@@ -67,7 +67,7 @@ where
 
 /// AES-CBC without padding; `data` must be a whole number of blocks.
 pub fn aes_cbc_encrypt(key: &[u8], iv: &[u8], data: &[u8]) -> Result<Vec<u8>> {
-    if data.len() % 16 != 0 || iv.len() != 16 {
+    if !data.len().is_multiple_of(16) || iv.len() != 16 {
         return Err(CryptoError::InvalidInput);
     }
     match key.len() {
@@ -79,7 +79,7 @@ pub fn aes_cbc_encrypt(key: &[u8], iv: &[u8], data: &[u8]) -> Result<Vec<u8>> {
 }
 
 pub fn aes_cbc_decrypt(key: &[u8], iv: &[u8], data: &[u8]) -> Result<Vec<u8>> {
-    if data.len() % 16 != 0 || iv.len() != 16 {
+    if !data.len().is_multiple_of(16) || iv.len() != 16 {
         return Err(CryptoError::InvalidInput);
     }
     match key.len() {

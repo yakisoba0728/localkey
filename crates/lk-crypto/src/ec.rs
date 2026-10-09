@@ -3,6 +3,7 @@ use p256::ecdsa::signature::hazmat::{PrehashSigner, PrehashVerifier};
 use p256::elliptic_curve::sec1::ToSec1Point;
 use zeroize::Zeroizing;
 
+use crate::rng::EntropyRng;
 use crate::{CryptoError, HashAlg, Result, digest};
 
 /// NIST curves used by FIDO, PIV, OpenPGP and the secure channels.
@@ -35,7 +36,9 @@ pub struct EcdsaSignature {
 }
 
 impl EcdsaSignature {
-    /// `r || s`, each padded to the field length (OpenPGP, COSE raw form).
+    /// `r || s` as stored (OpenPGP, COSE raw form). Signatures from
+    /// [`EcPrivateKey::sign_prehash`] hold both values at the field length, which is what
+    /// the raw form requires; a hand-built signature with shorter values is not padded.
     pub fn to_raw(&self) -> Vec<u8> {
         [self.r.as_slice(), self.s.as_slice()].concat()
     }
@@ -65,12 +68,16 @@ impl EcdsaSignature {
     }
 }
 
+/// DER length octets (X.690 §8.1.3): short form below 128, otherwise the minimal long form.
 fn push_der_len(out: &mut Vec<u8>, len: usize) {
-    match len {
-        0..=0x7f => out.push(len as u8),
-        0x80..=0xff => out.extend([0x81, len as u8]),
-        _ => out.extend([0x82, (len >> 8) as u8, len as u8]),
+    if len < 0x80 {
+        out.push(len as u8);
+        return;
     }
+    let bytes = len.to_be_bytes();
+    let start = bytes.iter().position(|&b| b != 0).unwrap_or(bytes.len() - 1);
+    out.push(0x80 | (bytes.len() - start) as u8);
+    out.extend_from_slice(&bytes[start..]);
 }
 
 /// An ECDSA/ECDH private key on P-256 or P-384.
@@ -128,8 +135,18 @@ impl EcPrivateKey {
         }
     }
 
-    /// Sign a message digest (already hashed by the caller), truncating per FIPS 186-5.
+    /// Sign a message digest (already hashed by the caller), truncating per FIPS 186-5
+    /// §6.4.1. The nonce is derived per RFC 6979 §3.2 with the curve's own hash (SHA-256
+    /// for P-256, SHA-384 for P-384) as the HMAC_DRBG hash. For a digest of that same hash
+    /// the signature is exactly RFC 6979's; for any other digest it is deterministic and
+    /// valid but differs from the values RFC 6979 Appendix A publishes for that pairing.
+    ///
+    /// An empty digest is rejected: no approved hash has an empty output, and the
+    /// RFC 6979 nonce derivation (`bits2int`) is undefined for it.
     pub fn sign_prehash(&self, prehash: &[u8]) -> Result<EcdsaSignature> {
+        if prehash.is_empty() {
+            return Err(CryptoError::InvalidInput);
+        }
         let (r, s) = match self.curve {
             Curve::P256 => {
                 let key = p256::ecdsa::SigningKey::from(p256_secret(&self.scalar));
@@ -147,9 +164,44 @@ impl EcPrivateKey {
         Ok(EcdsaSignature { r, s })
     }
 
-    /// Hash `message` with `alg` and sign the digest.
+    /// Hash `message` with `alg` and sign the digest (see [`Self::sign_prehash`]).
     pub fn sign_message(&self, alg: HashAlg, message: &[u8]) -> Result<EcdsaSignature> {
         self.sign_prehash(&digest(alg, message))
+    }
+
+    /// Sign a digest with a hedged nonce: RFC 6979 §3.6 with fresh host entropy as the
+    /// additional data `k'`. Signing the same digest twice gives different signatures, as
+    /// on a device that draws a random nonce, while a weak entropy source still cannot
+    /// leak the key. Device-visible signatures use this; [`Self::sign_prehash`] stays for
+    /// known-answer tests.
+    pub fn sign_prehash_hedged(&self, prehash: &[u8], entropy: &mut dyn Entropy) -> Result<EcdsaSignature> {
+        use p256::ecdsa::signature::hazmat::RandomizedPrehashSigner;
+        if prehash.is_empty() {
+            return Err(CryptoError::InvalidInput);
+        }
+        let mut rng = EntropyRng(entropy);
+        let (r, s) = match self.curve {
+            Curve::P256 => {
+                let key = p256::ecdsa::SigningKey::from(p256_secret(&self.scalar));
+                let sig: p256::ecdsa::Signature =
+                    key.sign_prehash_with_rng(&mut rng, prehash).map_err(|_| CryptoError::InvalidInput)?;
+                let (r, s) = sig.split_bytes();
+                (r.to_vec(), s.to_vec())
+            }
+            Curve::P384 => {
+                let key = p384::ecdsa::SigningKey::from(p384_secret(&self.scalar));
+                let sig: p384::ecdsa::Signature =
+                    key.sign_prehash_with_rng(&mut rng, prehash).map_err(|_| CryptoError::InvalidInput)?;
+                let (r, s) = sig.split_bytes();
+                (r.to_vec(), s.to_vec())
+            }
+        };
+        Ok(EcdsaSignature { r, s })
+    }
+
+    /// Hash `message` with `alg` and sign it with a hedged nonce ([`Self::sign_prehash_hedged`]).
+    pub fn sign_message_hedged(&self, alg: HashAlg, message: &[u8], entropy: &mut dyn Entropy) -> Result<EcdsaSignature> {
+        self.sign_prehash_hedged(&digest(alg, message), entropy)
     }
 
     /// ECDH: the X coordinate of `scalar * peer` (`peer` is an uncompressed SEC1 point).
@@ -197,18 +249,31 @@ pub fn ec_public_is_valid(curve: Curve, point: &[u8]) -> bool {
     }
 }
 
-/// Verify an ECDSA signature over a digest. `signature` is DER or raw `r || s`.
+/// Verify an ECDSA signature over a digest (FIPS 186-5 §6.4.2).
+///
+/// - `point` is an uncompressed SEC1 point on `curve`, as for [`ec_public_is_valid`] and
+///   [`EcPrivateKey::ecdh`]; compressed, hybrid and identity encodings are rejected.
+/// - `prehash` is the message digest, truncated to the order's bit length if longer and
+///   used as an integer if shorter (FIPS 186-5 §6.4.2 step 3 / §6.4.1).
+/// - `signature` is DER `SEQUENCE { r, s }` or raw `r || s`. A byte string can parse as
+///   both, so the signature is accepted if either reading verifies.
 pub fn ecdsa_verify_prehash(curve: Curve, point: &[u8], prehash: &[u8], signature: &[u8]) -> bool {
+    // The encoding rule of `ec_public_is_valid`; `from_sec1_bytes` checks the curve equation.
+    if point.len() != curve.point_len() || point.first() != Some(&0x04) {
+        return false;
+    }
     match curve {
         Curve::P256 => {
-            let Ok(key) = p256::ecdsa::VerifyingKey::from_sec1_bytes(point) else { return false };
-            let sig = p256::ecdsa::Signature::from_der(signature).or_else(|_| p256::ecdsa::Signature::from_slice(signature));
-            sig.is_ok_and(|sig| key.verify_prehash(prehash, &sig).is_ok())
+            use p256::ecdsa::{Signature, VerifyingKey};
+            let Ok(key) = VerifyingKey::from_sec1_bytes(point) else { return false };
+            let verifies = |sig: Signature| key.verify_prehash(prehash, &sig).is_ok();
+            Signature::from_der(signature).is_ok_and(verifies) || Signature::from_slice(signature).is_ok_and(verifies)
         }
         Curve::P384 => {
-            let Ok(key) = p384::ecdsa::VerifyingKey::from_sec1_bytes(point) else { return false };
-            let sig = p384::ecdsa::Signature::from_der(signature).or_else(|_| p384::ecdsa::Signature::from_slice(signature));
-            sig.is_ok_and(|sig| key.verify_prehash(prehash, &sig).is_ok())
+            use p384::ecdsa::{Signature, VerifyingKey};
+            let Ok(key) = VerifyingKey::from_sec1_bytes(point) else { return false };
+            let verifies = |sig: Signature| key.verify_prehash(prehash, &sig).is_ok();
+            Signature::from_der(signature).is_ok_and(verifies) || Signature::from_slice(signature).is_ok_and(verifies)
         }
     }
 }

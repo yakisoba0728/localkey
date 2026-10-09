@@ -54,8 +54,16 @@ fn cmac_tag<M: Mac + KeyInit>(key: &[u8], data: &[u8]) -> Result<Vec<u8>> {
     Ok(mac.finalize().into_bytes().to_vec())
 }
 
+/// Largest HKDF-SHA-256 output: RFC 5869 §2.3 limits `L` to `255 * HashLen` octets.
+const HKDF_SHA256_MAX_LEN: usize = 255 * 32;
+
 /// HKDF-SHA-256 (RFC 5869). `salt: None` means a string of zero bytes.
+///
+/// `len` above `255 * 32` (RFC 5869 §2.3) is rejected before any memory is allocated.
 pub fn hkdf_sha256(salt: Option<&[u8]>, ikm: &[u8], info: &[u8], len: usize) -> Result<Vec<u8>> {
+    if len > HKDF_SHA256_MAX_LEN {
+        return Err(CryptoError::InvalidInput);
+    }
     let hk = hkdf::Hkdf::<Sha256>::new(salt, ikm);
     let mut okm = vec![0; len];
     hk.expand(info, &mut okm).map_err(|_| CryptoError::InvalidInput)?;

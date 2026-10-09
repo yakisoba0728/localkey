@@ -224,6 +224,92 @@ It owns the applets, `Ctaphid`, `Ccid`, the OTP HID state, touch arbitration and
 Public API: `Device::open(profile, store, entropy, storage_key) -> Device`, `handle`,
 `next_deadline` (see `crates/lk-device/src/lib.rs`).
 
+## Phase 0 as implemented (binding for later phases)
+
+The frozen crates' sources are the authority; these are the points other crates must know.
+
+- **lk-crypto**
+  - Device-visible ECDSA signatures must use `EcPrivateKey::sign_prehash_hedged(digest, entropy)`
+    or `sign_message_hedged(alg, msg, entropy)`. These implement RFC 6979 §3.6 with host
+    entropy, so repeated signatures differ, as on hardware with a random nonce. The
+    deterministic `sign_prehash`/`sign_message` exist for known-answer tests.
+  - `sign_prehash(&[])` is an error.
+  - `rsa_public_op` rejects input >= n.
+  - `ed25519_verify` is strict and rejects small-order keys and R.
+  - `hkdf_sha256` rejects `len > 8160`.
+  - `RsaPrivateKey::from_primes` checks consistency but not primality.
+- **lk-codec::cbor**
+  - Canonical encoding order is CTAP 2.1 §8: lower major type, then shorter encoding, then bytewise.
+  - Minimal encodings are enforced for integers, lengths and tag numbers.
+  - Depth 8 counts arrays, maps and tags.
+  - Tags are decoded as `Value::Tag`; lk-fido must reject them (CTAP 2.1 §8 forbids tags).
+  - The decoder accepts map keys that are not in canonical order and keeps the received order.
+  - `MapBuilder` never emits duplicate keys.
+- **lk-codec::apdu**
+  - `Command::parse` stores `le = Some(0)` for short `00` and for extended `00 00`.
+    `expected_len()` gives Ne (256 or 65536). Also `Command::new(..).with_data(..).with_le(..)`
+    and `to_bytes()`.
+  - `secure_messaging()` and `sm_indication()` apply to interindustry CLA `0x00..=0x1F` only.
+  - `ApduError::sw()` is always `6700`.
+  - `CommandChain::new(max)`. `push(cmd)` returns `Ok(None)` while more parts follow and
+    `Ok(Some(cmd))` for the assembled or unchained command. `ChainError::sw()`: a header
+    change mid-chain is `6883` (LAST_COMMAND_EXPECTED) and the chain is dropped. Le and the
+    length form of intermediate parts are ignored.
+  - `ResponseQueue::start(data, sw, max)` returns the first chunk with `61xx`, or the final SW.
+    `next(max)` returns `None` when nothing is pending.
+  - Extra `sw` constants: `6881`, `6882`, `6883`, `6884`, `6986`, `6987`, `6988`, `6B00`,
+    `wrong_le(n)` (6Cxx); and `split_response`.
+- **lk-codec::tlv**
+  - `TlvError {Truncated, TagTooLong, IndefiniteLength, UnsupportedLength}`.
+  - Non-minimal long lengths are accepted on input; `encode` is minimal.
+  - `00`/`FF` padding between objects is not skipped.
+  - Also `Tlv::children()`, `is_constructed()`, `encode_into`, `encode_tag`.
+- **lk-codec::der / x509**
+  - Single-octet tags (`der::tag::*`).
+  - Builders: `sequence`, `set`, `set_of`, `integer` (unsigned BE), `integer_u64`, `boolean`,
+    `null`, `bit_string`, `named_bit_string`, `octet_string`, `oid(&[u64])`, `oid_dotted`,
+    the string types, `generalized_time`/`utc_time`, `explicit`/`implicit`/`implicit_constructed`.
+  - Readers: `parse_der`, `split_der`, `expect`, `expect_only`, `parse_all`, `decode_oid`,
+    `decode_unsigned`, `decode_bit_string`.
+  - `x509::TbsCertificate` is a struct literal plus `to_der()`. It uses `Name` (builder),
+    `Validity::rfc5280(..)` (UTCTime through 2049, GeneralizedTime after),
+    `PublicKey::{EcP256, EcP384, Ed25519, X25519, Rsa}` and `SignatureAlgorithm`.
+  - `x509::assemble(tbs_der, sig_alg, signature)`. ECDSA signatures are passed DER-encoded.
+- **lk-ctaphid**
+  - Command codes in `Event::Request.cmd` are 7-bit (`0x10` CBOR, `0x03` MSG); `respond`
+    accepts either form.
+  - Empty CBOR/MSG requests are answered with INVALID_LEN by the framer and never reach lk-fido.
+  - CIDs are allocated sequentially from 1.
+  - `reset()` emits no events: lk-device must check `outstanding()` first and drop its pending
+    operation itself.
+  - A vendor request the device does not handle must still get an answer (for example
+    `respond(cid, cmd::ERROR, &[err::INVALID_CMD])`), or the channel stays busy.
+  - `respond` addresses a channel. After an INIT resync (`Event::Abort`), lk-device must
+    discard the aborted request's late reply instead of sending it.
+- **lk-ccid**
+  - `CcidAction::PowerOff(reply)` is also returned for IccPowerOn while active (warm reset):
+    end the card session.
+  - A bulk Abort of an outstanding APDU is detected by `pending_seq()` changing across
+    `message()`. lk-device then cancels the pending applet operation.
+  - `control_abort(slot, seq)` covers the class-specific ABORT control request.
+  - `apdu_response` returns an empty Vec for "send nothing" (the sequence was aborted or the
+    card was reset).
+  - Extras: `is_active()`, `atr()`, `parameters_in_force()`, `descriptor::YUBIKEY_5C_NANO`,
+    `message` constants.
+- **lk-testkit**
+  - `SeededEntropy::new(seed)` (frozen stream) and `bytes(n)`.
+  - `ScriptedEntropy::new(seed, chunks)`, `push`.
+  - `TestHost::new()` (profile `DeviceProfile::own(12345678)`), `with_profile`, `seeded`,
+    `set_now`, `advance`, `profile_mut`, `push_entropy`, `fail_next_saves(n)`, `fail_all`,
+    `persisted(record)`, `persist_count`, `persist_attempts`, `set_persisted`, `clear_persisted`.
+  - `MemoryStore` has `fail_next_saves`, `fail_all`, `fail_loads`, `save_count`, `get`,
+    `insert` and `remove`. Clones share storage.
+- **lk-device::storage**
+  - `seal(key, record, plaintext, entropy) -> Vec<u8>` and `open(key, record, sealed)`.
+  - Layout `0x01 || nonce(12) || ciphertext || tag(16)`.
+  - AAD `b"localkey" || record_id || 0x01`.
+  - Record ids: Device 1, Fido 2, Oath 3, Otp 4, Piv 5, OpenPgp 6, HsmAuth 7, SecurityDomain 8.
+
 ## Contract change requests
 
-(none yet)
+Phase 0 requests are resolved in the section above.

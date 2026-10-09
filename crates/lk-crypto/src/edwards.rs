@@ -1,4 +1,4 @@
-use ed25519_dalek::{Signer, Verifier};
+use ed25519_dalek::Signer;
 use lk_core::Entropy;
 use zeroize::Zeroizing;
 
@@ -40,11 +40,17 @@ impl Ed25519Key {
     }
 }
 
+/// Verify an Ed25519 signature (RFC 8032 §5.1.7).
+///
+/// Beyond the RFC 8032 equation and its `S < L` rule, this rejects a public key `A` or
+/// commitment `R` of small order. With such a "weak" key a single signature verifies for
+/// every message: for `A` the identity, `(R, S) = (B, 1)` satisfies `[S]B = R + [k]A` for
+/// any `k`. Honest keys and signatures (`A = [s]B`, `R = [r]B`) are never of small order.
 pub fn ed25519_verify(public: &[u8], message: &[u8], signature: &[u8]) -> bool {
     let Ok(public) = <[u8; 32]>::try_from(public) else { return false };
     let Ok(signature) = <[u8; 64]>::try_from(signature) else { return false };
     let Ok(key) = ed25519_dalek::VerifyingKey::from_bytes(&public) else { return false };
-    key.verify(message, &ed25519_dalek::Signature::from_bytes(&signature)).is_ok()
+    key.verify_strict(message, &ed25519_dalek::Signature::from_bytes(&signature)).is_ok()
 }
 
 /// An X25519 private key (RFC 7748).
