@@ -7,6 +7,12 @@
 
 #![forbid(unsafe_code)]
 
+pub mod applet;
+pub mod profile;
+
+pub use applet::{CardApplet, Host, Outcome, ResetKind};
+pub use profile::{Capabilities, DeviceProfile, ProductIds, UsbInterfaces, Version};
+
 use core::fmt;
 
 /// Milliseconds on a monotonic clock owned by the host program.

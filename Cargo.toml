@@ -32,16 +32,18 @@ p384 = { version = "0.14", default-features = false, features = ["ecdsa", "ecdh"
 ed25519-dalek = { version = "3", default-features = false, features = ["zeroize"] }
 x25519-dalek = { version = "3", default-features = false, features = ["static_secrets", "zeroize"] }
 aes = "0.9"
-aes-gcm = { version = "0.11", default-features = false, features = ["aes"] }
+aes-gcm = { version = "0.11", default-features = false, features = ["aes", "alloc"] }
 cbc = "0.2"
 cmac = "0.8"
 sha1 = "0.11"
 sha2 = "0.11"
 hmac = "0.13"
 hkdf = "0.13"
-getrandom = "0.4"
+rand_core = "0.10"
 zeroize = "1.9"
 subtle = "2.6"
+rsa = { version = "=0.10.0-rc.19", default-features = false, features = ["std", "hazmat"] }
+des = "0.9"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

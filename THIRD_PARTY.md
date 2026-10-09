@@ -6,7 +6,7 @@ binaries; "build-time only" crates run in the compiler (procedural macros and bu
 scripts) and are not shipped. Distributing binaries requires including the license
 texts of the linked crates, which are permissive (MIT, Apache-2.0, BSD).
 
-Linked: 55. Build-time only: 8.
+Linked: 66. Build-time only: 10.
 
 | Crate | Version | License | Use | Source |
 | --- | --- | --- | --- | --- |
@@ -15,6 +15,7 @@ Linked: 55. Build-time only: 8.
 | aes-gcm | 0.11.1 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/AEADs |
 | autocfg | 1.5.1 | Apache-2.0 OR MIT | build-time only | https://github.com/cuviper/autocfg |
 | base16ct | 1.0.0 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/formats |
+| base64ct | 1.8.3 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/formats |
 | block-buffer | 0.12.1 | MIT OR Apache-2.0 | linked | https://github.com/RustCrypto/utils |
 | block-padding | 0.4.2 | MIT OR Apache-2.0 | linked | https://github.com/RustCrypto/utils |
 | cbc | 0.2.1 | MIT OR Apache-2.0 | linked | https://github.com/RustCrypto/block-modes |
@@ -27,12 +28,14 @@ Linked: 55. Build-time only: 8.
 | cpufeatures | 0.3.1 | MIT OR Apache-2.0 | linked | https://github.com/RustCrypto/utils |
 | crypto-bigint | 0.7.5 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/crypto-bigint |
 | crypto-common | 0.2.2 | MIT OR Apache-2.0 | linked | https://github.com/RustCrypto/traits |
+| crypto-primes | 0.7.2 | Apache-2.0 OR MIT | linked | https://github.com/entropyxyz/crypto-primes |
 | ctr | 0.10.1 | MIT OR Apache-2.0 | linked | https://github.com/RustCrypto/block-modes |
 | ctutils | 0.4.3 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/utils |
 | curve25519-dalek | 5.0.0 | BSD-3-Clause | linked | https://github.com/dalek-cryptography/curve25519-dalek/tree/main/curve25519-dalek |
 | curve25519-dalek-derive | 0.1.1 | MIT/Apache-2.0 | build-time only | https://github.com/dalek-cryptography/curve25519-dalek |
 | dbl | 0.5.0 | MIT OR Apache-2.0 | linked | https://github.com/RustCrypto/utils |
 | der | 0.8.2 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/formats |
+| des | 0.9.0 | MIT OR Apache-2.0 | linked | https://github.com/RustCrypto/block-ciphers |
 | digest | 0.11.3 | MIT OR Apache-2.0 | linked | https://github.com/RustCrypto/traits |
 | ecdsa | 0.17.0 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/signatures |
 | ed25519 | 3.0.0 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/signatures |
@@ -51,6 +54,9 @@ Linked: 55. Build-time only: 8.
 | num-traits | 0.2.19 | MIT OR Apache-2.0 | linked | https://github.com/rust-num/num-traits |
 | p256 | 0.14.0 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/elliptic-curves |
 | p384 | 0.14.0 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/elliptic-curves |
+| pem-rfc7468 | 1.0.0 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/formats |
+| pkcs1 | 0.8.0-rc.5 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/formats |
+| pkcs8 | 0.11.0 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/formats |
 | polyval | 0.7.3 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/universal-hashes |
 | primefield | 0.14.0 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/elliptic-curves |
 | primeorder | 0.14.0 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/elliptic-curves |
@@ -59,14 +65,21 @@ Linked: 55. Build-time only: 8.
 | r-efi | 6.0.0 | MIT OR Apache-2.0 OR LGPL-2.1-or-later | linked | https://github.com/r-efi/r-efi |
 | rand_core | 0.10.1 | MIT OR Apache-2.0 | linked | https://github.com/rust-random/rand_core |
 | rfc6979 | 0.6.0 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/signatures |
+| rsa | 0.10.0-rc.19 | MIT OR Apache-2.0 | linked | https://github.com/RustCrypto/RSA |
 | rustc_version | 0.4.1 | MIT OR Apache-2.0 | build-time only | https://github.com/djc/rustc-version-rs |
 | sec1 | 0.8.1 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/formats |
 | semver | 1.0.28 | MIT OR Apache-2.0 | build-time only | https://github.com/dtolnay/semver |
+| serde | 1.0.229 | MIT OR Apache-2.0 | linked | https://github.com/serde-rs/serde |
+| serde_core | 1.0.229 | MIT OR Apache-2.0 | linked | https://github.com/serde-rs/serde |
+| serde_derive | 1.0.229 | MIT OR Apache-2.0 | build-time only | https://github.com/serde-rs/serde |
+| serdect | 0.4.3 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/formats |
 | sha1 | 0.11.0 | MIT OR Apache-2.0 | linked | https://github.com/RustCrypto/hashes |
 | sha2 | 0.11.0 | MIT OR Apache-2.0 | linked | https://github.com/RustCrypto/hashes |
 | signature | 3.0.0 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/traits |
+| spki | 0.8.1 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/formats |
 | subtle | 2.6.1 | BSD-3-Clause | linked | https://github.com/dalek-cryptography/subtle |
 | syn | 2.0.119 | MIT OR Apache-2.0 | build-time only | https://github.com/dtolnay/syn |
+| syn | 3.0.6 | MIT OR Apache-2.0 | build-time only | https://github.com/dtolnay/syn |
 | typenum | 1.20.1 | MIT OR Apache-2.0 | linked | https://github.com/paholg/typenum |
 | unicode-ident | 1.0.26 | (MIT OR Apache-2.0) AND Unicode-3.0 | build-time only | https://github.com/dtolnay/unicode-ident |
 | universal-hash | 0.6.1 | MIT OR Apache-2.0 | linked | https://github.com/RustCrypto/traits |

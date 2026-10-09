@@ -11,7 +11,7 @@
 
 #![forbid(unsafe_code)]
 
-use lk_core::Millis;
+use lk_core::{Millis, UsbInterfaces};
 
 /// Everything the host can deliver to the device.
 #[derive(Debug)]
@@ -65,14 +65,6 @@ pub enum Output {
     PresenceIndicator(bool),
     /// The enabled interfaces changed; the host must re-enumerate with this set.
     Reenumerate(UsbInterfaces),
-}
-
-/// Which USB interfaces the device currently exposes.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct UsbInterfaces {
-    pub otp: bool,
-    pub fido: bool,
-    pub ccid: bool,
 }
 
 /// The composite device.
