@@ -1,0 +1,15 @@
+{
+  "candidate": "v0.46 FunctionFS negative OUT completion recovery",
+  "status": "unpublished isolated candidate",
+  "source_patch_sha256": "d6b55c1eea4f40f1964e9aa04d3291b5de0f7008918efbbdb243e7f0ad01bd37",
+  "source_linux_cpp_sha256": "0d3bb88ce930f32acfad7a0a37b768c4470850d0d80eccb8ee717b17f15abdbb",
+  "linux_arm64_ske_usbd_sha256": "e63cd9ea49ee5ebcc6cc7b7389b7785e1393d6c39c926fb766ff61068f30c690",
+  "validation_sha256": "c538166947a864df651fa77168fa9b800ceca186bb7ac4404007db7474357456",
+  "published_v44_ske_usbd_sha256": "2bf02ac6da2d027f64478e0977220d367a029db3c239e8ab5ed4184b5b5ba102",
+  "patch_applies_to_v45_staging_linux_cpp": true,
+  "published_outputs_modified": false,
+  "combined_guest_result_sha256": "93aad1ffe5768147d82d15e9158320a944d0d168b105bdfd9ecf712d8b5ee83b",
+  "combined_guest_inputs_sha256": "90e0f9014e59b829b5cc64fc347b7a42cd33f0d34c2ebc4c3aec1da38017a2f4",
+  "combined_guest_console_sha256": "05337618d0c909177d0bd0bef101277ce144a028532ab01b954a2c143a0d0ff3",
+  "combined_guest_passed": true
+}

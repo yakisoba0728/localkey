@@ -1,0 +1,174 @@
+#pragma once
+
+#include "swpasskey/constants.hpp"
+#include "swpasskey/crypto/key_backend.hpp"
+#include "swpasskey/crypto/provider.hpp"
+#include "swpasskey/ctap/cancel_token.hpp"
+#include "swpasskey/ctap/get_info.hpp"
+#include "swpasskey/ctap/request_handler.hpp"
+#include "swpasskey/status.hpp"
+#include "swpasskey/store/credential.hpp"
+#include "swpasskey/ui/presence.hpp"
+
+#include <array>
+#include <chrono>
+#include <cstdint>
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <span>
+#include <string>
+#include <string_view>
+#include <vector>
+
+namespace swpk::ctap {
+
+inline constexpr std::uint8_t kCmdMakeCredential = 0x01;
+inline constexpr std::uint8_t kCmdGetAssertion = 0x02;
+inline constexpr std::uint8_t kCmdGetInfo = 0x04;
+inline constexpr std::uint8_t kCmdClientPin = 0x06;
+inline constexpr std::uint8_t kCmdReset = 0x07;
+inline constexpr std::uint8_t kCmdGetNextAssertion = 0x08;
+// CTAP 2.1 authenticatorSelection: Chrome sends it to every FIDO_2_1 key when
+// more than one is plugged in ("touch the key you want to use").
+inline constexpr std::uint8_t kCmdAuthenticatorSelection = 0x0B;
+inline constexpr std::uint8_t kCmdCredentialManagement = 0x0A;
+inline constexpr std::uint8_t kCmdCredentialManagementPreview = 0x41;
+inline constexpr std::uint8_t kCmdLargeBlobs = 0x0C;
+inline constexpr std::uint8_t kCmdAuthenticatorConfig = 0x0D;
+
+struct AuthenticatorConfig {
+  std::array<std::uint8_t, 16> aaguid{kAaguid};
+  std::chrono::milliseconds up_timeout{kUserActionTimeout};
+  bool u2f_enabled{false};  // PR11
+  // PIN protocol: base delay after 3 consecutive failures (5 s, 10 s, ... cap 60 s)
+  // and the pinUvAuthToken idle timeout. Tests shrink these.
+  std::chrono::milliseconds pin_token_idle_timeout{30000};
+  std::chrono::milliseconds reset_window{10000};
+};
+
+struct AuthenticatorMetrics {
+  std::uint64_t make_cred_ok{0}, make_cred_err{0};
+  std::uint64_t get_assert_ok{0}, get_assert_err{0};
+  std::uint64_t up_allow{0}, up_deny{0}, up_timeout{0}, up_cancel{0};
+  std::uint64_t pin_fail{0}, pin_block{0};
+  std::array<std::uint64_t, 256> ctap_status{};
+};
+
+namespace detail {
+struct AssertionState;
+struct ManagementState;
+struct ExtensionsIn;
+struct UserEntity;
+class PinManager;
+}  // namespace detail
+
+class Authenticator final : public RequestHandler {
+public:
+  Authenticator(AuthenticatorConfig cfg,
+                crypto::Provider& crypto,
+                crypto::KeyBackend& primary_keys,   // new makeCredential
+                crypto::KeyBackend& software_keys,  // legacy rows; may alias primary
+                store::CredentialStore& store,
+                ui::Presence& presence);
+  ~Authenticator() override;
+
+  Result<std::vector<std::uint8_t>> handle_cbor(std::span<const std::uint8_t> request,
+                                                CancelToken& cancel) override;
+  Result<std::vector<std::uint8_t>> handle_cbor_channel(
+      std::span<const std::uint8_t> request, CancelToken& cancel, std::uint32_t channel) override;
+  std::vector<std::uint8_t> handle_u2f(std::span<const std::uint8_t> request,
+                                       CancelToken& cancel) override;
+  bool supports_u2f() const override { return cfg_.u2f_enabled; }
+  Result<void> reboot() override;
+
+  GetInfoSnapshot get_info() const;
+  AuthenticatorMetrics metrics() const;
+  const char* primary_backend_name() const;
+
+  // Control-socket entry points (PR12). Serialised against handle_cbor by an
+  // internal mutex; `reset` and `set_pin` still require local UP.
+  Result<void> ctl_reset(CancelToken& cancel);
+  Result<void> ctl_set_pin(std::string_view pin, CancelToken& cancel);
+  Result<void> ctl_delete(std::span<const std::uint8_t> cred_id);
+
+private:
+  struct PinAuthIn {
+    std::optional<std::vector<std::uint8_t>> param;  // pinUvAuthParam
+    std::optional<std::uint64_t> protocol;           // pinUvAuthProtocol
+  };
+
+  Result<std::vector<std::uint8_t>> cmd_get_info();
+  Result<std::vector<std::uint8_t>> cmd_credential_management(std::span<const std::uint8_t> body, bool preview = false);
+  Result<std::vector<std::uint8_t>> cmd_large_blobs(std::span<const std::uint8_t> body);
+  Result<std::vector<std::uint8_t>> cmd_authenticator_config(std::span<const std::uint8_t> body);
+  Result<std::vector<std::uint8_t>> cmd_make_credential(std::span<const std::uint8_t> body,
+                                                        CancelToken& cancel);
+  Result<std::vector<std::uint8_t>> cmd_get_assertion(std::span<const std::uint8_t> body,
+                                                      CancelToken& cancel);
+  Result<std::vector<std::uint8_t>> cmd_get_next_assertion();
+  Result<std::vector<std::uint8_t>> cmd_reset(CancelToken& cancel, bool enforce_window = true);
+  Result<std::vector<std::uint8_t>> cmd_authenticator_selection(CancelToken& cancel);
+  Result<std::vector<std::uint8_t>> cmd_client_pin(std::span<const std::uint8_t> body,
+                                                   CancelToken& cancel);
+
+  // CTAP1/U2F (PR11). Both return a full response APDU (data || SW1 SW2).
+  std::vector<std::uint8_t> u2f_register(std::span<const std::uint8_t> data, CancelToken& cancel);
+  std::vector<std::uint8_t> u2f_authenticate(std::uint8_t p1, std::span<const std::uint8_t> data,
+                                             CancelToken& cancel);
+
+  // Shared assertion builder used by getAssertion and getNextAssertion.
+  Result<std::vector<std::uint8_t>> build_assertion(const store::Credential& cred,
+                                                    std::span<const std::uint8_t, 32> rp_id_hash,
+                                                    std::span<const std::uint8_t, 32> client_data_hash,
+                                                    std::uint8_t flags, bool bump_counter,
+                                                    const detail::ExtensionsIn* ext,
+                                                    std::optional<std::size_t> number_of_credentials);
+
+  // User presence with keepalive status bookkeeping.
+  ui::Decision confirm_up(ui::PresenceRequest::Kind kind, const std::string& rp_id,
+                          const std::string& user_display,
+                          std::span<const std::uint8_t, 32> rp_id_hash, CancelToken& cancel);
+
+  // pinUvAuthParam handling for make/get. Returns the UV flag to set in
+  // authData. A zero-length param is the CTAP 2.1 "touch to select" probe
+  // and performs UP before answering PIN_NOT_SET / PIN_INVALID.
+  Result<bool> check_pin_auth(const PinAuthIn& in, std::span<const std::uint8_t, 32> client_data_hash,
+                              std::uint8_t permission, const std::string& rp_id,
+                              std::span<const std::uint8_t, 32> rp_id_hash, bool is_make,
+                              CancelToken& cancel, bool allow_unverified_make = false);
+
+  // hmac-secret (CTAP 2.1): returns the encrypted extension output for this
+  // credential, selecting CredRandomWithUV / WithoutUV by `uv`.
+  Result<std::vector<std::uint8_t>> hmac_secret_output(const store::Credential& cred,
+                                                       const detail::ExtensionsIn& ext, bool uv);
+  crypto::KeyBackend* backend_for(crypto::BackendKind kind);
+
+  Result<std::unique_ptr<crypto::SigningKey>> load_key(const store::Credential& cred);
+  Result<void> wrap_nonresident(store::Credential& cred, const crypto::SigningKey& key);
+  std::optional<store::Credential> resolve_credential(
+      std::span<const std::uint8_t, 32> rp_id_hash, std::span<const std::uint8_t> id,
+      std::string_view rp_id);
+  void destroy_key(const store::Credential& cred);
+  static std::uint64_t now_unix();
+  void count_status(std::uint8_t status);
+
+  AuthenticatorConfig cfg_;
+  std::chrono::steady_clock::time_point started_{std::chrono::steady_clock::now()};
+  crypto::Provider& crypto_;
+  crypto::KeyBackend& primary_;
+  crypto::KeyBackend& software_;
+  store::CredentialStore& store_;
+  ui::Presence& presence_;
+  mutable std::mutex metrics_mu_;
+  AuthenticatorMetrics metrics_;
+  std::mutex op_mu_;  // one CTAP/U2F/ctl operation at a time
+  std::unique_ptr<detail::AssertionState> next_state_;
+  std::unique_ptr<detail::PinManager> pin_;
+  std::unique_ptr<detail::ManagementState> management_state_;
+  std::vector<std::uint8_t> large_blob_pending_;
+  std::size_t large_blob_expected_{0};
+  std::uint32_t state_channel_{0};
+};
+
+}  // namespace swpk::ctap

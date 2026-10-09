@@ -1,0 +1,40 @@
+{
+  "passed": true,
+  "transport": "direct IFD",
+  "core_sha256": "4f6c71325b35550afc1530b39c811d1c2e44f090a8f489e9c1ee1b0fd4de19f1",
+  "fixed": true,
+  "rows": [
+    {
+      "name": "nonzero_wrong_p1",
+      "malformed_apdu": "00ff00ff1b039b180102030405060708090a0b0c0d0e0f101112131415161718",
+      "sw": "6a86",
+      "malformed_state_unchanged": true,
+      "expected_key_authenticates_after_restart": true,
+      "wrong_key_rejected_after_restart": true,
+      "normal_sdk_management_key_change": true
+    },
+    {
+      "name": "invalid_touch_policy_p2",
+      "malformed_apdu": "00ffff001b039b180102030405060708090a0b0c0d0e0f101112131415161718",
+      "sw": "6a86",
+      "malformed_state_unchanged": true,
+      "expected_key_authenticates_after_restart": true,
+      "wrong_key_rejected_after_restart": true,
+      "normal_sdk_management_key_change": true
+    },
+    {
+      "name": "explicit_le_1",
+      "malformed_apdu": "00ffffff1b039b180102030405060708090a0b0c0d0e0f10111213141516171801",
+      "sw": "6700",
+      "malformed_state_unchanged": true,
+      "expected_key_authenticates_after_restart": true,
+      "wrong_key_rejected_after_restart": true,
+      "normal_sdk_management_key_change": true
+    }
+  ],
+  "scp03": {
+    "unmodified_sdk_scp03_management_key_change": true,
+    "restart_persisted": true
+  },
+  "physical_key_accessed": false
+}

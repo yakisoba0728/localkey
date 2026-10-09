@@ -1,0 +1,10 @@
+--- a/emucard/core.py
++++ b/emucard/core.py
+@@ -2281,6 +2281,7 @@
+                 )
+             if config == bytes(52):
+                 require(a.p1 in (1, 3), 0x6A80)
++                require(current is not None, 0x6985)
+                 slots.pop(n, None)
+             else:
+                 require(

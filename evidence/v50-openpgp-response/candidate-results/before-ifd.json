@@ -1,0 +1,37 @@
+{
+  "root": "/Users/yakisoba0728/Documents/Codex/2026-10-07/new-chat/work/v50-openpgp-candidate/baseline",
+  "transport": "direct IFD",
+  "expect_fixed": false,
+  "tests": [
+    {
+      "name": "unmodified SDK GET DATA/RESPONSE with Le=1",
+      "passed": true
+    },
+    {
+      "name": "four-byte SDK GET RESPONSE compatibility",
+      "passed": true
+    },
+    {
+      "case": "wrong CLA",
+      "malformed_sw": "61ff",
+      "malformed_len": 1,
+      "subsequent_sw": "9000",
+      "subsequent_len": 313,
+      "pending_preserved": false,
+      "full_response_sha256": "4b85448e48ed9ba458c325a252a5118b6e106c08cdcc8eadadfc47246b352411"
+    },
+    {
+      "case": "command-chain CLA",
+      "malformed_sw": "61ff",
+      "malformed_len": 1,
+      "subsequent_sw": "9000",
+      "subsequent_len": 313,
+      "pending_preserved": false,
+      "full_response_sha256": "4b85448e48ed9ba458c325a252a5118b6e106c08cdcc8eadadfc47246b352411"
+    },
+    {
+      "name": "SDK re-read after malformed APDUs",
+      "passed": true
+    }
+  ]
+}

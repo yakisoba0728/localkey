@@ -1,0 +1,38 @@
+--- a/emucard/core.py
++++ b/emucard/core.py
+@@ -986,11 +986,14 @@
+             return
+         if ins == 0xF6:
+             require(self.mgmt_verified)
+-            require(a.p2 != 0xF9, 0x6A86)
+             require(str(a.p2) in d["keys"], 0x6A88)
+             if a.p1 == 0xFF:
+                 del d["keys"][str(a.p2)]
++                if a.p2 == 0xF9:
++                    d["attestation_key_removed"] = True
+             else:
++                # PIV 5.7 allows deleting F9, but never moving it.
++                require(a.p2 != 0xF9, 0x6A86)
+                 require(
+                     a.p1 in list(range(0x82, 0x96)) + [0x9A, 0x9C, 0x9D, 0x9E], 0x6A86
+                 )
+@@ -1035,6 +1038,8 @@
+             ):
+                 if tag in d[name]:
+                     restored[name][tag] = d[name][tag]
++            if d.get("attestation_key_removed"):
++                restored["attestation_key_removed"] = True
+             self.state.data["piv"] = restored
+             self.reset_session()
+             return
+--- a/emucard/piv_objects.py
++++ b/emucard/piv_objects.py
+@@ -35,7 +35,7 @@
+     data; the existing shrinking/deletion recovery rules remain applicable.
+     A deliberately replaced key or deleted certificate is never regenerated.
+     """
+-    if ATTESTATION_SLOT in d["keys"]:
++    if ATTESTATION_SLOT in d["keys"] or d.get("attestation_key_removed"):
+         return False
+     key = (
+         load_key(d["development_ca"])

@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "version": "0.64.0",
+  "archive_sha256": "4ad6f2b91996c025cd9bbfbe5b71a8326de91c8a273d82011b080ac05291d960",
+  "manifest_files_verified": 2234,
+  "cpp_cases": 140,
+  "cpp_assertions": 13748,
+  "ctap_sdk_checks": 82,
+  "fido_cancel": true,
+  "fido_same_cid": true,
+  "largeblob_sequence": true,
+  "piv_socket_ifd": true,
+  "piv_auth_le_socket_ifd": true,
+  "scp03_socket_ifd": true,
+  "hsmauth_socket_ifd": true,
+  "oath_socket_ifd": true,
+  "physical_or_host_device_access": false
+}

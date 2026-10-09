@@ -1,0 +1,18 @@
+--- a/src/ctap/hid_device.cpp
++++ b/src/ctap/hid_device.cpp
+@@ -169,6 +169,15 @@
+     return out;
+   }
+ 
++  // An unallocated CID must not reserve the sole message assembler: otherwise
++  // one incomplete request can make allocated channels report CHANNEL_BUSY.
++  // A CONT without an active INIT on its CID is spurious and has no response.
++  if (!(report[4] & kTypeInit)) {
++    if (framer_.assembling_cid() != cid) return out;
++  } else if (cid == 0 || !is_allocated(cid)) {
++    return fail(cid, HidErr::InvalidChannel);
++  }
++
+   auto r = framer_.ingest(report);
+   if (!r) {
+     return fail(cid, r.error());

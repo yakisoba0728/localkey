@@ -1,0 +1,138 @@
+{
+  "observed_utc": "2026-10-08T13:19:43.950613+00:00",
+  "firmware_version": [
+    5,
+    7,
+    4
+  ],
+  "transport": "native system PC/SC; shared access; SCARD_LEAVE_CARD",
+  "select_layout": [
+    {
+      "tag": "6f",
+      "value_length": 23,
+      "fields": [
+        {
+          "tag": "84",
+          "value_length": 8
+        },
+        {
+          "tag": "a5",
+          "value_length": 11,
+          "fields": [
+            {
+              "tag": "73",
+              "value_length": 9,
+              "fields": [
+                {
+                  "tag": "6",
+                  "value_length": 7
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "select_public_template": "6f178408a000000151000000a50b730906072a864886fc6b01",
+  "card_recognition_data": "733d06072a864886fc6b01600c060a2a864886fc6b02020301630906072a864886fc6b03640b06092a864886fc6b040360640c060a2a864886fc6b04119b06",
+  "key_information_schema": {
+    "entries": [
+      {
+        "tag": "c0",
+        "value_length": 4,
+        "type_lengths": [
+          {
+            "type": "88",
+            "length": 16
+          }
+        ]
+      },
+      {
+        "tag": "c0",
+        "value_length": 4,
+        "type_lengths": [
+          {
+            "type": "88",
+            "length": 16
+          }
+        ]
+      },
+      {
+        "tag": "c0",
+        "value_length": 4,
+        "type_lengths": [
+          {
+            "type": "88",
+            "length": 16
+          }
+        ]
+      },
+      {
+        "tag": "c0",
+        "value_length": 6,
+        "type_lengths": [
+          {
+            "type": "b1",
+            "length": 32
+          },
+          {
+            "type": "f0",
+            "length": 0
+          }
+        ]
+      }
+    ],
+    "key_reference_values_retained": false
+  },
+  "cplc_schema": {
+    "response_length": 42,
+    "platform_prefix": "4090",
+    "identifier_payload_retained": false
+  },
+  "commands": [
+    {
+      "command": "00a4040006d2760001240100",
+      "status": "9000",
+      "response_bytes": 0,
+      "get_response_count": 0
+    },
+    {
+      "command": "00f1000000",
+      "status": "9000",
+      "response_bytes": 3,
+      "get_response_count": 0
+    },
+    {
+      "command": "00a4040008a00000015100000000",
+      "status": "9000",
+      "response_bytes": 25,
+      "get_response_count": 0
+    },
+    {
+      "command": "00ca006600",
+      "status": "9000",
+      "response_bytes": 63,
+      "get_response_count": 0
+    },
+    {
+      "command": "00ca00e000",
+      "status": "9000",
+      "response_bytes": 26,
+      "get_response_count": 0
+    },
+    {
+      "command": "00ca9f7f00",
+      "status": "9000",
+      "response_bytes": 42,
+      "get_response_count": 0
+    }
+  ],
+  "pin_attempts": 0,
+  "handshake_or_pso_commands": false,
+  "credential_or_configuration_writes": false,
+  "activation_or_reset_commands": false,
+  "volatile_application_selection_changed": true,
+  "reader_name_serial_certificates_public_keys_or_cplc_identity_retained": false,
+  "scope": "public recognition bytes and SELECT/key/CPLC schema only; no authentication, retry, capacity or authorization measurement"
+}

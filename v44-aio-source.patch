@@ -1,0 +1,44 @@
+--- a/src/usb/linux.cpp
++++ b/src/usb/linux.cpp
+@@ -35,9 +35,9 @@
+   if (count < 0 || static_cast<std::size_t>(count) != bytes.size()) fail("USB userspace write failed");
+ }
+ 
+-// One kernel request per endpoint, on its own thread. Large FunctionFS bulk
+-// IN requests use AIO: an interrupted completion wait must not cancel/replay
+-// data which has already reached the host. Reconfiguration cancels the request.
++// One kernel request per endpoint, on its own thread. All FunctionFS endpoint
++// requests use AIO so interrupted waits cannot abandon a stack-owned transfer
++// or replay data already delivered to the host. Reconfiguration cancels it.
+ class Endpoint {
+  public:
+   std::uint8_t address;
+@@ -103,7 +103,7 @@
+   bool active_{false};
+   const bool recover_shutdown_;
+   std::exception_ptr failure_;
+-  ssize_t async_transfer(void* buffer, std::size_t size) {
++  ssize_t async_transfer(void* buffer, std::size_t size, bool input) {
+     struct Context {
+       aio_context_t value{};
+       ~Context() {
+@@ -116,7 +116,7 @@
+     if (::syscall(SYS_io_setup,1,&context.value) < 0)
+       fail("Cannot create FunctionFS asynchronous request");
+     iocb request{};
+-    request.aio_lio_opcode = IOCB_CMD_PWRITE;
++    request.aio_lio_opcode = input ? IOCB_CMD_PWRITE : IOCB_CMD_PREAD;
+     request.aio_fildes = static_cast<std::uint32_t>(fd_);
+     request.aio_buf = reinterpret_cast<std::uintptr_t>(buffer);
+     request.aio_nbytes = size;
+@@ -165,8 +165,8 @@
+     return -1;
+   }
+   ssize_t transfer(void* buffer, std::size_t size, bool input) {
+-    if (recover_shutdown_ && input && bulk && size > packet_size)
+-      return async_transfer(buffer,size);
++    if (recover_shutdown_)
++      return async_transfer(buffer,size,input);
+     while (!stop_.load()) {
+       const auto count = input ? ::write(fd_,buffer,size) : ::read(fd_,buffer,size);
+       if (count >= 0) return count;

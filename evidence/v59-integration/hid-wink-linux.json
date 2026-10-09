@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "expect_fixed": true,
+  "malformed_reply_cmd": 191,
+  "malformed_reply_payload_hex": "03",
+  "valid_wink": true,
+  "fresh_ping": true,
+  "binary_sha256": "6313f0dd781a278682de3c3688a09780757ea1a707e924b97b8e716d69a67e56",
+  "physical_device_access": false
+}

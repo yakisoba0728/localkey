@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "core_sha256": "eb91ac52aa5f9f17a62f7dbe7875496bc33936a3e1213cda9ed9df894cb1a37a",
+  "transport": "private CCID socket",
+  "fixed": true,
+  "malformed_apdu": "00a502040660045c027f2101",
+  "malformed_sw": "6700",
+  "persistent_state_unchanged_on_malformed": true,
+  "malformed_selection_preserved": true,
+  "valid_spec_le_zero_select": true,
+  "normal_unmodified_sdk_select_and_read": true,
+  "sdk_malformed_select_detected": true,
+  "certificates_persist_after_restart": true,
+  "physical_key_accessed": false
+}

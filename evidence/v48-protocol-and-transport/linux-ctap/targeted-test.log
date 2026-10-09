@@ -1,0 +1,7 @@
+{"ts":"2026-10-09T14:38:27.303Z","lvl":"info","event":"ctap","cmd":"unknown","cmd_byte":"0x0d","status":"0","ms":"0"}
+{"ts":"2026-10-09T14:38:27.303Z","lvl":"info","event":"ctap","cmd":"unknown","cmd_byte":"0x0d","status":"0","ms":"0"}
+Filters: "empty minPinLengthRPIDs leaves the prior allowlist intact"
+RNG seed: 519970087
+All tests passed (5 assertions in 1 test case)
+
+

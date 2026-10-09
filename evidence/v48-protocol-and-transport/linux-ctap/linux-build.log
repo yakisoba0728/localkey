@@ -1,0 +1,268 @@
+[1/268] Scanning /src/src/pcsc/reader.cpp for CXX dependencies
+[2/268] Scanning /src/src/pcsc/reader.cpp for CXX dependencies
+[3/268] Scanning /src/src/pcsc/ifd.cpp for CXX dependencies
+[4/268] Generating CXX dyndep file CMakeFiles/ske-ifd.dir/CXX.dd
+[5/268] Scanning /src/src/hid/otp_linux.cpp for CXX dependencies
+[6/268] Scanning /src/src/usb/composite.cpp for CXX dependencies
+[7/268] Generating CXX dyndep file CMakeFiles/ske-otpd.dir/CXX.dd
+[8/268] Scanning /src/src/usb/linux.cpp for CXX dependencies
+[9/268] Building CXX object CMakeFiles/ske-ifd.dir/src/pcsc/reader.cpp.o
+[10/268] Building CXX object CMakeFiles/ske-otpd.dir/src/pcsc/reader.cpp.o
+[11/268] Scanning /src/src/pcsc/reader.cpp for CXX dependencies
+[12/268] Generating CXX dyndep file CMakeFiles/ske-usbd.dir/CXX.dd
+[13/268] Scanning /src/src/log/log.cpp for CXX dependencies
+[14/268] Building CXX object CMakeFiles/ske-ifd.dir/src/pcsc/ifd.cpp.o
+[15/268] Linking CXX shared library ifd-ske.bundle/Contents/Linux/ske-ifd.so
+[16/268] Building CXX object CMakeFiles/ske-otpd.dir/src/hid/otp_linux.cpp.o
+[17/268] Linking CXX executable ske-otpd
+[18/268] Generating CXX dyndep file CMakeFiles/swpasskey_log.dir/CXX.dd
+[19/268] Building CXX object CMakeFiles/ske-usbd.dir/src/pcsc/reader.cpp.o
+[20/268] Scanning /src/src/cbor/cbor.cpp for CXX dependencies
+[21/268] Scanning /src/src/cbor/ctap_validation.cpp for CXX dependencies
+[22/268] Generating CXX dyndep file CMakeFiles/swpasskey_cbor.dir/CXX.dd
+[23/268] Building CXX object CMakeFiles/swpasskey_log.dir/src/log/log.cpp.o
+[24/268] Linking CXX static library libswpasskey_log.a
+[25/268] Building CXX object CMakeFiles/ske-usbd.dir/src/usb/composite.cpp.o
+[26/268] Building CXX object CMakeFiles/swpasskey_cbor.dir/src/cbor/cbor.cpp.o
+[27/268] Scanning /src/src/crypto/openssl_provider.cpp for CXX dependencies
+[28/268] Scanning /src/src/crypto/software_key_backend.cpp for CXX dependencies
+[29/268] Building CXX object CMakeFiles/swpasskey_cbor.dir/src/cbor/ctap_validation.cpp.o
+[30/268] Linking CXX static library libswpasskey_cbor.a
+[31/268] Scanning /src/src/crypto/self_signed_cert.cpp for CXX dependencies
+[32/268] Scanning /src/src/crypto/probe.cpp for CXX dependencies
+[33/268] Generating CXX dyndep file CMakeFiles/swpasskey_crypto.dir/CXX.dd
+[34/268] Scanning /src/src/store/credential_store.cpp for CXX dependencies
+[35/268] Scanning /src/src/store/file_store.cpp for CXX dependencies
+[36/268] Building CXX object CMakeFiles/ske-usbd.dir/src/usb/linux.cpp.o
+[37/268] Linking CXX executable ske-usbd
+[38/268] Building CXX object CMakeFiles/swpasskey_crypto.dir/src/crypto/self_signed_cert.cpp.o
+[39/268] Building CXX object CMakeFiles/swpasskey_crypto.dir/src/crypto/openssl_provider.cpp.o
+[40/268] Building CXX object CMakeFiles/swpasskey_crypto.dir/src/crypto/software_key_backend.cpp.o
+[41/268] Scanning /src/src/store/keychain.cpp for CXX dependencies
+[42/268] Building CXX object CMakeFiles/swpasskey_crypto.dir/src/crypto/probe.cpp.o
+[43/268] Scanning /src/src/store/keychain_linux.cpp for CXX dependencies
+[44/268] Linking CXX static library libswpasskey_crypto.a
+[45/268] Generating CXX dyndep file CMakeFiles/swpasskey_store.dir/CXX.dd
+[46/268] Scanning /src/src/ui/keys_model.cpp for CXX dependencies
+[47/268] Scanning /src/src/ui/presence.cpp for CXX dependencies
+[48/268] Scanning /src/src/ui/menubar.cpp for CXX dependencies
+[49/268] Building CXX object CMakeFiles/swpasskey_store.dir/src/store/keychain_linux.cpp.o
+[50/268] Generating CXX dyndep file CMakeFiles/swpasskey_ui.dir/CXX.dd
+[51/268] Building CXX object CMakeFiles/swpasskey_store.dir/src/store/keychain.cpp.o
+[52/268] Building CXX object CMakeFiles/swpasskey_store.dir/src/store/file_store.cpp.o
+[53/268] Building CXX object CMakeFiles/swpasskey_store.dir/src/store/credential_store.cpp.o
+[54/268] Linking CXX static library libswpasskey_store.a
+[55/268] Scanning /src/src/ctap/hid_framer.cpp for CXX dependencies
+[56/268] Scanning /src/src/ctap/hid_device.cpp for CXX dependencies
+[57/268] Scanning /src/src/ctap/get_info.cpp for CXX dependencies
+[58/268] Building CXX object CMakeFiles/swpasskey_ui.dir/src/ui/presence.cpp.o
+[59/268] Building CXX object CMakeFiles/swpasskey_ui.dir/src/ui/keys_model.cpp.o
+[60/268] Scanning /src/src/ctap/auth_data.cpp for CXX dependencies
+[61/268] Scanning /src/src/ctap/authenticator.cpp for CXX dependencies
+[62/268] Building CXX object CMakeFiles/swpasskey_ui.dir/src/ui/menubar.cpp.o
+[63/268] Linking CXX static library libswpasskey_ui.a
+[64/268] Scanning /src/src/ctap/make_credential.cpp for CXX dependencies
+[65/268] Scanning /src/src/ctap/nonresident.cpp for CXX dependencies
+[66/268] Scanning /src/src/ctap/get_assertion.cpp for CXX dependencies
+[67/268] Scanning /src/src/ctap/client_pin.cpp for CXX dependencies
+[68/268] Scanning /src/src/ctap/hmac_secret.cpp for CXX dependencies
+[69/268] Scanning /src/src/ctap/management.cpp for CXX dependencies
+[70/268] Scanning /src/src/ctap/u2f.cpp for CXX dependencies
+[71/268] Generating CXX dyndep file CMakeFiles/swpasskey_ctap.dir/CXX.dd
+[72/268] Scanning /src/src/hid/uhid_transport.cpp for CXX dependencies
+[73/268] Scanning /src/src/hid/card_wire.cpp for CXX dependencies
+[74/268] Scanning /src/src/hid/socket_transport.cpp for CXX dependencies
+[75/268] Building CXX object CMakeFiles/swpasskey_ctap.dir/src/ctap/get_info.cpp.o
+[76/268] Building CXX object CMakeFiles/swpasskey_ctap.dir/src/ctap/hid_framer.cpp.o
+[77/268] Building CXX object CMakeFiles/swpasskey_ctap.dir/src/ctap/hid_device.cpp.o
+[78/268] Building CXX object CMakeFiles/swpasskey_ctap.dir/src/ctap/auth_data.cpp.o
+[79/268] Building CXX object CMakeFiles/swpasskey_ctap.dir/src/ctap/authenticator.cpp.o
+[80/268] Building CXX object CMakeFiles/swpasskey_ctap.dir/src/ctap/make_credential.cpp.o
+[81/268] Building CXX object CMakeFiles/swpasskey_ctap.dir/src/ctap/nonresident.cpp.o
+[82/268] Building CXX object CMakeFiles/swpasskey_ctap.dir/src/ctap/get_assertion.cpp.o
+[83/268] Building CXX object CMakeFiles/swpasskey_ctap.dir/src/ctap/client_pin.cpp.o
+[84/268] Generating CXX dyndep file CMakeFiles/swpasskey_hid.dir/CXX.dd
+[85/268] Building CXX object CMakeFiles/swpasskey_ctap.dir/src/ctap/hmac_secret.cpp.o
+[86/268] Building CXX object CMakeFiles/swpasskey_ctap.dir/src/ctap/management.cpp.o
+[87/268] Building CXX object CMakeFiles/swpasskey_hid.dir/src/hid/uhid_transport.cpp.o
+[88/268] Scanning /src/src/daemon/loop.cpp for CXX dependencies
+[89/268] Building CXX object CMakeFiles/swpasskey_ctap.dir/src/ctap/u2f.cpp.o
+[90/268] Scanning /src/src/daemon/paths.cpp for CXX dependencies
+[91/268] Generating CXX dyndep file CMakeFiles/swpasskey_daemon.dir/CXX.dd
+[92/268] Scanning /src/src/ctl/server.cpp for CXX dependencies
+[93/268] Building CXX object CMakeFiles/swpasskey_hid.dir/src/hid/socket_transport.cpp.o
+[94/268] Linking CXX static library libswpasskey_hid.a
+[95/268] Linking CXX static library libswpasskey_ctap.a
+[96/268] Scanning /src/src/ctl/json.cpp for CXX dependencies
+[97/268] Generating CXX dyndep file CMakeFiles/swpasskey_ctl.dir/CXX.dd
+[98/268] Building CXX object CMakeFiles/swpasskey_daemon.dir/src/hid/card_wire.cpp.o
+[99/268] Building CXX object CMakeFiles/swpasskey_ctl.dir/src/ctl/json.cpp.o
+[100/268] Scanning /src/src/daemon/main.cpp for CXX dependencies
+[101/268] Generating CXX dyndep file CMakeFiles/swpasskeyd.dir/CXX.dd
+[102/268] Building CXX object CMakeFiles/swpasskey_daemon.dir/src/daemon/paths.cpp.o
+[103/268] Scanning /src/src/ctl/main.cpp for CXX dependencies
+[104/268] Building CXX object CMakeFiles/swpasskey_daemon.dir/src/daemon/loop.cpp.o
+[105/268] Generating CXX dyndep file CMakeFiles/swpasskeyctl.dir/CXX.dd
+[106/268] Linking CXX static library libswpasskey_daemon.a
+[107/268] Building CXX object CMakeFiles/swpasskey_ctl.dir/src/ctl/server.cpp.o
+[108/268] Scanning /src/tests/compatibility_test.cpp for CXX dependencies
+[109/268] Linking CXX static library libswpasskey_ctl.a
+[110/268] Scanning /src/tests/smoke_test.cpp for CXX dependencies
+[111/268] Scanning /src/tests/nonresident_test.cpp for CXX dependencies
+[112/268] Scanning /src/tests/hid_framer_test.cpp for CXX dependencies
+[113/268] Scanning /src/tests/cbor_test.cpp for CXX dependencies
+[114/268] Scanning /src/tests/crypto_test.cpp for CXX dependencies
+[115/268] Scanning /src/tests/key_backend_software_test.cpp for CXX dependencies
+[116/268] Building CXX object CMakeFiles/swpasskeyd.dir/src/daemon/main.cpp.o
+[117/268] Building CXX object CMakeFiles/swpasskeyctl.dir/src/ctl/main.cpp.o
+[118/268] Scanning /src/tests/get_info_test.cpp for CXX dependencies
+[119/268] Scanning /src/tests/authenticator_config_test.cpp for CXX dependencies
+[120/268] Scanning /src/tests/get_info_golden_test.cpp for CXX dependencies
+[121/268] Scanning /src/tests/hid_device_test.cpp for CXX dependencies
+[122/268] Scanning /src/tests/keepalive_loop_test.cpp for CXX dependencies
+[123/268] Linking CXX executable swpasskeyctl
+[124/268] Linking CXX executable swpasskeyd
+[125/268] Scanning /src/tests/presence_test.cpp for CXX dependencies
+[126/268] Scanning /src/tests/paths_test.cpp for CXX dependencies
+[127/268] Scanning /src/tests/make_credential_test.cpp for CXX dependencies
+[128/268] Scanning /src/tests/get_assertion_test.cpp for CXX dependencies
+[129/268] Scanning /src/tests/packed_self_attest_golden_test.cpp for CXX dependencies
+[130/268] Scanning /src/tests/pin_test.cpp for CXX dependencies
+[131/268] Scanning /src/tests/u2f_test.cpp for CXX dependencies
+[132/268] Scanning /src/tests/hmac_secret_test.cpp for CXX dependencies
+[133/268] Scanning /src/tests/store_test.cpp for CXX dependencies
+[134/268] Scanning /src/tests/keys_model_test.cpp for CXX dependencies
+[135/268] Scanning /src/tests/ctl_test.cpp for CXX dependencies
+[136/268] Generating CXX dyndep file CMakeFiles/swpasskey_tests.dir/CXX.dd
+[137/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/benchmark/catch_chronometer.cpp.o
+[138/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/benchmark/detail/catch_analyse.cpp.o
+[139/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/benchmark/detail/catch_benchmark_function.cpp.o
+[140/268] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/smoke_test.cpp.o
+[141/268] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/hid_framer_test.cpp.o
+[142/268] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/compatibility_test.cpp.o
+[143/268] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/cbor_test.cpp.o
+[144/268] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/nonresident_test.cpp.o
+[145/268] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/crypto_test.cpp.o
+[146/268] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/key_backend_software_test.cpp.o
+[147/268] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/get_info_test.cpp.o
+[148/268] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/get_info_golden_test.cpp.o
+[149/268] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/authenticator_config_test.cpp.o
+[150/268] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/hid_device_test.cpp.o
+[151/268] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/presence_test.cpp.o
+[152/268] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/paths_test.cpp.o
+[153/268] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/keepalive_loop_test.cpp.o
+[154/268] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/packed_self_attest_golden_test.cpp.o
+[155/268] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/make_credential_test.cpp.o
+[156/268] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/get_assertion_test.cpp.o
+[157/268] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/u2f_test.cpp.o
+[158/268] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/store_test.cpp.o
+[159/268] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/pin_test.cpp.o
+[160/268] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/hmac_secret_test.cpp.o
+[161/268] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/ctl_test.cpp.o
+[162/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/generators/catch_generator_exception.cpp.o
+[163/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/benchmark/detail/catch_run_for_at_least.cpp.o
+[164/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/benchmark/detail/catch_stats.cpp.o
+[165/268] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/keys_model_test.cpp.o
+[166/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/generators/catch_generators.cpp.o
+[167/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/generators/catch_generators_random.cpp.o
+[168/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_automake.cpp.o
+[169/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_common_base.cpp.o
+[170/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_compact.cpp.o
+[171/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_event_listener.cpp.o
+[172/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_console.cpp.o
+[173/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_cumulative_base.cpp.o
+[174/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_helpers.cpp.o
+[175/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_registrars.cpp.o
+[176/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_json.cpp.o
+[177/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_multi.cpp.o
+[178/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_junit.cpp.o
+[179/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_streaming_base.cpp.o
+[180/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_sonarqube.cpp.o
+[181/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_tap.cpp.o
+[182/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_teamcity.cpp.o
+[183/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/interfaces/catch_interfaces_exception.cpp.o
+[184/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/interfaces/catch_interfaces_generatortracker.cpp.o
+[185/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/interfaces/catch_interfaces_config.cpp.o
+[186/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/interfaces/catch_interfaces_capture.cpp.o
+[187/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/interfaces/catch_interfaces_registry_hub.cpp.o
+[188/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/reporters/catch_reporter_xml.cpp.o
+[189/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/interfaces/catch_interfaces_testcase.cpp.o
+[190/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/interfaces/catch_interfaces_reporter_factory.cpp.o
+[191/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_assertion_result.cpp.o
+[192/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/interfaces/catch_interfaces_reporter.cpp.o
+[193/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_approx.cpp.o
+[194/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_config.cpp.o
+[195/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_get_random_seed.cpp.o
+[196/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_message.cpp.o
+[197/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_registry_hub.cpp.o
+[198/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_tag_alias_autoregistrar.cpp.o
+[199/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_test_case_info.cpp.o
+[200/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_timer.cpp.o
+[201/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_totals.cpp.o
+[202/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_session.cpp.o
+[203/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_test_spec.cpp.o
+[204/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_translate_exception.cpp.o
+[205/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_case_insensitive_comparisons.cpp.o
+[206/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_version.cpp.o
+[207/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/catch_tostring.cpp.o
+[208/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_assertion_handler.cpp.o
+[209/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_context.cpp.o
+[210/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_debug_console.cpp.o
+[211/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_console_colour.cpp.o
+[212/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_clara.cpp.o
+[213/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_debugger.cpp.o
+[214/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_commandline.cpp.o
+[215/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_errno_guard.cpp.o
+[216/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_enforce.cpp.o
+[217/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_enum_values_registry.cpp.o
+[218/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_decomposer.cpp.o
+[219/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_getenv.cpp.o
+[220/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_floating_point_helpers.cpp.o
+[221/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_exception_translator_registry.cpp.o
+[222/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_istream.cpp.o
+[223/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_jsonwriter.cpp.o
+[224/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_fatal_condition_handler.cpp.o
+[225/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_leak_detector.cpp.o
+[226/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_message_info.cpp.o
+[227/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_lazy_expr.cpp.o
+[228/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_parse_numbers.cpp.o
+[229/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_random_number_generator.cpp.o
+[230/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_polyfills.cpp.o
+[231/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_output_redirect.cpp.o
+[232/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_list.cpp.o
+[233/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_random_seed_generation.cpp.o
+[234/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_reusable_string_stream.cpp.o
+[235/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_reporter_registry.cpp.o
+[236/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_reporter_spec_parser.cpp.o
+[237/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_singletons.cpp.o
+[238/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_startup_exception_registry.cpp.o
+[239/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_source_line_info.cpp.o
+[240/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_run_context.cpp.o
+[241/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_section.cpp.o
+[242/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_stdstreams.cpp.o
+[243/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_test_case_info_hasher.cpp.o
+[244/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_stringref.cpp.o
+[245/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_string_manip.cpp.o
+[246/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_tag_alias_registry.cpp.o
+[247/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_test_failure_exception.cpp.o
+[248/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_test_registry.cpp.o
+[249/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_test_case_tracker.cpp.o
+[250/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_uncaught_exceptions.cpp.o
+[251/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_test_spec_parser.cpp.o
+[252/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_test_case_registry_impl.cpp.o
+[253/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_textflow.cpp.o
+[254/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_wildcard_pattern.cpp.o
+[255/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/internal/catch_xmlwriter.cpp.o
+[256/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/matchers/catch_matchers.cpp.o
+[257/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/matchers/catch_matchers_container_properties.cpp.o
+[258/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/matchers/catch_matchers_exception.cpp.o
+[259/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/matchers/catch_matchers_predicate.cpp.o
+[260/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/matchers/catch_matchers_floating_point.cpp.o
+[261/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/matchers/catch_matchers_quantifiers.cpp.o
+[262/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/matchers/internal/catch_matchers_impl.cpp.o
+[263/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/matchers/catch_matchers_templated.cpp.o
+[264/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2WithMain.dir/catch2/internal/catch_main.cpp.o
+[265/268] Building CXX object _deps/catch2-build/src/CMakeFiles/Catch2.dir/catch2/matchers/catch_matchers_string.cpp.o
+[266/268] Linking CXX static library _deps/catch2-build/src/libCatch2d.a
+[267/268] Linking CXX static library _deps/catch2-build/src/libCatch2Maind.a
+[268/268] Linking CXX executable swpasskey_tests

@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "version": "0.62.0",
+  "main_python_reports": 59,
+  "main_python_checks": 5889,
+  "cpp_cases_each_platform": 138,
+  "cpp_assertions_each_platform": 13706,
+  "main_check_count": 6027,
+  "linux_ctap_sdk_checks": 82,
+  "usb_guest_exit_markers": 12,
+  "core_sha256": "e485006eb471c0f34055b190f40bc5d8b66b57f11924d5b6548b2bfa3da427df",
+  "mac_daemon_sha256": "16263eb6ef5ec2ad07baf9cf4daff988a49376e230d64fd992d4d3737a63349a",
+  "linux_daemon_sha256": "317f02d89bb42d7ebabd65425d4bcae71d6392ef756c11b5ac71849b1ffafc0a",
+  "fido_cancellation_socket_and_guest": true,
+  "oath_auth_binding_socket_and_ifd": true,
+  "piv_generate_p1_socket_and_ifd": true,
+  "ctap_largeblob_seq_socket": true,
+  "physical_reference_differential": false,
+  "apple_entitled_registration": false,
+  "guest_raw_console_sha256": "d26b12548143e3cae5100cdcc6dd7beffe52419e6e01387c38f6e8ecbc2f3ca8"
+}

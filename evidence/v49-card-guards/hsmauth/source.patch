@@ -1,0 +1,12 @@
+--- a/emucard/core.py
++++ b/emucard/core.py
+@@ -1509,6 +1509,9 @@
+             return bytes([d["mgmt_retries"]])
+         if ins == 6:
+             require((a.p1, a.p2) == (0xDE, 0xAD), 0x6A86)
++            require(not a.data, 0x6700)
++            # A short trailing 00 is ambiguous with a no-data formatter tail.
++            require(a.le is None or a.short_zero_tail, 0x6700)
+             self.state.data["hsmauth"] = defaults(piv_attestation=False)["hsmauth"]
+             return
+         if ins == 5:

@@ -1,0 +1,21 @@
+{"ts":"2026-10-09T14:55:40.756Z","lvl":"info","event":"ctap","cmd":"makeCredential","cmd_byte":"0x01","status":"44","ms":"0"}
+{"ts":"2026-10-09T14:55:40.758Z","lvl":"info","event":"make_credential","rp":"example.com","key_backend":"software"}
+{"ts":"2026-10-09T14:55:40.758Z","lvl":"info","event":"ctap","cmd":"makeCredential","cmd_byte":"0x01","status":"0","ms":"1"}
+{"ts":"2026-10-09T14:55:40.758Z","lvl":"info","event":"ctap","cmd":"makeCredential","cmd_byte":"0x01","status":"44","ms":"0"}
+{"ts":"2026-10-09T14:55:40.759Z","lvl":"info","event":"make_credential","rp":"example.com","key_backend":"software"}
+{"ts":"2026-10-09T14:55:40.759Z","lvl":"info","event":"ctap","cmd":"makeCredential","cmd_byte":"0x01","status":"0","ms":"0"}
+{"ts":"2026-10-09T14:55:40.759Z","lvl":"info","event":"make_credential","rp":"example.com","key_backend":"software"}
+{"ts":"2026-10-09T14:55:40.759Z","lvl":"info","event":"ctap","cmd":"makeCredential","cmd_byte":"0x01","status":"0","ms":"0"}
+{"ts":"2026-10-09T14:55:40.759Z","lvl":"info","event":"ctap","cmd":"makeCredential","cmd_byte":"0x01","status":"2","ms":"0"}
+{"ts":"2026-10-09T14:55:40.759Z","lvl":"info","event":"ctap","cmd":"makeCredential","cmd_byte":"0x01","status":"2","ms":"0"}
+{"ts":"2026-10-09T14:55:40.759Z","lvl":"info","event":"ctap","cmd":"makeCredential","cmd_byte":"0x01","status":"2","ms":"0"}
+{"ts":"2026-10-09T14:55:40.759Z","lvl":"info","event":"ctap","cmd":"makeCredential","cmd_byte":"0x01","status":"38","ms":"0"}
+{"ts":"2026-10-09T14:55:40.759Z","lvl":"info","event":"ctap","cmd":"makeCredential","cmd_byte":"0x01","status":"2","ms":"0"}
+{"ts":"2026-10-09T14:55:40.759Z","lvl":"info","event":"ctap","cmd":"makeCredential","cmd_byte":"0x01","status":"2","ms":"0"}
+{"ts":"2026-10-09T14:55:40.759Z","lvl":"info","event":"ctap","cmd":"makeCredential","cmd_byte":"0x01","status":"21","ms":"0"}
+{"ts":"2026-10-09T14:55:40.759Z","lvl":"info","event":"ctap","cmd":"makeCredential","cmd_byte":"0x01","status":"51","ms":"0"}
+Filters: "makeCredential option policy"
+Randomness seeded to: 3291189651
+===============================================================================
+All tests passed (14 assertions in 1 test case)
+

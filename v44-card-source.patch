@@ -1,0 +1,121 @@
+--- a/emucard/core.py
++++ b/emucard/core.py
+@@ -285,6 +285,9 @@
+     p2: int
+     data: bytes
+     le: int | None
++    # A five-byte command ending in 00 is indistinguishable on the wire from
++    # explicit short Le=256; retain its encoding for app-level compatibility.
++    short_zero_tail: bool = False
+ 
+     @classmethod
+     def decode(cls, value):
+@@ -313,7 +316,7 @@
+                 le = int.from_bytes(value[start + n :], "big") or (
+                     256 if width == 1 else 65536
+                 )
+-        return cls(cla, ins, p1, p2, data, le)
++        return cls(cla, ins, p1, p2, data, le, len(value) == 5 and value[4] == 0)
+ 
+ 
+ class Card:
+@@ -500,6 +503,7 @@
+                     apdu.p2,
+                     self.chained + apdu.data,
+                     apdu.le,
++                    apdu.short_zero_tail,
+                 )
+                 self.chained = b""
+                 self.chain_header = None
+@@ -1067,6 +1071,10 @@
+         if ins == 0x20:
+             require(a.p1 in (0, 0xFF), 0x6A86)
+             require(a.p2 in (0x81, 0x82, 0x83), 0x6A86)
++            # ShortApduFormatter emits a fifth 00 byte for no-data/no-Le.
++            # Its wire form is indistinguishable from short Le=256. Accept
++            # only that ambiguous form, not explicit extended Le=256.
++            require(a.le is None or (not a.data and a.short_zero_tail), 0x6700)
+             name = "admin" if a.p2 == 0x83 else "pin"
+             ref = ("openpgp", a.p2)
+             if a.p1 == 0xFF:
+@@ -1083,6 +1091,7 @@
+         if ins == 0x24:
+             require(a.p1 == 0, 0x6A86)
+             require(a.p2 in (0x81, 0x83), 0x6A86)
++            require(a.le is None, 0x6700)
+             name = "admin" if a.p2 == 0x83 else "pin"
+             old = pin_bytes(d, name)
+             self.verify("openpgp", name, a.data[: len(old)])
+@@ -1208,6 +1217,8 @@
+                 key = load_key(d["keys"][str(slot)]["key"])
+             return Tlv(0x7F49, public_data(key))
+         if ins in (0x2A, 0x88):
++            if ins == 0x88:
++                require(a.p1 == a.p2 == 0, 0x6A86)
+             slot = (
+                 3
+                 if ins == 0x88
+@@ -2021,14 +2032,23 @@
+             if c[47] & 8:
+                 require(self.touch("OTP challenge slot " + str(slot)), 0x6985)
+             if a.p1 in (0x30, 0x38):
+-                require(c[47] & 2 and len(a.data) == 64, 0x6A80)
+-                # LT64 strips the last-byte pad but retains one zero byte for
+-                # an otherwise empty challenge.
+-                challenge = (
+-                    (a.data.rstrip(a.data[-1:]) or b"\0")
+-                    if c[47] & 4
+-                    else a.data
+-                )
++                require(
++                    c[47] & 2
++                    and len(a.data) <= 64
++                    and (c[47] & 4 or len(a.data) == 64),
++                    0x6A80,
++                )
++                # A full-size LT64 frame uses its final byte as the pad marker.
++                # Short APDUs carry their explicit length, so trailing data
++                # bytes are preserved. An empty challenge is represented by 00.
++                if c[47] & 4:
++                    challenge = (
++                        a.data.rstrip(a.data[-1:])
++                        if len(a.data) == 64
++                        else a.data
++                    ) or b"\0"
++                else:
++                    challenge = a.data
+                 return hmac.digest(c[22:38] + c[16:20], challenge, "sha1")
+             require(not c[47] & 2 and len(a.data) == 6, 0x6A80)
+             return self.otp_ticket(
+--- a/emucard/otp_hid.py
++++ b/emucard/otp_hid.py
+@@ -35,6 +35,7 @@
+             )
+         if report[-1] in (0xFF, 0x8F):
+             self.responses.clear()
++            self.frame = bytearray(70)
+             self.sequence = -1
+             return
+         if report[-1] & 0xE0 != 0x80:
+@@ -44,6 +45,9 @@
+             self.frame = bytearray(70)
+             self.sequence = -1
+             self.responses.clear()
++        elif self.sequence < 0:
++            # An aborted or completed frame must start again at sequence 0.
++            return
+         if not self.sequence < sequence <= 9:
+             raise ValueError("invalid OTP sequence")
+         self.frame[sequence * 7 : sequence * 7 + 7] = report[:7]
+@@ -52,8 +56,10 @@
+             return
+         payload = bytes(self.frame[:64])
+         slot = self.frame[64]
++        received_crc = int.from_bytes(self.frame[65:67], "little")
++        self.frame = bytearray(70)
+         self.sequence = -1
+-        valid_crc = crc16(payload) == int.from_bytes(self.frame[65:67], "little")
++        valid_crc = crc16(payload) == received_crc
+         if os.environ.get("SKE_TRACE_OTP_FRAMES"):
+             print(
+                 "otp_frame_complete", "command", slot, "crc_ok", valid_crc, flush=True

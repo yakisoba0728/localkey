@@ -1,0 +1,143 @@
+[
+  {
+    "product": "YubiKey FIDO+CCID",
+    "vendor_id": 4176,
+    "versions": [
+      "U2F_V2",
+      "FIDO_2_0",
+      "FIDO_2_1_PRE",
+      "FIDO_2_1"
+    ],
+    "aaguid": "ff4dac45-ede8-4ec2-aced-cf66103f4335",
+    "algorithms": [
+      {
+        "alg": -7,
+        "type": "public-key"
+      },
+      {
+        "alg": -8,
+        "type": "public-key"
+      },
+      {
+        "alg": -35,
+        "type": "public-key"
+      }
+    ],
+    "extensions": [
+      "credProtect",
+      "hmac-secret",
+      "largeBlobKey",
+      "credBlob",
+      "minPinLength"
+    ],
+    "options": {
+      "rk": true,
+      "up": true,
+      "plat": false,
+      "alwaysUv": false,
+      "credMgmt": true,
+      "authnrCfg": true,
+      "clientPin": true,
+      "largeBlobs": true,
+      "pinUvAuthToken": true,
+      "setMinPINLength": true,
+      "makeCredUvNotRqd": true,
+      "credentialMgmtPreview": true
+    },
+    "subject": "physical reference: YubiKey 5C Nano 5.7.4"
+  },
+  {
+    "product": "swpasskey Software Authenticator",
+    "vendor_id": 4617,
+    "versions": [
+      "FIDO_2_1",
+      "FIDO_2_0",
+      "U2F_V2"
+    ],
+    "aaguid": "6fb1dfdd-51c0-43a0-a6f2-f74812cbf8fb",
+    "algorithms": [
+      {
+        "alg": -7,
+        "type": "public-key"
+      }
+    ],
+    "extensions": [
+      "hmac-secret"
+    ],
+    "options": {
+      "rk": true,
+      "up": true,
+      "plat": false,
+      "alwaysUv": false,
+      "credMgmt": false,
+      "clientPin": true,
+      "pinUvAuthToken": true,
+      "makeCredUvNotRqd": false
+    },
+    "subject": "original signed swpasskey v0.2.0; running macOS HID"
+  },
+  {
+    "subject": "modified source 0.42.0; private CTAPHID socket",
+    "product": "Software emulator development build",
+    "vendor_id": 4617,
+    "versions": [
+      "U2F_V2",
+      "FIDO_2_0",
+      "FIDO_2_1_PRE",
+      "FIDO_2_1"
+    ],
+    "extensions": [
+      "credProtect",
+      "hmac-secret",
+      "largeBlobKey",
+      "credBlob",
+      "minPinLength"
+    ],
+    "aaguid": "6fb1dfdd51c043a0a6f2f74812cbf8fb",
+    "options": {
+      "rk": true,
+      "up": true,
+      "plat": false,
+      "alwaysUv": false,
+      "credMgmt": true,
+      "authnrCfg": true,
+      "clientPin": false,
+      "largeBlobs": true,
+      "pinUvAuthToken": true,
+      "setMinPINLength": true,
+      "makeCredUvNotRqd": true,
+      "credentialMgmtPreview": true
+    },
+    "max_msg_size": 1536,
+    "pin_uv_protocols": [
+      2,
+      1
+    ],
+    "max_creds_in_list": 8,
+    "max_cred_id_length": 128,
+    "transports": [
+      "usb"
+    ],
+    "algorithms": [
+      {
+        "alg": -7,
+        "type": "public-key"
+      },
+      {
+        "alg": -8,
+        "type": "public-key"
+      },
+      {
+        "alg": -35,
+        "type": "public-key"
+      }
+    ],
+    "max_large_blob": 4096,
+    "force_pin_change": false,
+    "min_pin_length": 4,
+    "firmware_version": 3,
+    "max_cred_blob_length": 32,
+    "max_rpids_for_min_pin": 1,
+    "remaining_disc_creds": 100
+  }
+]

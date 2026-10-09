@@ -1,0 +1,43 @@
+{
+  "published_version": "0.47.0",
+  "published_core_sha256": "4f8fa1def2c7709cc4dfb0250222dcc210c86141e802c9981c2792d71b8fd1d2",
+  "candidate_core_sha256": "92d88bee2ed9e520af1dbaedf002469f95ba91f7ba68d79c1223e61d670cac12",
+  "source_patch_sha256": "1bbb19132748c9c1bfcae29ebd55612f4a9f57c5cbab751bb269c5fb97e23112",
+  "changed_emulator_python_source": [
+    "emucard/core.py"
+  ],
+  "reports": {
+    "baseline": {
+      "passed": false,
+      "matched": 9,
+      "count": 11
+    },
+    "candidate": {
+      "passed": true,
+      "matched": 11,
+      "count": 11
+    },
+    "oath-profile": {
+      "passed": true,
+      "matched": 107,
+      "count": 107
+    },
+    "ifd-oath-profile": {
+      "passed": true,
+      "matched": 107,
+      "count": 107
+    },
+    "smartcard": {
+      "passed": true,
+      "matched": 97,
+      "count": 97
+    },
+    "buttons": {
+      "passed": true,
+      "matched": 44,
+      "count": 44
+    }
+  },
+  "physical_device_access": false,
+  "firmware_5_7_4_differential_verified": false
+}

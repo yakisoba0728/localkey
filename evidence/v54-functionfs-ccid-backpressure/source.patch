@@ -1,0 +1,101 @@
+--- published-v0.53/src/usb/backend.hpp
++++ candidate-v0.54/src/usb/backend.hpp
+@@ -246,7 +246,7 @@
+     const bool pending = ccid_active_ || !ccid_jobs_.empty();
+     if ((abort_sequence_ && !matching_abort) || (pending && !matching_abort) || ccid_jobs_.size() >= 2) {
+       const auto type = response_type(packet[0]);
+-      model->queue_input(swpk::usb::kCcidIn, Bytes{type,0,0,0,0,packet[5],packet[6],
++      ccid_ready_.push_back(Bytes{type,0,0,0,0,packet[5],packet[6],
+           static_cast<std::uint8_t>(0x40 | (packet[5] ? 2 : icc_status_)),
+           static_cast<std::uint8_t>(packet[5] ? 5 : abort_sequence_ ? 0xff : 0xe0),
+           static_cast<std::uint8_t>(type == 0x81 ? clock_status_ : type == 0x82 ? 1 : 0)});
+@@ -348,12 +348,12 @@
+     {
+       std::lock_guard guard(ccid_mutex_);
+       if (ccid_failed_) throw std::runtime_error("CCID backend disconnected");
+-      while (!ccid_ready_.empty()) {
++      while (!ccid_ready_.empty() && !model->input_queue_full(swpk::usb::kCcidIn)) {
+         model->queue_input(swpk::usb::kCcidIn, std::move(ccid_ready_.front())); ccid_ready_.pop_front();
+       }
+       const auto now = std::chrono::steady_clock::now();
+       if (ccid_active_ && active_kind_ == 0x6f && active_generation_ == ccid_generation_ &&
+-          !abort_sequence_ && now >= next_wtx_) {
++          !abort_sequence_ && now >= next_wtx_ && !model->input_queue_full(swpk::usb::kCcidIn)) {
+         model->queue_input(swpk::usb::kCcidIn, Bytes{0x80,0,0,0,0,0,active_sequence_,
+             static_cast<std::uint8_t>(0x80 | icc_status_),1,0});
+         next_wtx_ = now + std::chrono::milliseconds(500);
+--- published-v0.53/src/usb/linux.cpp
++++ candidate-v0.54/src/usb/linux.cpp
+@@ -17,6 +17,7 @@
+ #include <exception>
+ #include <filesystem>
+ #include <fstream>
++#include <optional>
+ #include <set>
+ #include <sstream>
+ 
+@@ -84,13 +85,12 @@
+     if (packets_.size() >= 256) throw std::runtime_error("USB endpoint queue overflow");
+     packets_.push_back(std::move(data)); wake_.notify_one();
+   }
+-  std::vector<Bytes> receive() {
++  std::optional<Bytes> receive_one() {
+     std::lock_guard lock(mutex_);
+     if (failure_) std::rethrow_exception(failure_);
+-    std::vector<Bytes> result;
+-    while (!packets_.empty()) {
+-      result.push_back(std::move(packets_.front())); packets_.pop_front();
+-    }
++    if (packets_.empty()) return std::nullopt;
++    Bytes result = std::move(packets_.front()); packets_.pop_front();
++    wake_.notify_one();
+     return result;
+   }
+  private:
+@@ -228,6 +228,11 @@
+               bulk && !data.empty() && data.size() % packet_size == 0 && !stop_.load())
+             count = transfer(nullptr,0,true) < 0 ? -1 : count;
+         } else {
++          {
++            std::unique_lock lock(mutex_);
++            wake_.wait(lock, [this] { return stop_.load() || packets_.size() < 256; });
++            if (stop_.load()) break;
++          }
+           data.resize(packet_size);
+           count = transfer(data.data(),data.size(),false);
+           if (count >= 0) data.resize(static_cast<std::size_t>(count));
+@@ -240,7 +245,6 @@
+         std::lock_guard lock(mutex_);
+         active_ = false;
+         if (!(address & 0x80) && !data.empty()) {
+-          if (packets_.size() >= 256) throw std::runtime_error("USB endpoint queue overflow");
+           packets_.push_back(std::move(data));
+         }
+       }
+@@ -456,8 +460,10 @@
+   }
+   void forward() {
+     for (auto& [address, endpoint] : endpoints_)
+-      if (!(address & 0x80)) for (const auto& packet : endpoint->receive())
+-        if (!backend_.model->output(address,packet)) throw std::runtime_error("Invalid USB output report");
++      if (!(address & 0x80) &&
++          !(address == swpk::usb::kCcidOut && backend_.model->input_queue_full(swpk::usb::kCcidIn)))
++        if (auto packet = endpoint->receive_one())
++          if (!backend_.model->output(address,*packet)) throw std::runtime_error("Invalid USB output report");
+     backend_.forward();
+     for (auto& [address, endpoint] : endpoints_) {
+       if (!(address & 0x80) || endpoint->busy()) continue;
+@@ -537,9 +543,10 @@
+   void control(const usb_ctrlrequest& raw);
+   void forward() {
+     for (auto& [address, endpoint] : endpoints_) {
+-      if (!(address & 0x80))
+-        for (const auto& packet : endpoint->receive())
+-          if (!backend_.model->output(address, packet)) throw std::runtime_error("Invalid USB output report");
++      if (!(address & 0x80) &&
++          !(address == swpk::usb::kCcidOut && backend_.model->input_queue_full(swpk::usb::kCcidIn)))
++        if (auto packet = endpoint->receive_one())
++          if (!backend_.model->output(address, *packet)) throw std::runtime_error("Invalid USB output report");
+     }
+     backend_.forward();
+     for (auto& [address, endpoint] : endpoints_) {

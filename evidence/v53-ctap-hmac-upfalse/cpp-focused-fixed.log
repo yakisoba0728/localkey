@@ -1,0 +1,11 @@
+{"ts":"2026-10-09T15:55:40.115Z","lvl":"info","event":"make_credential","rp":"example.com","key_backend":"software"}
+{"ts":"2026-10-09T15:55:40.116Z","lvl":"info","event":"ctap","cmd":"makeCredential","cmd_byte":"0x01","status":"0","ms":"1"}
+{"ts":"2026-10-09T15:55:40.116Z","lvl":"info","event":"ctap","cmd":"getAssertion","cmd_byte":"0x02","status":"43","ms":"0"}
+{"ts":"2026-10-09T15:55:40.116Z","lvl":"info","event":"ctap","cmd":"getAssertion","cmd_byte":"0x02","status":"46","ms":"0"}
+{"ts":"2026-10-09T15:55:40.116Z","lvl":"info","event":"get_assertion","rp":"example.com","up":"0","creds":"1"}
+{"ts":"2026-10-09T15:55:40.116Z","lvl":"info","event":"ctap","cmd":"getAssertion","cmd_byte":"0x02","status":"0","ms":"0"}
+Filters: "hmac-secret rejects up=false without a prompt or signature"
+Randomness seeded to: 2611282345
+===============================================================================
+All tests passed (7 assertions in 1 test case)
+

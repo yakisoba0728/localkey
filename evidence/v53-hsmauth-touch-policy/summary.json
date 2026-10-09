@@ -1,0 +1,35 @@
+{
+  "base": "outputs/security-key-emulator (published v0.52.0)",
+  "changed_emulator_sources": [
+    "emucard/core.py"
+  ],
+  "base_core_sha256": "98c420ab0974feb08eb78735665045b4a39ceb5946b2dbf49d2c62b8f92cdc8e",
+  "candidate_core_sha256": "f9b00847620a1e77c0d9b57eedc1aad9ba95b8e787ac4e32a07b75425c703cc3",
+  "patch_sha256": "50180e655f649ec053ae0f6100c920ed0ec9ac4926e2cdd132487ac652f32c21",
+  "focused_baseline": {
+    "matched": 4,
+    "total": 10,
+    "result": "baseline-result.json"
+  },
+  "focused_candidate": {
+    "matched": 10,
+    "total": 10,
+    "result": "candidate-result.json"
+  },
+  "regressions": {
+    "smartcard": {
+      "passed": 97,
+      "total": 97,
+      "result": "smartcard-result.json"
+    },
+    "oath-profile": {
+      "passed": 107,
+      "total": 107,
+      "result": "oath-profile-result.json"
+    }
+  },
+  "regression_total": 204,
+  "physical_key_access": false,
+  "host_pcsc_access": false,
+  "firmware_5_7_4_differential_verified": false
+}

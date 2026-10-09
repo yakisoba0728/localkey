@@ -1,0 +1,8 @@
+{
+  "source_sha256": "49b470889aa2c421ccd81272f2f4d21978d977d184c4d7f5df4775535cf9af1e",
+  "source_patch_sha256": "755053fe71d4d9d7d9714dded8d0515d13ac02375b350831c857d883518ac1a4",
+  "rebuilt_binary_sha256": "2bf02ac6da2d027f64478e0977220d367a029db3c239e8ab5ed4184b5b5ba102",
+  "validated_staging_binary_sha256": "2bf02ac6da2d027f64478e0977220d367a029db3c239e8ab5ed4184b5b5ba102",
+  "binary_byte_identical_after_comment_fix": true,
+  "patch_applies_to_published_v43_source": true
+}

@@ -1,0 +1,22 @@
+{
+  "source" : "physical USB public registry and cached configuration",
+  "device_fields" : {
+    "bcdUSB" : 512,
+    "bMaxPacketSize0" : 64,
+    "bDeviceSubClass" : 0,
+    "bNumConfigurations" : 1,
+    "idProduct" : 1030,
+    "idVendor" : 4176,
+    "bcdDevice" : 1396,
+    "bDeviceClass" : 0,
+    "bDeviceProtocol" : 0
+  },
+  "captured_utc" : "2026-10-08T09:43:16Z",
+  "configuration_descriptor_hex" : "09027d00020100800f090400000203000000092110010001222200070504034000020705840340000209040100030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+  "device_opened" : false,
+  "credentials_accessed_or_changed" : false,
+  "device_reset_or_configured" : false,
+  "serial_strings_read" : false,
+  "hid_report_descriptor_hex" : "06d0f10901a1010920150026ff007508954081020921150026ff00750895409102c0",
+  "configuration_available" : true
+}

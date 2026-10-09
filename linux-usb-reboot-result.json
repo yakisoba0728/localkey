@@ -1,0 +1,392 @@
+{
+  "passed": true,
+  "tests": [
+    {
+      "name": "initial native USB composite preserves requested endpoint addresses",
+      "passed": true
+    },
+    {
+      "name": "settings write without reboot preserves live USB device",
+      "passed": true
+    },
+    {
+      "name": "pending USB configuration is readable through stock native SDK",
+      "passed": true
+    },
+    {
+      "name": "native FIDO rejects invalid configuration unlock",
+      "passed": true
+    },
+    {
+      "name": "native FIDO rejects invalid configuration unlock",
+      "passed": true
+    },
+    {
+      "name": "rejected reboot requests preserve live USB device",
+      "passed": true
+    },
+    {
+      "name": "native USB profile 1 preserves every requested endpoint address",
+      "passed": true
+    },
+    {
+      "name": "native USB profile 1 has new address and expected interfaces",
+      "passed": true
+    },
+    {
+      "name": "USB profile 1 reenumerates within the same live processes",
+      "passed": true
+    },
+    {
+      "name": "kernel FIDO hidraw matches active USB profile 1",
+      "passed": true
+    },
+    {
+      "name": "native USB profile 2 preserves every requested endpoint address",
+      "passed": true
+    },
+    {
+      "name": "native USB profile 2 has new address and expected interfaces",
+      "passed": true
+    },
+    {
+      "name": "USB profile 2 reenumerates within the same live processes",
+      "passed": true
+    },
+    {
+      "name": "kernel FIDO hidraw matches active USB profile 2",
+      "passed": true
+    },
+    {
+      "name": "native USB profile 3 preserves every requested endpoint address",
+      "passed": true
+    },
+    {
+      "name": "native USB profile 3 has new address and expected interfaces",
+      "passed": true
+    },
+    {
+      "name": "USB profile 3 reenumerates within the same live processes",
+      "passed": true
+    },
+    {
+      "name": "kernel FIDO hidraw matches active USB profile 3",
+      "passed": true
+    },
+    {
+      "name": "native USB profile 4 preserves every requested endpoint address",
+      "passed": true
+    },
+    {
+      "name": "native USB profile 4 has new address and expected interfaces",
+      "passed": true
+    },
+    {
+      "name": "USB profile 4 reenumerates within the same live processes",
+      "passed": true
+    },
+    {
+      "name": "kernel FIDO hidraw matches active USB profile 4",
+      "passed": true
+    },
+    {
+      "name": "native USB profile 5 preserves every requested endpoint address",
+      "passed": true
+    },
+    {
+      "name": "native USB profile 5 has new address and expected interfaces",
+      "passed": true
+    },
+    {
+      "name": "USB profile 5 reenumerates within the same live processes",
+      "passed": true
+    },
+    {
+      "name": "kernel FIDO hidraw matches active USB profile 5",
+      "passed": true
+    },
+    {
+      "name": "native USB profile 6 preserves every requested endpoint address",
+      "passed": true
+    },
+    {
+      "name": "actual 125-byte FIDO+CCID configuration equals saved physical reference",
+      "passed": true
+    },
+    {
+      "name": "actual kernel FIDO report descriptor equals saved physical reference",
+      "passed": true
+    },
+    {
+      "name": "native USB profile 6 has new address and expected interfaces",
+      "passed": true
+    },
+    {
+      "name": "USB profile 6 reenumerates within the same live processes",
+      "passed": true
+    },
+    {
+      "name": "kernel FIDO hidraw matches active USB profile 6",
+      "passed": true
+    },
+    {
+      "name": "native USB profile 7 preserves every requested endpoint address",
+      "passed": true
+    },
+    {
+      "name": "native USB profile 7 has new address and expected interfaces",
+      "passed": true
+    },
+    {
+      "name": "USB profile 7 reenumerates within the same live processes",
+      "passed": true
+    },
+    {
+      "name": "kernel FIDO hidraw matches active USB profile 7",
+      "passed": true
+    },
+    {
+      "name": "native USB profile 7 preserves every requested endpoint address",
+      "passed": true
+    },
+    {
+      "name": "native USB profile 7 has new address and expected interfaces",
+      "passed": true
+    },
+    {
+      "name": "USB profile 7 reenumerates within the same live processes",
+      "passed": true
+    },
+    {
+      "name": "kernel FIDO hidraw matches active USB profile 7",
+      "passed": true
+    },
+    {
+      "name": "native reboots preserve configured FIDO PIN",
+      "passed": true
+    },
+    {
+      "name": "native reboot replaces FIDO key agreement",
+      "passed": true
+    },
+    {
+      "name": "native reboot rejects pre-reboot FIDO token",
+      "passed": true
+    },
+    {
+      "name": "same FIDO credential independently verifies after all USB reboots",
+      "passed": true
+    },
+    {
+      "name": "native reboots preserve own OTP serial visibility",
+      "passed": true
+    },
+    {
+      "name": "native reboots preserve programmed OTP HMAC key",
+      "passed": true
+    },
+    {
+      "name": "stock libccid hotplug returns same own CCID identity",
+      "passed": true
+    },
+    {
+      "name": "eight acknowledged automatic USB reenumerations include unchanged profile",
+      "passed": true
+    },
+    {
+      "name": "native reboot fixture teardown removes every own HID device",
+      "passed": true
+    }
+  ],
+  "enumerations": [
+    {
+      "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+      "serial": "2992573542",
+      "vid": 4176,
+      "pid": 1031,
+      "address": 8,
+      "host_visible_configuration_descriptor_hex": "09029600030100800f090400000103010100092110010001224a000705810308000a090401000203000000092110010001222200070504034000020705840340000209040200030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+      "classes": [
+        3,
+        3,
+        11
+      ],
+      "host_visible_endpoint_addresses": [
+        129,
+        4,
+        132,
+        2,
+        130,
+        131
+      ]
+    },
+    {
+      "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+      "serial": "2992573542",
+      "vid": 4176,
+      "pid": 1025,
+      "address": 9,
+      "host_visible_configuration_descriptor_hex": "09022200010100800f090400000103010100092110010001224a000705810308000a",
+      "classes": [
+        3
+      ],
+      "host_visible_endpoint_addresses": [
+        129
+      ]
+    },
+    {
+      "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+      "serial": "2992573542",
+      "vid": 4176,
+      "pid": 1026,
+      "address": 10,
+      "host_visible_configuration_descriptor_hex": "09022900010100800f0904000002030000000921100100012222000705040340000207058403400002",
+      "classes": [
+        3
+      ],
+      "host_visible_endpoint_addresses": [
+        4,
+        132
+      ]
+    },
+    {
+      "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+      "serial": "2992573542",
+      "vid": 4176,
+      "pid": 1027,
+      "address": 11,
+      "host_visible_configuration_descriptor_hex": "09024200020100800f090400000103010100092110010001224a000705810308000a0904010002030000000921100100012222000705040340000207058403400002",
+      "classes": [
+        3,
+        3
+      ],
+      "host_visible_endpoint_addresses": [
+        129,
+        4,
+        132
+      ]
+    },
+    {
+      "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+      "serial": "2992573542",
+      "vid": 4176,
+      "pid": 1028,
+      "address": 12,
+      "host_visible_configuration_descriptor_hex": "09025d00010100800f09040000030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+      "classes": [
+        11
+      ],
+      "host_visible_endpoint_addresses": [
+        2,
+        130,
+        131
+      ]
+    },
+    {
+      "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+      "serial": "2992573542",
+      "vid": 4176,
+      "pid": 1029,
+      "address": 13,
+      "host_visible_configuration_descriptor_hex": "09027600020100800f090400000103010100092110010001224a000705810308000a09040100030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+      "classes": [
+        3,
+        11
+      ],
+      "host_visible_endpoint_addresses": [
+        129,
+        2,
+        130,
+        131
+      ]
+    },
+    {
+      "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+      "serial": "2992573542",
+      "vid": 4176,
+      "pid": 1030,
+      "address": 14,
+      "host_visible_configuration_descriptor_hex": "09027d00020100800f090400000203000000092110010001222200070504034000020705840340000209040100030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+      "classes": [
+        3,
+        11
+      ],
+      "host_visible_endpoint_addresses": [
+        4,
+        132,
+        2,
+        130,
+        131
+      ],
+      "host_visible_fido_report_descriptor_hex": "06d0f10901a1010920150026ff007508954081020921150026ff00750895409102c0"
+    },
+    {
+      "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+      "serial": "2992573542",
+      "vid": 4176,
+      "pid": 1031,
+      "address": 15,
+      "host_visible_configuration_descriptor_hex": "09029600030100800f090400000103010100092110010001224a000705810308000a090401000203000000092110010001222200070504034000020705840340000209040200030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+      "classes": [
+        3,
+        3,
+        11
+      ],
+      "host_visible_endpoint_addresses": [
+        129,
+        4,
+        132,
+        2,
+        130,
+        131
+      ]
+    },
+    {
+      "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+      "serial": "2992573542",
+      "vid": 4176,
+      "pid": 1031,
+      "address": 16,
+      "host_visible_configuration_descriptor_hex": "09029600030100800f090400000103010100092110010001224a000705810308000a090401000203000000092110010001222200070504034000020705840340000209040200030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+      "classes": [
+        3,
+        3,
+        11
+      ],
+      "host_visible_endpoint_addresses": [
+        129,
+        4,
+        132,
+        2,
+        130,
+        131
+      ]
+    }
+  ],
+  "physical_device_access": false,
+  "host_usb_passthrough": false,
+  "manufacturer_trust_reproduced": false,
+  "native_macos_registration_verified": false,
+  "firmware_reboot_timing_measured": false,
+  "userspace_usb_transport": "FunctionFS",
+  "pcsc_presence_wait_before_sdk_connect": true,
+  "controller": {
+    "base_source_url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/drivers/usb/gadget/udc/dummy_hcd.c",
+    "base_source_sha256": "6892efeaca7d13e0f8ba172fac6b9607f9ac5c60de1a5f1812a57eb7998fd993",
+    "source_license": "GPL",
+    "optional_parameter": "requested_ep_addresses",
+    "default_enabled": false,
+    "files": {
+      "dummy_hcd.c": "7ebdac59d1bee99d6acb4e811171c10d32618d3915d8b0ccdad43fe9d7a72918",
+      "dummy_hcd-addresses.patch": "16df2045ea6229954b57441894cf009a9fbf40b5ed0ec5e7e5c31685729fafcc",
+      "dummy_hcd.ko": "5e8481736a6dccd4788ff3fb07f06b8704dcf4a0a02a95888c310a3f594eb86a"
+    },
+    "requested_ep_addresses_enabled": true
+  },
+  "reference_descriptor_equivalence_verified": true,
+  "native_linux_usb_configuration_reenumeration_verified": true,
+  "native_linux_usb_all_interface_combinations_verified": true,
+  "native_linux_usb_reboot_volatile_state_verified": true,
+  "requested_endpoint_addresses_all_profiles_verified": true,
+  "test_count": 49
+}

@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "transport": "direct IFD",
+  "expect_fixed": true,
+  "explicit_le_1_sw": "6700",
+  "malformed_command_overwrote_sig_certificate": false,
+  "malformed_command_mutated_persistent_state": false,
+  "normal_sdk_attestation_signature_verified": true,
+  "physical_key_accessed": false
+}

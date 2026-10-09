@@ -1,0 +1,351 @@
+#!/usr/bin/env python3
+"""Assemble private initramfs from actual distro runtime and frozen source.
+
+Runs only inside the local builder container. Never copies host devices/state.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import importlib.util
+import json
+import os
+import re
+import shlex
+import shutil
+import subprocess
+from pathlib import Path
+
+# Build inside the Linux container: host bind mounts may fold PAM/pam names.
+# Export only initramfs/kernel/manifest to the host artifacts directory.
+root = Path("/tmp/ske-native-guest-root")
+if root.exists():
+    assert root.is_dir() and not root.is_symlink()
+    # This fixed scratch path is owned by this builder, never user credentials.
+    shutil.rmtree(root)
+root.mkdir(parents=True, exist_ok=True)
+kernel_version = "6.8.0-146-generic"
+
+
+def copy_file(source, target=None):
+    source = Path(source)
+    dest = root / str(target or source).lstrip("/")
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source, dest, follow_symlinks=True)
+
+
+libraries = set()
+
+
+def file_sha256(path):
+    with Path(path).open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def dependencies(source, browser=False):
+    result = subprocess.run(
+        ["ldd", str(source)],
+        capture_output=True,
+        text=True,
+        check=False,
+        env={**os.environ, "LD_LIBRARY_PATH": "/opt/ske-browser/firefox"}
+        if browser
+        else None,
+    )
+    assert "not found" not in result.stdout, result.stdout
+    for path in re.findall(r"(?:=>\s+|^\s*)(/[^\s]+)", result.stdout, re.MULTILINE):
+        if path not in libraries:
+            copy_file(path)
+            libraries.add(path)
+
+
+for directory in [
+    "bin",
+    "sbin",
+    "usr/bin",
+    "usr/sbin",
+    "dev",
+    "proc",
+    "sys",
+    "tmp",
+    "guest-state",
+    "etc",
+    "run/pcscd",
+    "var",
+    "opt/verification",
+]:
+    (root / directory).mkdir(parents=True, exist_ok=True)
+os.chmod(root / "tmp", 0o1777)
+copy_file("/bin/busybox")
+for applet in [
+    "sh",
+    "mount",
+    "mkdir",
+    "uname",
+    "echo",
+    "cat",
+    "ls",
+    "sleep",
+    "poweroff",
+    "dmesg",
+    "tail",
+    "sync",
+    "ip",
+]:
+    dest = root / "bin" / applet
+    if not dest.exists():
+        dest.symlink_to("busybox")
+copy_file("/usr/bin/kmod")
+dependencies("/usr/bin/kmod")
+modprobe = root / "sbin/modprobe"
+if not modprobe.exists():
+    modprobe.symlink_to("/usr/bin/kmod")
+insmod = root / "sbin/insmod"
+if not insmod.exists():
+    insmod.symlink_to("/usr/bin/kmod")
+
+module_base = Path("/lib/modules") / kernel_version
+for module in ["hid", "hid-generic", "uhid"]:
+    copy_file(module_base / "kernel/drivers/hid" / f"{module}.ko.zst")
+for metadata in module_base.glob("modules.*"):
+    if metadata.is_file():
+        copy_file(metadata)
+
+copy_file("/usr/bin/python3.12")
+dependencies("/usr/bin/python3.12")
+python_alias = root / "usr/bin/python3"
+if not python_alias.exists():
+    python_alias.symlink_to("python3.12")
+shutil.copytree("/usr/lib/python3.12", root / "usr/lib/python3.12", dirs_exist_ok=True)
+shutil.copytree(
+    "/opt/ske-venv", root / "opt/ske-venv", symlinks=True, dirs_exist_ok=True
+)
+for base in [
+    Path("/usr/lib/python3.12/lib-dynload"),
+    Path("/opt/ske-venv/lib/python3.12/site-packages"),
+]:
+    for library in base.rglob("*.so"):
+        dependencies(library)
+for binary in ["swpasskeyd", "swpasskeyctl"]:
+    source = Path("/artifacts/build") / binary
+    copy_file(source, "/opt/" + binary)
+    dependencies(source)
+
+copy_file("/src-tools/verify_ctap.py", "/opt/verification/verify_ctap.py")
+copy_file("/work/verify-stock-libccid-large-prototype.py", "/opt/verification/verify-stock-libccid-large-prototype.py")
+copy_file("/work/verify-native.py", "/opt/verification/verify-native.py")
+native_extra = Path("/artifacts/build/ske-otpd").exists()
+if native_extra:
+    for binary in ["ske-otpd", "ifd-ske.bundle/Contents/Linux/ske-ifd.so"]:
+        source = Path("/artifacts/build") / binary
+        copy_file(source, "/opt/" + source.name)
+        dependencies(source)
+    copy_file("/usr/sbin/pcscd")
+    dependencies("/usr/sbin/pcscd")
+    # pyscard dlopen()s this runtime library; it does not appear in its ldd list.
+    pcsc_dir = subprocess.run(
+        ["pkg-config", "--variable=libdir", "libpcsclite"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+    pcsc_library = Path(pcsc_dir) / "libpcsclite.so.1"
+    copy_file(pcsc_library)
+    dependencies(pcsc_library)
+    shutil.copytree(
+        "/src-application/emucard", root / "opt/emucard", dirs_exist_ok=True
+    )
+    copy_file("/src-tools/verify_smartcard.py", "/opt/verification/verify_smartcard.py")
+    copy_file(
+        "/work/verify-native-extra.py", "/opt/verification/verify-native-extra.py"
+    )
+    (root / "var/run").symlink_to("/run")
+    (root / "opt/isolated-ske-native-extra").write_text("Linux OTP and PCSC tests\n")
+if Path("/artifacts/build/ske-usbd").exists():
+    copy_file("/usr/lib/systemd/systemd-udevd")
+    dependencies("/usr/lib/systemd/systemd-udevd")
+    shutil.copytree(
+        "/usr/lib/udev/rules.d", root / "usr/lib/udev/rules.d", dirs_exist_ok=True
+    )
+    for module in ["udc-core", "gadgetfs", "libcomposite", "usb_f_fs", "usbhid"]:
+        output = subprocess.run(
+            ["modprobe", "--set-version", kernel_version, "--show-depends", module],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+        for line in output.splitlines():
+            fields = shlex.split(line)
+            if fields and fields[0] == "insmod":
+                copy_file(fields[1])
+    copy_file("/opt/ske-dummy-module/dummy_hcd.ko", "/opt/dummy_hcd.ko")
+    copy_file("/opt/ske-dummy-module/provenance.json", "/opt/dummy-hcd-provenance.json")
+    copy_file("/work/dummy_hcd-addresses.patch", "/opt/dummy_hcd-addresses.patch")
+    copy_file("/src-application/usb-reference-observation.json", "/opt/usb-reference-observation.json")
+    copy_file("/artifacts/build/ske-usbd", "/opt/ske-usbd")
+    dependencies("/artifacts/build/ske-usbd")
+    driver = "/usr/lib/pcsc/drivers/ifd-ccid.bundle"
+    shutil.copytree(driver, root / driver.lstrip("/"), dirs_exist_ok=True)
+    for library in Path(driver).rglob("*.so"):
+        dependencies(library)
+    copy_file("/usr/lib/aarch64-linux-gnu/libusb-1.0.so.0")
+    dependencies("/usr/lib/aarch64-linux-gnu/libusb-1.0.so.0")
+    copy_file("/work/verify-composite.py", "/opt/verification/verify-composite.py")
+    copy_file("/work/verify-composite.py", "/opt/verification/verify_composite.py")
+    copy_file(
+        "/work/verify-native-extra.py", "/opt/verification/verify_native_extra.py"
+    )
+    copy_file(
+        "/work/verify-composite-extra.py", "/opt/verification/verify-composite-extra.py"
+    )
+    copy_file(
+        "/work/verify-composite-extra.py", "/opt/verification/verify_composite_extra.py"
+    )
+    copy_file(
+        "/work/verify-composite-reboot.py",
+        "/opt/verification/verify-composite-reboot.py",
+    )
+    (root / "opt/isolated-ske-usb-guest").write_text(
+        "own virtual USB bus; no host USB or NIC\n"
+    )
+
+# Evidence from installed unmodified driver/SDK files, copied into the guest.
+import importlib.metadata
+stock_provenance = {
+    'packages': {name:subprocess.run(['dpkg-query','-W','-f=${Version}',name],capture_output=True,text=True,check=True).stdout
+                 for name in ['libccid','pcscd','libpcsclite1']},
+    'sdk_versions': {name:next(d.version for d in importlib.metadata.distributions(path=['/opt/ske-venv/lib/python3.12/site-packages']) if d.metadata['Name']==name) for name in ['fido2','yubikey-manager','pyscard']},
+    'files': {name:hashlib.sha256(Path(name).read_bytes()).hexdigest() for name in [
+        '/usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so',
+        '/usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Info.plist',
+        '/usr/sbin/pcscd',
+        '/opt/ske-venv/lib/python3.12/site-packages/ykman/pcsc/__init__.py',
+        '/opt/ske-venv/lib/python3.12/site-packages/yubikit/core/smartcard/__init__.py',
+        '/opt/ske-venv/lib/python3.12/site-packages/yubikit/piv.py',
+        '/opt/ske-venv/lib/python3.12/site-packages/yubikit/oath.py',
+        '/opt/ske-venv/lib/python3.12/site-packages/fido2/hid/linux.py']}}
+(root/'opt/stock-driver-provenance.json').write_text(json.dumps(stock_provenance,indent=2)+'\n')
+Path('/artifacts/stock-driver-provenance.json').write_text(json.dumps(stock_provenance,indent=2)+'\n')
+
+# Pinned official browser runtime, copied only into this private initramfs.
+assert Path("/opt/ske-browser/archive.sha256").read_text().split()[0] == (
+    "b99d44d1d64bf8133db1c28e77cafdf82216af90c0a94802f0f6578c9b722d7d"
+)
+shutil.copytree("/opt/ske-browser", root / "opt/ske-browser", dirs_exist_ok=True)
+for browser_file in Path("/opt/ske-browser/firefox").rglob("*"):
+    if browser_file.is_file() and (
+        browser_file.suffix == ".so"
+        or browser_file.name in ["firefox", "firefox-bin", "plugin-container"]
+    ):
+        dependencies(browser_file, browser=True)
+# Firefox GTK modules are dlopen()d rather than linked by libxul.
+for browser_library in [
+    "/usr/lib/aarch64-linux-gnu/libgtk-3.so.0",
+    "/usr/lib/aarch64-linux-gnu/libdbus-glib-1.so.2",
+]:
+    copy_file(browser_library)
+    dependencies(browser_library)
+(root / "etc/hosts").write_text("127.0.0.1 localhost\n::1 localhost\n")
+shutil.copytree("/etc/fonts", root / "etc/fonts", dirs_exist_ok=True)
+shutil.copytree("/usr/share/fonts", root / "usr/share/fonts", dirs_exist_ok=True)
+copy_file("/work/verify-browser.py", "/opt/verification/verify-browser.py")
+copy_file("/work/verify-browser-resident.py", "/opt/verification/verify-browser-resident.py")
+copy_file("/work/verify-browser-prf.py", "/opt/verification/verify-browser-prf.py")
+copy_file("/work/verify-browser-attestation.py", "/opt/verification/verify-browser-attestation.py")
+
+# Pinned stock Chromium and native private guest UI, independent distro ABI.
+largeblob_spec = importlib.util.spec_from_file_location('largeblob_runtime', '/work/build-browser-largeblob-runtime.py')
+largeblob_runtime = importlib.util.module_from_spec(largeblob_spec)
+largeblob_spec.loader.exec_module(largeblob_runtime)
+chromium_runtime = largeblob_runtime.install(root, copy_file, dependencies)
+
+copy_file("/work/verify-usb-state.py", "/opt/verification/verify-usb-state.py")
+copy_file("/work/verify-usb-state.py", "/opt/verification/verify_usb_state.py")
+copy_file("/work/verify-usb-power.py", "/opt/verification/verify-usb-power.py")
+copy_file("/work/verify-usb-interrupt.py", "/opt/verification/verify-usb-interrupt.py")
+copy_file("/work/verify-usb-runtime.py", "/opt/verification/verify-usb-runtime.py")
+copy_file("/work/verify-usb-runtime.py", "/opt/verification/verify_usb_runtime.py")
+copy_file("/work/verify-usb-runtime-pending.py", "/opt/verification/verify-usb-runtime-pending.py")
+copy_file("/work/verify-usb-runtime-pending.py", "/opt/verification/verify_usb_runtime_pending.py")
+copy_file("/work/verify-usb-large-partial-runtime.py", "/opt/verification/verify-usb-large-partial-runtime.py")
+copy_file("/work/verify-usb-reboot-pending.py", "/opt/verification/verify-usb-reboot-pending.py")
+copy_file("/work/verify-usb-reboot-pending.py", "/opt/verification/verify_usb_reboot_pending.py")
+copy_file("/work/verify-usb-long-cutover.py", "/opt/verification/verify-usb-long-cutover.py")
+copy_file("/work/verify-usb-long-cutover.py", "/opt/verification/verify_usb_long_cutover.py")
+copy_file("/work/native-ccid-io.py", "/opt/verification/native_ccid_io.py")
+copy_file("/work/verify-usb-partial-interrupt.py", "/opt/verification/verify-usb-partial-interrupt.py")
+copy_file("/work/usb-state-pending.py", "/opt/verification/usb_state_pending.py")
+copy_file("/work/guest-init.sh", "/init")
+os.chmod(root / "init", 0o755)
+(root / "opt/isolated-ske-test-guest").write_text(
+    "no NIC; no host devices; fresh own software state\n"
+)
+(root / "etc/passwd").write_text("root:x:0:0:root:/guest-state:/bin/sh\n")
+(root / "etc/group").write_text("root:x:0:\n")
+(root / "etc/nsswitch.conf").write_text("passwd: files\ngroup: files\nhosts: files\n")
+shutil.copy2(f"/boot/vmlinuz-{kernel_version}", "/artifacts/guest-kernel")
+subprocess.run(
+    [
+        "bash",
+        "-o",
+        "pipefail",
+        "-c",
+        "find . -print0 | cpio --null --create --format=newc --quiet | gzip -1 > /artifacts/guest-initramfs.gz",
+    ],
+    cwd=root,
+    check=True,
+)
+manifest = {
+    "kernel": kernel_version,
+    "guest_network": False,
+    "host_device_passthrough": False,
+    "source_mounted_readonly": True,
+    "usb_virtual_controller": json.loads(Path("/opt/ske-dummy-module/provenance.json").read_text()),
+    "native_runtime_verified": False,
+    "usb_state_helper_sha256": {name: file_sha256(Path("/work") / name)
+        for name in ["verify-usb-state.py", "usb-state-pending.py", "validate-usb-state.py"]},
+    "usb_power_helper_sha256": {name: file_sha256(Path("/work") / name)
+        for name in ["verify-usb-power.py", "validate-usb-power.py"]},
+    "usb_interrupt_helper_sha256": {name: file_sha256(Path("/work") / name)
+        for name in ["verify-usb-interrupt.py", "validate-usb-interrupt.py"]},
+    "usb_runtime_helper_sha256": {name: file_sha256(Path("/work") / name)
+        for name in ["verify-usb-runtime.py", "validate-usb-runtime.py"]},
+    "usb_runtime_pending_helper_sha256": {name: file_sha256(Path("/work") / name)
+        for name in ["verify-usb-runtime-pending.py", "validate-usb-runtime-pending.py"]},
+    "usb_reboot_pending_helper_sha256": {name: file_sha256(Path("/work") / name)
+        for name in ["verify-usb-reboot-pending.py", "validate-usb-reboot-pending.py"]},
+    "usb_long_cutover_helper_sha256": {name: file_sha256(Path("/work") / name)
+        for name in ["verify-usb-long-cutover.py", "validate-usb-long-cutover.py", "native-ccid-io.py", "validate-native-ccid-io.py"]},
+    "usb_large_partial_runtime_helper_sha256": {name: file_sha256(Path("/work") / name)
+        for name in ["verify-usb-large-partial-runtime.py", "validate-usb-large-partial-runtime.py", "native-ccid-io.py", "validate-native-ccid-io.py"]},
+    "usb_partial_interrupt_helper_sha256": {name: file_sha256(Path("/work") / name)
+        for name in ["verify-usb-partial-interrupt.py", "validate-usb-partial-interrupt.py", "native-ccid-io.py", "validate-native-ccid-io.py"]},
+    "usb_power_source_sha256": file_sha256("/src-application/source/src/usb/linux.cpp"),
+    "card_service_sha256": file_sha256("/src-application/emucard/service.py"),
+    "case_sensitive_container_staging": True,
+    "browser_runtime": {
+        "name": "Firefox",
+        "version": "157.0.1",
+        "architecture": "linux-aarch64",
+        "archive_url": "https://archive.mozilla.org/pub/firefox/releases/157.0.1/linux-aarch64/en-US/firefox-157.0.1.tar.xz",
+        "archive_sha256": "b99d44d1d64bf8133db1c28e77cafdf82216af90c0a94802f0f6578c9b722d7d",
+        "official_sha512sums_checked": True,
+        "binary_sha256": file_sha256("/opt/ske-browser/firefox/firefox"),
+        "library_sha256": file_sha256("/opt/ske-browser/firefox/libxul.so"),
+    },
+    "chromium_runtime": chromium_runtime,
+    "artifacts": {
+        path.name: {
+            "bytes": path.stat().st_size,
+            "sha256": hashlib.file_digest(path.open("rb"), "sha256").hexdigest(),
+        }
+        for path in [
+            Path("/artifacts/guest-kernel"),
+            Path("/artifacts/guest-initramfs.gz"),
+        ]
+    },
+}
+Path("/artifacts/guest-build-manifest.json").write_text(
+    json.dumps(manifest, indent=2) + "\n"
+)
+print(json.dumps(manifest, indent=2))

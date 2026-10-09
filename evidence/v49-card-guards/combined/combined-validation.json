@@ -1,0 +1,75 @@
+{
+  "passed": true,
+  "baseline": "published v0.48 staging card source; read-only",
+  "base_core_sha256": "0e7595b17ea9709fab195fcfbbf43653a8d1af455cbe75d6f0181661424c7f1a",
+  "combined_core_sha256": "4d2b50bf7a1a616696c66e1da1171f0b394a1c1a41b7e27323a7ba86eaa0f1d1",
+  "patches_in_order": [
+    {
+      "name": "hsmauth_reset",
+      "sha256": "5d42db97468dc7f7c3c44dc17322eddb6ae745e7b86c578d1e71cbae501bfa25",
+      "applied": true
+    },
+    {
+      "name": "oath_put_key_minimum",
+      "sha256": "1bbb19132748c9c1bfcae29ebd55612f4a9f57c5cbab751bb269c5fb97e23112",
+      "applied": true
+    }
+  ],
+  "independent_patch_reapplication_byte_identical": true,
+  "reports": {
+    "hsmauth_reset_socket": {
+      "file": "hsmauth-reset-socket.json",
+      "passed": true,
+      "checks": 24
+    },
+    "hsmauth_reset_ifd": {
+      "file": "hsmauth-reset-ifd.json",
+      "passed": true,
+      "checks": 24
+    },
+    "oath_key_minimum": {
+      "file": "oath-key-minimum.json",
+      "passed": true,
+      "checks": 11
+    },
+    "oath_profile_socket": {
+      "file": "oath-profile-socket.json",
+      "passed": true,
+      "checks": 107
+    },
+    "oath_profile_ifd": {
+      "file": "oath-profile-ifd.json",
+      "passed": true,
+      "checks": 107
+    },
+    "smartcard_socket": {
+      "file": "smartcard-socket.json",
+      "passed": true,
+      "checks": 97
+    },
+    "smartcard_ifd": {
+      "file": "smartcard-ifd.json",
+      "passed": true,
+      "checks": 97
+    },
+    "buttons": {
+      "file": "buttons.json",
+      "passed": true,
+      "checks": 44
+    },
+    "hsmauth_retry_socket": {
+      "file": "hsmauth-retry-socket.json",
+      "passed": true,
+      "checks": 24
+    },
+    "hsmauth_retry_ifd": {
+      "file": "hsmauth-retry-ifd.json",
+      "passed": true,
+      "checks": 24
+    }
+  },
+  "check_count_not_unique_behaviors": 559,
+  "physical_key_accessed": false,
+  "host_pcsc_or_usb_accessed": false,
+  "firmware_5_7_4_differential_verified": false
+}

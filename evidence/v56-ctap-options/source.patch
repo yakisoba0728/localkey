@@ -1,0 +1,21 @@
+--- a/source/src/ctap/auth_data.cpp
++++ b/source/src/ctap/auth_data.cpp
+@@ -140,6 +140,10 @@
+     auto k = r.tstr();
+     if (!k) {
+       return std::unexpected(k.error());
++    }
++    if (*k != "rk" && *k != "up" && *k != "uv") {
++      if (auto skipped = r.skip(); !skipped) return std::unexpected(skipped.error());
++      continue;
+     }
+     auto v = r.boolean();
+     if (!v) {
+@@ -152,7 +156,6 @@
+     } else if (*k == "uv") {
+       o.uv = *v;
+     }
+-    // Unknown options are ignored per spec.
+   }
+   return o;
+ }

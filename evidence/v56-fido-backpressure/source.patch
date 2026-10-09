@@ -1,0 +1,47 @@
+--- a/src/usb/backend.hpp
++++ b/src/usb/backend.hpp
+@@ -91,19 +91,20 @@
+       data = data.subspan(static_cast<std::size_t>(count));
+     }
+   }
+-  std::vector<Bytes> read() {
+-    std::vector<Bytes> out;
+-    // Bounded drain avoids starving the controller's serial command queue.
+-    for (int i = 0; i < 64; ++i) {
++  std::optional<Bytes> read_one() {
++    for (;;) {
+       std::array<std::uint8_t,64> packet{};
+       const auto count = recv(fd_, packet.data(), packet.size() - partial_.size(), MSG_DONTWAIT);
+       if (count < 0 && errno == EINTR) continue;
+-      if (count < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) break;
++      if (count < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) return std::nullopt;
+       if (count <= 0) throw std::runtime_error("FIDO daemon disconnected");
+       partial_.insert(partial_.end(), packet.begin(), packet.begin() + count);
+-      if (partial_.size() == 64) { out.push_back(std::move(partial_)); partial_.clear(); }
+-    }
+-    return out;
++      if (partial_.size() == 64) {
++        Bytes result;
++        result.swap(partial_);
++        return result;
++      }
++    }
+   }
+  private:
+   int fd_{-1};
+@@ -360,7 +361,14 @@
+       }
+     }
+     for (auto& packet : model->take_ccid_output()) submit_ccid(std::move(packet));
+-    for (auto& packet : fido->read()) model->queue_input(swpk::usb::kFidoIn, std::move(packet));
++    // Leave complete reports in the socket when the host has stopped reading
++    // interrupt IN. Reading a batch first can exceed the model's 256-report
++    // queue and terminate the composite bridge under normal USB backpressure.
++    for (int i = 0; i < 64 && !model->input_queue_full(swpk::usb::kFidoIn); ++i) {
++      auto packet = fido->read_one();
++      if (!packet) break;
++      model->queue_input(swpk::usb::kFidoIn, std::move(*packet));
++    }
+ #ifdef __linux__
+     poll_keyboard_usb_events();
+ #endif

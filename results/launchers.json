@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "tests": [
+    {
+      "name": "fido starts with normal presence, answers wire metadata, shares identity when applicable and cleans up",
+      "passed": true,
+      "testing_auto_allow": false
+    },
+    {
+      "name": "card starts with normal presence, answers wire metadata, shares identity when applicable and cleans up",
+      "passed": true,
+      "testing_auto_allow": false
+    },
+    {
+      "name": "device starts with normal presence, answers wire metadata, shares identity when applicable and cleans up",
+      "passed": true,
+      "testing_auto_allow": false
+    }
+  ],
+  "physical_device_access": false
+}

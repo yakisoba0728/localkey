@@ -1,0 +1,213 @@
+{
+  "subject": "modified software authenticator versus saved public reference GetInfo",
+  "physical_device_access": false,
+  "complete_firmware_equivalence": false,
+  "system_hid_registration_verified": false,
+  "passed": true,
+  "tests": [
+    {
+      "name": "GetInfo presence of every public CBOR key matches reference",
+      "passed": true
+    },
+    {
+      "name": "reference GetInfo versions",
+      "passed": true
+    },
+    {
+      "name": "reference GetInfo extensions",
+      "passed": true
+    },
+    {
+      "name": "reference GetInfo options",
+      "passed": true
+    },
+    {
+      "name": "reference GetInfo max_msg_size",
+      "passed": true
+    },
+    {
+      "name": "reference GetInfo pin_uv_protocols",
+      "passed": true
+    },
+    {
+      "name": "reference GetInfo max_creds_in_list",
+      "passed": true
+    },
+    {
+      "name": "reference GetInfo max_cred_id_length",
+      "passed": true
+    },
+    {
+      "name": "reference GetInfo transports",
+      "passed": true
+    },
+    {
+      "name": "reference GetInfo algorithms",
+      "passed": true
+    },
+    {
+      "name": "reference GetInfo max_large_blob",
+      "passed": true
+    },
+    {
+      "name": "reference GetInfo force_pin_change",
+      "passed": true
+    },
+    {
+      "name": "reference GetInfo min_pin_length",
+      "passed": true
+    },
+    {
+      "name": "reference GetInfo max_cred_blob_length",
+      "passed": true
+    },
+    {
+      "name": "reference GetInfo max_rpids_for_min_pin",
+      "passed": true
+    },
+    {
+      "name": "fresh software identity and state remain explicit",
+      "passed": true
+    },
+    {
+      "name": "128-byte unknown credential ID is parsed and returns no credentials",
+      "passed": true
+    },
+    {
+      "name": "unknown 128-byte descriptor does not hide a valid allow-list credential",
+      "passed": true
+    },
+    {
+      "name": "whole CTAP message boundary 1536 bytes gives status 0x2e",
+      "passed": true
+    },
+    {
+      "name": "whole CTAP message boundary 1537 bytes gives status 0x39",
+      "passed": true
+    },
+    {
+      "name": "oversized request preserves channel usability",
+      "passed": true
+    },
+    {
+      "name": "large-blob read accepts measured maxMsgSize minus 64 fragment limit",
+      "passed": true
+    },
+    {
+      "name": "oversized large-blob read returns INVALID_LENGTH",
+      "passed": true
+    },
+    {
+      "name": "oversized large-blob write returns INVALID_LENGTH before changing state",
+      "passed": true
+    },
+    {
+      "name": "1472-byte fragments commit and read back complete integrity-checked array",
+      "passed": true
+    },
+    {
+      "name": "large-blob exact end returns empty bytes",
+      "passed": true
+    },
+    {
+      "name": "large-blob offset past end returns INVALID_PARAMETER",
+      "passed": true
+    },
+    {
+      "name": "two minimum-PIN RPs exceed measured one-RP limit",
+      "passed": true
+    },
+    {
+      "name": "rejected configuration leaves PIN policy unchanged",
+      "passed": true
+    },
+    {
+      "name": "failed configuration preserves valid token for subsequent one-RP configuration",
+      "passed": true
+    },
+    {
+      "name": "measured-limit configuration survives restart",
+      "passed": true
+    }
+  ],
+  "compared_reference_utc": "2026-10-08T08:14:07.096578+00:00",
+  "get_info": {
+    "versions": [
+      "U2F_V2",
+      "FIDO_2_0",
+      "FIDO_2_1_PRE",
+      "FIDO_2_1"
+    ],
+    "extensions": [
+      "credProtect",
+      "hmac-secret",
+      "largeBlobKey",
+      "credBlob",
+      "minPinLength"
+    ],
+    "aaguid": "6fb1dfdd51c043a0a6f2f74812cbf8fb",
+    "options": {
+      "rk": true,
+      "up": true,
+      "plat": false,
+      "alwaysUv": false,
+      "credMgmt": true,
+      "authnrCfg": true,
+      "clientPin": false,
+      "largeBlobs": true,
+      "pinUvAuthToken": true,
+      "setMinPINLength": true,
+      "makeCredUvNotRqd": true,
+      "credentialMgmtPreview": true
+    },
+    "max_msg_size": 1536,
+    "pin_uv_protocols": [
+      2,
+      1
+    ],
+    "max_creds_in_list": 8,
+    "max_cred_id_length": 128,
+    "transports": [
+      "usb"
+    ],
+    "algorithms": [
+      {
+        "alg": -7,
+        "type": "public-key"
+      },
+      {
+        "alg": -8,
+        "type": "public-key"
+      },
+      {
+        "alg": -35,
+        "type": "public-key"
+      }
+    ],
+    "max_large_blob": 4096,
+    "force_pin_change": false,
+    "min_pin_length": 4,
+    "firmware_version": 3,
+    "max_cred_blob_length": 32,
+    "max_rpids_for_min_pin": 1,
+    "remaining_disc_creds": 100
+  },
+  "intentional_differences": {
+    "aaguid": {
+      "software": "6fb1dfdd51c043a0a6f2f74812cbf8fb",
+      "reference": "ff4dac45ede84ec2acedcf66103f4335"
+    },
+    "firmware_version": {
+      "software": 3,
+      "reference": 329476
+    },
+    "remaining_disc_creds": {
+      "software": 100,
+      "reference": 99
+    },
+    "clientPin": {
+      "software": false,
+      "reference": true
+    }
+  }
+}

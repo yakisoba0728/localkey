@@ -1,0 +1,18 @@
+--- a/emucard/core.py
++++ b/emucard/core.py
+@@ -2014,6 +2014,7 @@
+     def otp_keyboard_events(self, slot):
+         from .keyboard import events
+ 
++        require(self.otp_touch_mode is None, 0x6985)
+         previous = copy.deepcopy(self.state.data)
+         previous_otp_sessions = copy.deepcopy(self.otp_sessions)
+         try:
+@@ -2075,6 +2076,7 @@
+         from .management import application_enabled
+ 
+         require(type(duration_ms) is int and 0 <= duration_ms <= 60000, 0x6A80)
++        require(self.otp_touch_mode is None, 0x6985)
+         require(application_enabled(self, AID.OTP), 0x6985)
+         d = self.state.data["otp"]
+         slots = {

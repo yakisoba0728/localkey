@@ -1,0 +1,72 @@
+{
+  "passed": true,
+  "scope": "OATH SEND REMAINING CLA validation before pending response consumption",
+  "published_version": "0.60.0",
+  "primary_spec": "https://developers.yubico.com/OATH/YKOATH_Protocol.html#send-remaining-instruction",
+  "sdk_source": "https://developers.yubico.com/yubikey-manager/API_Documentation/_modules/yubikit/oath.html",
+  "baseline_core_sha256": "f6587c70da88ca9f4e73779c49642471b3d0dbc84c58b84d6c26980404163a59",
+  "fixed_core_sha256": "2b0cdfb0a6f224b272cc420a38ff06eb51cde5cd5381fdb8603be849fe6ed264",
+  "source_patch_sha256": "9bb3a92ca909b05dd46b72fa812b1fb794a636a3c7c3b02089a306f993ae65cf",
+  "verification_script_sha256": "9ce2d0b7a0c0bc890feb97c378a4840597fec5d10c48fd9b7693346df97bc625",
+  "results": [
+    {
+      "platform": "mac",
+      "route": "socket",
+      "baseline_sw": "61f7",
+      "baseline_consumed": 256,
+      "fixed_sw": "6e00",
+      "fixed_consumed": 0,
+      "recovered_full_response": true,
+      "oath_regression": 107,
+      "smartcard_regression": 97,
+      "baseline_sha256": "da47782f4085a826f91513254ac24418024dd0e0adea9861a2a1fd33d84e7b20",
+      "fixed_sha256": "077767d8bff2f6a5f13b5d22bffbbb10f087d2173a33b4f1d91ad4fd82b4ddbe"
+    },
+    {
+      "platform": "mac",
+      "route": "ifd",
+      "baseline_sw": "61f7",
+      "baseline_consumed": 256,
+      "fixed_sw": "6e00",
+      "fixed_consumed": 0,
+      "recovered_full_response": true,
+      "oath_regression": 107,
+      "smartcard_regression": 97,
+      "baseline_sha256": "8a959a02700ae414562e909e31e54c9be13e0183a04db26eb3c5f3caa9e9b4e7",
+      "fixed_sha256": "ac201495ff3b153b45e9df62daa59f1625d619c6b5c315d0c14a3309d626fbb9"
+    },
+    {
+      "platform": "linux",
+      "route": "socket",
+      "baseline_sw": "61f7",
+      "baseline_consumed": 256,
+      "fixed_sw": "6e00",
+      "fixed_consumed": 0,
+      "recovered_full_response": true,
+      "oath_regression": 107,
+      "smartcard_regression": 97,
+      "baseline_sha256": "b6c51cd8131691a4a315d5ec23f222552ec746d0792b5ccc84502d1aab3e4e3f",
+      "fixed_sha256": "8f4d530d97aada02c861e8b871c04b5afc69b2057e90ae9c582258fd80f3b03f"
+    },
+    {
+      "platform": "linux",
+      "route": "ifd",
+      "baseline_sw": "61f7",
+      "baseline_consumed": 256,
+      "fixed_sw": "6e00",
+      "fixed_consumed": 0,
+      "recovered_full_response": true,
+      "oath_regression": 107,
+      "smartcard_regression": 97,
+      "baseline_sha256": "1f4560a45724506e0796e2d274c5d18f56eb3cd6e76c1bb0344d38b2f7dedb78",
+      "fixed_sha256": "1a7cc7056ed26604027a1a622088a3978df6971508b90d114e0cc0c51c2bc1b5"
+    }
+  ],
+  "total_focused_ab_routes": 4,
+  "total_oath_regression_checks": 428,
+  "total_smartcard_regression_checks": 388,
+  "physical_firmware_differential_verified": false,
+  "modeled_invalid_cla_sw": "6e00; exact 5.7.4 status unmeasured",
+  "host_device_access": false,
+  "network_devices": false
+}

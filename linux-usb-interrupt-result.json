@@ -1,0 +1,1095 @@
+{
+  "passed": true,
+  "tests": [
+    {
+      "name": "private native interrupt guest marker",
+      "passed": true
+    },
+    {
+      "name": "actual ARM64 kernel and only loopback for interruption probe",
+      "passed": true
+    },
+    {
+      "name": "fresh owned resident ES256 PIN/UV credential for interruption fixture",
+      "passed": true
+    },
+    {
+      "name": "native SDK UV signature and user binding initial",
+      "passed": true
+    },
+    {
+      "name": "native OTP SDK independently verifies retained key initial",
+      "passed": true
+    },
+    {
+      "name": "fresh owned native OATH HOTP counter zero",
+      "passed": true
+    },
+    {
+      "name": "actual kernel exposes write-exit and signal-delivery trace events",
+      "passed": true
+    },
+    {
+      "name": "actual unread CCID response blocks native endpoint write 0",
+      "passed": true
+    },
+    {
+      "name": "native HOTP commits once before unread response 0",
+      "passed": true
+    },
+    {
+      "name": "same actual queued CCID buffer before targeted signal 0/0",
+      "passed": true
+    },
+    {
+      "name": "kernel accepts SIGUSR1 only for owned endpoint thread 0/0",
+      "passed": true
+    },
+    {
+      "name": "actual kernel signal delivery and write EINTR observed 0/0",
+      "passed": true
+    },
+    {
+      "name": "actual EINTR requeues same native CCID buffer 0/0",
+      "passed": true
+    },
+    {
+      "name": "signal retry leaves exact persistent bytes and HOTP unchanged 0/0",
+      "passed": true
+    },
+    {
+      "name": "same actual queued CCID buffer before targeted signal 0/1",
+      "passed": true
+    },
+    {
+      "name": "kernel accepts SIGUSR1 only for owned endpoint thread 0/1",
+      "passed": true
+    },
+    {
+      "name": "actual kernel signal delivery and write EINTR observed 0/1",
+      "passed": true
+    },
+    {
+      "name": "actual EINTR requeues same native CCID buffer 0/1",
+      "passed": true
+    },
+    {
+      "name": "signal retry leaves exact persistent bytes and HOTP unchanged 0/1",
+      "passed": true
+    },
+    {
+      "name": "same actual queued CCID buffer before targeted signal 0/2",
+      "passed": true
+    },
+    {
+      "name": "kernel accepts SIGUSR1 only for owned endpoint thread 0/2",
+      "passed": true
+    },
+    {
+      "name": "actual kernel signal delivery and write EINTR observed 0/2",
+      "passed": true
+    },
+    {
+      "name": "actual EINTR requeues same native CCID buffer 0/2",
+      "passed": true
+    },
+    {
+      "name": "signal retry leaves exact persistent bytes and HOTP unchanged 0/2",
+      "passed": true
+    },
+    {
+      "name": "native FIDO GetInfo and PING unaffected by queued CCID signal 0",
+      "passed": true
+    },
+    {
+      "name": "native USB delivers one complete original CCID sequence after signal 0",
+      "passed": true
+    },
+    {
+      "name": "original native response independently matches HOTP and single commit 0",
+      "passed": true
+    },
+    {
+      "name": "following native SDK request has no duplicate stale CCID response 0",
+      "passed": true
+    },
+    {
+      "name": "same three live services after native CCID interruption 0",
+      "passed": true
+    },
+    {
+      "name": "interruption retains same actual USB address configuration and identity 0",
+      "passed": true
+    },
+    {
+      "name": "native SDK UV signature and user binding interrupt-0",
+      "passed": true
+    },
+    {
+      "name": "counter increases interrupt-0",
+      "passed": true
+    },
+    {
+      "name": "native OTP SDK independently verifies retained key interrupt-0",
+      "passed": true
+    },
+    {
+      "name": "actual unread CCID response blocks native endpoint write 1",
+      "passed": true
+    },
+    {
+      "name": "native HOTP commits once before unread response 1",
+      "passed": true
+    },
+    {
+      "name": "same actual queued CCID buffer before targeted signal 1/0",
+      "passed": true
+    },
+    {
+      "name": "kernel accepts SIGUSR1 only for owned endpoint thread 1/0",
+      "passed": true
+    },
+    {
+      "name": "actual kernel signal delivery and write EINTR observed 1/0",
+      "passed": true
+    },
+    {
+      "name": "actual EINTR requeues same native CCID buffer 1/0",
+      "passed": true
+    },
+    {
+      "name": "signal retry leaves exact persistent bytes and HOTP unchanged 1/0",
+      "passed": true
+    },
+    {
+      "name": "same actual queued CCID buffer before targeted signal 1/1",
+      "passed": true
+    },
+    {
+      "name": "kernel accepts SIGUSR1 only for owned endpoint thread 1/1",
+      "passed": true
+    },
+    {
+      "name": "actual kernel signal delivery and write EINTR observed 1/1",
+      "passed": true
+    },
+    {
+      "name": "actual EINTR requeues same native CCID buffer 1/1",
+      "passed": true
+    },
+    {
+      "name": "signal retry leaves exact persistent bytes and HOTP unchanged 1/1",
+      "passed": true
+    },
+    {
+      "name": "same actual queued CCID buffer before targeted signal 1/2",
+      "passed": true
+    },
+    {
+      "name": "kernel accepts SIGUSR1 only for owned endpoint thread 1/2",
+      "passed": true
+    },
+    {
+      "name": "actual kernel signal delivery and write EINTR observed 1/2",
+      "passed": true
+    },
+    {
+      "name": "actual EINTR requeues same native CCID buffer 1/2",
+      "passed": true
+    },
+    {
+      "name": "signal retry leaves exact persistent bytes and HOTP unchanged 1/2",
+      "passed": true
+    },
+    {
+      "name": "native FIDO GetInfo and PING unaffected by queued CCID signal 1",
+      "passed": true
+    },
+    {
+      "name": "native USB delivers one complete original CCID sequence after signal 1",
+      "passed": true
+    },
+    {
+      "name": "original native response independently matches HOTP and single commit 1",
+      "passed": true
+    },
+    {
+      "name": "following native SDK request has no duplicate stale CCID response 1",
+      "passed": true
+    },
+    {
+      "name": "same three live services after native CCID interruption 1",
+      "passed": true
+    },
+    {
+      "name": "interruption retains same actual USB address configuration and identity 1",
+      "passed": true
+    },
+    {
+      "name": "native SDK UV signature and user binding interrupt-1",
+      "passed": true
+    },
+    {
+      "name": "counter increases interrupt-1",
+      "passed": true
+    },
+    {
+      "name": "native OTP SDK independently verifies retained key interrupt-1",
+      "passed": true
+    },
+    {
+      "name": "actual unread CCID response blocks native endpoint write 2",
+      "passed": true
+    },
+    {
+      "name": "native HOTP commits once before unread response 2",
+      "passed": true
+    },
+    {
+      "name": "same actual queued CCID buffer before targeted signal 2/0",
+      "passed": true
+    },
+    {
+      "name": "kernel accepts SIGUSR1 only for owned endpoint thread 2/0",
+      "passed": true
+    },
+    {
+      "name": "actual kernel signal delivery and write EINTR observed 2/0",
+      "passed": true
+    },
+    {
+      "name": "actual EINTR requeues same native CCID buffer 2/0",
+      "passed": true
+    },
+    {
+      "name": "signal retry leaves exact persistent bytes and HOTP unchanged 2/0",
+      "passed": true
+    },
+    {
+      "name": "same actual queued CCID buffer before targeted signal 2/1",
+      "passed": true
+    },
+    {
+      "name": "kernel accepts SIGUSR1 only for owned endpoint thread 2/1",
+      "passed": true
+    },
+    {
+      "name": "actual kernel signal delivery and write EINTR observed 2/1",
+      "passed": true
+    },
+    {
+      "name": "actual EINTR requeues same native CCID buffer 2/1",
+      "passed": true
+    },
+    {
+      "name": "signal retry leaves exact persistent bytes and HOTP unchanged 2/1",
+      "passed": true
+    },
+    {
+      "name": "same actual queued CCID buffer before targeted signal 2/2",
+      "passed": true
+    },
+    {
+      "name": "kernel accepts SIGUSR1 only for owned endpoint thread 2/2",
+      "passed": true
+    },
+    {
+      "name": "actual kernel signal delivery and write EINTR observed 2/2",
+      "passed": true
+    },
+    {
+      "name": "actual EINTR requeues same native CCID buffer 2/2",
+      "passed": true
+    },
+    {
+      "name": "signal retry leaves exact persistent bytes and HOTP unchanged 2/2",
+      "passed": true
+    },
+    {
+      "name": "native FIDO GetInfo and PING unaffected by queued CCID signal 2",
+      "passed": true
+    },
+    {
+      "name": "native USB delivers one complete original CCID sequence after signal 2",
+      "passed": true
+    },
+    {
+      "name": "original native response independently matches HOTP and single commit 2",
+      "passed": true
+    },
+    {
+      "name": "following native SDK request has no duplicate stale CCID response 2",
+      "passed": true
+    },
+    {
+      "name": "same three live services after native CCID interruption 2",
+      "passed": true
+    },
+    {
+      "name": "interruption retains same actual USB address configuration and identity 2",
+      "passed": true
+    },
+    {
+      "name": "native SDK UV signature and user binding interrupt-2",
+      "passed": true
+    },
+    {
+      "name": "counter increases interrupt-2",
+      "passed": true
+    },
+    {
+      "name": "native OTP SDK independently verifies retained key interrupt-2",
+      "passed": true
+    },
+    {
+      "name": "nine real kernel EINTR results across three original responses",
+      "passed": true
+    },
+    {
+      "name": "unmodified native PIV SDK verifies own fifty-byte object before ZLP interruption",
+      "passed": true
+    },
+    {
+      "name": "actual USB receives original complete sixty-four-byte CCID object response once",
+      "passed": true
+    },
+    {
+      "name": "real CCID ZLP write blocks separately after data packet is delivered",
+      "passed": true
+    },
+    {
+      "name": "same actual queued zero-length transfer before signal 0",
+      "passed": true
+    },
+    {
+      "name": "kernel accepts own targeted ZLP thread SIGUSR1 0",
+      "passed": true
+    },
+    {
+      "name": "actual kernel ZLP write EINTR and signal delivery observed 0",
+      "passed": true
+    },
+    {
+      "name": "actual EINTR requeues only ZLP and retains endpoint thread 0",
+      "passed": true
+    },
+    {
+      "name": "ZLP retry leaves exact persistent bytes and HOTP unchanged 0",
+      "passed": true
+    },
+    {
+      "name": "same actual queued zero-length transfer before signal 1",
+      "passed": true
+    },
+    {
+      "name": "kernel accepts own targeted ZLP thread SIGUSR1 1",
+      "passed": true
+    },
+    {
+      "name": "actual kernel ZLP write EINTR and signal delivery observed 1",
+      "passed": true
+    },
+    {
+      "name": "actual EINTR requeues only ZLP and retains endpoint thread 1",
+      "passed": true
+    },
+    {
+      "name": "ZLP retry leaves exact persistent bytes and HOTP unchanged 1",
+      "passed": true
+    },
+    {
+      "name": "same actual queued zero-length transfer before signal 2",
+      "passed": true
+    },
+    {
+      "name": "kernel accepts own targeted ZLP thread SIGUSR1 2",
+      "passed": true
+    },
+    {
+      "name": "actual kernel ZLP write EINTR and signal delivery observed 2",
+      "passed": true
+    },
+    {
+      "name": "actual EINTR requeues only ZLP and retains endpoint thread 2",
+      "passed": true
+    },
+    {
+      "name": "ZLP retry leaves exact persistent bytes and HOTP unchanged 2",
+      "passed": true
+    },
+    {
+      "name": "actual USB receives recovered zero-length terminator without duplicate data packet",
+      "passed": true
+    },
+    {
+      "name": "completed recovered ZLP leaves exact persistent bytes unchanged",
+      "passed": true
+    },
+    {
+      "name": "following unmodified PIV SDK request has correct new sequence and no stale data or ZLP",
+      "passed": true
+    },
+    {
+      "name": "same three live services after native CCID ZLP interruption",
+      "passed": true
+    },
+    {
+      "name": "following SDK read retains same USB generation and persistent plaintext state",
+      "passed": true
+    },
+    {
+      "name": "native SDK UV signature and user binding zlp-interrupt",
+      "passed": true
+    },
+    {
+      "name": "counter increases zlp-interrupt",
+      "passed": true
+    },
+    {
+      "name": "native OTP SDK independently verifies retained key zlp-interrupt",
+      "passed": true
+    },
+    {
+      "name": "all real kernel EINTR results accounted for full data and zero-length transfers",
+      "passed": true
+    }
+  ],
+  "signals": [
+    {
+      "cycle": 0,
+      "attempt": 0,
+      "before": {
+        "tid": 3454,
+        "tgid": 3435,
+        "fd": 11,
+        "bytes": 19,
+        "buffer": "0xc090f56428e0",
+        "syscall": "64 0xb 0xc090f56428e0 0x13 0x0 0x0 0xc090f5640a20 0xe87d8fffe5f0 0xe87d963c1e4c",
+        "wchan": "ffs_epfile_io"
+      },
+      "after": {
+        "tid": 3454,
+        "tgid": 3435,
+        "fd": 11,
+        "bytes": 19,
+        "buffer": "0xc090f56428e0",
+        "syscall": "64 0xb 0xc090f56428e0 0x13 0x0 0x0 0xc090f5640a20 0xe87d8fffe5f0 0xe87d963c1e4c",
+        "wchan": "ffs_epfile_io"
+      },
+      "actual_kernel_write_errno": 4,
+      "signal": 10,
+      "actual_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 3/3   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-3454    [001] ...1.   163.898164: sys_write(fd: b, buf: c090f56428e0, count: 13)\n        ske-usbd-3454    [000] ...1.   163.960927: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [000] d..1.   163.961025: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [000] ...1.   163.962162: sys_write(fd: b, buf: c090f56428e0, count: 13)\n"
+    },
+    {
+      "cycle": 0,
+      "attempt": 1,
+      "before": {
+        "tid": 3454,
+        "tgid": 3435,
+        "fd": 11,
+        "bytes": 19,
+        "buffer": "0xc090f56428e0",
+        "syscall": "64 0xb 0xc090f56428e0 0x13 0x0 0x0 0xc090f5640a20 0xe87d8fffe5f0 0xe87d963c1e4c",
+        "wchan": "ffs_epfile_io"
+      },
+      "after": {
+        "tid": 3454,
+        "tgid": 3435,
+        "fd": 11,
+        "bytes": 19,
+        "buffer": "0xc090f56428e0",
+        "syscall": "64 0xb 0xc090f56428e0 0x13 0x0 0x0 0xc090f5640a20 0xe87d8fffe5f0 0xe87d963c1e4c",
+        "wchan": "ffs_epfile_io"
+      },
+      "actual_kernel_write_errno": 4,
+      "signal": 10,
+      "actual_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 7/7   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-3454    [001] ...1.   163.898164: sys_write(fd: b, buf: c090f56428e0, count: 13)\n        ske-usbd-3454    [000] ...1.   163.960927: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [000] d..1.   163.961025: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [000] ...1.   163.962259: sys_write(fd: b, buf: c090f56428e0, count: 13)\n        ske-usbd-3454    [000] ...1.   163.989746: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [000] d..1.   163.989770: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [000] ...1.   163.990635: sys_write(fd: b, buf: c090f56428e0, count: 13)\n"
+    },
+    {
+      "cycle": 0,
+      "attempt": 2,
+      "before": {
+        "tid": 3454,
+        "tgid": 3435,
+        "fd": 11,
+        "bytes": 19,
+        "buffer": "0xc090f56428e0",
+        "syscall": "64 0xb 0xc090f56428e0 0x13 0x0 0x0 0xc090f5640a20 0xe87d8fffe5f0 0xe87d963c1e4c",
+        "wchan": "ffs_epfile_io"
+      },
+      "after": {
+        "tid": 3454,
+        "tgid": 3435,
+        "fd": 11,
+        "bytes": 19,
+        "buffer": "0xc090f56428e0",
+        "syscall": "64 0xb 0xc090f56428e0 0x13 0x0 0x0 0xc090f5640a20 0xe87d8fffe5f0 0xe87d963c1e4c",
+        "wchan": "ffs_epfile_io"
+      },
+      "actual_kernel_write_errno": 4,
+      "signal": 10,
+      "actual_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 10/10   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-3454    [001] ...1.   163.898164: sys_write(fd: b, buf: c090f56428e0, count: 13)\n        ske-usbd-3454    [000] ...1.   163.960927: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [000] d..1.   163.961025: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [000] ...1.   163.962259: sys_write(fd: b, buf: c090f56428e0, count: 13)\n        ske-usbd-3454    [000] ...1.   163.989746: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [000] d..1.   163.989770: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [000] ...1.   163.990635: sys_write(fd: b, buf: c090f56428e0, count: 13)\n        ske-usbd-3454    [000] ...1.   164.017910: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [000] d..1.   164.017938: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [000] ...1.   164.018902: sys_write(fd: b, buf: c090f56428e0, count: 13)\n"
+    },
+    {
+      "cycle": 1,
+      "attempt": 0,
+      "before": {
+        "tid": 3454,
+        "tgid": 3435,
+        "fd": 11,
+        "bytes": 19,
+        "buffer": "0xc090f5642c20",
+        "syscall": "64 0xb 0xc090f5642c20 0x13 0x0 0x0 0xc090f5640a20 0xe87d8fffe5f0 0xe87d963c1e4c",
+        "wchan": "ffs_epfile_io"
+      },
+      "after": {
+        "tid": 3454,
+        "tgid": 3435,
+        "fd": 11,
+        "bytes": 19,
+        "buffer": "0xc090f5642c20",
+        "syscall": "64 0xb 0xc090f5642c20 0x13 0x0 0x0 0xc090f5640a20 0xe87d8fffe5f0 0xe87d963c1e4c",
+        "wchan": "ffs_epfile_io"
+      },
+      "actual_kernel_write_errno": 4,
+      "signal": 10,
+      "actual_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 4/4   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-3454    [001] ...1.   165.090110: sys_write(fd: b, buf: c090f5642c20, count: 13)\n        ske-usbd-3454    [001] ...1.   165.148775: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [001] d..1.   165.148813: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [001] ...1.   165.149795: sys_write(fd: b, buf: c090f5642c20, count: 13)\n"
+    },
+    {
+      "cycle": 1,
+      "attempt": 1,
+      "before": {
+        "tid": 3454,
+        "tgid": 3435,
+        "fd": 11,
+        "bytes": 19,
+        "buffer": "0xc090f5642c20",
+        "syscall": "64 0xb 0xc090f5642c20 0x13 0x0 0x0 0xc090f5640a20 0xe87d8fffe5f0 0xe87d963c1e4c",
+        "wchan": "ffs_epfile_io"
+      },
+      "after": {
+        "tid": 3454,
+        "tgid": 3435,
+        "fd": 11,
+        "bytes": 19,
+        "buffer": "0xc090f5642c20",
+        "syscall": "64 0xb 0xc090f5642c20 0x13 0x0 0x0 0xc090f5640a20 0xe87d8fffe5f0 0xe87d963c1e4c",
+        "wchan": "ffs_epfile_io"
+      },
+      "actual_kernel_write_errno": 4,
+      "signal": 10,
+      "actual_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 7/7   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-3454    [001] ...1.   165.090110: sys_write(fd: b, buf: c090f5642c20, count: 13)\n        ske-usbd-3454    [001] ...1.   165.148775: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [001] d..1.   165.148813: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [001] ...1.   165.149795: sys_write(fd: b, buf: c090f5642c20, count: 13)\n        ske-usbd-3454    [000] ...1.   165.175945: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [000] d..1.   165.175967: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [000] ...1.   165.176910: sys_write(fd: b, buf: c090f5642c20, count: 13)\n"
+    },
+    {
+      "cycle": 1,
+      "attempt": 2,
+      "before": {
+        "tid": 3454,
+        "tgid": 3435,
+        "fd": 11,
+        "bytes": 19,
+        "buffer": "0xc090f5642c20",
+        "syscall": "64 0xb 0xc090f5642c20 0x13 0x0 0x0 0xc090f5640a20 0xe87d8fffe5f0 0xe87d963c1e4c",
+        "wchan": "ffs_epfile_io"
+      },
+      "after": {
+        "tid": 3454,
+        "tgid": 3435,
+        "fd": 11,
+        "bytes": 19,
+        "buffer": "0xc090f5642c20",
+        "syscall": "64 0xb 0xc090f5642c20 0x13 0x0 0x0 0xc090f5640a20 0xe87d8fffe5f0 0xe87d963c1e4c",
+        "wchan": "ffs_epfile_io"
+      },
+      "actual_kernel_write_errno": 4,
+      "signal": 10,
+      "actual_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 9/9   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-3454    [001] ...1.   165.090110: sys_write(fd: b, buf: c090f5642c20, count: 13)\n        ske-usbd-3454    [001] ...1.   165.148775: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [001] d..1.   165.148813: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [001] ...1.   165.149795: sys_write(fd: b, buf: c090f5642c20, count: 13)\n        ske-usbd-3454    [000] ...1.   165.175945: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [000] d..1.   165.175967: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [000] ...1.   165.176910: sys_write(fd: b, buf: c090f5642c20, count: 13)\n        ske-usbd-3454    [000] ...1.   165.213498: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [000] d..1.   165.213528: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [000] ...1.   165.214567: sys_write(fd: b, buf: c090f5642c20, count: 13)\n"
+    },
+    {
+      "cycle": 2,
+      "attempt": 0,
+      "before": {
+        "tid": 3454,
+        "tgid": 3435,
+        "fd": 11,
+        "bytes": 19,
+        "buffer": "0xc090f5642c80",
+        "syscall": "64 0xb 0xc090f5642c80 0x13 0x0 0x0 0xc090f5640a20 0xe87d8fffe5f0 0xe87d963c1e4c",
+        "wchan": "ffs_epfile_io"
+      },
+      "after": {
+        "tid": 3454,
+        "tgid": 3435,
+        "fd": 11,
+        "bytes": 19,
+        "buffer": "0xc090f5642c80",
+        "syscall": "64 0xb 0xc090f5642c80 0x13 0x0 0x0 0xc090f5640a20 0xe87d8fffe5f0 0xe87d963c1e4c",
+        "wchan": "ffs_epfile_io"
+      },
+      "actual_kernel_write_errno": 4,
+      "signal": 10,
+      "actual_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 3/3   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-3454    [000] ...1.   166.302217: sys_write(fd: b, buf: c090f5642c80, count: 13)\n        ske-usbd-3454    [001] ...1.   166.355676: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [001] d..1.   166.355707: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n"
+    },
+    {
+      "cycle": 2,
+      "attempt": 1,
+      "before": {
+        "tid": 3454,
+        "tgid": 3435,
+        "fd": 11,
+        "bytes": 19,
+        "buffer": "0xc090f5642c80",
+        "syscall": "64 0xb 0xc090f5642c80 0x13 0x0 0x0 0xc090f5640a20 0xe87d8fffe5f0 0xe87d963c1e4c",
+        "wchan": "ffs_epfile_io"
+      },
+      "after": {
+        "tid": 3454,
+        "tgid": 3435,
+        "fd": 11,
+        "bytes": 19,
+        "buffer": "0xc090f5642c80",
+        "syscall": "64 0xb 0xc090f5642c80 0x13 0x0 0x0 0xc090f5640a20 0xe87d8fffe5f0 0xe87d963c1e4c",
+        "wchan": "ffs_epfile_io"
+      },
+      "actual_kernel_write_errno": 4,
+      "signal": 10,
+      "actual_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 4/4   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-3454    [000] ...1.   166.302217: sys_write(fd: b, buf: c090f5642c80, count: 13)\n        ske-usbd-3454    [001] ...1.   166.355676: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [001] d..1.   166.355707: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [001] ...1.   166.357319: sys_write(fd: b, buf: c090f5642c80, count: 13)\n        ske-usbd-3454    [001] ...1.   166.383918: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [001] d..1.   166.355733: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n"
+    },
+    {
+      "cycle": 2,
+      "attempt": 2,
+      "before": {
+        "tid": 3454,
+        "tgid": 3435,
+        "fd": 11,
+        "bytes": 19,
+        "buffer": "0xc090f5642c80",
+        "syscall": "64 0xb 0xc090f5642c80 0x13 0x0 0x0 0xc090f5640a20 0xe87d8fffe5f0 0xe87d963c1e4c",
+        "wchan": "ffs_epfile_io"
+      },
+      "after": {
+        "tid": 3454,
+        "tgid": 3435,
+        "fd": 11,
+        "bytes": 19,
+        "buffer": "0xc090f5642c80",
+        "syscall": "64 0xb 0xc090f5642c80 0x13 0x0 0x0 0xc090f5640a20 0xe87d8fffe5f0 0xe87d963c1e4c",
+        "wchan": "ffs_epfile_io"
+      },
+      "actual_kernel_write_errno": 4,
+      "signal": 10,
+      "actual_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 10/10   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-3454    [000] ...1.   166.302217: sys_write(fd: b, buf: c090f5642c80, count: 13)\n        ske-usbd-3454    [001] ...1.   166.355676: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [001] d..1.   166.355707: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [001] ...1.   166.357319: sys_write(fd: b, buf: c090f5642c80, count: 13)\n        ske-usbd-3454    [001] ...1.   166.385529: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [001] d..1.   166.385555: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [001] ...1.   166.386583: sys_write(fd: b, buf: c090f5642c80, count: 13)\n        ske-usbd-3454    [001] ...1.   166.411934: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [001] d..1.   166.411966: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [001] ...1.   166.413129: sys_write(fd: b, buf: c090f5642c80, count: 13)\n"
+    },
+    {
+      "cycle": "zlp",
+      "attempt": 0,
+      "before": {
+        "tid": 3454,
+        "tgid": 3435,
+        "fd": 11,
+        "bytes": 0,
+        "buffer": "0x0",
+        "syscall": "64 0xb 0x0 0x0 0x0 0x0 0xc090f5640a20 0xe87d8fffe5f0 0xe87d963c1e4c",
+        "wchan": "ffs_epfile_io"
+      },
+      "after": {
+        "tid": 3454,
+        "tgid": 3435,
+        "fd": 11,
+        "bytes": 0,
+        "buffer": "0x0",
+        "syscall": "64 0xb 0x0 0x0 0x0 0x0 0xc090f5640a20 0xe87d8fffe5f0 0xe87d963c1e4c",
+        "wchan": "ffs_epfile_io"
+      },
+      "actual_kernel_write_errno": 4,
+      "signal": 10,
+      "actual_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 6/6   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-3454    [000] ...1.   167.599652: sys_write(fd: b, buf: e87d80000ce0, count: 40)\n        ske-usbd-3454    [000] ...1.   167.600962: sys_write -> 0x40\n        ske-usbd-3454    [000] ...1.   167.601041: sys_write(fd: b, buf: 0, count: 0)\n        ske-usbd-3454    [000] ...1.   167.641515: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [000] d..1.   167.641538: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [000] ...1.   167.642618: sys_write(fd: b, buf: 0, count: 0)\n"
+    },
+    {
+      "cycle": "zlp",
+      "attempt": 1,
+      "before": {
+        "tid": 3454,
+        "tgid": 3435,
+        "fd": 11,
+        "bytes": 0,
+        "buffer": "0x0",
+        "syscall": "64 0xb 0x0 0x0 0x0 0x0 0xc090f5640a20 0xe87d8fffe5f0 0xe87d963c1e4c",
+        "wchan": "ffs_epfile_io"
+      },
+      "after": {
+        "tid": 3454,
+        "tgid": 3435,
+        "fd": 11,
+        "bytes": 0,
+        "buffer": "0x0",
+        "syscall": "64 0xb 0x0 0x0 0x0 0x0 0xc090f5640a20 0xe87d8fffe5f0 0xe87d963c1e4c",
+        "wchan": "ffs_epfile_io"
+      },
+      "actual_kernel_write_errno": 4,
+      "signal": 10,
+      "actual_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 8/8   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-3454    [000] ...1.   167.599652: sys_write(fd: b, buf: e87d80000ce0, count: 40)\n        ske-usbd-3454    [000] ...1.   167.600962: sys_write -> 0x40\n        ske-usbd-3454    [000] ...1.   167.601041: sys_write(fd: b, buf: 0, count: 0)\n        ske-usbd-3454    [000] ...1.   167.641515: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [000] d..1.   167.641538: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [000] ...1.   167.642618: sys_write(fd: b, buf: 0, count: 0)\n        ske-usbd-3454    [000] ...1.   167.668951: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [000] d..1.   167.668982: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n"
+    },
+    {
+      "cycle": "zlp",
+      "attempt": 2,
+      "before": {
+        "tid": 3454,
+        "tgid": 3435,
+        "fd": 11,
+        "bytes": 0,
+        "buffer": "0x0",
+        "syscall": "64 0xb 0x0 0x0 0x0 0x0 0xc090f5640a20 0xe87d8fffe5f0 0xe87d963c1e4c",
+        "wchan": "ffs_epfile_io"
+      },
+      "after": {
+        "tid": 3454,
+        "tgid": 3435,
+        "fd": 11,
+        "bytes": 0,
+        "buffer": "0x0",
+        "syscall": "64 0xb 0x0 0x0 0x0 0x0 0xc090f5640a20 0xe87d8fffe5f0 0xe87d963c1e4c",
+        "wchan": "ffs_epfile_io"
+      },
+      "actual_kernel_write_errno": 4,
+      "signal": 10,
+      "actual_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 12/12   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-3454    [000] ...1.   167.599652: sys_write(fd: b, buf: e87d80000ce0, count: 40)\n        ske-usbd-3454    [000] ...1.   167.600962: sys_write -> 0x40\n        ske-usbd-3454    [000] ...1.   167.601041: sys_write(fd: b, buf: 0, count: 0)\n        ske-usbd-3454    [000] ...1.   167.641515: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [000] d..1.   167.641538: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [000] ...1.   167.642618: sys_write(fd: b, buf: 0, count: 0)\n        ske-usbd-3454    [000] ...1.   167.668951: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [000] d..1.   167.668982: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [000] ...1.   167.670318: sys_write(fd: b, buf: 0, count: 0)\n        ske-usbd-3454    [000] ...1.   167.695198: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [000] d..1.   167.695222: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [000] ...1.   167.696296: sys_write(fd: b, buf: 0, count: 0)\n"
+    }
+  ],
+  "cycles": [
+    {
+      "index": 0,
+      "sequence": 4,
+      "counter_before": 0,
+      "counter_after": 1,
+      "same_three_services": true,
+      "before_usb": {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "3627769880",
+        "vid": 4176,
+        "pid": 1031,
+        "address": 23,
+        "host_visible_configuration_descriptor_hex": "09029600030100800f090400000103010100092110010001224a000705810308000a090401000203000000092110010001222200070504034000020705840340000209040200030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+        "classes": [
+          3,
+          3,
+          11
+        ],
+        "host_visible_endpoint_addresses": [
+          129,
+          4,
+          132,
+          2,
+          130,
+          131
+        ]
+      },
+      "after_usb": {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "3627769880",
+        "vid": 4176,
+        "pid": 1031,
+        "address": 23,
+        "host_visible_configuration_descriptor_hex": "09029600030100800f090400000103010100092110010001224a000705810308000a090401000203000000092110010001222200070504034000020705840340000209040200030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+        "classes": [
+          3,
+          3,
+          11
+        ],
+        "host_visible_endpoint_addresses": [
+          129,
+          4,
+          132,
+          2,
+          130,
+          131
+        ]
+      },
+      "actual_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 10/10   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-3454    [001] ...1.   163.898164: sys_write(fd: b, buf: c090f56428e0, count: 13)\n        ske-usbd-3454    [000] ...1.   163.960927: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [000] d..1.   163.961025: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [000] ...1.   163.962259: sys_write(fd: b, buf: c090f56428e0, count: 13)\n        ske-usbd-3454    [000] ...1.   163.989746: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [000] d..1.   163.989770: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [000] ...1.   163.990635: sys_write(fd: b, buf: c090f56428e0, count: 13)\n        ske-usbd-3454    [000] ...1.   164.017910: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [000] d..1.   164.017938: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [000] ...1.   164.018902: sys_write(fd: b, buf: c090f56428e0, count: 13)\n",
+      "independent_hotp_verified": true,
+      "following_sdk_no_stale_response_verified": true,
+      "original_write_entry_before_signal": "        ske-usbd-3454    [001] ...1.   163.898164: sys_write(fd: b, buf: c090f56428e0, count: 13)"
+    },
+    {
+      "index": 1,
+      "sequence": 6,
+      "counter_before": 1,
+      "counter_after": 2,
+      "same_three_services": true,
+      "before_usb": {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "3627769880",
+        "vid": 4176,
+        "pid": 1031,
+        "address": 23,
+        "host_visible_configuration_descriptor_hex": "09029600030100800f090400000103010100092110010001224a000705810308000a090401000203000000092110010001222200070504034000020705840340000209040200030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+        "classes": [
+          3,
+          3,
+          11
+        ],
+        "host_visible_endpoint_addresses": [
+          129,
+          4,
+          132,
+          2,
+          130,
+          131
+        ]
+      },
+      "after_usb": {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "3627769880",
+        "vid": 4176,
+        "pid": 1031,
+        "address": 23,
+        "host_visible_configuration_descriptor_hex": "09029600030100800f090400000103010100092110010001224a000705810308000a090401000203000000092110010001222200070504034000020705840340000209040200030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+        "classes": [
+          3,
+          3,
+          11
+        ],
+        "host_visible_endpoint_addresses": [
+          129,
+          4,
+          132,
+          2,
+          130,
+          131
+        ]
+      },
+      "actual_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 10/10   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-3454    [001] ...1.   165.090110: sys_write(fd: b, buf: c090f5642c20, count: 13)\n        ske-usbd-3454    [001] ...1.   165.148775: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [001] d..1.   165.148813: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [001] ...1.   165.149795: sys_write(fd: b, buf: c090f5642c20, count: 13)\n        ske-usbd-3454    [000] ...1.   165.175945: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [000] d..1.   165.175967: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [000] ...1.   165.176910: sys_write(fd: b, buf: c090f5642c20, count: 13)\n        ske-usbd-3454    [000] ...1.   165.213498: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [000] d..1.   165.213528: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [000] ...1.   165.214567: sys_write(fd: b, buf: c090f5642c20, count: 13)\n",
+      "independent_hotp_verified": true,
+      "following_sdk_no_stale_response_verified": true,
+      "original_write_entry_before_signal": "        ske-usbd-3454    [001] ...1.   165.090110: sys_write(fd: b, buf: c090f5642c20, count: 13)"
+    },
+    {
+      "index": 2,
+      "sequence": 8,
+      "counter_before": 2,
+      "counter_after": 3,
+      "same_three_services": true,
+      "before_usb": {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "3627769880",
+        "vid": 4176,
+        "pid": 1031,
+        "address": 23,
+        "host_visible_configuration_descriptor_hex": "09029600030100800f090400000103010100092110010001224a000705810308000a090401000203000000092110010001222200070504034000020705840340000209040200030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+        "classes": [
+          3,
+          3,
+          11
+        ],
+        "host_visible_endpoint_addresses": [
+          129,
+          4,
+          132,
+          2,
+          130,
+          131
+        ]
+      },
+      "after_usb": {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "3627769880",
+        "vid": 4176,
+        "pid": 1031,
+        "address": 23,
+        "host_visible_configuration_descriptor_hex": "09029600030100800f090400000103010100092110010001224a000705810308000a090401000203000000092110010001222200070504034000020705840340000209040200030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+        "classes": [
+          3,
+          3,
+          11
+        ],
+        "host_visible_endpoint_addresses": [
+          129,
+          4,
+          132,
+          2,
+          130,
+          131
+        ]
+      },
+      "actual_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 10/10   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-3454    [000] ...1.   166.302217: sys_write(fd: b, buf: c090f5642c80, count: 13)\n        ske-usbd-3454    [001] ...1.   166.355676: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [001] d..1.   166.355707: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [001] ...1.   166.357319: sys_write(fd: b, buf: c090f5642c80, count: 13)\n        ske-usbd-3454    [001] ...1.   166.385529: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [001] d..1.   166.385555: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [001] ...1.   166.386583: sys_write(fd: b, buf: c090f5642c80, count: 13)\n        ske-usbd-3454    [001] ...1.   166.411934: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [001] d..1.   166.411966: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [001] ...1.   166.413129: sys_write(fd: b, buf: c090f5642c80, count: 13)\n",
+      "independent_hotp_verified": true,
+      "following_sdk_no_stale_response_verified": true,
+      "original_write_entry_before_signal": "        ske-usbd-3454    [000] ...1.   166.302217: sys_write(fd: b, buf: c090f5642c80, count: 13)"
+    }
+  ],
+  "assertions": [
+    {
+      "phase": "initial",
+      "signature_verified": true,
+      "user_verified": true,
+      "user_handle_verified": true,
+      "rp_id_hash_verified": true,
+      "counter": 2,
+      "pin_uv_protocol": 2,
+      "challenge_sha256": "6169e379391ec7f29f271df5d7e7562c5df43a0aef0ae912a5b1740d60550b4b",
+      "credential_sha256": "4a159c1f7f36cbedbbaa5fb93edbc8971a05278531043aab4400b698cf84eb07"
+    },
+    {
+      "phase": "interrupt-0",
+      "signature_verified": true,
+      "user_verified": true,
+      "user_handle_verified": true,
+      "rp_id_hash_verified": true,
+      "counter": 3,
+      "pin_uv_protocol": 2,
+      "challenge_sha256": "01fd5bc30fa4b113d73636c9ea417628e32f8451b71d4feffa9ab9c02eb9e2d8",
+      "credential_sha256": "4a159c1f7f36cbedbbaa5fb93edbc8971a05278531043aab4400b698cf84eb07"
+    },
+    {
+      "phase": "interrupt-1",
+      "signature_verified": true,
+      "user_verified": true,
+      "user_handle_verified": true,
+      "rp_id_hash_verified": true,
+      "counter": 4,
+      "pin_uv_protocol": 2,
+      "challenge_sha256": "5f3c02b520ecb2dd221f49f33fb65ae77632b9c4ab648e24a3e9a40b8420bd86",
+      "credential_sha256": "4a159c1f7f36cbedbbaa5fb93edbc8971a05278531043aab4400b698cf84eb07"
+    },
+    {
+      "phase": "interrupt-2",
+      "signature_verified": true,
+      "user_verified": true,
+      "user_handle_verified": true,
+      "rp_id_hash_verified": true,
+      "counter": 5,
+      "pin_uv_protocol": 2,
+      "challenge_sha256": "8874d72ee1fa6107c86f1cb770b2ca2203d986fb461d3fa40ff171eb03cec008",
+      "credential_sha256": "4a159c1f7f36cbedbbaa5fb93edbc8971a05278531043aab4400b698cf84eb07"
+    },
+    {
+      "phase": "zlp-interrupt",
+      "signature_verified": true,
+      "user_verified": true,
+      "user_handle_verified": true,
+      "rp_id_hash_verified": true,
+      "counter": 6,
+      "pin_uv_protocol": 2,
+      "challenge_sha256": "540109bc1269f66390ce769623f09cb0e6e916b09616f7d00d5c9fd1523a6f07",
+      "credential_sha256": "4a159c1f7f36cbedbbaa5fb93edbc8971a05278531043aab4400b698cf84eb07"
+    }
+  ],
+  "scope": "actual same-generation queued FunctionFS CCID IN interruption in isolated ARM64 guest",
+  "physical_device_access": false,
+  "host_device_passthrough": false,
+  "manufacturer_trust_reproduced": false,
+  "native_macos_registration_verified": false,
+  "production_hardware_udcs_verified": false,
+  "physical_touch_verified": false,
+  "card_testing_auto_allow": false,
+  "fido_presence_auto_approved_only_for_owned_fixture": true,
+  "observed_version": "swpasskeyd 0.42.0",
+  "emulator_binary_sha256": "4a34289e3d8a6eb2e3dbde984ce5433b78b12aa8f419ac7a198ca843d562ba7a",
+  "usb_bridge_binary_sha256": "04a9702cc19d7cb85735d0fd113b9390d65ca465bc10e5dd48954de52ed78099",
+  "write_exit_format": "name: sys_exit_write\nID: 671\nformat:\n\tfield:unsigned short common_type;\toffset:0;\tsize:2;\tsigned:0;\n\tfield:unsigned char common_flags;\toffset:2;\tsize:1;\tsigned:0;\n\tfield:unsigned char common_preempt_count;\toffset:3;\tsize:1;\tsigned:0;\n\tfield:int common_pid;\toffset:4;\tsize:4;\tsigned:1;\n\n\tfield:int __syscall_nr;\toffset:8;\tsize:4;\tsigned:1;\n\tfield:long ret;\toffset:16;\tsize:8;\tsigned:1;\n\nprint fmt: \"0x%lx\", REC->ret\n",
+  "signal_delivery_format": "name: signal_deliver\nID: 135\nformat:\n\tfield:unsigned short common_type;\toffset:0;\tsize:2;\tsigned:0;\n\tfield:unsigned char common_flags;\toffset:2;\tsize:1;\tsigned:0;\n\tfield:unsigned char common_preempt_count;\toffset:3;\tsize:1;\tsigned:0;\n\tfield:int common_pid;\toffset:4;\tsize:4;\tsigned:1;\n\n\tfield:int sig;\toffset:8;\tsize:4;\tsigned:1;\n\tfield:int errno;\toffset:12;\tsize:4;\tsigned:1;\n\tfield:int code;\toffset:16;\tsize:4;\tsigned:1;\n\tfield:unsigned long sa_handler;\toffset:24;\tsize:8;\tsigned:0;\n\tfield:unsigned long sa_flags;\toffset:32;\tsize:8;\tsigned:0;\n\nprint fmt: \"sig=%d errno=%d code=%d sa_handler=%lx sa_flags=%lx\", REC->sig, REC->errno, REC->code, REC->sa_handler, REC->sa_flags\n",
+  "write_entry_format": "name: sys_enter_write\nID: 672\nformat:\n\tfield:unsigned short common_type;\toffset:0;\tsize:2;\tsigned:0;\n\tfield:unsigned char common_flags;\toffset:2;\tsize:1;\tsigned:0;\n\tfield:unsigned char common_preempt_count;\toffset:3;\tsize:1;\tsigned:0;\n\tfield:int common_pid;\toffset:4;\tsize:4;\tsigned:1;\n\n\tfield:int __syscall_nr;\toffset:8;\tsize:4;\tsigned:1;\n\tfield:unsigned int fd;\toffset:16;\tsize:8;\tsigned:0;\n\tfield:const char * buf;\toffset:24;\tsize:8;\tsigned:0;\n\tfield:size_t count;\toffset:32;\tsize:8;\tsigned:0;\n\nprint fmt: \"fd: 0x%08lx, buf: 0x%08lx, count: 0x%08lx\", ((unsigned long)(REC->fd)), ((unsigned long)(REC->buf)), ((unsigned long)(REC->count))\n",
+  "trace_events_armed_before_original_data_and_zlp_write": true,
+  "mode": "full",
+  "counter_at_queued_response": 3,
+  "selected_worker": {
+    "tid": 3454,
+    "tgid": 3435,
+    "fd": 11,
+    "bytes": 19,
+    "buffer": "0xc090f5642c80",
+    "syscall": "64 0xb 0xc090f5642c80 0x13 0x0 0x0 0xc090f5640a20 0xe87d8fffe5f0 0xe87d963c1e4c",
+    "wchan": "ffs_epfile_io"
+  },
+  "last_actual_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 12/12   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-3454    [000] ...1.   167.599652: sys_write(fd: b, buf: e87d80000ce0, count: 40)\n        ske-usbd-3454    [000] ...1.   167.600962: sys_write -> 0x40\n        ske-usbd-3454    [000] ...1.   167.601041: sys_write(fd: b, buf: 0, count: 0)\n        ske-usbd-3454    [000] ...1.   167.641515: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [000] d..1.   167.641538: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [000] ...1.   167.642618: sys_write(fd: b, buf: 0, count: 0)\n        ske-usbd-3454    [000] ...1.   167.668951: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [000] d..1.   167.668982: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [000] ...1.   167.670318: sys_write(fd: b, buf: 0, count: 0)\n        ske-usbd-3454    [000] ...1.   167.695198: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [000] d..1.   167.695222: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [000] ...1.   167.696296: sys_write(fd: b, buf: 0, count: 0)\n",
+  "zlp": {
+    "sequence": 17,
+    "data_packet_bytes": 64,
+    "object_payload_bytes": 50,
+    "zero_length_terminator_bytes": 0,
+    "same_three_services": true,
+    "before_usb": {
+      "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+      "serial": "3627769880",
+      "vid": 4176,
+      "pid": 1031,
+      "address": 23,
+      "host_visible_configuration_descriptor_hex": "09029600030100800f090400000103010100092110010001224a000705810308000a090401000203000000092110010001222200070504034000020705840340000209040200030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+      "classes": [
+        3,
+        3,
+        11
+      ],
+      "host_visible_endpoint_addresses": [
+        129,
+        4,
+        132,
+        2,
+        130,
+        131
+      ]
+    },
+    "after_usb": {
+      "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+      "serial": "3627769880",
+      "vid": 4176,
+      "pid": 1031,
+      "address": 23,
+      "host_visible_configuration_descriptor_hex": "09029600030100800f090400000103010100092110010001224a000705810308000a090401000203000000092110010001222200070504034000020705840340000209040200030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+      "classes": [
+        3,
+        3,
+        11
+      ],
+      "host_visible_endpoint_addresses": [
+        129,
+        4,
+        132,
+        2,
+        130,
+        131
+      ]
+    },
+    "actual_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 12/12   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-3454    [000] ...1.   167.599652: sys_write(fd: b, buf: e87d80000ce0, count: 40)\n        ske-usbd-3454    [000] ...1.   167.600962: sys_write -> 0x40\n        ske-usbd-3454    [000] ...1.   167.601041: sys_write(fd: b, buf: 0, count: 0)\n        ske-usbd-3454    [000] ...1.   167.641515: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [000] d..1.   167.641538: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [000] ...1.   167.642618: sys_write(fd: b, buf: 0, count: 0)\n        ske-usbd-3454    [000] ...1.   167.668951: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [000] d..1.   167.668982: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [000] ...1.   167.670318: sys_write(fd: b, buf: 0, count: 0)\n        ske-usbd-3454    [000] ...1.   167.695198: sys_write -> 0xfffffffffffffffc\n        ske-usbd-3454    [000] d..1.   167.695222: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c090e6446d44 sa_flags=0\n        ske-usbd-3454    [000] ...1.   167.696296: sys_write(fd: b, buf: 0, count: 0)\n",
+    "independent_original_object_bytes_verified": true,
+    "only_zero_length_retried_without_duplicate_data": true,
+    "following_native_sdk_no_stale_response_verified": true,
+    "counter_before": 3,
+    "counter_after": 3,
+    "exact_ciphertext_unchanged_during_interruptions": true,
+    "original_write_entry_before_signal": "        ske-usbd-3454    [000] ...1.   167.601041: sys_write(fd: b, buf: 0, count: 0)",
+    "following_sdk_persistent_plaintext_unchanged": true,
+    "following_sdk_read_transaction_reencrypts_unchanged_plaintext": true
+  },
+  "helper_sha256": {
+    "verify-usb-interrupt.py": "424655ccb9f5164a9d8440643ae866a3165473420f0734866214f0ed07dced10",
+    "verify-usb-state.py": "6e76e28d905bcbe4d397bb42741c508746cdd2bdcff551e53781bfe13d348098",
+    "usb-state-pending.py": "f2605f2e7b7c0993b0570deb03ac4a3e6c5ce5f9ff31ffb85c3e9d48f9ff0fd0"
+  },
+  "card_service_sha256": "f68038ad664fcc4756535ffe85fdd1460048cf6bb9ecfba5fbb2a67ab7187687",
+  "controller": {
+    "base_source_url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/drivers/usb/gadget/udc/dummy_hcd.c",
+    "base_source_sha256": "6892efeaca7d13e0f8ba172fac6b9607f9ac5c60de1a5f1812a57eb7998fd993",
+    "source_license": "GPL",
+    "optional_parameter": "requested_ep_addresses",
+    "default_enabled": false,
+    "files": {
+      "dummy_hcd.c": "7ebdac59d1bee99d6acb4e811171c10d32618d3915d8b0ccdad43fe9d7a72918",
+      "dummy_hcd-addresses.patch": "16df2045ea6229954b57441894cf009a9fbf40b5ed0ec5e7e5c31685729fafcc",
+      "dummy_hcd.ko": "5e8481736a6dccd4788ff3fb07f06b8704dcf4a0a02a95888c310a3f594eb86a"
+    },
+    "requested_ep_addresses_enabled": true
+  },
+  "service_pids": [
+    3435,
+    3420,
+    3417
+  ],
+  "actual_native_ccid_in_eintr_recovery_verified": true,
+  "actual_native_fido_isolation_verified": true,
+  "same_usb_generation_retained": true,
+  "actual_native_bulk_zlp_eintr_recovery_verified": true,
+  "card_log": "",
+  "bridge_log": "uest=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\n",
+  "test_count": 113
+}

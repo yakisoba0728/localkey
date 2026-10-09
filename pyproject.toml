@@ -1,0 +1,11 @@
+[project]
+name = "local-security-key-emulator"
+version = "0.31.0"
+requires-python = ">=3.12"
+dependencies = [
+  "cryptography==50.0.2",
+  "fido2==2.2.1",
+  "yubikey-manager==5.9.2",
+  "yubihsm==3.1.2",
+  "playwright==1.63.0",
+]

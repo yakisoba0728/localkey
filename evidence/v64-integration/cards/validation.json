@@ -1,0 +1,217 @@
+{
+  "passed": true,
+  "subject": "v64 merged-stage card Python integration",
+  "stage_root": "/Users/yakisoba0728/Documents/Codex/2026-10-07/new-chat/work/security-key-emulator-v64-staging/security-key-emulator",
+  "focused_reports": [
+    {
+      "name": "hsmauth-mac-socket",
+      "result": "results/hsmauth-mac-socket.json",
+      "result_sha256": "6cb4a86a1150fb61a78b2ad569c0c18de43756dd087a96e400599f207a02531e",
+      "raw_log": "logs/hsmauth-mac-socket.log",
+      "raw_log_sha256": "6cb4a86a1150fb61a78b2ad569c0c18de43756dd087a96e400599f207a02531e"
+    },
+    {
+      "name": "hsmauth-mac-ifd",
+      "result": "results/hsmauth-mac-ifd.json",
+      "result_sha256": "73b146fe500e7fd57bed3be387c67c664c9dddb0c37cb90e4e794933ed405b44",
+      "raw_log": "logs/hsmauth-mac-ifd.log",
+      "raw_log_sha256": "73b146fe500e7fd57bed3be387c67c664c9dddb0c37cb90e4e794933ed405b44"
+    },
+    {
+      "name": "hsmauth-linux-socket",
+      "result": "results/hsmauth-linux-socket.json",
+      "result_sha256": "cae880b4fb02312eb396ed2578b6740d4373e98b0827ef675ff09283ca59d085",
+      "raw_log": "logs/hsmauth-linux-socket.log",
+      "raw_log_sha256": "cae880b4fb02312eb396ed2578b6740d4373e98b0827ef675ff09283ca59d085"
+    },
+    {
+      "name": "hsmauth-linux-ifd",
+      "result": "results/hsmauth-linux-ifd.json",
+      "result_sha256": "78cf0101224a3289c9e68e314d63b3593312ce5dd83b1ad90f42b987ed70d6f7",
+      "raw_log": "logs/hsmauth-linux-ifd.log",
+      "raw_log_sha256": "78cf0101224a3289c9e68e314d63b3593312ce5dd83b1ad90f42b987ed70d6f7"
+    },
+    {
+      "name": "scp03-mac-socket",
+      "result": "results/scp03-mac-socket.json",
+      "result_sha256": "559583764ee31a6e89d24fe47a51d0309901a93f6b8b0a79094658d5df671cf3",
+      "raw_log": "logs/scp03-mac-socket.log",
+      "raw_log_sha256": "de19c3c48e6e5f5e3889429f2e2897d26c92deedd3e06a58be61e802bfaa513d"
+    },
+    {
+      "name": "scp03-mac-ifd",
+      "result": "results/scp03-mac-ifd.json",
+      "result_sha256": "749359b06b23638c427c77ae69fa8a38fa6067dcf14d6e82d19f569ea5058f86",
+      "raw_log": "logs/scp03-mac-ifd.log",
+      "raw_log_sha256": "7332e12121b7df5f40a38aa58798625d6b05fc93ebe0e29267c09edf6d8c4854"
+    },
+    {
+      "name": "scp03-linux-socket",
+      "result": "results/scp03-linux-socket.json",
+      "result_sha256": "559583764ee31a6e89d24fe47a51d0309901a93f6b8b0a79094658d5df671cf3",
+      "raw_log": "logs/scp03-linux-socket.log",
+      "raw_log_sha256": "de19c3c48e6e5f5e3889429f2e2897d26c92deedd3e06a58be61e802bfaa513d"
+    },
+    {
+      "name": "scp03-linux-ifd",
+      "result": "results/scp03-linux-ifd.json",
+      "result_sha256": "749359b06b23638c427c77ae69fa8a38fa6067dcf14d6e82d19f569ea5058f86",
+      "raw_log": "logs/scp03-linux-ifd.log",
+      "raw_log_sha256": "7332e12121b7df5f40a38aa58798625d6b05fc93ebe0e29267c09edf6d8c4854"
+    },
+    {
+      "name": "piv-le-mac-socket",
+      "result": "results/piv-le-mac-socket.json",
+      "result_sha256": "61de2d78e9410349cff48ff3c774a73ee27628c8279c12ee01fee0eb39d80ac0",
+      "raw_log": "logs/piv-le-mac-socket.log",
+      "raw_log_sha256": "406847d86b4cd8a1457d6f831e34bfad1982a1a510eae0b5be9f18e01eb57461"
+    },
+    {
+      "name": "piv-le-mac-ifd",
+      "result": "results/piv-le-mac-ifd.json",
+      "result_sha256": "da6c455377a5f8706bd31c46fc06b93e3df520d8aa4d0277291d539d8258d83c",
+      "raw_log": "logs/piv-le-mac-ifd.log",
+      "raw_log_sha256": "e22a713664c944cb08be3b5f674393843582b6b94ddc4fa1001f2af87e083ac3"
+    },
+    {
+      "name": "piv-le-linux-socket",
+      "result": "results/piv-le-linux-socket.json",
+      "result_sha256": "61de2d78e9410349cff48ff3c774a73ee27628c8279c12ee01fee0eb39d80ac0",
+      "raw_log": "logs/piv-le-linux-socket.log",
+      "raw_log_sha256": "406847d86b4cd8a1457d6f831e34bfad1982a1a510eae0b5be9f18e01eb57461"
+    },
+    {
+      "name": "piv-le-linux-ifd",
+      "result": "results/piv-le-linux-ifd.json",
+      "result_sha256": "da6c455377a5f8706bd31c46fc06b93e3df520d8aa4d0277291d539d8258d83c",
+      "raw_log": "logs/piv-le-linux-ifd.log",
+      "raw_log_sha256": "e22a713664c944cb08be3b5f674393843582b6b94ddc4fa1001f2af87e083ac3"
+    }
+  ],
+  "focused_passed": 12,
+  "smartcard_regressions": [
+    {
+      "name": "smartcard-mac-socket",
+      "checks": 97,
+      "result": "results/smartcard-mac-socket.json",
+      "result_sha256": "5180e7168bf239d59ed9e6199aa5db0a1805aba2c896fe46a319ca8a7a6acec6",
+      "raw_log": "logs/smartcard-mac-socket.log",
+      "raw_log_sha256": "a8d5cd5c10b3925c2024d4fc8811fdd856245fd45ef6a9429017802f90931934"
+    },
+    {
+      "name": "smartcard-mac-ifd",
+      "checks": 97,
+      "result": "results/smartcard-mac-ifd.json",
+      "result_sha256": "82155fea2481aeeb11602bc91b6898c7e89df0b39084a7f15edb606ccc6810d1",
+      "raw_log": "logs/smartcard-mac-ifd.log",
+      "raw_log_sha256": "a8d5cd5c10b3925c2024d4fc8811fdd856245fd45ef6a9429017802f90931934"
+    },
+    {
+      "name": "smartcard-linux-socket",
+      "checks": 97,
+      "result": "results/smartcard-linux-socket.json",
+      "result_sha256": "5180e7168bf239d59ed9e6199aa5db0a1805aba2c896fe46a319ca8a7a6acec6",
+      "raw_log": "logs/smartcard-linux-socket.log",
+      "raw_log_sha256": "a8d5cd5c10b3925c2024d4fc8811fdd856245fd45ef6a9429017802f90931934"
+    },
+    {
+      "name": "smartcard-linux-ifd",
+      "checks": 97,
+      "result": "results/smartcard-linux-ifd.json",
+      "result_sha256": "82155fea2481aeeb11602bc91b6898c7e89df0b39084a7f15edb606ccc6810d1",
+      "raw_log": "logs/smartcard-linux-ifd.log",
+      "raw_log_sha256": "a8d5cd5c10b3925c2024d4fc8811fdd856245fd45ef6a9429017802f90931934"
+    }
+  ],
+  "smartcard_checks_passed": 388,
+  "probe_source_sha256": {
+    "hsmauth_portable": "f19d4c9250f75c7020a4fb920d289e66b64d1564a9c07afd1e67cc3fa27d9b57",
+    "scp03": "ee169c00ff87a55df890a6623344964bfa47c9c4bb82bb7a23039fc2f996ec7e",
+    "piv_le": "10f550fed69ae0ae28cc52c56cb59cd5586690dc0e8e7cac2e6dd252928f7c2f"
+  },
+  "mac_transport": "private CCID Unix socket/direct IFD ABI",
+  "linux_container_image": "ske-v58-otp-test:local",
+  "linux_network": "none",
+  "linux_capabilities": "dropped ALL",
+  "physical_key_host_pcsc_usb_hid_keyboard_keychain_access": false,
+  "current_staged_binaries_rebuild_waiting": false,
+  "exact_physical_firmware_5_7_4_equivalence_verified": false,
+  "stage_sha256_initial_pre_rebuild": {
+    "emucard/core.py": "29a132b08225043620c95142a5ebc40e6a212969f432f3a0e641f6c30730042d",
+    "emucard/secure_channel.py": "40cd0713d623722b418d3d67ca20025eb33d4da15583df8058545c25e5b82073",
+    "emucard/piv_objects.py": "b3c656f90d3f5ba5aeb7129529a4e2f0a86887e8a2ece2837e67e715e568d0ba",
+    "bin/macos-arm64/ifd-ske.bundle/Contents/MacOS/ske-ifd.dylib": "b99e2d71658954664bc5e1e203249aa7085407bf9edecf3f77df493ce556d267",
+    "bin/linux-arm64/ifd-ske.bundle/Contents/Linux/ske-ifd.so": "1412bb9fb2c0b10a63bbbf4885f6a4f6b959d378d40704e760673f487f2fd554"
+  },
+  "stage_sha256_rebuilt": {
+    "emucard/core.py": "29a132b08225043620c95142a5ebc40e6a212969f432f3a0e641f6c30730042d",
+    "emucard/secure_channel.py": "40cd0713d623722b418d3d67ca20025eb33d4da15583df8058545c25e5b82073",
+    "emucard/piv_objects.py": "b3c656f90d3f5ba5aeb7129529a4e2f0a86887e8a2ece2837e67e715e568d0ba",
+    "bin/macos-arm64/ifd-ske.bundle/Contents/MacOS/ske-ifd.dylib": "9185c64187b5fc8c6b8440b766480558c7f4b40086b1f09f97ac7d4de5fa6d01",
+    "bin/linux-arm64/ifd-ske.bundle/Contents/Linux/ske-ifd.so": "0c64e9c59144a7c0a287110e8f91d9f14b9509571a36feecbde35924d8c50219"
+  },
+  "rebuilt_ifd_focused_reports": [
+    {
+      "name": "rebuilt-hsmauth-mac-ifd",
+      "result": "results/rebuilt-hsmauth-mac-ifd.json",
+      "result_sha256": "73b146fe500e7fd57bed3be387c67c664c9dddb0c37cb90e4e794933ed405b44",
+      "raw_log": "logs/rebuilt-hsmauth-mac-ifd.log",
+      "raw_log_sha256": "73b146fe500e7fd57bed3be387c67c664c9dddb0c37cb90e4e794933ed405b44"
+    },
+    {
+      "name": "rebuilt-hsmauth-linux-ifd",
+      "result": "results/rebuilt-hsmauth-linux-ifd.json",
+      "result_sha256": "78cf0101224a3289c9e68e314d63b3593312ce5dd83b1ad90f42b987ed70d6f7",
+      "raw_log": "logs/rebuilt-hsmauth-linux-ifd.log",
+      "raw_log_sha256": "78cf0101224a3289c9e68e314d63b3593312ce5dd83b1ad90f42b987ed70d6f7"
+    },
+    {
+      "name": "rebuilt-scp03-mac-ifd",
+      "result": "results/rebuilt-scp03-mac-ifd.json",
+      "result_sha256": "749359b06b23638c427c77ae69fa8a38fa6067dcf14d6e82d19f569ea5058f86",
+      "raw_log": "logs/rebuilt-scp03-mac-ifd.log",
+      "raw_log_sha256": "7332e12121b7df5f40a38aa58798625d6b05fc93ebe0e29267c09edf6d8c4854"
+    },
+    {
+      "name": "rebuilt-scp03-linux-ifd",
+      "result": "results/rebuilt-scp03-linux-ifd.json",
+      "result_sha256": "749359b06b23638c427c77ae69fa8a38fa6067dcf14d6e82d19f569ea5058f86",
+      "raw_log": "logs/rebuilt-scp03-linux-ifd.log",
+      "raw_log_sha256": "7332e12121b7df5f40a38aa58798625d6b05fc93ebe0e29267c09edf6d8c4854"
+    },
+    {
+      "name": "rebuilt-piv-le-mac-ifd",
+      "result": "results/rebuilt-piv-le-mac-ifd.json",
+      "result_sha256": "da6c455377a5f8706bd31c46fc06b93e3df520d8aa4d0277291d539d8258d83c",
+      "raw_log": "logs/rebuilt-piv-le-mac-ifd.log",
+      "raw_log_sha256": "e22a713664c944cb08be3b5f674393843582b6b94ddc4fa1001f2af87e083ac3"
+    },
+    {
+      "name": "rebuilt-piv-le-linux-ifd",
+      "result": "results/rebuilt-piv-le-linux-ifd.json",
+      "result_sha256": "da6c455377a5f8706bd31c46fc06b93e3df520d8aa4d0277291d539d8258d83c",
+      "raw_log": "logs/rebuilt-piv-le-linux-ifd.log",
+      "raw_log_sha256": "e22a713664c944cb08be3b5f674393843582b6b94ddc4fa1001f2af87e083ac3"
+    }
+  ],
+  "rebuilt_ifd_focused_passed": 6,
+  "rebuilt_ifd_smartcard_regressions": [
+    {
+      "name": "rebuilt-smartcard-mac-ifd",
+      "result": "results/rebuilt-smartcard-mac-ifd.json",
+      "result_sha256": "82155fea2481aeeb11602bc91b6898c7e89df0b39084a7f15edb606ccc6810d1",
+      "raw_log": "logs/rebuilt-smartcard-mac-ifd.log",
+      "raw_log_sha256": "a8d5cd5c10b3925c2024d4fc8811fdd856245fd45ef6a9429017802f90931934",
+      "checks": 97
+    },
+    {
+      "name": "rebuilt-smartcard-linux-ifd",
+      "result": "results/rebuilt-smartcard-linux-ifd.json",
+      "result_sha256": "82155fea2481aeeb11602bc91b6898c7e89df0b39084a7f15edb606ccc6810d1",
+      "raw_log": "logs/rebuilt-smartcard-linux-ifd.log",
+      "raw_log_sha256": "a8d5cd5c10b3925c2024d4fc8811fdd856245fd45ef6a9429017802f90931934",
+      "checks": 97
+    }
+  ],
+  "rebuilt_ifd_smartcard_checks_passed": 194
+}

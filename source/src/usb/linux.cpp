@@ -1,0 +1,690 @@
+// Linux FunctionFS/GadgetFS transports for the OTP/FIDO/CCID composite model.
+// The filesystem and USB controller must be prepared by the operator.
+// --wire-test opens only the private software services, no kernel USB device.
+#include "backend.hpp"
+#include <linux/aio_abi.h>
+#include <linux/usb/gadgetfs.h>
+#include <linux/usb/functionfs.h>
+#include <fcntl.h>
+#include <poll.h>
+#include <pthread.h>
+#include <signal.h>
+#include <sys/ioctl.h>
+#include <sys/syscall.h>
+#include <sys/vfs.h>
+
+#include <atomic>
+#include <exception>
+#include <filesystem>
+#include <fstream>
+#include <optional>
+#include <set>
+#include <sstream>
+
+using swpk::usb::Bytes;
+using swpk::usb::Setup;
+using swpk::usb::native::Backend;
+namespace {
+volatile sig_atomic_t stopping = 0;
+void stop_signal(int) { stopping = 1; }
+void interrupt_io(int) {}
+void fail(const std::string& message) {
+  throw std::runtime_error(message + ": " + std::strerror(errno));
+}
+void write_once(int fd, std::span<const std::uint8_t> bytes) {
+  const auto count = ::write(fd, bytes.data(), bytes.size());
+  if (count < 0 || static_cast<std::size_t>(count) != bytes.size()) fail("USB userspace write failed");
+}
+
+// One kernel request per endpoint, on its own thread. All FunctionFS endpoint
+// requests use AIO so interrupted waits cannot abandon a stack-owned transfer
+// or replay data already delivered to the host. Reconfiguration cancels it.
+class Endpoint {
+ public:
+  std::uint8_t address;
+  std::size_t packet_size;
+  bool bulk;
+  Endpoint(const std::filesystem::path& path, std::span<const std::uint8_t> descriptor,
+           bool gadgetfs = true)
+      : address(descriptor[2]), packet_size(descriptor[4] | (std::size_t(descriptor[5]) << 8)),
+        bulk((descriptor[3] & 3) == 2), recover_shutdown_(!gadgetfs) {
+    fd_ = ::open(path.c_str(), O_RDWR | O_CLOEXEC);
+    if (fd_ < 0) fail("Cannot open USB endpoint " + path.filename().string());
+    try {
+      if (gadgetfs) {
+        Bytes config{1,0,0,0};
+        config.insert(config.end(), descriptor.begin(), descriptor.end());
+        write_once(fd_, config);
+      }
+      worker_ = std::thread([this] { run(); });
+    } catch (...) { ::close(fd_); fd_ = -1; throw; }
+  }
+  ~Endpoint() { stop(); }
+  Endpoint(const Endpoint&) = delete;
+  Endpoint& operator=(const Endpoint&) = delete;
+  void stop() {
+    if (fd_ < 0) return;
+    stop_.store(true);
+    wake_.notify_all();
+    // Repeated interruption covers the boundary between the stop flag check
+    // and submission of the next blocking kernel request.
+    while (worker_.joinable() && !done_.load()) {
+      (void)pthread_kill(worker_.native_handle(), SIGUSR1);
+      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+    if (worker_.joinable()) worker_.join();
+    ::close(fd_); fd_ = -1;
+  }
+  bool busy() {
+    std::lock_guard lock(mutex_);
+    if (failure_) std::rethrow_exception(failure_);
+    return active_ || !packets_.empty();
+  }
+  void send(Bytes data) {
+    std::lock_guard lock(mutex_);
+    if (packets_.size() >= 256) throw std::runtime_error("USB endpoint queue overflow");
+    packets_.push_back(std::move(data)); wake_.notify_one();
+  }
+  std::optional<Bytes> receive_one() {
+    std::lock_guard lock(mutex_);
+    if (failure_) std::rethrow_exception(failure_);
+    if (packets_.empty()) return std::nullopt;
+    Bytes result = std::move(packets_.front()); packets_.pop_front();
+    wake_.notify_one();
+    return result;
+  }
+ private:
+  int fd_{-1};
+  std::atomic<bool> stop_{false}, done_{false};
+  std::mutex mutex_;
+  std::condition_variable wake_;
+  std::deque<Bytes> packets_;
+  std::thread worker_;
+  bool active_{false};
+  const bool recover_shutdown_;
+  std::exception_ptr failure_;
+  ssize_t async_transfer(void* buffer, std::size_t size, bool input) {
+    struct Context {
+      aio_context_t value{};
+      ~Context() {
+        // io_destroy cancels outstanding IO and waits for its completion before
+        // the request and data below leave scope. Closing the fd alone would
+        // not give this lifetime guarantee.
+        if (value) while (::syscall(SYS_io_destroy,value) < 0 && errno == EINTR) {}
+      }
+    } context;
+    if (::syscall(SYS_io_setup,1,&context.value) < 0)
+      fail("Cannot create FunctionFS asynchronous request");
+    iocb request{};
+    request.aio_lio_opcode = input ? IOCB_CMD_PWRITE : IOCB_CMD_PREAD;
+    request.aio_fildes = static_cast<std::uint32_t>(fd_);
+    request.aio_buf = reinterpret_cast<std::uintptr_t>(buffer);
+    request.aio_nbytes = size;
+    iocb* submitted[] = {&request};
+    while (!stop_.load()) {
+      const auto count = ::syscall(SYS_io_submit,context.value,1,submitted);
+      if (count == 1) break;
+      if (count < 0 && errno == EINTR) continue; // No request was submitted.
+      if (count < 0 && errno == ESHUTDOWN) {
+        std::unique_lock lock(mutex_);
+        wake_.wait_for(lock,std::chrono::milliseconds(20),[this] { return stop_.load(); });
+        continue;
+      }
+      if (count == 0) errno = EIO;
+      fail("Cannot submit FunctionFS asynchronous request");
+    }
+    if (stop_.load()) { errno = EINTR; return -1; }
+    if (std::getenv("SKE_TRACE_USB")) {
+      std::ostringstream message;
+      message << "functionfs_async_queued address=" << unsigned(address)
+              << " tid=" << ::syscall(SYS_gettid) << " fd=" << fd_
+              << " context=" << context.value << " request=" << &request
+              << " buffer=" << buffer << " bytes=" << size << '\n';
+      std::cerr << message.str();
+    }
+    while (!stop_.load()) {
+      io_event completed{};
+      const auto count = ::syscall(SYS_io_getevents,context.value,1,1,&completed,nullptr);
+      if (count < 0 && errno == EINTR) continue; // Keep the original kernel IO.
+      if (count < 0) fail("FunctionFS asynchronous completion failed");
+      if (count == 0) continue;
+      if (completed.obj != reinterpret_cast<std::uintptr_t>(&request) || completed.res2)
+        throw std::runtime_error("Invalid FunctionFS asynchronous completion");
+      if (stop_.load()) break;
+      if (completed.res < 0) {
+        // The completion does not report partial progress on an error. Never
+        // replay IN data after an unknown amount reached the host. A failed
+        // OUT read delivered no packet to userspace and can be retried.
+        errno = static_cast<int>(-completed.res);
+        if (!input && (errno == EPIPE || errno == ESHUTDOWN || errno == ECONNRESET))
+          return -1;
+        fail("FunctionFS asynchronous endpoint transfer failed");
+      }
+      return static_cast<ssize_t>(completed.res);
+    }
+    io_event cancelled{};
+    (void)::syscall(SYS_io_cancel,context.value,&request,&cancelled);
+    errno = EINTR;
+    return -1;
+  }
+  ssize_t transfer(void* buffer, std::size_t size, bool input) {
+    if (recover_shutdown_) {
+      while (!stop_.load()) {
+        const auto count = async_transfer(buffer,size,input);
+        if (count >= 0) return count;
+        const auto error = errno;
+        if (!input && (error == EPIPE || error == ESHUTDOWN || error == ECONNRESET)) {
+          if (std::getenv("SKE_TRACE_USB"))
+            std::cerr << "functionfs_async_out_retry address=" << unsigned(address)
+                      << " error=" << error << '\n';
+          std::unique_lock lock(mutex_);
+          wake_.wait_for(lock,std::chrono::milliseconds(20),[this] { return stop_.load(); });
+          continue;
+        }
+        errno = error;
+        return -1;
+      }
+      errno = EINTR;
+      return -1;
+    }
+    while (!stop_.load()) {
+      const auto count = input ? ::write(fd_,buffer,size) : ::read(fd_,buffer,size);
+      if (count >= 0) return count;
+      const auto error = errno;
+      if (error == EINTR) continue;
+      // FunctionFS may cancel a request during controller PM/reconfiguration
+      // before ep0 delivers its lifecycle event. Retain this transfer until
+      // the endpoint is ready, or that event stops and discards this worker.
+      if (recover_shutdown_ && error == ESHUTDOWN) {
+        if (std::getenv("SKE_TRACE_USB"))
+          std::cerr << "functionfs_endpoint_shutdown_retry address=" << unsigned(address) << '\n';
+        std::unique_lock lock(mutex_);
+        wake_.wait_for(lock,std::chrono::milliseconds(20),[this] { return stop_.load(); });
+        continue;
+      }
+      errno = error;
+      fail("USB endpoint " + std::to_string(address) + " transfer failed");
+    }
+    return -1;
+  }
+  void run() noexcept {
+    try {
+      while (!stop_.load()) {
+        Bytes data;
+        ssize_t count;
+        if (address & 0x80) {
+          {
+            std::unique_lock lock(mutex_);
+            wake_.wait(lock, [this] { return stop_.load() || !packets_.empty(); });
+            if (stop_.load()) break;
+            data = std::move(packets_.front()); packets_.pop_front(); active_ = true;
+          }
+          count = transfer(data.data(),data.size(),true);
+          if (count >= 0 && static_cast<std::size_t>(count) != data.size())
+            throw std::runtime_error("Short USB endpoint " + std::to_string(address) + " transfer");
+          // Terminate a complete CCID bulk message on a packet boundary.
+          // Interrupt HID reports require no extra zero-length packet.
+          if (count >= 0 && static_cast<std::size_t>(count) == data.size() &&
+              bulk && !data.empty() && data.size() % packet_size == 0 && !stop_.load())
+            count = transfer(nullptr,0,true) < 0 ? -1 : count;
+        } else {
+          {
+            std::unique_lock lock(mutex_);
+            wake_.wait(lock, [this] { return stop_.load() || packets_.size() < 256; });
+            if (stop_.load()) break;
+          }
+          data.resize(packet_size);
+          count = transfer(data.data(),data.size(),false);
+          if (count >= 0) data.resize(static_cast<std::size_t>(count));
+        }
+        if (stop_.load()) break;
+        if (count < 0) {
+          if (errno == EINTR) continue;
+          fail("USB endpoint transfer failed");
+        }
+        std::lock_guard lock(mutex_);
+        active_ = false;
+        if (!(address & 0x80) && !data.empty()) {
+          packets_.push_back(std::move(data));
+        }
+      }
+    } catch (...) {
+      if (!stop_.load()) { std::lock_guard lock(mutex_); failure_ = std::current_exception(); }
+    }
+    done_.store(true);
+  }
+};
+
+// FunctionFS queues a control OUT buffer when userspace reads it, rather than
+// acknowledging into GadgetFS's shared buffer before its setup event is read.
+// ConfigFS must contain one operator-prepared ffs.ske function in configs/c.1;
+// this transport binds only an initially unbound, explicitly supplied gadget.
+class FunctionGadget {
+ public:
+  FunctionGadget(Backend& backend, std::filesystem::path directory,
+                 std::filesystem::path config, std::string controller)
+      : backend_(backend), directory_(std::move(directory)), config_(std::move(config)),
+        controller_(std::move(controller)) {
+    struct statfs fs{};
+    if (::statfs(directory_.c_str(), &fs) || fs.f_type != 0xa647361L)
+      throw std::invalid_argument("--functionfs must name a mounted FunctionFS directory");
+    if (::statfs(config_.c_str(), &fs) || fs.f_type != 0x62656570L)
+      throw std::invalid_argument("--configfs-gadget must name a ConfigFS gadget");
+    if (controller_.empty() || controller_.find('/') != std::string::npos ||
+        controller_ == "." || controller_ == "..")
+      throw std::invalid_argument("invalid USB controller name");
+    std::ifstream udc(config_ / "UDC");
+    std::string existing; std::getline(udc, existing);
+    if (!udc || !existing.empty())
+      throw std::invalid_argument("FunctionFS gadget must already exist and be unbound");
+    try { connect(); }
+    catch (...) { disconnect(true); throw; }
+  }
+  ~FunctionGadget() { disconnect(true); }
+  void run() {
+    bool stdin_open = true;
+    while (!stopping) {
+      pollfd ready[2]{{ep0_,POLLIN,0},{stdin_open ? STDIN_FILENO : -1,POLLIN,0}};
+      const auto count = ::poll(ready,2,2);
+      if (count < 0) { if (errno == EINTR) continue; fail("FunctionFS poll failed"); }
+      if (ready[0].revents & POLLIN) {
+        std::array<usb_functionfs_event,4> events{};
+        const auto size = ::read(ep0_,events.data(),sizeof(events));
+        if (size < 0) {
+          if (errno == EINTR || errno == EIDRM) continue;
+          fail("FunctionFS event read failed");
+        }
+        if (static_cast<std::size_t>(size) % sizeof(events[0]))
+          throw std::runtime_error("Invalid FunctionFS event size");
+        for (std::size_t i=0; i < static_cast<std::size_t>(size)/sizeof(events[0]); ++i) {
+          const auto& event = events[i];
+          if (event.type == FUNCTIONFS_SUSPEND) {
+            if (std::getenv("SKE_TRACE_USB")) std::cerr << "functionfs_suspend\n";
+            backend_.suspend();
+          } else if (event.type == FUNCTIONFS_RESUME) {
+            if (std::getenv("SKE_TRACE_USB")) std::cerr << "functionfs_resume\n";
+            backend_.resume();
+          } else if (event.type == FUNCTIONFS_SETUP) control(event.u.setup);
+          else if (event.type == FUNCTIONFS_ENABLE && !backend_.model->configured()) {
+            (void)backend_.model->control({0,USB_REQ_SET_CONFIGURATION,1,0,0});
+            configure();
+          } else if (event.type == FUNCTIONFS_DISABLE || event.type == FUNCTIONFS_UNBIND) {
+            endpoints_.clear(); backend_.reset();
+          }
+        }
+      }
+      if (ready[1].revents & (POLLIN | POLLHUP)) {
+        std::array<char,256> text{};
+        const auto size = ::read(STDIN_FILENO,text.data(),text.size());
+        if (size == 0) stdin_open = false;
+        else if (size > 0) for (ssize_t i=0; i<size; ++i) {
+          const auto ch = text[static_cast<std::size_t>(i)];
+          if (ch == '\n') {
+            if (command_ == "quit") stopping = 1;
+            else if (command_.starts_with("hold ")) {
+              try { backend_.hold(command_.substr(5)); }
+              catch (const std::exception&) { std::cerr << "Hold request rejected.\n"; }
+            }
+            command_.clear();
+          } else if (command_.size() < 256) command_ += ch;
+          else throw std::invalid_argument("USB control command too long");
+        }
+      }
+      if (stopping) break;
+      if (backend_.model->configured()) forward();
+      if (backend_.poll_reboot()) {
+        bool pending = false;
+        for (auto& [address, endpoint] : endpoints_)
+          if (address == swpk::usb::kCcidIn || address == swpk::usb::kFidoIn)
+            pending |= endpoint->busy();
+        if (backend_.reboot_ready(pending)) {
+          disconnect();
+          backend_.apply_reboot();
+          std::this_thread::sleep_for(std::chrono::milliseconds(100));
+          connect();
+          std::cerr << "functionfs_reenumerated generation=" << backend_.usb_state_.generation << '\n';
+        }
+      }
+    }
+  }
+ private:
+  Backend& backend_;
+  std::filesystem::path directory_, config_;
+  std::string controller_, command_;
+  int ep0_{-1};
+  bool bound_{false};
+  std::map<std::uint8_t,std::unique_ptr<Endpoint>> endpoints_;
+  static void little32(Bytes& out, std::uint32_t value) {
+    for (unsigned shift=0; shift<32; shift+=8)
+      out.push_back(static_cast<std::uint8_t>(value >> shift));
+  }
+  void attribute(const std::filesystem::path& path, const std::string& value) {
+    const auto fd = ::open((config_ / path).c_str(), O_WRONLY | O_CLOEXEC);
+    if (fd < 0) fail("Cannot open ConfigFS attribute " + path.string());
+    const auto text = value + "\n";
+    const auto count = ::write(fd,text.data(),text.size());
+    const auto saved = errno; ::close(fd); errno = saved;
+    if (count < 0 || static_cast<std::size_t>(count) != text.size())
+      fail("Cannot write ConfigFS attribute " + path.string());
+  }
+  std::string string(unsigned index) {
+    const auto value = backend_.model->control({0x80,USB_REQ_GET_DESCRIPTOR,
+        static_cast<std::uint16_t>((USB_DT_STRING << 8) | index),0x409,255}).data;
+    if (value.size() < 2 || value.size() % 2) throw std::runtime_error("Invalid software USB string");
+    std::string out;
+    for (std::size_t i=2; i<value.size(); i+=2) {
+      if (value[i+1] || value[i] < 32 || value[i] > 126)
+        throw std::runtime_error("Non-ASCII software USB identity");
+      out.push_back(static_cast<char>(value[i]));
+    }
+    return out;
+  }
+  void connect() {
+    const auto device = backend_.model->device_descriptor();
+    const auto config = backend_.model->configuration_descriptor();
+    for (const auto& [name, offset] : std::array<std::pair<const char*,std::size_t>,4>{{
+        {"bcdUSB",2},{"idVendor",8},{"idProduct",10},{"bcdDevice",12}}})
+      attribute(name,std::to_string(device[offset] | (unsigned(device[offset+1]) << 8)));
+    for (const auto& [name, offset] : std::array<std::pair<const char*,std::size_t>,4>{{
+        {"bDeviceClass",4},{"bDeviceSubClass",5},{"bDeviceProtocol",6},{"bMaxPacketSize0",7}}})
+      attribute(name,std::to_string(device[offset]));
+    attribute("strings/0x409/manufacturer",string(1));
+    attribute("strings/0x409/product",string(2));
+    attribute("strings/0x409/serialnumber",string(3));
+    attribute("configs/c.1/bmAttributes",std::to_string(config[7]));
+    attribute("configs/c.1/MaxPower",std::to_string(unsigned(config[8])*2));
+    // The modeled key is a 12 Mbps full-speed USB device. A high-speed-capable
+    // UDC otherwise negotiates high speed, but this FunctionFS table has only
+    // full-speed descriptors and the host cannot read a configuration.
+    attribute("max_speed","full-speed");
+    ep0_ = ::open((directory_ / "ep0").c_str(), O_RDWR | O_CLOEXEC);
+    if (ep0_ < 0) fail("Cannot open FunctionFS ep0");
+    std::uint32_t count = 0;
+    for (std::size_t i=9; i<config.size(); i+=config[i]) ++count;
+    Bytes descriptors;
+    little32(descriptors,FUNCTIONFS_DESCRIPTORS_MAGIC_V2);
+    little32(descriptors,static_cast<std::uint32_t>(16 + config.size() - 9));
+    little32(descriptors,FUNCTIONFS_HAS_FS_DESC);
+    little32(descriptors,count);
+    descriptors.insert(descriptors.end(),config.begin()+9,config.end());
+    write_once(ep0_,descriptors);
+    Bytes strings;
+    for (auto value : std::array<std::uint32_t,4>{FUNCTIONFS_STRINGS_MAGIC,16,0,0}) little32(strings,value);
+    write_once(ep0_,strings);
+    attribute("UDC",controller_); bound_ = true;
+    std::cerr << "functionfs_bound controller=" << controller_ << '\n';
+  }
+  void disconnect(bool best_effort = false) {
+    endpoints_.clear();
+    if (bound_) {
+      try { attribute("UDC",""); }
+      catch (...) { if (!best_effort) throw; }
+      bound_ = false;
+    }
+    if (ep0_ >= 0) { ::close(ep0_); ep0_ = -1; }
+  }
+  void configure() {
+    const auto config = backend_.model->configuration_descriptor();
+    unsigned endpoint_index = 0;
+    for (std::size_t i=9; i<config.size(); i+=config[i]) {
+      if (config[i+1] != USB_DT_ENDPOINT) continue;
+      const auto desc = std::span(config).subspan(i,config[i]);
+      // FunctionFS can remap host endpoint numbers; file order remains the
+      // supplied descriptor order and the shared model uses logical addresses.
+      const auto name = "ep" + std::to_string(++endpoint_index);
+      auto endpoint = std::make_unique<Endpoint>(directory_ / name,desc,false);
+      endpoints_.emplace(endpoint->address,std::move(endpoint));
+    }
+    std::cerr << "functionfs_configured endpoints=" << endpoints_.size() << '\n';
+  }
+  void control(const usb_ctrlrequest& raw) {
+    const auto setup = Setup::decode(std::span(reinterpret_cast<const std::uint8_t*>(&raw),sizeof(raw)));
+    Bytes output;
+    if (!(setup.type & 0x80) && setup.length) {
+      output.resize(setup.length);
+      const auto count = ::read(ep0_,output.data(),output.size());
+      if (count < 0) { if (errno == EIDRM) return; fail("FunctionFS control OUT failed"); }
+      output.resize(static_cast<std::size_t>(count));
+    }
+    const auto response = backend_.model->control(setup,output);
+    if (std::getenv("SKE_TRACE_USB"))
+      std::cerr << "functionfs_setup type=" << unsigned(setup.type) << " request=" << unsigned(setup.request)
+                << " value=" << setup.value << " index=" << setup.index << " length=" << setup.length
+                << " stalled=" << response.stalled << '\n';
+    if (response.stalled) {
+      if (setup.type & 0x80) (void)::read(ep0_,nullptr,0);
+      else if (!setup.length) (void)::write(ep0_,nullptr,0);
+    } else if (setup.type & 0x80) write_once(ep0_,response.data);
+    else if (!setup.length && ::read(ep0_,nullptr,0) < 0 && errno != EIDRM)
+      fail("FunctionFS control acknowledgement failed");
+  }
+  void forward() {
+    for (auto& [address, endpoint] : endpoints_)
+      if (!(address & 0x80) &&
+          !(address == swpk::usb::kCcidOut && backend_.model->input_queue_full(swpk::usb::kCcidIn)))
+        if (auto packet = endpoint->receive_one())
+          if (!backend_.model->output(address,*packet)) throw std::runtime_error("Invalid USB output report");
+    backend_.forward();
+    for (auto& [address, endpoint] : endpoints_) {
+      if (!(address & 0x80) || endpoint->busy()) continue;
+      const auto capacity = address == swpk::usb::kCcidIn ? swpk::usb::kCcidMessageLength : endpoint->packet_size;
+      if (auto packet = backend_.model->input(address,capacity)) endpoint->send(std::move(*packet));
+    }
+  }
+};
+
+class Gadget {
+ public:
+  Gadget(Backend& backend, std::filesystem::path directory, const std::string& controller)
+      : backend_(backend), directory_(std::move(directory)), controller_(controller) {
+    struct statfs filesystem{};
+    if (::statfs(directory_.c_str(), &filesystem) || filesystem.f_type != 0xaee71ee7L)
+      throw std::runtime_error("--gadgetfs must name a mounted Linux GadgetFS directory");
+    if (controller.empty() || controller.find('/') != std::string::npos || controller == "." || controller == "..")
+      throw std::invalid_argument("invalid USB controller name");
+    connect();
+  }
+  void connect() {
+    ep0_ = ::open((directory_ / controller_).c_str(), O_RDWR | O_CLOEXEC);
+    if (ep0_ < 0) fail("Cannot open GadgetFS controller");
+    try {
+      Bytes config{0,0,0,0};
+      auto descriptors = backend_.model->configuration_descriptor();
+      config.insert(config.end(), descriptors.begin(), descriptors.end());
+      descriptors = backend_.model->device_descriptor();
+      config.insert(config.end(), descriptors.begin(), descriptors.end());
+      write_once(ep0_, config);
+    } catch (...) { ::close(ep0_); ep0_ = -1; throw; }
+  }
+  ~Gadget() {
+    // Interrupt and finish endpoint IO before unregistering the controller.
+    // GadgetFS endpoint requests hold locks also needed during unbind.
+    endpoints_.clear();
+    if (ep0_ >= 0) ::close(ep0_);
+  }
+  void run();
+ private:
+  Backend& backend_;
+  std::filesystem::path directory_;
+  std::string controller_;
+  int ep0_{-1};
+  std::map<std::uint8_t,std::unique_ptr<Endpoint>> endpoints_;
+  std::string command_;
+  void configure() {
+    endpoints_.clear();
+    if (!backend_.model->configured()) return;
+    const auto config = backend_.model->configuration_descriptor();
+    std::set<std::string> used;
+    for (std::size_t index = 0; index < config.size(); index += config[index]) {
+      if (config[index+1] != USB_DT_ENDPOINT) continue;
+      const auto desc = std::span(config).subspan(index,config[index]);
+      const std::string direction = (desc[2] & 0x80) ? "in" : "out";
+      const std::string kind = (desc[3] & 3) == 2 ? "bulk" : "int";
+      const auto exact = "ep" + std::to_string(desc[2] & 15) + direction;
+      std::vector<std::string> candidates;
+      for (const auto& entry : std::filesystem::directory_iterator(directory_)) {
+        const auto name = entry.path().filename().string();
+        if (used.contains(name)) continue;
+        if (name == exact || name == exact + "-" + kind ||
+            (name.starts_with("ep-") && name.ends_with(direction))) candidates.push_back(name);
+      }
+      std::sort(candidates.begin(),candidates.end(),[&](const auto& a,const auto& b) {
+        const bool ae=a.starts_with(exact),be=b.starts_with(exact);
+        return ae != be ? ae : a < b;
+      });
+      if (candidates.empty()) throw std::runtime_error("No suitable GadgetFS endpoint for " + exact + "-" + kind);
+      used.insert(candidates.front());
+      auto endpoint = std::make_unique<Endpoint>(directory_ / candidates.front(),desc);
+      const auto address = endpoint->address;
+      endpoints_.emplace(address, std::move(endpoint));
+    }
+    std::cerr << "gadgetfs_configured endpoints=" << endpoints_.size() << '\n';
+  }
+  void control(const usb_ctrlrequest& raw);
+  void forward() {
+    for (auto& [address, endpoint] : endpoints_) {
+      if (!(address & 0x80) &&
+          !(address == swpk::usb::kCcidOut && backend_.model->input_queue_full(swpk::usb::kCcidIn)))
+        if (auto packet = endpoint->receive_one())
+          if (!backend_.model->output(address, *packet)) throw std::runtime_error("Invalid USB output report");
+    }
+    backend_.forward();
+    for (auto& [address, endpoint] : endpoints_) {
+      if (!(address & 0x80) || endpoint->busy()) continue;
+      const auto capacity = address == swpk::usb::kCcidIn ? swpk::usb::kCcidMessageLength : endpoint->packet_size;
+      if (auto packet = backend_.model->input(address, capacity)) endpoint->send(std::move(*packet));
+    }
+  }
+};
+void Gadget::control(const usb_ctrlrequest& raw) {
+  const auto setup = Setup::decode(std::span(reinterpret_cast<const std::uint8_t*>(&raw),sizeof(raw)));
+  Bytes output;
+  if (!(setup.type & 0x80) && setup.length) {
+    output.resize(setup.length);
+    const auto count = ::read(ep0_, output.data(), output.size());
+    if (count < 0) fail("GadgetFS control OUT failed");
+    output.resize(static_cast<std::size_t>(count));
+  }
+  const auto response = backend_.model->control(setup,output);
+  if (std::getenv("SKE_TRACE_USB"))
+    std::cerr << "gadgetfs_setup type=" << unsigned(setup.type) << " request=" << unsigned(setup.request)
+              << " value=" << setup.value << " index=" << setup.index << " length=" << setup.length
+              << " stalled=" << response.stalled << '\n';
+  if (response.stalled) {
+    // GadgetFS stalls with an operation opposite to the setup direction.
+    // Its kernel API already acknowledges OUT requests carrying data; those
+    // cannot be stalled after userspace validation and remain a transport gap.
+    if (setup.type & 0x80) (void)::read(ep0_,nullptr,0);
+    else if (!setup.length) (void)::write(ep0_,nullptr,0);
+    return;
+  }
+  if (!setup.type && setup.request == USB_REQ_SET_CONFIGURATION) configure();
+  if (setup.type & 0x80) write_once(ep0_,response.data);
+  else if (!setup.length && ::read(ep0_,nullptr,0) < 0) fail("GadgetFS control acknowledgement failed");
+}
+void Gadget::run() {
+  bool stdin_open = true;
+  while (!stopping) {
+    pollfd ready[2]{{ep0_,POLLIN,0},{stdin_open ? STDIN_FILENO : -1,POLLIN,0}};
+    const auto count = ::poll(ready,2,2);
+    if (count < 0) { if (errno == EINTR) continue; fail("GadgetFS poll failed"); }
+    if (ready[0].revents & POLLIN) {
+      std::array<usb_gadgetfs_event,5> events{};
+      const auto size = ::read(ep0_,events.data(),sizeof(events));
+      if (size < 0) { if (errno == EINTR || errno == EIDRM) continue; fail("GadgetFS event read failed"); }
+      if (static_cast<std::size_t>(size) % sizeof(events[0])) throw std::runtime_error("Invalid GadgetFS event size");
+      for (std::size_t i=0; i < static_cast<std::size_t>(size)/sizeof(events[0]); ++i) {
+        const auto& event = events[i];
+        if (event.type == GADGETFS_SETUP) control(event.u.setup);
+        else if (event.type == GADGETFS_DISCONNECT) { endpoints_.clear(); backend_.reset(); }
+        else if (event.type == GADGETFS_CONNECT)
+          std::cerr << "gadgetfs_connected speed=" << event.u.speed << '\n';
+      }
+    }
+    if (ready[1].revents & (POLLIN | POLLHUP)) {
+      std::array<char,256> text{};
+      const auto size = ::read(STDIN_FILENO,text.data(),text.size());
+      if (size == 0) stdin_open = false;
+      else if (size > 0) {
+        for (ssize_t i=0; i<size; ++i) {
+          const auto ch = text[static_cast<std::size_t>(i)];
+          if (ch == '\n') {
+            if (command_ == "quit") stopping = 1;
+            else if (command_.starts_with("hold ")) {
+              try { backend_.hold(command_.substr(5)); }
+              catch (const std::exception&) { std::cerr << "Hold request rejected.\n"; }
+            }
+            command_.clear();
+          } else if (command_.size() < 256) command_ += ch;
+          else throw std::invalid_argument("USB control command too long");
+        }
+      }
+    }
+    if (!stopping) {
+      forward();
+      if (backend_.poll_reboot()) {
+        bool pending = false;
+        for (auto& [address, endpoint] : endpoints_)
+          if (address == swpk::usb::kCcidIn || address == swpk::usb::kFidoIn) pending |= endpoint->busy();
+        if (backend_.reboot_ready(pending)) {
+          endpoints_.clear();
+          ::close(ep0_); ep0_ = -1;
+          backend_.apply_reboot();
+          // Ensure the host observes removal before registering the new profile.
+          std::this_thread::sleep_for(std::chrono::milliseconds(100));
+          connect();
+          std::cerr << "gadgetfs_reenumerated generation=" << backend_.usb_state_.generation << '\n';
+        }
+      }
+    }
+  }
+}
+}  // namespace
+
+int main(int argc,char** argv) {
+  if (argc == 2 && std::string(argv[1]) == "--help") {
+    std::cout << "ske-usbd --card-socket PATH --fido-socket PATH [--yubico-usb-ids] [--wire-test]\n"
+                 "         [--gadgetfs DIRECTORY] [--controller NAME]\n"
+                 "         [--functionfs DIRECTORY --configfs-gadget PATH] [--controller NAME]\n"
+                 "Native Linux composite USB requires mounted GadgetFS and an available USB device controller.\n"
+                 "--yubico-usb-ids uses public SDK matching IDs with an independent software identity.\n"
+                 "--wire-test accepts control/out/in/reset/hold lines and creates no OS devices.\n"
+                 "Native stdin accepts hold MILLISECONDS and quit.\n";
+    return 0;
+  }
+  std::string card_socket,fido_socket,controller="dummy_udc",directory="/dev/gadget",functionfs,configfs;
+  bool test=false,compatibility_ids=false;
+  for (int i=1;i<argc;++i) {
+    const std::string flag=argv[i];
+    if (flag == "--wire-test" && !test) test=true;
+    else if (flag == "--yubico-usb-ids" && !compatibility_ids) compatibility_ids=true;
+    else if (i+1 < argc && flag == "--card-socket" && card_socket.empty()) card_socket=argv[++i];
+    else if (i+1 < argc && flag == "--fido-socket" && fido_socket.empty()) fido_socket=argv[++i];
+    else if (i+1 < argc && flag == "--gadgetfs") directory=argv[++i];
+    else if (i+1 < argc && flag == "--controller") controller=argv[++i];
+    else if (i+1 < argc && flag == "--functionfs" && functionfs.empty()) functionfs=argv[++i];
+    else if (i+1 < argc && flag == "--configfs-gadget" && configfs.empty()) configfs=argv[++i];
+    else return 2;
+  }
+  if (card_socket.empty() || fido_socket.empty()) return 2;
+  if (functionfs.empty() != configfs.empty() || (test && !functionfs.empty())) return 2;
+  struct sigaction action{};
+  sigemptyset(&action.sa_mask);
+  action.sa_handler=interrupt_io;
+  sigaction(SIGUSR1,&action,nullptr);
+  action.sa_handler=stop_signal;
+  sigaction(SIGINT,&action,nullptr); sigaction(SIGTERM,&action,nullptr);
+  try {
+    Backend backend(card_socket,fido_socket,compatibility_ids);
+    if (test) { swpk::usb::native::wire_test(backend); return 0; }
+    if (!functionfs.empty()) {
+      FunctionGadget gadget(backend,functionfs,configfs,controller);
+      gadget.run();
+      return 0;
+    }
+    Gadget gadget(backend,directory,controller);
+    gadget.run();
+    return 0;
+  } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }
+  catch (const swpk::pcsc::WireError&) { std::cerr << "Card service unavailable.\n"; return 1; }
+}

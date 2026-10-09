@@ -1,0 +1,557 @@
+{
+  "passed": false,
+  "scope": "stock Chromium actual Linux USB: ES256/Ed25519 largeBlob SDK/restart proof; explicit ES384 parser rejection with independent device signature proof",
+  "physical_device_access": false,
+  "host_usb_passthrough": false,
+  "virtual_authenticator_enabled": false,
+  "webauthn_api_replaced": false,
+  "browser_webauthn_service_callbacks_invoked_directly": false,
+  "physical_touch_verified": false,
+  "manufacturer_trust_reproduced": false,
+  "tests": [
+    {
+      "name": "private own largeBlob USB guest marker",
+      "passed": true
+    },
+    {
+      "name": "actual isolated ARM64 distro kernel with only loopback",
+      "passed": true
+    },
+    {
+      "name": "actual own guest accessibility bus enabled and ready before native browser",
+      "passed": true
+    },
+    {
+      "name": "actual pinned stock Chromium runtime and ELF byte hash",
+      "passed": true
+    },
+    {
+      "name": "actual largeBlob-supported resident creation with required PIN UV -7",
+      "passed": true
+    },
+    {
+      "name": "actual browser largeBlob write and independently RP-verified assertion -7",
+      "passed": true
+    },
+    {
+      "name": "actual largeBlob-supported resident creation with required PIN UV -8",
+      "passed": true
+    },
+    {
+      "name": "actual browser largeBlob write and independently RP-verified assertion -8",
+      "passed": true
+    },
+    {
+      "name": "two actual browser resident credentials and zero unintended PIN failures before SDK references",
+      "passed": true
+    },
+    {
+      "name": "independent native UV-bound SDK credential signature and user binding -7",
+      "passed": true
+    },
+    {
+      "name": "independent SDK decrypts actual browser blob and rejects unrelated key -7",
+      "passed": true
+    },
+    {
+      "name": "independent SDK encrypted blob replacement verified -7",
+      "passed": true
+    },
+    {
+      "name": "independent native UV-bound SDK credential signature and user binding -8",
+      "passed": true
+    },
+    {
+      "name": "independent SDK decrypts actual browser blob and rejects unrelated key -8",
+      "passed": true
+    },
+    {
+      "name": "independent SDK encrypted blob replacement verified -8",
+      "passed": true
+    },
+    {
+      "name": "actual browser independent SDK blob read and RP signature/UV/userHandle after browser-restart-after-sdk-write -7",
+      "passed": true
+    },
+    {
+      "name": "actual browser independent SDK blob read and RP signature/UV/userHandle after browser-restart-after-sdk-write -8",
+      "passed": true
+    },
+    {
+      "name": "live own USB reboot changes device address while retaining all three service processes",
+      "passed": true
+    },
+    {
+      "name": "actual browser independent SDK blob read and RP signature/UV/userHandle after live-usb-reboot -7",
+      "passed": true
+    },
+    {
+      "name": "actual browser independent SDK blob read and RP signature/UV/userHandle after live-usb-reboot -8",
+      "passed": true
+    },
+    {
+      "name": "largeBlob browser and SDK state preserved with zero unintended PIN failures and full retries",
+      "passed": true
+    },
+    {
+      "name": "six actual browser assertion challenges are distinct",
+      "passed": true
+    },
+    {
+      "name": "actual focused PIN fields contain all fifteen characters before single submission",
+      "passed": true
+    }
+  ],
+  "all_browser_extensions_verified": false,
+  "all_browser_algorithms_verified": false,
+  "native_macos_registration_verified": false,
+  "ui_actions": [
+    {
+      "role": "password text",
+      "name": "PIN",
+      "method": "actual-guest-x-key-events",
+      "actual_character_count": 15,
+      "account": "own-chromium-blob--7",
+      "phase": "initial",
+      "mode": "register"
+    },
+    {
+      "role": "push button",
+      "name": "Next",
+      "method": "actual-at-spi-action",
+      "account": "own-chromium-blob--7",
+      "phase": "initial",
+      "mode": "register"
+    },
+    {
+      "role": "password text",
+      "name": "PIN",
+      "method": "actual-guest-x-key-events",
+      "actual_character_count": 15,
+      "account": "own-chromium-blob--7",
+      "phase": "initial",
+      "mode": "login"
+    },
+    {
+      "role": "push button",
+      "name": "Next",
+      "method": "actual-at-spi-action",
+      "account": "own-chromium-blob--7",
+      "phase": "initial",
+      "mode": "login"
+    },
+    {
+      "role": "password text",
+      "name": "PIN",
+      "method": "actual-guest-x-key-events",
+      "actual_character_count": 15,
+      "account": "own-chromium-blob--8",
+      "phase": "initial",
+      "mode": "register"
+    },
+    {
+      "role": "push button",
+      "name": "Next",
+      "method": "actual-at-spi-action",
+      "account": "own-chromium-blob--8",
+      "phase": "initial",
+      "mode": "register"
+    },
+    {
+      "role": "password text",
+      "name": "PIN",
+      "method": "actual-guest-x-key-events",
+      "actual_character_count": 15,
+      "account": "own-chromium-blob--8",
+      "phase": "initial",
+      "mode": "login"
+    },
+    {
+      "role": "push button",
+      "name": "Next",
+      "method": "actual-at-spi-action",
+      "account": "own-chromium-blob--8",
+      "phase": "initial",
+      "mode": "login"
+    },
+    {
+      "role": "password text",
+      "name": "PIN",
+      "method": "actual-guest-x-key-events",
+      "actual_character_count": 15,
+      "account": "own-chromium-blob--7",
+      "phase": "browser-restart-after-sdk-write",
+      "mode": "login"
+    },
+    {
+      "role": "push button",
+      "name": "Next",
+      "method": "actual-at-spi-action",
+      "account": "own-chromium-blob--7",
+      "phase": "browser-restart-after-sdk-write",
+      "mode": "login"
+    },
+    {
+      "role": "password text",
+      "name": "PIN",
+      "method": "actual-guest-x-key-events",
+      "actual_character_count": 15,
+      "account": "own-chromium-blob--8",
+      "phase": "browser-restart-after-sdk-write",
+      "mode": "login"
+    },
+    {
+      "role": "push button",
+      "name": "Next",
+      "method": "actual-at-spi-action",
+      "account": "own-chromium-blob--8",
+      "phase": "browser-restart-after-sdk-write",
+      "mode": "login"
+    },
+    {
+      "role": "password text",
+      "name": "PIN",
+      "method": "actual-guest-x-key-events",
+      "actual_character_count": 15,
+      "account": "own-chromium-blob--7",
+      "phase": "live-usb-reboot",
+      "mode": "login"
+    },
+    {
+      "role": "push button",
+      "name": "Next",
+      "method": "actual-at-spi-action",
+      "account": "own-chromium-blob--7",
+      "phase": "live-usb-reboot",
+      "mode": "login"
+    },
+    {
+      "role": "password text",
+      "name": "PIN",
+      "method": "actual-guest-x-key-events",
+      "actual_character_count": 15,
+      "account": "own-chromium-blob--8",
+      "phase": "live-usb-reboot",
+      "mode": "login"
+    },
+    {
+      "role": "push button",
+      "name": "Next",
+      "method": "actual-at-spi-action",
+      "account": "own-chromium-blob--8",
+      "phase": "live-usb-reboot",
+      "mode": "login"
+    }
+  ],
+  "cdp_commands": [
+    "Runtime.evaluate",
+    "Runtime.evaluate",
+    "Runtime.evaluate",
+    "Browser.getVersion",
+    "Runtime.evaluate",
+    "Runtime.evaluate",
+    "Runtime.evaluate",
+    "Runtime.evaluate",
+    "Runtime.evaluate",
+    "Runtime.evaluate",
+    "Runtime.evaluate",
+    "Runtime.evaluate",
+    "Runtime.evaluate",
+    "Runtime.evaluate",
+    "Runtime.evaluate",
+    "Runtime.evaluate"
+  ],
+  "independent_sdk_references": [
+    {
+      "algorithm": -7,
+      "independent_sdk_signature_verified": true,
+      "independent_sdk_user_verified": true,
+      "independent_sdk_user_handle_verified": true,
+      "independent_sdk_pin_uv_protocol": 2,
+      "independent_sdk_browser_blob_match": true,
+      "independent_sdk_replacement_verified": true,
+      "unrelated_key_has_no_blob": true,
+      "credential_sha256": "bf833a9930c5a7275b9e05efa4e38a9338cae869459a16755d62386019df0876",
+      "large_blob_key_sha256": "3f6f4160d26d07d8601dd518cf0a7c2c426345c8b8637de31463403b493e9faa",
+      "browser_payload_sha256": "291468de7fffa79bf5db94dd2c07981abbf2c5a0891f30da965a8b4005bfb743",
+      "sdk_payload_sha256": "2b7717e48cdd404f483417b7e48bbca67f0703290710d1001e15b77bfb94b6ac",
+      "browser_payload_bytes": 792,
+      "sdk_payload_bytes": 1056,
+      "sdk_counter": 3
+    },
+    {
+      "algorithm": -8,
+      "independent_sdk_signature_verified": true,
+      "independent_sdk_user_verified": true,
+      "independent_sdk_user_handle_verified": true,
+      "independent_sdk_pin_uv_protocol": 2,
+      "independent_sdk_browser_blob_match": true,
+      "independent_sdk_replacement_verified": true,
+      "unrelated_key_has_no_blob": true,
+      "credential_sha256": "b924eb09489fdff857dc1ed5143874c30c6966844388f1ab95795f2889ab9a29",
+      "large_blob_key_sha256": "f6a19900e53566f9219b67b64f26345635ec395adc175619c6d8cfb45d54e825",
+      "browser_payload_sha256": "de10dc1aee2d21cd41d87e3fb91eb3b6eb6df434c2e1ad3fd287f9359d4297f1",
+      "sdk_payload_sha256": "619aae5b81da0f6118837042d366470591054ff05946597800e2942a59e2c4c0",
+      "browser_payload_bytes": 792,
+      "sdk_payload_bytes": 1056,
+      "sdk_counter": 3
+    }
+  ],
+  "own_guest_accessibility_enabled_before_browser_launch": true,
+  "controller": {
+    "base_source_url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/drivers/usb/gadget/udc/dummy_hcd.c",
+    "base_source_sha256": "6892efeaca7d13e0f8ba172fac6b9607f9ac5c60de1a5f1812a57eb7998fd993",
+    "source_license": "GPL",
+    "optional_parameter": "requested_ep_addresses",
+    "default_enabled": false,
+    "files": {
+      "dummy_hcd.c": "7ebdac59d1bee99d6acb4e811171c10d32618d3915d8b0ccdad43fe9d7a72918",
+      "dummy_hcd-addresses.patch": "16df2045ea6229954b57441894cf009a9fbf40b5ed0ec5e7e5c31685729fafcc",
+      "dummy_hcd.ko": "5e8481736a6dccd4788ff3fb07f06b8704dcf4a0a02a95888c310a3f594eb86a"
+    },
+    "requested_ep_addresses_enabled": true
+  },
+  "usb_discovery": {
+    "serial": "2141939521",
+    "path": "/dev/hidraw1",
+    "vid": 4176,
+    "pid": 1031,
+    "kernel_link": "/sys/devices/platform/dummy_hcd.0/usb1/1-1/1-1:1.1/0003:1050:0407.0077",
+    "sdk_connection": "LinuxCtapHidConnection",
+    "userspace_usb_transport": "FunctionFS",
+    "controller": {
+      "base_source_url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/drivers/usb/gadget/udc/dummy_hcd.c",
+      "base_source_sha256": "6892efeaca7d13e0f8ba172fac6b9607f9ac5c60de1a5f1812a57eb7998fd993",
+      "source_license": "GPL",
+      "optional_parameter": "requested_ep_addresses",
+      "default_enabled": false,
+      "files": {
+        "dummy_hcd.c": "7ebdac59d1bee99d6acb4e811171c10d32618d3915d8b0ccdad43fe9d7a72918",
+        "dummy_hcd-addresses.patch": "16df2045ea6229954b57441894cf009a9fbf40b5ed0ec5e7e5c31685729fafcc",
+        "dummy_hcd.ko": "5e8481736a6dccd4788ff3fb07f06b8704dcf4a0a02a95888c310a3f594eb86a"
+      },
+      "requested_ep_addresses_enabled": true
+    },
+    "host_visible_endpoint_addresses": [
+      129,
+      4,
+      132,
+      2,
+      130,
+      131
+    ],
+    "host_visible_device_descriptor_hex": "120100020000004050100704740501020301",
+    "host_visible_configuration_descriptor_hex": "09029600030100800f090400000103010100092110010001224a000705810308000a090401000203000000092110010001222200070504034000020705840340000209040200030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020"
+  },
+  "browser_version": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/154.0.8037.92",
+    "revision": "@334b65d254ccc35df4fca82706d1753227b01039",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36",
+    "jsVersion": "15.4.80.19"
+  },
+  "initial_metrics": {
+    "ok": true,
+    "key_backend": "software",
+    "probe": "probe=forced_software",
+    "creds": {
+      "software": 2,
+      "tpm2": 0,
+      "se": 0
+    },
+    "store_creds": 2,
+    "remaining": 98,
+    "pin_set": true,
+    "pin_retries": 8,
+    "make_cred_ok": 2,
+    "make_cred_err": 0,
+    "get_assert_ok": 2,
+    "get_assert_err": 0,
+    "up_allow": 4,
+    "up_deny": 0,
+    "up_timeout": 0,
+    "pin_fail": 0,
+    "pin_block": 0,
+    "errors": {},
+    "hid_init": 6,
+    "hid_error": 0,
+    "hid_ping": 0,
+    "keepalives": 13,
+    "cancels": 0
+  },
+  "before_reboot_metrics": {
+    "ok": true,
+    "key_backend": "software",
+    "probe": "probe=forced_software",
+    "creds": {
+      "software": 2,
+      "tpm2": 0,
+      "se": 0
+    },
+    "store_creds": 2,
+    "remaining": 98,
+    "pin_set": true,
+    "pin_retries": 8,
+    "make_cred_ok": 2,
+    "make_cred_err": 0,
+    "get_assert_ok": 6,
+    "get_assert_err": 0,
+    "up_allow": 8,
+    "up_deny": 0,
+    "up_timeout": 0,
+    "pin_fail": 0,
+    "pin_block": 0,
+    "errors": {},
+    "hid_init": 10,
+    "hid_error": 0,
+    "hid_ping": 0,
+    "keepalives": 30,
+    "cancels": 0
+  },
+  "usb_reboot": {
+    "before": {
+      "serial": "2141939521",
+      "address": 81,
+      "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1"
+    },
+    "after": {
+      "serial": "2141939521",
+      "address": 82,
+      "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1"
+    },
+    "same_three_service_processes": true
+  },
+  "error": "AssertionError: own actual PIN field incomplete",
+  "registrations": [
+    {
+      "account": "own-chromium-blob--7",
+      "algorithm": -7,
+      "credential_sha256": "bf833a9930c5a7275b9e05efa4e38a9338cae869459a16755d62386019df0876",
+      "credential_id_bytes": 32,
+      "user_verified": true,
+      "transports": [
+        "usb"
+      ]
+    },
+    {
+      "account": "own-chromium-blob--8",
+      "algorithm": -8,
+      "credential_sha256": "b924eb09489fdff857dc1ed5143874c30c6966844388f1ab95795f2889ab9a29",
+      "credential_id_bytes": 32,
+      "user_verified": true,
+      "transports": [
+        "usb"
+      ]
+    }
+  ],
+  "assertions": [
+    {
+      "account": "own-chromium-blob--7",
+      "algorithm": -7,
+      "phase": "initial",
+      "signature_verified": true,
+      "user_verified": true,
+      "user_handle_verified": true,
+      "counter": 2,
+      "origin": "http://localhost:37601",
+      "challenge_sha256": "bd95c0e48dded1b6905e0a8a220a538683493304908e078eac70686f94d8aec9"
+    },
+    {
+      "account": "own-chromium-blob--8",
+      "algorithm": -8,
+      "phase": "initial",
+      "signature_verified": true,
+      "user_verified": true,
+      "user_handle_verified": true,
+      "counter": 2,
+      "origin": "http://localhost:37601",
+      "challenge_sha256": "47dd25741baa13244ab342e71b7a52bde4f3cc31839a1aa9942ad0e6126bb176"
+    },
+    {
+      "account": "own-chromium-blob--7",
+      "algorithm": -7,
+      "phase": "browser-restart-after-sdk-write",
+      "signature_verified": true,
+      "user_verified": true,
+      "user_handle_verified": true,
+      "counter": 4,
+      "origin": "http://localhost:37601",
+      "challenge_sha256": "7323bee2400fdfe17867a5074d5d1ea579577699022ee1d50fcbbae9cc4b4f7a",
+      "large_blob_payload_sha256": "2b7717e48cdd404f483417b7e48bbca67f0703290710d1001e15b77bfb94b6ac",
+      "independent_sdk_blob_match": true,
+      "large_blob_payload_bytes": 1056
+    },
+    {
+      "account": "own-chromium-blob--8",
+      "algorithm": -8,
+      "phase": "browser-restart-after-sdk-write",
+      "signature_verified": true,
+      "user_verified": true,
+      "user_handle_verified": true,
+      "counter": 4,
+      "origin": "http://localhost:37601",
+      "challenge_sha256": "70cdb47f259e11b1df4f019f9acd240c2aa7890d8cabab4bc82c667a9c0b7f66",
+      "large_blob_payload_sha256": "619aae5b81da0f6118837042d366470591054ff05946597800e2942a59e2c4c0",
+      "independent_sdk_blob_match": true,
+      "large_blob_payload_bytes": 1056
+    },
+    {
+      "account": "own-chromium-blob--7",
+      "algorithm": -7,
+      "phase": "live-usb-reboot",
+      "signature_verified": true,
+      "user_verified": true,
+      "user_handle_verified": true,
+      "counter": 5,
+      "origin": "http://localhost:37601",
+      "challenge_sha256": "5972e388db350b79acd089c30475528a4c8fadde010552dd31591ef86c178970",
+      "large_blob_payload_sha256": "2b7717e48cdd404f483417b7e48bbca67f0703290710d1001e15b77bfb94b6ac",
+      "independent_sdk_blob_match": true,
+      "large_blob_payload_bytes": 1056
+    },
+    {
+      "account": "own-chromium-blob--8",
+      "algorithm": -8,
+      "phase": "live-usb-reboot",
+      "signature_verified": true,
+      "user_verified": true,
+      "user_handle_verified": true,
+      "counter": 5,
+      "origin": "http://localhost:37601",
+      "challenge_sha256": "487f857b3cd79e176dd6e31a53c479e60f50e16f9df442462080d41f70b741ad",
+      "large_blob_payload_sha256": "619aae5b81da0f6118837042d366470591054ff05946597800e2942a59e2c4c0",
+      "independent_sdk_blob_match": true,
+      "large_blob_payload_bytes": 1056
+    }
+  ],
+  "final_metrics": {
+    "ok": true,
+    "key_backend": "software",
+    "probe": "probe=forced_software",
+    "creds": {
+      "software": 2,
+      "tpm2": 0,
+      "se": 0
+    },
+    "store_creds": 2,
+    "remaining": 98,
+    "pin_set": true,
+    "pin_retries": 8,
+    "make_cred_ok": 2,
+    "make_cred_err": 0,
+    "get_assert_ok": 8,
+    "get_assert_err": 0,
+    "up_allow": 10,
+    "up_deny": 0,
+    "up_timeout": 0,
+    "pin_fail": 0,
+    "pin_block": 0,
+    "errors": {},
+    "hid_init": 14,
+    "hid_error": 0,
+    "hid_ping": 0,
+    "keepalives": 35,
+    "cancels": 0
+  },
+  "test_count": 23
+}

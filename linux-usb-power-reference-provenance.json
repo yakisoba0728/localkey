@@ -1,0 +1,74 @@
+[
+  {
+    "url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/include/uapi/linux/usbdevice_fs.h",
+    "destination": "work/linux-usb-power-probe/reference/include_uapi_linux_usbdevice_fs.h",
+    "sha256": "d822c4c7ac5dd7fa54cf0d1a440fe3413edfee443a611a6d8d4ce69856393d25",
+    "scope": "pinned upstream6.8; distro6.8.0-146 may differ; actual runtime independently verified"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/drivers/usb/core/devio.c",
+    "destination": "work/linux-usb-power-probe/reference/drivers_usb_core_devio.c",
+    "sha256": "8aee2c8210aa6bb28029ccdf6a75bd1cf1239abcc192afe5587ebf7301f40627",
+    "scope": "pinned upstream6.8; distro6.8.0-146 may differ; actual runtime independently verified"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/Documentation/driver-api/usb/power-management.rst",
+    "destination": "work/linux-usb-power-probe/reference/Documentation_driver-api_usb_power-management.rst",
+    "sha256": "b795955ec4e9cd62966cfef608f50134f2d9c9d524056ce2498b0158a857b0e1",
+    "scope": "pinned upstream6.8; distro6.8.0-146 may differ; actual runtime independently verified"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/drivers/usb/gadget/udc/dummy_hcd.c",
+    "destination": "work/linux-usb-power-probe/reference/drivers_usb_gadget_udc_dummy_hcd.c",
+    "sha256": "6892efeaca7d13e0f8ba172fac6b9607f9ac5c60de1a5f1812a57eb7998fd993",
+    "scope": "pinned upstream6.8; distro6.8.0-146 may differ; actual runtime independently verified"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/drivers/usb/gadget/function/f_fs.c",
+    "destination": "work/linux-usb-power-probe/reference/drivers_usb_gadget_function_f_fs.c",
+    "sha256": "d9406ca97079251916e765a113e695d50ca5fdc1fb0027bf6f6ab61a538273ba",
+    "scope": "pinned upstream6.8; distro6.8.0-146 may differ; actual runtime independently verified"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/drivers/hid/usbhid/hid-core.c",
+    "destination": "work/linux-usb-power-probe/reference/drivers_hid_usbhid_hid-core.c",
+    "sha256": "200a29117d0353046db545883387fd9baf8f00dad638f828c0ddbd82a3901d29",
+    "scope": "pinned upstream6.8; distro kernel may differ; actual runtime independently verified"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/drivers/usb/core/driver.c",
+    "destination": "work/linux-usb-power-probe/reference/drivers_usb_core_driver.c",
+    "sha256": "2f81e953001354db884b6ce1624839d64399acef0150a14cf357ae77cb2aca37",
+    "scope": "pinned upstream6.8; distro kernel may differ; actual runtime independently verified"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/drivers/usb/core/hub.c",
+    "destination": "work/linux-usb-power-probe/reference/drivers_usb_core_hub.c",
+    "sha256": "d486569c6da9a3166ae06fa5a9ab27b3ff11ad708ea57846e07e58ce2038626f",
+    "scope": "pinned upstream6.8; distro kernel may differ; actual runtime independently verified"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/drivers/hid/hid-quirks.c",
+    "destination": "work/linux-usb-power-probe/reference/drivers_hid_hid-quirks.c",
+    "sha256": "67615baaee9e6d1770c7af98e136158de7bf690955db4293a67250b3980afab7",
+    "scope": "pinned upstream6.8; actual distro bindings independently observed"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/Documentation/power/basic-pm-debugging.rst",
+    "destination": "work/linux-usb-power-probe/reference/Documentation_power_basic-pm-debugging.rst",
+    "sha256": "5d0575bb9bd126c4b5c81e94820ec14811f1fbb67eaf26d5a5df4753306fddc2",
+    "scope": "pinned upstream6.8; distro6.8.0-146 runtime independently verified"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/kernel/power/suspend.c",
+    "destination": "work/linux-usb-power-probe/reference/kernel_power_suspend.c",
+    "sha256": "923405a2ec95c6194600f1958c840ec68441de08bfecf317335598199508d4a1",
+    "scope": "pinned upstream6.8; distro6.8.0-146 runtime independently verified"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/include/trace/events/power.h",
+    "destination": "work/linux-usb-power-probe/reference/include_trace_events_power.h",
+    "sha256": "f63929be3cfb18199d7ea9c2bebf610912f38ed75dbdad60efd9006aae3fb408",
+    "scope": "pinned upstream6.8; distro6.8.0-146 runtime independently verified"
+  }
+]

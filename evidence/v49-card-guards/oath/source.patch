@@ -1,0 +1,13 @@
+--- a/emucard/core.py
++++ b/emucard/core.py
+@@ -1768,7 +1768,9 @@
+         if ins == 1:
+             name = v[0x71]
+             key = v[0x73]
+-            require(1 <= len(name) <= 64 and len(key) >= 3, 0x6A80)
++            # Yubico's PUT wire format requires at least 14 secret bytes;
++            # host SDKs zero-pad shorter source secrets before sending.
++            require(1 <= len(name) <= 64 and len(key) >= 2 + 14, 0x6A80)
+             require(
+                 key[0] & 0xF0 in (0x10, 0x20)
+                 and key[0] & 15 in (1, 2, 3)

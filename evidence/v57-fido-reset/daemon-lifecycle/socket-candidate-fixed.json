@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "expected_fixed": true,
+  "physical_device_access": false,
+  "old_cid": "97bd5ea9",
+  "old_timeout_leaked": false,
+  "stale_report_hex": null,
+  "fresh_init_works": true
+}

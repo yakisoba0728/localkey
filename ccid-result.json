@@ -1,0 +1,419 @@
+{
+  "passed": true,
+  "tests": [
+    {
+      "name": "inactive slot reports unknown stopped clock",
+      "passed": true
+    },
+    {
+      "name": "unpowered transfer returns ICC_MUTE",
+      "passed": true
+    },
+    {
+      "name": "power-up ATR and full byte sequence echo",
+      "passed": true
+    },
+    {
+      "name": "T=1 default parameters match independent software ATR",
+      "passed": true
+    },
+    {
+      "name": "T=1 parameter change accepts valid bounds",
+      "passed": true
+    },
+    {
+      "name": "GET_PARAMETERS preserves negotiated state",
+      "passed": true
+    },
+    {
+      "name": "invalid parameter offset 10 returns unchanged current settings",
+      "passed": true
+    },
+    {
+      "name": "invalid parameter offset 11 returns unchanged current settings",
+      "passed": true
+    },
+    {
+      "name": "invalid parameter offset 13 returns unchanged current settings",
+      "passed": true
+    },
+    {
+      "name": "invalid parameter offset 14 returns unchanged current settings",
+      "passed": true
+    },
+    {
+      "name": "invalid parameter offset 15 returns unchanged current settings",
+      "passed": true
+    },
+    {
+      "name": "invalid parameter offset 16 returns unchanged current settings",
+      "passed": true
+    },
+    {
+      "name": "incorrect parameter size does not mutate negotiation",
+      "passed": true
+    },
+    {
+      "name": "unsupported T=0 parameter request preserves T=1 settings",
+      "passed": true
+    },
+    {
+      "name": "ATR convention controls T=1 inverse bit",
+      "passed": true
+    },
+    {
+      "name": "either-polarity clock stop selects low state",
+      "passed": true
+    },
+    {
+      "name": "stopped clock rejects APDU transfer",
+      "passed": true
+    },
+    {
+      "name": "clock restart restores running status",
+      "passed": true
+    },
+    {
+      "name": "invalid clock operation is rejected",
+      "passed": true
+    },
+    {
+      "name": "RESET_PARAMETERS restores ATR defaults",
+      "passed": true
+    },
+    {
+      "name": "default ATR forbids clock stop",
+      "passed": true
+    },
+    {
+      "name": "command 62 rejects nonzero reserved payload",
+      "passed": true
+    },
+    {
+      "name": "command 63 rejects nonzero reserved payload",
+      "passed": true
+    },
+    {
+      "name": "command 65 rejects nonzero reserved payload",
+      "passed": true
+    },
+    {
+      "name": "command 6c rejects nonzero reserved payload",
+      "passed": true
+    },
+    {
+      "name": "command 6d rejects nonzero reserved payload",
+      "passed": true
+    },
+    {
+      "name": "command 6e rejects nonzero reserved payload",
+      "passed": true
+    },
+    {
+      "name": "reserved header offset 7 rejected before execution",
+      "passed": true
+    },
+    {
+      "name": "reserved header offset 8 rejected before execution",
+      "passed": true
+    },
+    {
+      "name": "reserved header offset 9 rejected before execution",
+      "passed": true
+    },
+    {
+      "name": "nonexistent slot uses no-ICC status for reply 62",
+      "passed": true
+    },
+    {
+      "name": "nonexistent slot uses no-ICC status for reply 65",
+      "passed": true
+    },
+    {
+      "name": "nonexistent slot uses no-ICC status for reply 61",
+      "passed": true
+    },
+    {
+      "name": "nonexistent slot uses no-ICC status for reply 6b",
+      "passed": true
+    },
+    {
+      "name": "nonexistent slot uses no-ICC status for reply 73",
+      "passed": true
+    },
+    {
+      "name": "malformed declared length produces recoverable CCID error",
+      "passed": true
+    },
+    {
+      "name": "unadvertised command 69 uses its correct failed reply type",
+      "passed": true
+    },
+    {
+      "name": "unadvertised command 6a uses its correct failed reply type",
+      "passed": true
+    },
+    {
+      "name": "unadvertised command 6b uses its correct failed reply type",
+      "passed": true
+    },
+    {
+      "name": "unadvertised command 71 uses its correct failed reply type",
+      "passed": true
+    },
+    {
+      "name": "unadvertised command fd uses its correct failed reply type",
+      "passed": true
+    },
+    {
+      "name": "clock/rate negotiation reports active fixed values",
+      "passed": true
+    },
+    {
+      "name": "unsupported clock frequency rejected at offset 10",
+      "passed": true
+    },
+    {
+      "name": "unsupported bit rate rejected at offset 14",
+      "passed": true
+    },
+    {
+      "name": "control ABORT rejects nonexistent slot",
+      "passed": true
+    },
+    {
+      "name": "control ABORT accepts independent sequence number",
+      "passed": true
+    },
+    {
+      "name": "abort barrier fails new commands before matching bulk phase",
+      "passed": true
+    },
+    {
+      "name": "mismatched bulk ABORT preserves barrier",
+      "passed": true
+    },
+    {
+      "name": "matching bulk ABORT completes control-first pair",
+      "passed": true
+    },
+    {
+      "name": "completed abort pair reopens slot to commands",
+      "passed": true
+    },
+    {
+      "name": "bulk-first ABORT defers reply until control phase",
+      "passed": true
+    },
+    {
+      "name": "bulk-first ABORT resolves after matching control request",
+      "passed": true
+    },
+    {
+      "name": "power-off returns inactive clock state",
+      "passed": true
+    },
+    {
+      "name": "power cycle restores clean T=1 card session",
+      "passed": true
+    },
+    {
+      "name": "HOTP cancellation race reaches pre-commit boundary",
+      "passed": true
+    },
+    {
+      "name": "cancellation before commit suppresses APDU success",
+      "passed": true
+    },
+    {
+      "name": "cancelled counter mutation rolls back memory and leaves ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "commit-first race reaches protected durable write",
+      "passed": true
+    },
+    {
+      "name": "ABORT waits for an already-started commit boundary",
+      "passed": true
+    },
+    {
+      "name": "commit accepted before ABORT may complete successfully",
+      "passed": true
+    },
+    {
+      "name": "commit-first operation persists exactly one HOTP increment",
+      "passed": true
+    },
+    {
+      "name": "failed PIN comparison reaches durable retry commit",
+      "passed": true
+    },
+    {
+      "name": "ABORT suppresses a failed PIN response",
+      "passed": true
+    },
+    {
+      "name": "aborted response cannot erase a completed wrong-PIN attempt",
+      "passed": true
+    },
+    {
+      "name": "valid PIN works after retry-preserving cancellation",
+      "passed": true
+    },
+    {
+      "name": "idle private reader retains its session beyond the frame deadline",
+      "passed": true
+    },
+    {
+      "name": "independent OATH SDK resumes on the same idle reader",
+      "passed": true
+    },
+    {
+      "name": "private RPC rejects malformed header without dispatch",
+      "passed": true
+    },
+    {
+      "name": "private RPC rejects malformed body without dispatch",
+      "passed": true
+    },
+    {
+      "name": "private RPC rejects malformed oversized length without dispatch",
+      "passed": true
+    },
+    {
+      "name": "private RPC rejects malformed capability padding without dispatch",
+      "passed": true
+    },
+    {
+      "name": "fragmented RPC body cannot extend the total frame deadline",
+      "passed": true
+    },
+    {
+      "name": "closed and timed-out readers release private session capabilities",
+      "passed": true
+    },
+    {
+      "name": "malformed RPC requests preserve card data and encrypted state",
+      "passed": true
+    },
+    {
+      "name": "native USB bulk request enters real service presence wait",
+      "passed": true
+    },
+    {
+      "name": "independent FIDO SDK GetInfo completes during CCID presence wait",
+      "passed": true
+    },
+    {
+      "name": "concurrent FIDO capability reads leave pending card transaction untouched",
+      "passed": true
+    },
+    {
+      "name": "FIDO HID PING completes while CCID presence is pending",
+      "passed": true
+    },
+    {
+      "name": "USB CCID control list supports short reads during presence wait",
+      "passed": true
+    },
+    {
+      "name": "native USB rejects a second command to a busy slot",
+      "passed": true
+    },
+    {
+      "name": "USB ABORT with nonexistent slot stalls without cancelling request",
+      "passed": true
+    },
+    {
+      "name": "USB control ABORT interrupts active CCID presence without waiting for state lock",
+      "passed": true
+    },
+    {
+      "name": "aborted native transfer returns CMD_ABORTED without APDU data",
+      "passed": true
+    },
+    {
+      "name": "native matching bulk ABORT returns good slot status",
+      "passed": true
+    },
+    {
+      "name": "active transport cancellation preserves credentials, counters and encrypted state",
+      "passed": true
+    },
+    {
+      "name": "independent OATH SDK resumes after native cancellation",
+      "passed": true
+    },
+    {
+      "name": "resumed request commits one HOTP result without cancellation replay",
+      "passed": true
+    },
+    {
+      "name": "native bulk-first ABORT remains pending",
+      "passed": true
+    },
+    {
+      "name": "native bulk-first ABORT completes across independent pipes",
+      "passed": true
+    },
+    {
+      "name": "forty immediate bulk-first ABORT completions each leave SDK requests usable",
+      "passed": true
+    },
+    {
+      "name": "bus reset test reaches pending presence operation",
+      "passed": true
+    },
+    {
+      "name": "native bus reset cancels pending operation without counter commit",
+      "passed": true
+    },
+    {
+      "name": "bus reset discards replies from the previous USB generation",
+      "passed": true
+    },
+    {
+      "name": "native bus reset restores a usable fresh card session",
+      "passed": true
+    },
+    {
+      "name": "unknown private session capability cannot cancel another reader",
+      "passed": true
+    },
+    {
+      "name": "non-testing service waits for explicit terminal approval",
+      "passed": true
+    },
+    {
+      "name": "session control cancels actual stdin presence wait",
+      "passed": true
+    },
+    {
+      "name": "actual terminal wait ends promptly with CMD_ABORTED",
+      "passed": true
+    },
+    {
+      "name": "terminal cancellation preserves persistent HOTP state",
+      "passed": true
+    },
+    {
+      "name": "next operation requests fresh terminal approval",
+      "passed": true
+    },
+    {
+      "name": "explicit terminal approval permits one resumed HOTP response",
+      "passed": true
+    },
+    {
+      "name": "terminal-approved operation persists exactly one counter increment",
+      "passed": true
+    },
+    {
+      "name": "non-testing service removes its owned socket on shutdown",
+      "passed": true
+    }
+  ],
+  "scope": "fresh software state; native USB wire model; no OS registration or physical key",
+  "specification": "https://www.usb.org/sites/default/files/DWG_Smart-Card_CCID_Rev110.pdf"
+}

@@ -1,0 +1,9 @@
+{"ts":"2026-10-09T16:14:42.988Z","lvl":"info","event":"ctap","cmd":"getAssertion","cmd_byte":"0x02","status":"46","ms":"0"}
+{"ts":"2026-10-09T16:14:42.988Z","lvl":"info","event":"ctap","cmd":"getAssertion","cmd_byte":"0x02","status":"46","ms":"0"}
+{"ts":"2026-10-09T16:14:42.988Z","lvl":"info","event":"ctap","cmd":"getAssertion","cmd_byte":"0x02","status":"46","ms":"0"}
+{"ts":"2026-10-09T16:14:42.988Z","lvl":"info","event":"ctap","cmd":"getAssertion","cmd_byte":"0x02","status":"46","ms":"0"}
+Filters: "CTAP ignores unknown canonical float-valued fields"
+Randomness seeded to: 1333430448
+===============================================================================
+All tests passed (5 assertions in 1 test case)
+

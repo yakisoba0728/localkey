@@ -1,0 +1,47 @@
+{
+  "version": "0.42.0",
+  "passed": true,
+  "actual_native_checks": 52,
+  "runtime_autosuspend_profile_pid": 1030,
+  "verified_modes": [
+    "manual-on",
+    "native-fido-sdk",
+    "native-ccid-sdk"
+  ],
+  "same_processes_usb_address_configuration_and_keys_verified": true,
+  "actual_usb_runtime_callbacks_and_rpm_returns_zero_verified": true,
+  "kernel_suspended_time_advances_and_own_persistent_bytes_unchanged": true,
+  "independent_pin_uvp2_es256_signatures": 4,
+  "native_oath_hotp_counter_before": 0,
+  "native_oath_hotp_counter_after": 1,
+  "stock_profile7_autosuspend_blocker": {
+    "pid": 1031,
+    "runtime_usage": 0,
+    "autosuspend_check_errno": 95,
+    "usb_runtime_suspend_errno": 11,
+    "actual_kernel_diagnostic": "remote wakeup needed for autosuspend",
+    "stock_hid_drivers_remain_bound": true,
+    "descriptor_changed_to_force_suspend": false
+  },
+  "endpoint_transfer_source_byte_equal_frozen33": false,
+  "existing_synchronous_path_without_new_async_dispatch_byte_equal_frozen33": true,
+  "large_functionfs_aio_changed_in40": true,
+  "source_sha256": "d1be0586e061e3529bfea2fc4d3b716a137a6f10032dac94fe16d7eac3786dfc",
+  "usb_bridge_binary_sha256": "04a9702cc19d7cb85735d0fd113b9390d65ca465bc10e5dd48954de52ed78099",
+  "physical_device_access": false,
+  "host_device_passthrough": false,
+  "host_hid_drivers_unbound": false,
+  "other_usb_profiles_runtime_pm_verified": false,
+  "full_platform_sleep_verified": false,
+  "production_udc_verified": false,
+  "physical_touch_verified": false,
+  "manufacturer_trust_reproduced": false,
+  "native_macos_registration_verified": false,
+  "physical_firmware_power_timing_or_pin_token_semantics_verified": false,
+  "complete_yubikey_equivalence": false,
+  "evidence": [
+    "linux-usb-runtime-result.json",
+    "linux-native-result.json",
+    "linux-usb-runtime-reference-provenance.json"
+  ]
+}

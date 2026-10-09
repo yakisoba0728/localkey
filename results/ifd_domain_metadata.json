@@ -1,0 +1,227 @@
+{
+  "passed": true,
+  "tests": [
+    {
+      "name": "SELECT public template exactly matches saved firmware-5.7.4 response",
+      "passed": true
+    },
+    {
+      "name": "partial public Domain AID returns the complete public SELECT template",
+      "passed": true
+    },
+    {
+      "name": "short SELECT Le uses GET RESPONSE and reconstructs measured public bytes",
+      "passed": true
+    },
+    {
+      "name": "GET DATA 0066 exactly matches all 63 captured public bytes",
+      "passed": true
+    },
+    {
+      "name": "SDK recognition has GP/version/identification and separate SCP03/SCP11 templates",
+      "passed": true
+    },
+    {
+      "name": "public recognition declares GP card specification 2.3.1",
+      "passed": true
+    },
+    {
+      "name": "captured SCP03 implementation option 60 is preserved",
+      "passed": true
+    },
+    {
+      "name": "captured two-byte SCP11 implementation option 9b06 is preserved",
+      "passed": true
+    },
+    {
+      "name": "GP option bits advertise a/b/c and certificate chains with transient OCE keys",
+      "passed": true
+    },
+    {
+      "name": "GP option bits advertise S8 and X509 while excluding legacy certificate format",
+      "passed": true
+    },
+    {
+      "name": "reference advertises no BF20 authorization for either SCP11a or SCP11c",
+      "passed": true
+    },
+    {
+      "name": "short recognition Le uses GET RESPONSE without losing either option template",
+      "passed": true
+    },
+    {
+      "name": "fresh own key-table type/length schema matches captured public schema",
+      "passed": true
+    },
+    {
+      "name": "CPLC raw response has measured 42-byte format",
+      "passed": true
+    },
+    {
+      "name": "CPLC uses explicit software platform marker instead of claiming Infineon silicon",
+      "passed": true
+    },
+    {
+      "name": "CPLC identifier is independently generated software data",
+      "passed": true
+    },
+    {
+      "name": "CPLC is stable across repeated public SELECT and read",
+      "passed": true
+    },
+    {
+      "name": "SCP03 SDK encryption and response MAC preserve CPLC and public recognition",
+      "passed": true
+    },
+    {
+      "name": "SCP11b SDK encryption and response MAC preserve public metadata",
+      "passed": true
+    },
+    {
+      "name": "SCP11b public read privilege cannot reset the Domain; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "encrypted SELECT returns the public template with a valid SDK response MAC",
+      "passed": true
+    },
+    {
+      "name": "encrypted SELECT terminates the previous app-scoped channel; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "public metadata remains available after encrypted SELECT channel closure",
+      "passed": true
+    },
+    {
+      "name": "CPLC survives software-card restart",
+      "passed": true
+    },
+    {
+      "name": "separate fresh software cards receive distinct CPLC identifiers",
+      "passed": true
+    },
+    {
+      "name": "legacy state without CPLC gains one fresh own identifier",
+      "passed": true
+    },
+    {
+      "name": "CPLC migration preserves every existing own key, certificate and retry count",
+      "passed": true
+    },
+    {
+      "name": "CPLC migration preserves all other application state",
+      "passed": true
+    },
+    {
+      "name": "migrated own CPLC is persisted rather than regenerated on restart",
+      "passed": true
+    },
+    {
+      "name": "unsupported public metadata tag remains unavailable; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "software GP unsupported-BF20 response for SCP11 11 critical=True; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "software GP unsupported-BF20 response for SCP11 11 critical=False; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 11 valid own chain recovers after BF20 denial",
+      "passed": true
+    },
+    {
+      "name": "software GP unsupported-BF20 response for SCP11 15 critical=True; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "software GP unsupported-BF20 response for SCP11 15 critical=False; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 15 valid own chain recovers after BF20 denial",
+      "passed": true
+    },
+    {
+      "name": "BF20 is rejected in an intermediate PSO before a final leaf can reuse its chain; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "failed BF20 PSO never leaves a management-authorized channel; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "ordinary key deletion retains the own Domain CPLC",
+      "passed": true
+    },
+    {
+      "name": "last management-key deletion requires explicit delete_last; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "last-key DELETE response is authenticated by the old SDK channel before it closes",
+      "passed": true
+    },
+    {
+      "name": "explicit last-key deletion restores the documented fresh default key table",
+      "passed": true
+    },
+    {
+      "name": "documented Domain reset rotates the independent CPLC identifier",
+      "passed": true
+    },
+    {
+      "name": "Domain reset generates a fresh independent SCP11b identity",
+      "passed": true
+    },
+    {
+      "name": "Domain reset retains peer application keys and durable HOTP progression",
+      "passed": true
+    },
+    {
+      "name": "pre-reset SDK channel cannot authorize a follow-up encrypted command; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "fresh default SCP03 channel authenticates after explicit last-key reset",
+      "passed": true
+    },
+    {
+      "name": "reset CPLC identifier remains stable after restart",
+      "passed": true
+    },
+    {
+      "name": "failure-driven SDK reset also terminates the old authenticated channel; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "failure-driven SDK software reset also rotates own CPLC",
+      "passed": true
+    },
+    {
+      "name": "public recognition remains invariant through both software reset paths",
+      "passed": true
+    }
+  ],
+  "scope": "fresh software fixtures; saved public reference comparison",
+  "transport": "direct IFD ABI",
+  "physical_device_access": false,
+  "system_pcsc_reader_registered": false,
+  "manufacturer_trust_reproduced": false,
+  "public_select_and_recognition_byte_comparison": true,
+  "reference_scp03_option": "60",
+  "reference_scp11_option": "9b06",
+  "reference_advertises_bf20": false,
+  "unsupported_bf20_status_model": "6a81; GP SCP11 public review Table 7-13; physical rejection unmeasured",
+  "cplc_format": "42 raw bytes; 0000 software platform plus own random 40-byte identifier",
+  "reference_cplc_identifier_retained": false,
+  "cplc_reset_source": "published Yubico SCP technical manual; physical lifecycle unmeasured",
+  "unverified": [
+    "physical certificate rejection/status and exact retry/delete lifecycle",
+    "critical SD subject-ID handling",
+    "native OS reader enumeration and browser flow"
+  ]
+}

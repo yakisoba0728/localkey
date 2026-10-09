@@ -1,0 +1,329 @@
+"""Actual unread CCID/configuration cutover in an owned isolated USB guest."""
+import base64,copy,hashlib,hmac,json,os,platform,queue,re,shutil,struct,tempfile,threading,time,traceback
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+import usb.core,usb.backend.libusb1,usb.util
+import verify_composite as base
+import verify_usb_state as state
+import usb_state_pending as pending
+from emucard.core import EncryptedState
+from fido2.ctap2 import ClientPin,PinProtocolV2
+from fido2.ctap import CtapError
+from fido2.hid import CtapHidDevice,CTAPHID
+from fido2.hid.base import CtapHidConnection
+from yubikit.core import TRANSPORT,Tlv
+from yubikit.management import CAPABILITY,DeviceConfig,ManagementSession
+from yubikit.oath import CredentialData,OathSession
+from yubikit.piv import DEFAULT_MANAGEMENT_KEY,OBJECT_ID,PivSession
+
+checks=[]
+class NativeHidMux:
+    """Demultiplex unmodified actual hidraw reports for two owned SDK CIDs."""
+    def __init__(self,physical):
+        self.physical=physical;self.routes={};self.lock=threading.Lock();self.writes=threading.Lock()
+        self.frames=[];self.stopping=False;self.reader=threading.Thread(target=self.run,daemon=True);self.reader.start()
+    def run(self):
+        try:
+            while not self.stopping:
+                packet=self.physical.read_packet()
+                assert len(packet)==64,'actual own HID report width'
+                with self.lock:
+                    self.frames.append({'direction':'in','hex':packet.hex(),'cid_hex':packet[:4].hex()})
+                    target=self.routes.get(packet[:4])
+                if target is not None:target.put(packet)
+        except Exception as exc:
+            with self.lock:
+                for target in self.routes.values():target.put(exc)
+    def channel(self,cid):
+        mux=self
+        class Channel(CtapHidConnection):
+            def __init__(self):
+                self.inbox=queue.Queue();self.cid=cid
+                with mux.lock:mux.routes[cid]=self.inbox
+            def write_packet(self,packet):
+                with mux.lock:
+                    if self.cid!=packet[:4]:
+                        if mux.routes.get(self.cid) is self.inbox:mux.routes.pop(self.cid)
+                        self.cid=packet[:4];mux.routes[self.cid]=self.inbox
+                    mux.frames.append({'direction':'out','hex':packet.hex(),'cid_hex':packet[:4].hex()})
+                with mux.writes:mux.physical.write_packet(packet)
+            def read_packet(self):
+                packet=self.inbox.get(timeout=4)
+                if isinstance(packet,Exception):raise packet
+                assert packet[:4]==self.cid,'mux returns only actual matching channel'
+                return packet
+            def close(self):
+                with mux.lock:
+                    if mux.routes.get(self.cid) is self.inbox:mux.routes.pop(self.cid)
+        return Channel()
+    def close(self):
+        self.stopping=True;self.physical.close();self.reader.join(1)
+def check(value,name):
+    assert value,name
+    checks.append({'name':name,'passed':True});print('PASS',name,flush=True)
+def wait(predicate,label,seconds=6):
+    deadline=time.monotonic()+seconds
+    while time.monotonic()<deadline:
+        value=predicate()
+        if value:return value
+        time.sleep(.01)
+    raise AssertionError(label)
+def worker(pid,size):
+    for task in (Path('/proc')/str(pid)/'task').iterdir():
+        try:
+            words=(task/'syscall').read_text().strip().split()
+            if not words or words[0]!='64' or int(words[3],0)!=size:continue
+            fd=int(words[1],0)
+            if os.readlink(Path('/proc')/str(pid)/'fd'/str(fd))!='/dev/ffs-ske/ep4':continue
+            if (task/'wchan').read_text().strip()!='ffs_epfile_io':continue
+            return {'tid':int(task.name),'tgid':pid,'fd':fd,'bytes':size,'buffer':words[2],
+                    'endpoint':'/dev/ffs-ske/ep4','wchan':'ffs_epfile_io','syscall':' '.join(words)}
+        except (FileNotFoundError,ProcessLookupError):continue
+    return None
+
+def prove_fido(f,credential,label,report):
+    ct=state.fresh_hid(f);protocol=PinProtocolV2()
+    token=ClientPin(ct,protocol).get_pin_token(state.PIN,ClientPin.PERMISSION.GET_ASSERTION,state.RP)
+    digest=hashlib.sha256(('own pending management '+label).encode()).digest()
+    result=ct.get_assertion(state.RP,digest,allow_list=[{'type':'public-key','id':credential.credential_id}],
+        pin_uv_protocol=2,pin_uv_param=protocol.authenticate(token,digest))
+    credential.public_key.verify(result.auth_data+digest,result.signature)
+    check(result.credential['id']==credential.credential_id and result.user['id']==state.USER and
+          result.auth_data.flags&5==5 and result.auth_data.rp_id_hash==hashlib.sha256(state.RP.encode()).digest(),
+          'actual native PIN UVp2 original credential signature RP and user '+label)
+    if report['assertions']:check(result.auth_data.counter>report['assertions'][-1]['counter'],'native FIDO counter increases '+label)
+    report['assertions'].append({'phase':label,'counter':result.auth_data.counter,'signature_verified':True,
+        'pin_uv_protocol':2,'credential_sha256':hashlib.sha256(credential.credential_id).hexdigest(),
+        'challenge_sha256':digest.hex(),'rp_user_uv_verified':True})
+    state.close_hid(f)
+
+def main():
+    f=tmp=d=trace=executor=mux=None;future=None;cancel_sequence=None
+    report={'passed':False,'tests':checks,'cycles':[],'assertions':[],
+        'scope':'actual owned reference-profile6 unread CCID -> native FIDO Management profile2 -> profile6',
+        'host_cid_router_changes_response_bytes':False,
+        'unmodified_multiple_separate_sdk_processes_verified':False,
+        'unread_reply_reboot_grace_is_private_model_not_physical_timing':True,
+        'physical_device_access':False,'host_device_passthrough':False,'host_hid_drivers_unbound':False,
+        'manufacturer_trust_reproduced':False,'native_macos_registration_verified':False,
+        'production_udc_verified':False,'physical_touch_verified':False,
+        'physical_firmware_reboot_timing_verified':False,'card_testing_auto_allow':False,
+        'fido_testing_auto_allow_only_for_owned_fixture':True}
+    try:
+        check(Path('/opt/isolated-ske-usb-guest').exists() and platform.release()=='6.8.0-146-generic'
+              and platform.machine()=='aarch64' and [p.name for p in Path('/sys/class/net').iterdir()]==['lo'],
+              'actual private ARM64 kernel guest with only loopback')
+        tmp=Path(tempfile.mkdtemp(prefix='own-reboot-pending-',dir='/guest-state'));os.environ['SKE_TRACE_USB']='1'
+        f=base.CompositeFixture(Path('/opt/swpasskeyd'),tmp);f.card=pending.PromptCardFixture(Path('/opt'),tmp/'card',startup_timeout=30)
+        ct=f.start();report['service_pids']=[f.bridge.pid,f.process.pid,f.card.process.pid];report['controller']=f.controller
+        protocol=PinProtocolV2();ClientPin(ct,protocol).set_pin(state.PIN)
+        token=ClientPin(ct,protocol).get_pin_token(state.PIN,ClientPin.PERMISSION.MAKE_CREDENTIAL,state.RP)
+        digest=hashlib.sha256(b'own queued management registration').digest()
+        response=ct.make_credential(digest,{'id':state.RP},{'id':state.USER,'name':'own-reboot-pending'},
+            [{'type':'public-key','alg':-7}],options={'rk':True},pin_uv_protocol=2,pin_uv_param=protocol.authenticate(token,digest))
+        credential=response.auth_data.credential_data
+        check(response.auth_data.flags&5==5,'own resident key created with native PIN UVp2')
+        state.close_hid(f);prove_fido(f,credential,'initial',report)
+        original=state.reboot.snapshot(f.serial);report['original_identity']=original
+        with state.reboot.connection('FIDO',f.serial) as conn:
+            ManagementSession(conn).write_device_config(DeviceConfig({TRANSPORT.USB:CAPABILITY(0x33a)}),reboot=True)
+        identity=wait(lambda:(lambda x:x if x and x['pid']==0x406 and x['address']!=original['address'] else None)(state.reboot.snapshot(f.serial)),
+                      'initial own reference profile6 missing')
+        report['profile6_identity']=identity
+        reference=json.loads(Path('/opt/usb-reference-observation.json').read_text())
+        check(identity['host_visible_configuration_descriptor_hex']==reference['configuration_descriptor_hex'],
+              'initial actual profile6 configuration byte equal to saved reference')
+        backend=usb.backend.libusb1.get_backend(find_library=lambda name:'/usr/lib/aarch64-linux-gnu/libusb-1.0.so.0')
+        def device():
+            matches=list(usb.core.find(find_all=True,idVendor=0x1050,idProduct=0x406,backend=backend))
+            assert len(matches)==1 and matches[0].serial_number==f.serial
+            return matches[0]
+        d=device();connection=pending.NativeCcid(d);oath=OathSession(connection)
+        own=oath.put_credential(CredentialData.parse_uri('otpauth://hotp/RebootPending:owned?secret=JBSWY3DPEHPK3PXP&counter=0'))
+        touch_own=oath.put_credential(CredentialData.parse_uri('otpauth://hotp/RebootTouch:owned?secret=JBSWY3DPEHPK3PXP&counter=0'),touch_required=True)
+        count=lambda:EncryptedState(f.directory/'card/state.bin').data['oath']['credentials'][own.id.hex()]['counter']
+        touch_count=lambda:EncryptedState(f.directory/'card/state.bin').data['oath']['credentials'][touch_own.id.hex()]['counter']
+        def durable():
+            data=copy.deepcopy(EncryptedState(f.directory/'card/state.bin').data)
+            data.pop('management',None);data['otp'].pop('sequence',None)
+            return hashlib.sha256(json.dumps(data,sort_keys=True).encode()).hexdigest()
+        check(count()==touch_count()==0,'fresh owned HOTP and touch counters zero')
+        check(bytes(d.read(0x83,8,timeout=1500))==b'\x50\x03','initial own occupied-slot insertion notification')
+        trace=Path('/sys/kernel/tracing')
+        import verify_usb_runtime as runtime
+        runtime.ensure_mount('tracefs',trace)
+        entry=trace/'events/syscalls/sys_enter_write';exit_event=trace/'events/syscalls/sys_exit_write'
+        def arm():
+            threads=[int(t.name) for t in (Path('/proc')/str(f.bridge.pid)/'task').iterdir()]
+            own_filter=' || '.join('common_pid == '+str(tid) for tid in threads)
+            for e in [entry,exit_event]:(e/'filter').write_text(own_filter+'\n');(e/'enable').write_text('1\n')
+            (trace/'trace').write_text('');(trace/'tracing_on').write_text('1\n')
+        def completed(size):
+            def observe():
+                text=(trace/'trace').read_text();lines=text.splitlines()
+                for i,line in enumerate(lines):
+                    if not re.search(r'fd: a, buf: [0-9a-f]+, count: '+format(size,'x')+r'\b',line):continue
+                    match=re.search(r'\bske-usbd-(\d+)\s',line)
+                    if not match:continue
+                    tid=int(match[1]);tail=[x for x in lines[i+1:] if re.search(r'\bske-usbd-'+str(tid)+r'\s',x)]
+                    if tail and re.search(r'(?:sys_exit_write:|sys_write ->)\s*(?:0x'+format(size,'x')+'|'+str(size)+r')\b',tail[0]):
+                        return {'tid':tid,'fd':10,'bytes':size,'entry':line,'exit':tail[0],'actual_trace':text,
+                                'kernel_write_completed_before_any_host_IN_read':True}
+            return wait(observe,'original completed endpoint write trace missing '+str(size),3)
+        def original_entry(target):
+            lines=(trace/'trace').read_text().splitlines()
+            wanted='fd: '+format(target['fd'],'x')+', buf: '+format(int(target['buffer'],0),'x')+', count: '+format(target['bytes'],'x')
+            selected=[line for line in lines if re.search(r'\bske-usbd-'+str(target['tid'])+r'\s',line) and wanted in line]
+            assert len(selected)==1,('owned original write entry missing',wanted,selected)
+            return selected[0]
+        def new_generation(before,pid):
+            return wait(lambda:(lambda x:x if x and x['pid']==pid and x['address']!=before['address'] else None)(state.reboot.snapshot(f.serial)),
+                        'actual new USB generation missing '+hex(pid),8)
+        def alive(label):check(all(p.poll() is None for p in [f.bridge,f.process,f.card.process]),'same three original services alive '+label)
+        def calculate_expected(counter):
+            value=hmac.new(base64.b32decode('JBSWY3DPEHPK3PXP'),counter.to_bytes(8,'big'),'sha1').digest();offset=value[-1]&15
+            return str((int.from_bytes(value[offset:offset+4],'big')&0x7fffffff)%1000000).zfill(6)
+        for mode in ['kernel-buffered-data','blocked-data','blocked-zlp','pending-terminal-abort']:
+            before=state.reboot.snapshot(f.serial);before_count=count();row={'mode':mode,'before_usb':before,'counter_before_request':before_count}
+            native_fido=state.reboot.connection('FIDO',f.serial);management=ManagementSession(native_fido)
+            if mode=='blocked-zlp':
+                piv=PivSession(connection);piv.authenticate(DEFAULT_MANAGEMENT_KEY);piv.put_object(OBJECT_ID.CHUID,bytes(range(50)))
+                body=Tlv(0x5c,int(OBJECT_ID.CHUID).to_bytes(3,'big'));arm()
+                sequence=connection.write(0x6f,bytes([0,0xcb,0x3f,0xff,len(body)])+body)
+                target=wait(lambda:worker(f.bridge.pid,0),'original ZLP did not block before host data read',3)
+                packet=bytes(d.read(0x82,64,timeout=1500));header=struct.unpack('<BIBBBBB',packet[:10])
+                check(header==(0x80,54,0,sequence,0,0,0) and Tlv.parse_dict(packet[10:-2])[0x53]==bytes(range(50)) and packet[-2:]==b'\x90\x00',
+                      'original sixty-four-byte PIV response delivered once before unread ZLP')
+                check(worker(f.bridge.pid,0)==target,'same original ZLP remains blocked after data drain')
+                row.update(original_data_packet_hex=packet.hex(),original_sequence=sequence,original_worker=target)
+            elif mode=='pending-terminal-abort':
+                oath=OathSession(connection);previous=(f.directory/'card/log.txt').read_text().count('approve user presence');arm()
+                payload=Tlv(0x71,touch_own.id)+Tlv(0x74,bytes(8));sequence=connection.write(0x6f,bytes([0,0xa2,0,1,len(payload)])+payload)
+                cancel_sequence=sequence
+                wait(lambda:(f.directory/'card/log.txt').read_text().count('approve user presence')>previous,'real terminal prompt not reached',5)
+                target=wait(lambda:worker(f.bridge.pid,10),'original WTX write not pending',3)
+                check(touch_count()==0,'pending actual terminal approval has not committed HOTP')
+                row.update(original_sequence=sequence,original_worker=target)
+            else:
+                oath=OathSession(connection);arm()
+                if mode=='blocked-data':
+                    primer_sequence=connection.write(0x65);row['kernel_buffered_prior_slot_reply']=completed(10);row['primer_sequence']=primer_sequence
+                payload=Tlv(0x71,own.id)+Tlv(0x74,bytes(8));sequence=connection.write(0x6f,bytes([0,0xa2,0,1,len(payload)])+payload)
+                if mode=='kernel-buffered-data':row['completed_original_write']=completed(19)
+                else:row['original_worker']=wait(lambda:worker(f.bridge.pid,19),'original nineteen-byte data write not pending',3)
+                check(count()==before_count+1,'original unread HOTP commits exactly once '+mode)
+                row['original_sequence']=sequence
+            saved=durable();expected_count=count();start=time.monotonic()
+            if 'original_worker' in row:
+                row['original_write_entry_before_configuration']=original_entry(row['original_worker'])
+            if mode=='pending-terminal-abort':
+                mux=NativeHidMux(native_fido._connection)
+                native_fido._connection=mux.channel(struct.pack('>I',native_fido._channel_id))
+                executor=ThreadPoolExecutor(max_workers=1)
+                future=executor.submit(management.write_device_config,DeviceConfig({TRANSPORT.USB:CAPABILITY(0x202)}),reboot=True)
+                time.sleep(.2)
+                check(not future.done() and touch_count()==0 and durable()==saved and state.reboot.snapshot(f.serial)==before,
+                      'submitted native configuration write remains pending while real terminal touch owns card transaction')
+                peer=CtapHidDevice(native_fido.descriptor,mux.channel(bytes.fromhex('ffffffff')))
+                # The stock call() retries CHANNEL_BUSY. Its unchanged single
+                # transaction method exposes the actual first native response.
+                try:peer._do_call(CTAPHID.CBOR,b'\x04',threading.Event(),None)
+                except CtapError as exc:
+                    check(int(exc.code)==6,'actual peer FIDO GetInfo returns CHANNEL_BUSY while native configuration worker waits on touch')
+                    row['peer_native_getinfo_error']=int(exc.code)
+                else:raise AssertionError('peer FIDO did not observe native configuration in flight')
+                ping=b'own actual pending config peer'
+                check(peer.ping(ping)==ping,'actual independent FIDO channel PING completes during pending configuration and terminal touch')
+                peer.close()
+                check(not future.done() and durable()==saved and touch_count()==0,
+                      'peer CHANNEL_BUSY and PING do not cancel original configuration or touch transaction')
+                control_start=time.monotonic();result=d.ctrl_transfer(0x21,1,sequence<<8,1,None,timeout=1500)
+                check(result==0,'actual USB control ABORT completes during blocked native configuration write')
+                row['abort_control_seconds']=time.monotonic()-control_start
+                packet=struct.pack('<BIBBBBB',0x72,0,0,sequence,0,0,0)
+                check(d.write(2,packet,timeout=1500)==10,'actual matching native bulk ABORT sent with original sequence')
+                future.result(4);executor.shutdown();executor=None;future=None;cancel_sequence=None
+                row['original_touch_canceled_without_approval']=True
+                check(touch_count()==0,'native ABORT releases configuration write without HOTP commit')
+            else:management.write_device_config(DeviceConfig({TRANSPORT.USB:CAPABILITY(0x202)}),reboot=True)
+            row['native_management_ack_seconds']=time.monotonic()-start;native_fido.close()
+            after=new_generation(before,0x402);row['after_fido_only_usb']=after
+            if mux:
+                row['actual_native_hid_mux_frames']=list(mux.frames)
+                row['host_cid_demultiplexing_used']=True
+                row['stock_sdk_single_transaction_method_used_for_busy']=True
+                mux.close();mux=None
+            old_tid=row['original_worker']['tid'] if 'original_worker' in row else row['completed_original_write']['tid']
+            check(not (Path('/proc')/str(f.bridge.pid)/'task'/str(old_tid)).exists(),
+                  'old CCID endpoint worker absent in new FIDO-only generation '+mode)
+            row['old_worker_absent_in_new_generation_verified']=True;row['actual_cutover_write_trace']=(trace/'trace').read_text()
+            check(after['classes']==[3] and after['host_visible_endpoint_addresses']==[4,0x84] and after['serial']==before['serial'],
+                  'actual profile2 exposes only original requested FIDO endpoints '+mode)
+            alive(mode+' cutover')
+            check(durable()==saved and count()==expected_count and touch_count()==0,
+                  'configuration cutover preserves all card plaintext except committed management and OTP sequence '+mode)
+            try:d.read(0x82,3072,timeout=300)
+            except usb.core.USBError as exc:check(exc.errno==19,'original disconnected CCID handle returns actual ENODEV '+mode);row['old_handle_errno']=exc.errno
+            else:raise AssertionError('disconnected old CCID returned a stale response '+mode)
+            usb.util.dispose_resources(d);d=None
+            with state.reboot.connection('FIDO',f.serial) as conn:
+                check(ManagementSession(conn).read_device_info().config.enabled_capabilities[TRANSPORT.USB]==CAPABILITY(0x202),
+                      'stock native SDK sees committed FIDO-only application mask '+mode)
+            prove_fido(f,credential,mode+'-fido-only',report)
+            with state.reboot.connection('FIDO',f.serial) as conn:
+                ManagementSession(conn).write_device_config(DeviceConfig({TRANSPORT.USB:CAPABILITY(0x33a)}),reboot=True)
+            restored=new_generation(after,0x406);row['restored_usb']=restored
+            check(restored['host_visible_configuration_descriptor_hex']==reference['configuration_descriptor_hex'],
+                  'actual restored profile6 byte equal to saved physical reference '+mode)
+            alive(mode+' restored')
+            check(durable()==saved and count()==expected_count and touch_count()==0,'second native reboot retains original card credentials and counters '+mode)
+            d=device();connection=pending.NativeCcid(d)
+            check(bytes(d.read(0x83,8,timeout=1500))==b'\x50\x03','new generation has exactly original occupied slot notification '+mode)
+            oath=OathSession(connection)
+            check({c.id for c in oath.list_credentials()}=={own.id,touch_own.id},'fresh PowerOn and SDK SELECT/LIST contain no old response or ZLP '+mode)
+            value=oath.calculate_code(own).value
+            check(value==calculate_expected(expected_count) and count()==expected_count+1,'fresh native OATH result independently verifies retained counter and commits once '+mode)
+            if mode=='blocked-zlp':
+                piv=PivSession(connection);check(piv.get_object(OBJECT_ID.CHUID)==bytes(range(50)),'original opaque PIV transport object persists across both cutovers')
+            if mode=='pending-terminal-abort':
+                oath=OathSession(connection);previous=(f.directory/'card/log.txt').read_text().count('approve user presence')
+                executor=ThreadPoolExecutor(max_workers=1);future=executor.submit(oath.calculate_code,touch_own)
+                wait(lambda:(f.directory/'card/log.txt').read_text().count('approve user presence')>previous,'new restored terminal prompt missing',5)
+                check(not future.done() and touch_count()==0,'restored native touch credential requires fresh actual approval')
+                f.card.process.stdin.write('y\n');f.card.process.stdin.flush();value=future.result(3)
+                check(value.value==calculate_expected(0) and touch_count()==1,'fresh actual terminal approval produces independent HOTP and one commit after cutover')
+                executor.shutdown();executor=None;future=None
+                row['fresh_terminal_approval_verified']=True
+            prove_fido(f,credential,mode+'-restored',report)
+            row.update(counter_at_cutover=expected_count,counter_after_fresh_sdk=count(),touch_counter_after=touch_count(),
+                       original_services_alive=True,retained_card_plaintext_verified=True,new_generation_sdk_no_stale_response_verified=True)
+            report['cycles'].append(row)
+        alive('final');report['final_hotp_counter']=count();report['final_touch_counter']=touch_count()
+        report['final_process_status']={name:p.poll() for name,p in [('bridge',f.bridge),('fido',f.process),('card',f.card.process)]}
+        report['native_pending_management_cutover_verified']=True;report['passed']=True
+    except Exception as exc:report.update(error=f'{type(exc).__name__}: {exc}',traceback=traceback.format_exc())
+    finally:
+        if cancel_sequence is not None and d is not None:
+            try:d.ctrl_transfer(0x21,1,cancel_sequence<<8,1,None,timeout=500)
+            except Exception:pass
+        if trace:
+            for event in ['sys_enter_write','sys_exit_write']:
+                if (trace/'events/syscalls'/event/'enable').exists():(trace/'events/syscalls'/event/'enable').write_text('0\n')
+            if (trace/'tracing_on').exists():(trace/'tracing_on').write_text('0\n')
+        if d is not None:usb.util.dispose_resources(d)
+        if f:
+            for name in ['usb.log','daemon.log','card/log.txt']:
+                p=f.directory/name
+                if p.exists():report[name]=p.read_text(errors='replace')[-9000:]
+            try:f.stop()
+            except Exception as exc:report.update(passed=False,cleanup_error=str(exc))
+        if mux:mux.close()
+        if executor:executor.shutdown(wait=True,cancel_futures=True)
+        if tmp and tmp.exists():shutil.rmtree(tmp)
+        report['test_count']=len(checks)
+        for name,key in [('swpasskeyd','emulator_binary_sha256'),('ske-usbd','usb_bridge_binary_sha256')]:report[key]=hashlib.sha256(Path('/opt',name).read_bytes()).hexdigest()
+        report['card_service_sha256']=hashlib.sha256(Path('/opt/emucard/service.py').read_bytes()).hexdigest()
+        report['helper_sha256']=hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+        print('SKE_USB_REBOOT_PENDING_BEGIN\n'+json.dumps(report)+'\nSKE_USB_REBOOT_PENDING_END',flush=True)
+    return 0 if report['passed'] else 1
+if __name__=='__main__':raise SystemExit(main())

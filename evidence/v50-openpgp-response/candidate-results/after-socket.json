@@ -1,0 +1,37 @@
+{
+  "root": "/Users/yakisoba0728/Documents/Codex/2026-10-07/new-chat/work/v50-openpgp-candidate/candidate",
+  "transport": "private CCID socket",
+  "expect_fixed": true,
+  "tests": [
+    {
+      "name": "unmodified SDK GET DATA/RESPONSE with Le=1",
+      "passed": true
+    },
+    {
+      "name": "four-byte SDK GET RESPONSE compatibility",
+      "passed": true
+    },
+    {
+      "case": "wrong CLA",
+      "malformed_sw": "6e00",
+      "malformed_len": 0,
+      "subsequent_sw": "9000",
+      "subsequent_len": 314,
+      "pending_preserved": true,
+      "full_response_sha256": "ab50fc742320ee081407584a2306d0b972f52a02670fe11a65a7ea16988270b3"
+    },
+    {
+      "case": "command-chain CLA",
+      "malformed_sw": "6e00",
+      "malformed_len": 0,
+      "subsequent_sw": "9000",
+      "subsequent_len": 314,
+      "pending_preserved": true,
+      "full_response_sha256": "ab50fc742320ee081407584a2306d0b972f52a02670fe11a65a7ea16988270b3"
+    },
+    {
+      "name": "SDK re-read after malformed APDUs",
+      "passed": true
+    }
+  ]
+}

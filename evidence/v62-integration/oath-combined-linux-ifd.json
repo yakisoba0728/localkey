@@ -1,0 +1,52 @@
+{
+  "passed": true,
+  "variant": "fixed",
+  "platform": "linux",
+  "route": "ifd",
+  "unmodified_yubikit": true,
+  "two_private_clients": true,
+  "physical_or_host_device_access": false,
+  "network_devices": false,
+  "core_sha256": "e485006eb471c0f34055b190f40bc5d8b66b57f11924d5b6548b2bfa3da427df",
+  "phases": [
+    {
+      "name": "code_enabled_after_another_client_selected_unlocked",
+      "stale_client_sw": "6982",
+      "stale_client_inserted": false,
+      "encrypted_state_changed": false
+    },
+    {
+      "name": "code_rotated_after_old_validation",
+      "stale_client_sw": "6982",
+      "stale_client_inserted": false,
+      "encrypted_state_changed": false
+    },
+    {
+      "name": "code_rotated_away_and_back",
+      "stale_client_sw": "6982",
+      "stale_client_inserted": false,
+      "encrypted_state_changed": false
+    },
+    {
+      "name": "app_reset_then_same_code_reinstalled",
+      "stale_client_sw": "6982",
+      "stale_client_inserted": false,
+      "encrypted_state_changed": false
+    }
+  ],
+  "continuations": [
+    {
+      "name": "send_remaining_after_code_rotation",
+      "status": "6982",
+      "leaked_previous_response": false,
+      "state_changed": false
+    },
+    {
+      "name": "get_response_after_code_rotation",
+      "status": "6982",
+      "leaked_previous_response": false,
+      "state_changed": false
+    }
+  ],
+  "normal_sdk_reauthorization": true
+}

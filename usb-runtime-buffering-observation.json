@@ -1,0 +1,31 @@
+{
+  "version": "0.42.0",
+  "subject": "Absence of a blocked userspace write does not establish loss of an unread IN reply",
+  "prior_observer_error": "AssertionError: actual original nineteen-byte CCID data write blocked 0",
+  "prior_checks": 15,
+  "original_hotp_counter_after_request": 1,
+  "actual_original_usb_packet_hex": "8009000000000400000076050615a741489000",
+  "failure_before_requested_runtime_cycle": true,
+  "original_read_succeeded_after_observer_failure": true,
+  "response_loss_observed": false,
+  "initial_notification_drain_freed_shared_dummy_fifo": true,
+  "source_inference": "Pinned upstream6.8 dummy_queue can copy an IN request of at most64 bytes into its one shared FIFO and complete the userspace write before a host IN read. Actual full37 sys_enter/exit traces independently prove original slot/HOTP writes completed before read and responses survive runtime PM.",
+  "pinned_upstream_source": {
+    "url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/drivers/usb/gadget/udc/dummy_hcd.c",
+    "sha256": "6892efeaca7d13e0f8ba172fac6b9607f9ac5c60de1a5f1812a57eb7998fd993",
+    "scope": "pinned upstream6.8; distro6.8.0-146 may differ; actual runtime independently verified"
+  },
+  "pinned_upstream_fifo_bytes": 64,
+  "actual_distro_source_delta_not_reproduced": true,
+  "fifo_policy_modified_to_force_proof": false,
+  "final_native_evidence": "linux-usb-runtime-pending-result.json",
+  "actual_final_checks": 205,
+  "separate_blocked_and_kernel_buffered_original_replies_verified": true,
+  "prior_report": "linux-usb-runtime-buffering-prior-probe.json",
+  "prior_report_sha256": "411d084166e9a2ec7e53503bdf52cf635caa2ffeb2c7e6690721e5013e784055",
+  "original_helper_sha256": "009404bc661e9b8e0b50cd397f11042de31e9e33d2aaf986a824cc9b73e5024b",
+  "original_helper_and_console_preserved_outside_package": "work/linux-ccid-resume-probe/actual-response-kernel-buffered-after-initial-notification-drain",
+  "physical_device_access": false,
+  "host_device_passthrough": false,
+  "complete_yubikey_equivalence": false
+}

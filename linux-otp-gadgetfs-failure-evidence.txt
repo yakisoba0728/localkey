@@ -1,0 +1,24 @@
+GadgetFS own-guest failure evidence, version 0.27.0
+Only fresh private software state was used; no host/physical device passthrough.
+Full source console SHA-256: 12691c00cc49068c75b97eca99959d46daf5479925427d03d5e84e06ac2cc00c
+Sender: stock ykman hidraw SEND diagnostics; final configuration transaction (payload omitted).
+SEND flags=0x80 payload_sha256=837885c8f8091aeaeb9ec3c3f85a6ff470a415e610b8ba3e49f9b33c9cf9d619
+SEND flags=0x82 payload_sha256=9d70940cb6da4f893de0a4e8b73a65fb4d5a52e5fc2138e508ea9ad5f01a221c
+SEND flags=0x83 payload_sha256=eb5af21aa6bf3cda8f402f1d4f1c980d5d60d13c5e949d9e51cceefed5fcb9be
+SEND flags=0x84 payload_sha256=d87e3e9cdb179ae1748b29fc091806c2b58bb5a77e8c1d459f6ca3a9dff1f2df
+SEND flags=0x85 payload_sha256=68c5ddf3e3f1bffa72bf30ee335ba4f393a7b83a51fb8e3d70decd288d3cd801
+SEND flags=0x86 payload_sha256=245b7915fc3d805e9191d8cbb7c8cd4026aaad1411052e4b97977d5be56c4006
+SEND flags=0x87 payload_sha256=c01f3aa10c435c203f107dac2030cd9463890b2b99192ee88a2f575fa0921b33
+SEND flags=0x89 payload_sha256=6cb22013369822e5031530e8370f363212ad6569e5cbb62150be3084cc5a9de0
+Receiver: private card service report diagnostics; final configuration transaction.
+RECEIVE flags=0x80 data_crc=29583
+RECEIVE flags=0x82 data_crc=17486
+RECEIVE flags=0x83 data_crc=5989
+RECEIVE flags=0x84 data_crc=27369
+RECEIVE flags=0x86 data_crc=65445
+RECEIVE flags=0x87 data_crc=32930
+RECEIVE flags=0x89 data_crc=63807
+otp_frame_complete command 3 crc_ok False
+CommandRejectedError: No data
+The intermediate SEND flags=0x85 has no receiver entry; payload CRC failed.
+Exact kernel race and production UDC behavior are unverified.

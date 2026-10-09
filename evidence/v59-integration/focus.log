@@ -1,0 +1,51 @@
+{
+  "passed": true,
+  "expect_fixed": true,
+  "malformed_reply_cmd": 191,
+  "malformed_reply_payload_hex": "03",
+  "valid_wink": true,
+  "fresh_ping": true,
+  "binary_sha256": "6313f0dd781a278682de3c3688a09780757ea1a707e924b97b8e716d69a67e56",
+  "physical_device_access": false
+}
+3/3 fixed dormant update checks passed
+{
+  "passed": true,
+  "core_sha256": "9ec868235c409c57d3699a32ba14e87c86d2b81c4c134391b923df0ff0fd3760",
+  "transport": "private CCID socket",
+  "expect_fixed": true,
+  "operational_activate_sw": "9000",
+  "operational_state_semantically_identical": true,
+  "encrypted_state_bytes_identical": false,
+  "unmodified_sdk_operational_activate": "9000 success",
+  "malformed_headers_rejected_immutably": true,
+  "url_preserved_after_restart": true,
+  "unmodified_sdk_reset_terminated_activation": true,
+  "reset_persisted_after_restart": true,
+  "pristine": {
+    "pristine_state_no_attestation_created": true,
+    "pristine_state_survives_restart": true
+  },
+  "physical_key_accessed": false
+}
+{
+  "passed": true,
+  "core_sha256": "9ec868235c409c57d3699a32ba14e87c86d2b81c4c134391b923df0ff0fd3760",
+  "transport": "direct IFD",
+  "expect_fixed": true,
+  "operational_activate_sw": "9000",
+  "operational_state_semantically_identical": true,
+  "encrypted_state_bytes_identical": false,
+  "unmodified_sdk_operational_activate": "9000 success",
+  "malformed_headers_rejected_immutably": true,
+  "url_preserved_after_restart": true,
+  "unmodified_sdk_reset_terminated_activation": true,
+  "reset_persisted_after_restart": true,
+  "pristine": {
+    "pristine_state_no_attestation_created": true,
+    "pristine_state_survives_restart": true
+  },
+  "physical_key_accessed": false
+}
+usage: verify_ctap.py [-h] --binary BINARY --work-dir WORK_DIR --report REPORT
+verify_ctap.py: error: the following arguments are required: --work-dir

@@ -1,0 +1,11 @@
+--- a/source/src/ctap/management.cpp
++++ b/source/src/ctap/management.cpp
+@@ -132,7 +132,7 @@
+     return encode_management_row(first, sub == 2, total);
+   }
+   if (!descriptor || (sub == 7 && !user)) return std::unexpected(Status::MissingParameter);
+-  if (!row || !row->rk) return std::unexpected(Status::InvalidCredential);
++  if (!row || !row->rk) return std::unexpected(Status::NoCredentials);
+   if (sub == 6) {
+     if (auto d = store_.erase(row->cred_id); !d) return std::unexpected(d.error());
+     destroy_key(*row);

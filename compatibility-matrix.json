@@ -1,0 +1,908 @@
+{
+  "version": "0.64.0",
+  "goal_status": "active",
+  "complete_yubikey_equivalence": false,
+  "criteria": [
+    {
+      "id": "public_get_info",
+      "status": "verified_with_identity_and_fresh_state_differences",
+      "evidence": "reference-profile-result.json"
+    },
+    {
+      "id": "fido_crypto_pin_extensions_management",
+      "status": "implemented_sdk_cases_verified",
+      "evidence": "ctap-upgrade-result.json"
+    },
+    {
+      "id": "smartcard_crypto_applications",
+      "status": "implemented_sdk_cases_verified",
+      "evidence": "smartcard-result.json"
+    },
+    {
+      "id": "native_ifd_abi",
+      "status": "verified_direct_call_only",
+      "evidence": [
+        "ifd-result.json",
+        "ifd-smartcard-result.json"
+      ]
+    },
+    {
+      "id": "composite_usb_protocol_model",
+      "status": "verified_wire_model_and_actual_Linux_guest_USB_sdk; macOS_entitled_registration_pending",
+      "evidence": "usb-bridge-result.json"
+    },
+    {
+      "id": "ccid_parameters_errors_and_cancellation",
+      "status": "verified_software_model_and_native_wire_path",
+      "evidence": "ccid-result.json"
+    },
+    {
+      "id": "measured_fido_ccid_usb_descriptors",
+      "status": "exact_configuration_and_hid_report_bytes_in_wire_model",
+      "evidence": [
+        "usb-reference-observation.json",
+        "ccid-chaining-result.json"
+      ]
+    },
+    {
+      "id": "ccid_extended_chaining_wtx_and_eof",
+      "status": "verified_transport_fixtures_and_native_wire_path; reference_timing_unverified",
+      "evidence": "ccid-chaining-result.json"
+    },
+    {
+      "id": "piv_buffer_and_storage_capacity",
+      "status": "published_ceiling_model_verified; exact_hardware_boundaries_unverified",
+      "evidence": "piv-storage-result.json"
+    },
+    {
+      "id": "piv_initial_objects_retries_and_f9_lifecycle",
+      "status": "published_profile_sdk_verified_over_socket_and_direct_ifd; hardware_differential_pending",
+      "evidence": [
+        "piv-profile-result.json",
+        "ifd-piv-profile-result.json"
+      ]
+    },
+    {
+      "id": "oath_syntax_capacity_crypto_and_reset",
+      "status": "published_protocol_and_rfc_sdk_verified_over_socket_and_direct_ifd; reference_boundaries_pending",
+      "evidence": [
+        "oath-profile-result.json",
+        "ifd-oath-profile-result.json"
+      ]
+    },
+    {
+      "id": "openpgp_public_metadata",
+      "status": "captured_public_bytes_and_schema_match; identity_and_key_contents_independent",
+      "evidence": [
+        "openpgp-reference-observation.json",
+        "pgp-objects-result.json"
+      ]
+    },
+    {
+      "id": "openpgp_object_limits_access_and_legacy_data",
+      "status": "specification_and_observed_ceiling_model_sdk_verified_over_socket_and_direct_ifd; physical_write_and_challenge_boundaries_pending",
+      "evidence": [
+        "pgp-objects-result.json",
+        "ifd-pgp-objects-result.json"
+      ]
+    },
+    {
+      "id": "openpgp_full_advertised_algorithm_generation_import_and_counters",
+      "status": "public_FA_and_7A_schema_measured; all_43_variants_sdk_crypto_verified_over_socket_and_direct_ifd; physical_write_counter_semantics_pending",
+      "evidence": [
+        "pgp-algorithms-result.json",
+        "ifd-pgp-algorithms-result.json",
+        "openpgp-reference-observation.json"
+      ]
+    },
+    {
+      "id": "openpgp_issuer_reset_metadata_and_certificate_format",
+      "status": "published_profile_sdk_crypto_verified_over_socket_and_direct_ifd; template_firmware_wrapper_measured; physical_leaf_and_reset_boundaries_pending",
+      "evidence": [
+        "pgp-attestation-result.json",
+        "ifd-pgp-attestation-result.json",
+        "openpgp-reference-observation.json"
+      ]
+    },
+    {
+      "id": "security_domain_role_policy_capacity_retry_and_reset",
+      "status": "GP_role_and_documented_SCP03_profile_plus_explicit_software_models_sdk_verified_over_socket_and_direct_ifd; critical_subject_ID_and_physical_limits_pending; measured_option_advertises_no_BF20",
+      "evidence": [
+        "domain-profile-result.json",
+        "ifd-domain-profile-result.json",
+        "domain-result.json",
+        "ifd-domain-result.json"
+      ]
+    },
+    {
+      "id": "security_domain_public_metadata_and_reset",
+      "status": "public_SELECT_and_recognition_exact; key_and_CPLC_schema_measured; own_identity_lifecycle_and_no_BF20_model_SDK_verified_socket_direct_IFD; physical_reset_rejection_pending",
+      "evidence": [
+        "security-domain-reference-observation.json",
+        "domain-metadata-result.json",
+        "ifd-domain-metadata-result.json"
+      ]
+    },
+    {
+      "id": "security_domain_full_scp03_version_range",
+      "status": "all_254_published_custom_versions_SDK_and_independent_crypto_verified_socket_direct_IFD; SCP11_seven_bit_range_preserved; physical_boundary_and_INIT_pending",
+      "evidence": [
+        "domain-versions-result.json",
+        "ifd-domain-versions-result.json"
+      ]
+    },
+    {
+      "id": "security_domain_oce_cache_and_allowlist_lifecycle",
+      "status": "GP_public_review_model_SDK_receipt_KDF_secure_messaging_verified_socket_direct_IFD; hardware_status_final_GP14_chain_serial_scope_counter_pending",
+      "evidence": [
+        "domain-cache-result.json",
+        "ifd-domain-cache-result.json"
+      ]
+    },
+    {
+      "id": "security_domain_scp11c_static_ecdh_replay_and_counter",
+      "status": "GP_public_review_model_independent_crypto_SDK_authenticated_replay_and_atomic_failure_verified_socket_direct_IFD; hardware_final_GP14_transaction_logical_channel_policy_pending",
+      "evidence": [
+        "domain-scp11c-result.json",
+        "ifd-domain-scp11c-result.json"
+      ]
+    },
+    {
+      "id": "security_domain_shared_policy_reset_and_rollback",
+      "status": "GP_public_review_model_cross_client_SDK_cache_channel_reset_failure_and_migration_verified_socket_separate_direct_IFD_handles; transient_OCE_logical_channel_transaction_physical_final_GP14_pending",
+      "evidence": [
+        "domain-shared-result.json",
+        "ifd-domain-shared-result.json"
+      ]
+    },
+    {
+      "id": "security_domain_protected_handoff_and_sole_c_context",
+      "status": "GP_public_review_12_outer_target_combinations_SDK_new_context_and_sole_c_latest_commit_rollback_SELECT_disconnect_verified_socket_separate_direct_IFD; hardware_logical_channel_policy_failed_MUT_finalGP14_transactions_pending",
+      "evidence": [
+        "domain-handoff-result.json",
+        "ifd-domain-handoff-result.json"
+      ]
+    },
+    {
+      "id": "security_domain_incremental_pso_validation_and_lifecycle",
+      "status": "GP_public_review_prefix_signature_role_CA_path_reference_scope_SDK_a_c_and_PIV_PIN_crypto_lifecycle_verified_socket_direct_IFD; hardware_status_tolerance_chain_serial_finalGP14_pending",
+      "evidence": [
+        "domain-pso-result.json",
+        "ifd-domain-pso-result.json"
+      ]
+    },
+    {
+      "id": "security_domain_vendor_plaintext_boundary",
+      "status": "vendor_rule_model_plain_PSO_INIT_MUT_INTERNAL_chaining_reject_before_dispatch_session_OCE_PIV_admin_OATH_revocation_recovery_verified_socket_direct_IFD; physical_status_handshake_exceptions_pending",
+      "evidence": [
+        "domain-plaintext-result.json",
+        "ifd-domain-plaintext-result.json",
+        "plaintext-boundary-observation.json"
+      ]
+    },
+    {
+      "id": "security_domain_each_certificate_allowlist",
+      "status": "vendor_each_presented_serial_model_prefix_final_one_anchor_wildcard_optionalroot_directleaf_padding_cache_peer_rollback_restart_sdk_verified_socket_direct_IFD; physical_scope_status_timing_pending",
+      "evidence": [
+        "domain-allowlist-result.json",
+        "ifd-domain-allowlist-result.json",
+        "allowlist-boundary-observation.json"
+      ]
+    },
+    {
+      "id": "usb_management_reboot_reenumeration",
+      "status": "Linux_native_stock_SDK_all_seven_interface_combinations_and_same_profile_reboot_verified; commit_failure_lock_rejection_and_volatile_auth_crypto_verified; macOS_runtime_and_firmware_timing_pending",
+      "evidence": [
+        "usb-reboot-result.json",
+        "linux-usb-reboot-result.json"
+      ]
+    },
+    {
+      "id": "native_macos_composite_enumeration",
+      "status": "pending_entitlement_and_actual_os_validation",
+      "evidence": null
+    },
+    {
+      "id": "stock_sdk_os_discovery_and_pcsc",
+      "status": "Linux_guest_composite_USB_stock_OTP_FIDO_libccid_pcscd_and_grouping_verified; macOS_pending",
+      "evidence": "linux-native-result.json"
+    },
+    {
+      "id": "modified_engine_native_browser_flow",
+      "status": "Linux_Firefox_native_USB_all_three_algorithms_basic_and_resident_PIN_UV_multi_account_RP_crypto_browser_restart_live_USB_reboot_verified; remaining_extension_attestation_edge_cases_other_browsers_and_macOS_pending",
+      "evidence": [
+        "linux-browser-result.json",
+        "linux-browser-resident-result.json"
+      ]
+    },
+    {
+      "id": "modified_engine_native_browser_prf",
+      "status": "Linux_Firefox_native_USB_all_three_algorithms_six_resident_PRF_keys_dual_single_evalByCredential_30outputs_independent_UV_SDK_reference_and_restarts_verified; remaining_extension_edge_cases_largeBlob_other_browsers_macOS_pending",
+      "evidence": [
+        "linux-browser-prf-result.json",
+        "linux-native-result.json"
+      ]
+    },
+    {
+      "id": "modified_engine_native_browser_attestation_consent",
+      "status": "Linux_Firefox_native_USB_all_three_algorithms_real_Allow_Block_UI_own_packed_signature_and_tamper_rejections_none_statement_with_model_AAGUID_preserved_six_resident_keys_and_browser_restart_verified; manufacturer_trust_false_other_browsers_macOS_pending",
+      "evidence": [
+        "linux-browser-attestation-result.json",
+        "linux-native-result.json"
+      ]
+    },
+    {
+      "id": "modified_engine_native_browser_largeblob",
+      "status": "Linux_stock_Chromium_ES256_Ed25519_real_PIN_native_USB_largeBlob_browser_write_SDK_UV_signature_decrypt_key_isolation_replacement_four_reads_browser_restart_live_USB_reboot_verified; actual_ES384_client_parser_rejection_and_same_credential_SDK_signature_recorded; other_algorithms_extensions_platforms_pending",
+      "evidence": [
+        "linux-browser-largeblob-result.json",
+        "chromium-es384-parser-observation.json",
+        "linux-native-result.json"
+      ]
+    },
+    {
+      "id": "native_keyboard_input",
+      "status": "Linux_guest_evdev_keys_and_releases_verified; macOS_pending",
+      "evidence": "linux-native-result.json"
+    },
+    {
+      "id": "all_firmware_edge_cases_and_timing",
+      "status": "incomplete",
+      "evidence": null
+    },
+    {
+      "id": "nonresident_storage_semantics",
+      "status": "software_stateless_sdk_verified; hardware_backend_and_legacy_rows_remain_stored",
+      "evidence": [
+        "nonresident-result.json",
+        "unit-test-result.txt"
+      ]
+    },
+    {
+      "id": "nonresident_reference_counter_and_credential_blob",
+      "status": "published_profile_and_software_model_only; differential_validation_pending",
+      "evidence": "implementation-status.json"
+    },
+    {
+      "id": "full_standards_and_differential_conformance",
+      "status": "incomplete",
+      "evidence": null
+    },
+    {
+      "id": "manufacturer_trust_and_hardware_guarantees",
+      "status": "inherently_not_reproduced",
+      "evidence": "implementation-status.json"
+    },
+    {
+      "id": "native_usb_halt_reset_configuration_and_pending_ccid_fido_concurrency",
+      "status": "isolated_Linux_native_six_HALT_EPIPE_clear_three_idle_one_pending_reset_config0_1_retained_UV_keys_real_CCID_prompt_GetInfo_PING_no_HOTP_mutation_fresh_approval_verified; production_UDC_power_management_firmware_timing_token_semantics_and_macOS_pending",
+      "evidence": [
+        "linux-usb-state-result.json",
+        "ccid-fido-concurrency-observation.json",
+        "ccid-result.json",
+        "usb-reboot-result.json",
+        "linux-native-result.json"
+      ]
+    },
+    {
+      "id": "native_kernel_device_pm_and_queued_ccid_udc_reenumeration",
+      "status": "isolated_Linux_actual_kernel_devices_PM_three_idle_one_pending_queued_bulk_IN_ESHUTDOWN_same_processes_keys_and_sdk_HOTP_recovery_verified; runtime_PM_full_platform_sleep_production_UDCs_physical_firmware_and_macOS_pending",
+      "evidence": [
+        "linux-usb-power-result.json",
+        "usb-power-recovery-observation.json",
+        "linux-usb-power-prior-v32-failure.json",
+        "linux-usb-power-prior-v32-console.txt",
+        "linux-native-result.json"
+      ]
+    },
+    {
+      "id": "native_fido_ccid_reference_profile_runtime_autosuspend_and_sdk_autoresume",
+      "status": "isolated_Linux_profile6_actual_auto_suspend_manual_and_native_FIDO_CCID_SDK_resume_same_address_services_keys_rpm_returns_zero_verified; profile7_stock_remote_wakeup_refusal_confirmed; other_profiles_remote_wakeup_pending_IO_physical_UDCs_full_sleep_and_macOS_pending",
+      "evidence": [
+        "linux-usb-runtime-result.json",
+        "usb-runtime-power-observation.json",
+        "linux-usb-runtime-reference-provenance.json",
+        "linux-native-result.json"
+      ]
+    },
+    {
+      "id": "native_configured_ccid_data_and_bulk_zlp_eintr_recovery",
+      "status": "isolated_Linux_real_targeted_SIGUSR1_write_EINTR_same_generation_buffer_thread_three_HOTP_single_commits_and64byte_PIV_plus_only_ZLP_retries_nativeSDK_FIDO_isolation_verified; production_UDC_physical_timing_and_other_backpressure_error_cases_pending",
+      "evidence": [
+        "linux-usb-interrupt-result.json",
+        "usb-interrupt-recovery-observation.json",
+        "linux-usb-interrupt-prior-v32-data-failure.json",
+        "linux-usb-interrupt-prior-v32-zlp-failure.json",
+        "linux-usb-interrupt-paired-v33-data-result.json",
+        "linux-usb-interrupt-paired-v33-zlp-result.json",
+        "linux-native-result.json",
+        "usb-interrupt-trace-observation.json",
+        "linux-usb-interrupt-prior-v35-trace-failure.json",
+        "usb-interrupt-trace-arm-observation.json",
+        "linux-usb-interrupt-prior-v36-trace-arm-failure.json"
+      ]
+    },
+    {
+      "id": "native_profile6_queued_ccid_data_and_zero_length_terminator_runtime_pm",
+      "status": "isolated_Linux_real_runtime_suspend_resume_same_generation_worker_buffer_data_and_ZLP_nativeSDK_FIDO_HOTP_verified; other_profiles_concurrent_full_message_errors_remote_wakeup_physical_and_macOS_pending",
+      "evidence": [
+        "linux-usb-runtime-pending-result.json",
+        "usb-runtime-pending-observation.json",
+        "linux-native-result.json",
+        "usb-runtime-slot-conformance-observation.json",
+        "linux-usb-runtime-slot-prior-v36-failure.json",
+        "linux-usb-runtime-slot-prior-v36-console.txt",
+        "usb-runtime-slot-conformance-prior-v36-observation.json",
+        "usb-endpoint-frozen33-equivalence.json"
+      ]
+    },
+    {
+      "id": "ccid_post_resume_deactivation_slot_change_and_explicit_reactivation",
+      "status": "actual_Linux_profile6_six_runtime_cycles_inactive_slot_insertion_once_explicit_poweron_committed_replies_preserved_PIV_revocation_terminal_cancel_fresh_approval_verified; macOS_route_compiled_only_physical_UDCs_other_profiles_pending",
+      "evidence": [
+        "linux-usb-runtime-pending-result.json",
+        "usb-runtime-pending-observation.json",
+        "linux-native-result.json",
+        "usb-runtime-slot-conformance-observation.json",
+        "linux-usb-runtime-slot-prior-v36-failure.json",
+        "linux-usb-runtime-slot-prior-v36-console.txt",
+        "usb-runtime-slot-conformance-prior-v36-observation.json",
+        "usb-endpoint-frozen33-equivalence.json"
+      ]
+    },
+    {
+      "id": "compiled_common_usb_resume_backend",
+      "status": "compiled_macOS_controller_route_and_common_wire_13_resume_checks_verified; entitled_macOS_native_and_GadgetFS_runtime_pending",
+      "evidence": [
+        "usb-bridge-result.json",
+        "source/src/usb/backend.hpp",
+        "source/src/usb/native.mm"
+      ]
+    },
+    {
+      "id": "native_pending_ccid_configuration_generation_cutover",
+      "status": "actual_Linux_86_checks_four_original_unread_or_terminal_pending_modes_eight_native_FIDO_Management_cutovers_nine_reenumerations_and_original_UVp2_signatures_verified; peer_CHANNEL_BUSY_PING_uses_byte_preserving_CID_router; other_profiles_full_messages_production_UDCs_physical_and_macOS_pending",
+      "evidence": [
+        "linux-usb-reboot-pending-result.json",
+        "usb-reboot-pending-observation.json",
+        "linux-native-result.json",
+        "linux-usb-reboot-prior-v37-sdk-channel-failure.json",
+        "linux-usb-reboot-prior-v37-baseline.json",
+        "linux-usb-reboot-prior-v37-cid-mux.json"
+      ]
+    },
+    {
+      "id": "native_large_partial_ccid_configuration_cutover",
+      "status": "actual_Linux_328_checks_14_cases_six_large_response_boundaries_partial64_and_ZLP_28_cutovers_29_generations_signatures_native_command_response_chains_verified; owned_CCID_driver_stock_libccid_large_transport_broader_runtime_PM_and_physical_macOS_pending",
+      "evidence": [
+        "linux-usb-long-cutover-result.json",
+        "usb-long-cutover-observation.json",
+        "linux-native-result.json",
+        "linux-usb-long-prior-v38-zlp-observer.json",
+        "linux-usb-long-prior-v38-device-query.json",
+        "linux-usb-long-prior-v38-sdk-format.json",
+        "linux-usb-long-prior-v38-partial-pass.json",
+        "linux-usb-long-prior-v38-command-pass.json"
+      ]
+    },
+    {
+      "id": "native_large_partial_same_generation_signal_recovery",
+      "status": "actual_Linux_108_checks_six_prefix64_cases_single_original_AIO_submission_same_generation_exact_tail_seven_signatures_verified; profile6_prefix64_large_runtime_PM_verified534_other_errors_stock_libccid_GadgetFS_physical_macOS_pending",
+      "evidence": [
+        "linux-usb-partial-interrupt-result.json",
+        "usb-partial-interrupt-recovery-observation.json",
+        "linux-native-result.json",
+        "source/src/usb/linux.cpp",
+        "tools/linux-native/verify-usb-partial-interrupt.py",
+        "tools/linux-native/validate-usb-partial-interrupt.py",
+        "tools/linux-native/native-ccid-io.py",
+        "tools/linux-native/validate-native-ccid-io.py",
+        "usb-endpoint-current40-fragment.txt",
+        "linux-usb-partial-prior-v39-paired-original.json",
+        "linux-usb-partial-prior-v39-paired-candidate.json"
+      ]
+    },
+    {
+      "id": "native_large_partial_ccid_actual_runtime_pm_and_original_keys",
+      "status": "actual_Linux_534_checks_18_size_mode_cycles_original_prefix64_first_packet_single_AIO_exact_tail_same_generation_PIN_admin_revoked_19_PIV_FIDO_signatures_each_HOTP18_verified;3073_following_chain_inactive_after_card_reset;broader_errors_stock_libccid_physical_macOS_pending",
+      "evidence": [
+        "linux-usb-large-partial-runtime-result.json",
+        "usb-large-partial-runtime-observation.json",
+        "linux-native-result.json",
+        "source/src/usb/linux.cpp",
+        "tools/linux-native/verify-usb-large-partial-runtime.py",
+        "tools/linux-native/validate-usb-large-partial-runtime.py",
+        "linux-usb-large-runtime-prior-v40-six-cases.json",
+        "linux-usb-large-runtime-prior-v40-all-modes.json",
+        "linux-usb-large-runtime-prior-v40-setup.json"
+      ]
+    },
+    {
+      "id": "native_stock_libccid_large_ccid_original_crypto_state",
+      "status": "actual_Linux_stock_libccid_PCSc122_8_positive_4_oversized_rejections_raw_chains_ZLP_original_AIO_original13FIDO12PIV_HOTP12_verified;stock_PM_cutover_errors_exact_physical_PIV_boundary_pending",
+      "evidence": [
+        "linux-stock-libccid-large-result.json",
+        "stock-libccid-large-observation.json",
+        "linux-stock-driver-provenance.json",
+        "tools/linux-native/verify-stock-libccid-large.py",
+        "tools/linux-native/validate-stock-libccid-large.py",
+        "evidence/stock-original41"
+      ]
+    },
+    {
+      "id": "safe_wire_resume_response_committed_prefix_precondition",
+      "status": "original35_failure_and_actual_active_CMD_ABORTED_packets_preserved;prefix1_tail9_24x68_and_full5841_verified;whole_unread10_not_claimed_native_scopes_separate",
+      "evidence": [
+        "wire-resume-fixture-observation.json",
+        "evidence/wire-resume42",
+        "tools/verify_usb_bridge.py"
+      ]
+    },
+    {
+      "id": "actual_chromium_pin_ui_input_precondition",
+      "status": "original_full23_failure_unrecorded_count_and_logging_only_count22_failure_original29_pass_preserved;private_Xvfb_repeat_guard9x15_actual_PIN_inputs_restored_controls_current_native29_verified;original_failure_repeat_root_cause_unclassified",
+      "evidence": [
+        "chromium-pin-input-fixture-observation.json",
+        "evidence/chromium-pin42",
+        "tools/linux-native/verify-browser-largeblob.py",
+        "tools/linux-native/validate-browser-largeblob.py"
+      ]
+    },
+    {
+      "id": "piv_published_3052_certificate_limit",
+      "status": "valid_X509_SDK_and_stock_Linux_libccid_verified; physical_status_unmeasured",
+      "evidence": [
+        "piv-cert-boundary-result.json",
+        "piv-certificate-native-observation.json"
+      ]
+    },
+    {
+      "id": "otp_lt64_empty_hmac",
+      "status": "SDK_APDU_and_OTP_HID_independent_HMAC_verified; physical_firmware_unmeasured",
+      "evidence": "otp-hmac-boundary-result.json"
+    },
+    {
+      "id": "otp_two_slot_touch_windows",
+      "status": "published_windows_software_verified; exact_physical_debounce_unmeasured",
+      "evidence": "otp-dual-slot-timing-result.json"
+    },
+    {
+      "id": "openpgp_rfc4880_low_count_s2k",
+      "status": "independent_digest_SDK_APDU_socket_and_direct_IFD_verified; physical_acceptance_unmeasured",
+      "evidence": [
+        "pgp-s2k-short-count-result.json",
+        "ifd-pgp-s2k-short-count-result.json"
+      ]
+    },
+    {
+      "id": "openpgp_verify_change_apdu_headers",
+      "status": "OpenPGP_3_4_1_header_guard_independent_SDK_APDU_socket_and_direct_IFD_verified; physical_status_unmeasured",
+      "evidence": [
+        "pgp-apdu-headers-result.json",
+        "ifd-pgp-apdu-headers-result.json"
+      ]
+    },
+    {
+      "id": "otp_short_apdu_and_hid_abort",
+      "status": "software_sdk_and_private_socket_verified_physical_unmeasured",
+      "evidence": [
+        "v44-card-combined-validation.json",
+        "v44-otp-joint-result.json"
+      ]
+    },
+    {
+      "id": "openpgp_explicit_le_and_internal_auth_headers",
+      "status": "private_socket_and_direct_ifd_verified_physical_unmeasured",
+      "evidence": [
+        "v44-card-combined-validation.json",
+        "v44-pgp-joint-socket-result.json",
+        "v44-pgp-joint-ifd-result.json"
+      ]
+    },
+    {
+      "id": "functionfs_all_endpoint_aio",
+      "status": "private_linux_native_smoke_and_repeats_verified_rare_failure_not_proven_eliminated",
+      "evidence": "v44-native-aio-validation.json"
+    },
+    {
+      "id": "oath_hotp_terminal_counter",
+      "status": "software_model_and_private_socket_verified; physical_status_pending",
+      "evidence": "evidence/v45-card-fidelity/oath-socket-combined.json"
+    },
+    {
+      "id": "otp_power_session_and_touch_status",
+      "status": "software_ticket_AES_CRC_commit_and_reboot_SDK_verified; physical_USB_power_mapping_pending",
+      "evidence": [
+        "evidence/v45-card-fidelity/otp-ticket-combined.json",
+        "evidence/v45-card-fidelity/otp-touch-combined.json",
+        "evidence/v45-card-fidelity/otp-commit-combined.json",
+        "evidence/v45-card-fidelity/otp-reboot-socket-combined.json",
+        "evidence/v45-card-fidelity/otp-reboot-rpc-combined.json"
+      ]
+    },
+    {
+      "id": "openpgp_mutating_command_le",
+      "status": "private_socket_and_direct_IFD_verified; physical_status_pending",
+      "evidence": [
+        "evidence/v45-card-fidelity/pgp-put-socket-recheck.json",
+        "evidence/v45-card-fidelity/pgp-generate-ifd.json",
+        "evidence/v45-card-fidelity/pgp-sign-auth-socket.json"
+      ]
+    },
+    {
+      "id": "functionfs_out_negative_completion_recovery",
+      "status": "three_synthetic_out_errors_and_combined_no_nic_guest_verified; real_kernel_incidence_and_production_UDC_pending",
+      "evidence": "evidence/v46-functionfs-out-error/combined-result.json"
+    },
+    {
+      "id": "piv_mutating_command_absent_le",
+      "status": "isolated_software_and_native_guest_verified; physical_firmware_and_entitled_macos_pending",
+      "evidence": "evidence/v47-card-boundaries/piv/validation.json"
+    },
+    {
+      "id": "oath_binary_name_touch_calculation",
+      "status": "isolated_software_and_native_guest_verified; physical_firmware_and_entitled_macos_pending",
+      "evidence": "evidence/v47-card-boundaries/otp/combined/summary.json"
+    },
+    {
+      "id": "openpgp_lifecycle_explicit_le",
+      "status": "isolated_software_and_native_guest_verified; physical_firmware_and_entitled_macos_pending",
+      "evidence": "evidence/v47-card-boundaries/openpgp/combined/lifecycle-socket.json"
+    },
+    {
+      "id": "linux_queued_reset_stress_v47",
+      "status": "isolated_software_and_native_guest_verified; physical_firmware_and_entitled_macos_pending",
+      "evidence": "evidence/v47-card-boundaries/linux/reset-stress/result.json"
+    },
+    {
+      "id": "ctap_min_pin_empty_rp_allowlist",
+      "status": "standard_aligned_software_tested",
+      "evidence": "evidence/v48-protocol-and-transport/ctap/validation.json"
+    },
+    {
+      "id": "piv_pin_apdu_headers_and_hsmauth_exhaustion",
+      "status": "sdk_socket_ifd_tested_physical_unmeasured",
+      "evidence": [
+        "evidence/v48-protocol-and-transport/piv/candidate-result.json",
+        "evidence/v48-protocol-and-transport/hsmauth/fixed-ifd.json"
+      ]
+    },
+    {
+      "id": "linux_default_controller_remap",
+      "status": "isolated_dummy_hcd_verified_high_speed_pending",
+      "evidence": "evidence/v48-protocol-and-transport/linux-default-controller/result.json"
+    },
+    {
+      "id": "oath_put_secret_minimum",
+      "status": "sdk_socket_ifd_tested_physical_unmeasured",
+      "evidence": "evidence/v49-card-guards/combined/combined-validation.json"
+    },
+    {
+      "id": "hsmauth_reset_apdu_shape",
+      "status": "sdk_socket_ifd_tested_physical_unmeasured",
+      "evidence": "evidence/v49-card-guards/combined/combined-validation.json"
+    },
+    {
+      "id": "high_speed_capable_udc_full_speed_policy",
+      "status": "isolated_dummy_hcd_28_122_8_verified_production_udc_pending",
+      "evidence": "evidence/v49-fullspeed-controller/default-bridge/result.json"
+    },
+    {
+      "id": "ctap_enterprise_attestation_unsigned_integer",
+      "status": "spec_aligned_private_socket_and_isolated_guest_USB_verified; physical_status_unmeasured",
+      "evidence": [
+        "evidence/v50-ctap-enterprise/validation.json",
+        "evidence/v50-linux-ctap/native-guest-integrated/result.json"
+      ]
+    },
+    {
+      "id": "openpgp_get_response_cla_pending_buffer",
+      "status": "spec_aligned_socket_and_direct_IFD_verified; physical_status_unmeasured",
+      "evidence": [
+        "evidence/v50-openpgp-response/integrated-openpgp-socket.json",
+        "evidence/v50-openpgp-response/integrated-openpgp-ifd.json"
+      ]
+    },
+    {
+      "id": "otp_single_slot1_fast_trigger",
+      "status": "modeled_completed_hold_output_verified; physical_contact_time_unmodeled",
+      "evidence": "evidence/v50-otp-fast-trigger/integrated-otp.json"
+    },
+    {
+      "id": "linux_seven_profiles_and_integrated_usb",
+      "status": "no_NIC_dummy_hcd_verified; production_UDC_and_external_host_pending",
+      "evidence": [
+        "evidence/v50-seven-profiles/result.json",
+        "evidence/v50-linux-ctap/native-guest-integrated/result.json"
+      ]
+    },
+    {
+      "id": "openpgp_get_response_interrupts_command_chain",
+      "status": "private_socket_and_direct_IFD_verified; exact_physical_status_unmeasured",
+      "evidence": [
+        "evidence/v51-openpgp-chain/integrated-pgp-chain-socket.json",
+        "evidence/v51-openpgp-chain/integrated-pgp-chain-ifd.json"
+      ]
+    },
+    {
+      "id": "otp_explicit_touch_events_and_counter_exclusivity",
+      "status": "private_software_socket_verified; native_event_producer_and_physical_timing_pending",
+      "evidence": [
+        "evidence/v51-otp-events/integrated-otp-press-release.json",
+        "evidence/v51-otp-events/integrated-otp-cross.json"
+      ]
+    },
+    {
+      "id": "v51_integrated_linux_guest_usb",
+      "status": "no_NIC_dummy_hcd_28_122_8_6_verified; production_UDC_external_host_pending",
+      "evidence": "evidence/v51-linux-guest/final/result.json"
+    },
+    {
+      "id": "ctap_present_empty_allowlist_no_credentials",
+      "status": "private_unmodified_sdk_and_cpp_verified; physical_firmware_unmeasured",
+      "evidence": "evidence/v52-integration/ctap-empty-allowlist-final.json"
+    },
+    {
+      "id": "openpgp_getdata_command_chain_rejected",
+      "status": "private_socket_and_direct_IFD_verified; physical_status_unmeasured",
+      "evidence": [
+        "evidence/v52-integration/pgp-getdata-final-socket.json",
+        "evidence/v52-integration/pgp-getdata-final-ifd.json"
+      ]
+    },
+    {
+      "id": "otp_shared_touch_ownership",
+      "status": "private_multi_client_verified; physical_simultaneous_timing_unmeasured",
+      "evidence": "evidence/v52-integration/otp-shared-touch-final.json"
+    },
+    {
+      "id": "linux_functionfs_software_touch_keyboard",
+      "status": "no_NIC_dummy_hcd_evdev_verified; physical_sensor_and_external_host_pending",
+      "evidence": "evidence/v52-integration/guest/result.json"
+    },
+    {
+      "id": "linux_functionfs_same_generation_usb_reset_clears_touch_queue",
+      "status": "no_NIC_dummy_hcd_before_after_verified; production_UDC_pending",
+      "evidence": "evidence/v52-touch-usb/reset/result.json"
+    },
+    {
+      "id": "ctap_hmac_secret_up_false_rejected",
+      "status": "private_unmodified_sdk_and_cpp_verified; physical_firmware_unmeasured",
+      "evidence": "evidence/v53-integration/ctap-hmac-upfalse.json"
+    },
+    {
+      "id": "openpgp_get_next_data_command_data_rejected",
+      "status": "private_socket_and_direct_IFD_verified; physical_status_unmeasured",
+      "evidence": [
+        "evidence/v53-integration/pgp-next-data-socket.json",
+        "evidence/v53-integration/pgp-next-data-ifd.json"
+      ]
+    },
+    {
+      "id": "yubihsm_auth_touch_policy_syntax",
+      "status": "private_unmodified_sdk_and_direct_APDU_verified; physical_status_unmeasured",
+      "evidence": "evidence/v53-integration/hsmauth-touch-policy.json"
+    },
+    {
+      "id": "linux_functionfs_otp_in_backpressure",
+      "status": "no_NIC_dummy_hcd_before_after_and_combined_guest_verified; production_UDC_pending",
+      "evidence": [
+        "evidence/v53-functionfs-backpressure/result.json",
+        "evidence/v53-integration/guest/result.json"
+      ]
+    },
+    {
+      "id": "ctap_unknown_canonical_float_ignored",
+      "status": "private_CTAPHID_and_cpp_verified; physical_firmware_unmeasured",
+      "evidence": "evidence/v54-integration/ctap-float.json"
+    },
+    {
+      "id": "openpgp_exhausted_next_data_preserves_selection",
+      "status": "private_socket_and_direct_IFD_verified; physical_firmware_unmeasured",
+      "evidence": [
+        "evidence/v54-integration/pgp-socket.json",
+        "evidence/v54-integration/pgp-ifd.json"
+      ]
+    },
+    {
+      "id": "yubihsm_auth_add_input_syntax_and_duplicates",
+      "status": "private_socket_unmodified_sdk_verified; physical_firmware_unmeasured",
+      "evidence": "evidence/v54-integration/hsmauth-add.json"
+    },
+    {
+      "id": "linux_functionfs_ccid_bulk_backpressure",
+      "status": "no_NIC_dummy_hcd_before_after_and_combined_guest_verified; production_UDC_pending",
+      "evidence": [
+        "evidence/v54-functionfs-ccid-backpressure/result.json",
+        "evidence/v54-integration/guest/result.json"
+      ]
+    },
+    {
+      "id": "ctap_credential_management_missing_no_credentials",
+      "status": "private_CTAPHID_unmodified_SDK_and_cpp_verified; physical_firmware_unmeasured",
+      "evidence": "evidence/v55-integration/ctap-missing-credential.json"
+    },
+    {
+      "id": "openpgp_attestation_bad_le_no_certificate_overwrite",
+      "status": "private_socket_and_direct_IFD_verified; physical_firmware_unmeasured",
+      "evidence": [
+        "evidence/v55-integration/pgp-socket.json",
+        "evidence/v55-integration/pgp-ifd.json"
+      ]
+    },
+    {
+      "id": "ctaphid_max_7609_byte_ping",
+      "status": "owned_no_NIC_dummy_hcd_USB_and_cpp_verified; external_host_pending",
+      "evidence": "evidence/v55-integration/usb-max-ping.json"
+    },
+    {
+      "id": "piv_printed_raw_put_data",
+      "status": "unresolved_official_source_conflict; candidate_not_promoted; physical_firmware_unmeasured",
+      "evidence": "evidence/v55-piv-source-conflict.md"
+    },
+    {
+      "id": "ctap_unknown_options_arbitrary_values",
+      "status": "private_CTAPHID_pyfido2_Mac_Linux_verified; physical_firmware_unmeasured",
+      "evidence": "results/ctap_unknown_options.json"
+    },
+    {
+      "id": "piv_f9_delete_key_5_7",
+      "status": "private_socket_and_IFD_unmodified_YubiKit_verified; physical_firmware_unmeasured",
+      "evidence": [
+        "results/piv_f9_delete.json",
+        "results/ifd_piv_f9_delete.json"
+      ]
+    },
+    {
+      "id": "fido_in_delayed_host_reads",
+      "status": "owned_no_NIC_dummy_hcd_USB_verified; production_UDC_unverified",
+      "evidence": "evidence/v56-fido-backpressure/focus-result.json"
+    },
+    {
+      "id": "ctap_pin_soft_block_and_power_cycle",
+      "status": "private_CTAPHID_pyfido2_Mac_Linux_verified; physical_firmware_unmeasured",
+      "evidence": "evidence/v57-pin-soft-block/fixed.json"
+    },
+    {
+      "id": "ctap_forced_change_pin_retry_order",
+      "status": "private_CTAPHID_pyfido2_Mac_Linux_verified; physical_firmware_unmeasured",
+      "evidence": "evidence/v57-pin-soft-block/policy-fixed.json"
+    },
+    {
+      "id": "ctap_malformed_pin_proof_retry_accounting",
+      "status": "private_CTAPHID_pyfido2_Mac_Linux_verified; physical_firmware_unmeasured",
+      "evidence": "evidence/v57-pin-soft-block/malformed-fixed.json"
+    },
+    {
+      "id": "piv_reset_malformed_command_guard",
+      "status": "private_socket_and_IFD_unmodified_YubiKit_Mac_Linux_verified; physical_firmware_unmeasured",
+      "evidence": "evidence/v57-piv-reset-header/results/after-ifd.json"
+    },
+    {
+      "id": "fido_usb_bus_reset_old_report_isolation",
+      "status": "owned_no_NIC_dummy_hcd_USB_verified; production_UDC_unverified",
+      "evidence": "evidence/v57-integration/fido-reset/result.json"
+    },
+    {
+      "id": "ctaphid_allocated_init_late_reply_flush",
+      "status": "private_socket_Mac_Linux_and_noNIC_dummy_hcd_FIDO_HID_AB_verified; physical_firmware_unmeasured",
+      "evidence": "evidence/v58-ctaphid-resync/usb-focus/usb-resync-ab-result.json"
+    },
+    {
+      "id": "piv_set_retries_and_management_key_header_guard",
+      "status": "private_socket_direct_IFD_YubiKit_SCP03_Mac_Linux_verified; physical_firmware_unmeasured",
+      "evidence": "evidence/v58-piv-headers/results/summary.json"
+    },
+    {
+      "id": "otp_swap_requires_two_configured_slots",
+      "status": "private_CCID_YubiKit_Mac_Linux_verified; physical_firmware_status_unmeasured",
+      "evidence": "evidence/v58-otp-swap/fixed-mac.json"
+    },
+    {
+      "id": "macos_fido_hid_report_input_preservation",
+      "status": "compiled_and_pure_unit_verified; entitled_OS_registration_unverified",
+      "evidence": "evidence/v58-macos-hid/unit.log"
+    },
+    {
+      "id": "ctaphid_wink_zero_length_only",
+      "status": "spec_syntax_Mac_Linux_CPP_private_socket_verified; physical_firmware_status_unmeasured",
+      "evidence": "evidence/v59-ctaphid-wink/baseline-socket-mac.json"
+    },
+    {
+      "id": "otp_update_dormant_or_allow_update",
+      "status": "unmodified_YubiKit_Mac_Linux_private_CCID_verified; physical_firmware_status_unmeasured",
+      "evidence": "evidence/v59-otp-dormant/fixed-mac.json"
+    },
+    {
+      "id": "openpgp_operational_activate_noop",
+      "status": "unmodified_YubiKit_Mac_Linux_socket_direct_IFD_verified; physical_firmware_unmeasured",
+      "evidence": "evidence/v59-openpgp-activate/results/summary.json"
+    },
+    {
+      "id": "ctaphid_orphan_cont_unknown_channel",
+      "status": "Mac_Linux_CPP_private_socket_no_NIC_guest_verified; physical_firmware_unmeasured",
+      "evidence": "evidence/v60-fido-channel/fixed.json"
+    },
+    {
+      "id": "otp_empty_slot_delete",
+      "status": "unmodified_YubiKit_Mac_Linux_private_CCID_verified; physical_firmware_status_unmeasured",
+      "evidence": "evidence/v60-otp-empty-delete/fixed-mac.json"
+    },
+    {
+      "id": "openpgp_select_data_explicit_le",
+      "status": "unmodified_YubiKit_Mac_Linux_socket_direct_IFD_verified; physical_firmware_status_unmeasured",
+      "evidence": "evidence/v60-openpgp-select-data/results/summary.json"
+    },
+    {
+      "id": "piv_f6_move_delete_apdu_shape",
+      "status": "unmodified_YubiKit_Mac_Linux_socket_direct_IFD_verified; physical_firmware_status_unmeasured",
+      "evidence": "evidence/v60-piv-move-delete/summary.json"
+    },
+    {
+      "id": "ctaphid_cross_channel_arbitration",
+      "status": "Mac_Linux_CPP_private_socket_no_NIC_guest_verified; physical_firmware_timing_unmeasured",
+      "evidence": "evidence/v61-fido-arbitration/mac-socket-fixed.json"
+    },
+    {
+      "id": "oath_send_remaining_cla",
+      "status": "unmodified_YubiKit_Mac_Linux_socket_direct_IFD_verified; physical_firmware_status_unmeasured",
+      "evidence": "evidence/v61-oath-remaining-cla/summary.json"
+    },
+    {
+      "id": "openpgp_set_retries_f2_header",
+      "status": "unmodified_YubiKit_Mac_Linux_socket_direct_IFD_verified; physical_firmware_status_unmeasured",
+      "evidence": "evidence/v61-openpgp-retries-header/results/summary.json"
+    },
+    {
+      "id": "ctaphid_cancel_during_u2f",
+      "status": "Mac_Linux_private_socket_and_no_NIC_USB_verified; physical_firmware_unmeasured",
+      "evidence": "evidence/v62-fido-cancel-u2f/validation.json"
+    },
+    {
+      "id": "oath_cross_client_authorization",
+      "status": "Mac_Linux_socket_direct_IFD_unmodified_YubiKit_verified; physical_concurrency_unmeasured",
+      "evidence": "evidence/v62-oath-auth-binding/validation.json"
+    },
+    {
+      "id": "piv_generate_p1",
+      "status": "Mac_Linux_socket_direct_IFD_unmodified_YubiKit_verified; physical_status_unmeasured",
+      "evidence": "evidence/v62-piv-generate-p1/results/summary.json"
+    },
+    {
+      "id": "ctap_largeblob_sequence",
+      "status": "Mac_Linux_private_socket_and_CPP_verified; physical_error_precedence_unmeasured",
+      "evidence": "evidence/v62-ctap-largeblob-sequence/summary.json"
+    },
+    {
+      "id": "piv_general_authenticate_le",
+      "status": "Mac_Linux_socket_direct_IFD_unmodified_YubiKit_verified; physical_status_unmeasured",
+      "evidence": "evidence/v63-integration/result.json"
+    },
+    {
+      "id": "fido_same_cid_transaction",
+      "status": "Mac_Linux_software_and_owned_USB_as_applicable_verified; physical_5_7_4_unmeasured",
+      "evidence": "evidence/v64-integration/result.json"
+    },
+    {
+      "id": "hsmauth_symmetric_challenge_touch",
+      "status": "Mac_Linux_software_and_owned_USB_as_applicable_verified; physical_5_7_4_unmeasured",
+      "evidence": "evidence/v64-integration/result.json"
+    },
+    {
+      "id": "scp03_initialize_update_le",
+      "status": "Mac_Linux_software_and_owned_USB_as_applicable_verified; physical_5_7_4_unmeasured",
+      "evidence": "evidence/v64-integration/result.json"
+    }
+  ],
+  "functionfs_native_descriptor_comparison": {
+    "evidence": "linux-functionfs-descriptor-comparison.json",
+    "five_endpoint_address_bytes_differ_from_reference": false,
+    "configuration_byte_equivalence": true,
+    "fido_report_byte_equivalence": true,
+    "scope": "optional requested-address policy on isolated dummy_hcd; other UDCs unverified",
+    "all_seven_profiles_requested_addresses_verified": true,
+    "historical_remapping_evidence": "linux-functionfs-descriptor-comparison-v27.json"
+  },
+  "completion_rule": "Do not mark complete while any required host behavior is unimplemented/unverified. Inherent hardware and manufacturer-trust differences remain explicit even after protocol compatibility.",
+  "test_count_note": "Counts are assertions grouped as test cases/check items. Reused SDK scenarios over different transports are counted separately; the total is not a count of unique YubiKey firmware behaviors."
+}

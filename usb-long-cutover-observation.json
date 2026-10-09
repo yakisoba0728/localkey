@@ -1,0 +1,134 @@
+{
+  "version": "0.42.0",
+  "passed": true,
+  "actual_native_checks": 328,
+  "total_ccid_response_boundaries": [
+    2047,
+    2048,
+    2049,
+    3071,
+    3072,
+    3073
+  ],
+  "actual_large_transfer_cases": 14,
+  "configuration_cutovers": 28,
+  "actual_reenumerations": 29,
+  "independent_original_credential_pin_uvp2_signatures": 29,
+  "ordinary_hotp_final_counter": 14,
+  "native_command_chain_cases": 7,
+  "native_response_chain_cases": 2,
+  "actual_partial64_cases": 6,
+  "actual_wholly_unread_cases": 6,
+  "actual_original_large_zlp_cases": 2,
+  "large_zlp_representations": {
+    "2048-zlp": "kernel-buffered",
+    "3072-zlp": "kernel-buffered"
+  },
+  "positive_control_native_large_response_and_following_zlp_verified": true,
+  "exact_prior97_zlp_observer_failure_preserved": true,
+  "prior97_observed_original_large_data_write_return": 2048,
+  "prior97_observed_original_zlp_write_return": 0,
+  "prior97_does_not_prove_response_loss": true,
+  "original154_device_query_failure_cause_not_fully_captured": true,
+  "current_bounded_exact_libusb_generation_address_and_serial_verified": true,
+  "stock_sdk_fresh_short_protocol_used_for_large_provisioning": true,
+  "stock_piv_oath_sdk_unmodified": true,
+  "owned_native_ccid_driver_used": true,
+  "stock_libccid_large_transport_verified": false,
+  "same_three_original_services_alive_after_all_cutovers": true,
+  "card_state_except_management_and_otp_sequence_preserved": true,
+  "old_disconnected_ccid_handle_errno": 19,
+  "fresh_poweron_and_sdk_no_stale_tail_or_continuation_verified": true,
+  "opaque_piv_object_is_valid_chuid": false,
+  "physical_firmware_reboot_timing_verified": false,
+  "unread_reply_reboot_grace_is_private_model_not_physical_timing": true,
+  "physical_device_access": false,
+  "host_device_passthrough": false,
+  "manufacturer_trust_reproduced": false,
+  "native_macos_registration_verified": false,
+  "production_udc_verified": false,
+  "protocol_behavior_source_changed_from38": true,
+  "large_functionfs_aio_changed_in40": true,
+  "source_changes_from38": [
+    "source/CMakeLists.txt",
+    "source/src/pcsc/ifd.cpp",
+    "source/src/usb/linux.cpp"
+  ],
+  "all_other_packaged_source_files_byte_equal_frozen38": true,
+  "unchanged_packaged_source_files": 140,
+  "baseline38_archive_sha256": "042f380a6668de79a0726d584d93b75c108d9b3d17f8d99dab3ef979b7a12160",
+  "preserved_actual38_trials": [
+    {
+      "scope": "actual frozen38 own no-NIC large CCID prototype",
+      "passed": false,
+      "test_count": 97,
+      "files": {
+        "linux-usb-long-prior-v38-zlp-observer.json": "452ae2d4f58cd5a21aff5afd1e57d79e5c7f53d63173dce649e734f8118dad3f",
+        "linux-usb-long-prior-v38-zlp-observer-console.txt": "2dd0e69334e6bc038a9b31a03360c0ff13f630340e48d5d0b2a34e7047084175",
+        "linux-usb-long-prior-v38-zlp-observer-helper.py.txt": "89bb23efccb176f2f738ca4ee2ec646a556119d71b47d57e232305fb4451079c"
+      },
+      "error": "AssertionError: actual original large response ZLP blocked 2048-zlp"
+    },
+    {
+      "scope": "actual frozen38 own no-NIC large CCID prototype",
+      "passed": false,
+      "test_count": 154,
+      "files": {
+        "linux-usb-long-prior-v38-device-query.json": "b0968c52be18af06679ae1b6c952a6268b671e00b6c3da472dc01c56cc5e1a33",
+        "linux-usb-long-prior-v38-device-query-console.txt": "1ffa3e991000c139e69e9450afc49f2e54d54f624d391e0645fb9d439e72023a",
+        "linux-usb-long-prior-v38-device-query-helper.py.txt": "6c3e6fa89dfdd1ee15fb50cc38ec29b85db96c38c581adb4262822ad6b324929"
+      },
+      "error": "AssertionError: "
+    },
+    {
+      "scope": "actual frozen38 own no-NIC large CCID prototype",
+      "passed": false,
+      "test_count": 161,
+      "files": {
+        "linux-usb-long-prior-v38-sdk-format.json": "ec43424e78968cf5b8d59f5dbc36c16e9c2ca21c3734b1f78170e9ec293da62c",
+        "linux-usb-long-prior-v38-sdk-format-console.txt": "c1e6497af1e873fd0551134c93693ba5914e8ae2dd17b0df4aecb2ee3b9ef689",
+        "linux-usb-long-prior-v38-sdk-format-helper.py.txt": "7cb4854c4693544167649e3e9a2ea4d0d7fb24e4b03370ac0b14acd150b3f255"
+      },
+      "error": "NotSupportedError: APDU length exceeds YubiKey capability"
+    },
+    {
+      "scope": "actual frozen38 own no-NIC large CCID prototype",
+      "passed": true,
+      "test_count": 314,
+      "files": {
+        "linux-usb-long-prior-v38-partial-pass.json": "a00a53ad04598bc528bebc1f8c24ba505173d8a3a96a5f62b8b1e0dfda6ce915",
+        "linux-usb-long-prior-v38-partial-pass-console.txt": "33dfeaddf996993bada4d3f636530dce766225d89ec6bbbdecaf4aa6b3b9ad00",
+        "linux-usb-long-prior-v38-partial-pass-helper.py.txt": "3bd86ee39215c466e8a9b9b777a08dbcbdddc726f51b3532e692dd7d6484fbde"
+      },
+      "error": null
+    },
+    {
+      "scope": "actual frozen38 own no-NIC large CCID prototype",
+      "passed": true,
+      "test_count": 328,
+      "files": {
+        "linux-usb-long-prior-v38-command-pass.json": "642f76b9c3ce7330f04254343d195f50c6bf59d0c6e73aa22ac110641239b2cf",
+        "linux-usb-long-prior-v38-command-pass-console.txt": "b6448cf4afcadbafc107de16a8395258fbf57ef89d3238bde047fe0e56f83f5e",
+        "linux-usb-long-prior-v38-command-pass-helper.py.txt": "f7093754521105f7e532d9a8908debac3dd70ced3450adfce1936f4571a5f32b"
+      },
+      "error": null
+    }
+  ],
+  "emulator_binary_sha256": "4a34289e3d8a6eb2e3dbde984ce5433b78b12aa8f419ac7a198ca843d562ba7a",
+  "usb_bridge_binary_sha256": "04a9702cc19d7cb85735d0fd113b9390d65ca465bc10e5dd48954de52ed78099",
+  "helper_sha256": {
+    "verify-usb-long-cutover.py": "0ac7563a961c5827a585f37f5b8b1b3824477e94b45257c768bbb9b915fea719",
+    "validate-usb-long-cutover.py": "94c7204422ace658346915e42b7a5c13797f05bb70e2e6321d1a35951830b033",
+    "native-ccid-io.py": "19b0a8dae534d82eed031bf4748ead2f7e33a869ebff0b6734d234b025566763",
+    "validate-native-ccid-io.py": "add5a9f17d643046c5791c9e2cfc1603c9dce2787aa7850f0c0503d468d2b607"
+  },
+  "shared_helper_sha256": "445dab690b654dba21421e1b75047dcf2e07089ba39bb0da62e70ae56e42774a",
+  "complete_yubikey_equivalence": false,
+  "goal_status": "active",
+  "evidence": [
+    "linux-usb-long-cutover-result.json",
+    "linux-native-result.json",
+    "tools/linux-native/verify-usb-long-cutover.py",
+    "tools/linux-native/validate-usb-long-cutover.py"
+  ]
+}

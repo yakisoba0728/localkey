@@ -1,0 +1,31 @@
+{
+  "passed": true,
+  "expected_fixed": true,
+  "transport": "private CTAPHID Unix socket",
+  "physical_device_access": false,
+  "initial_retries": 8,
+  "wrong_pin_status": "0x31",
+  "retries_after_wrong_pin": 7,
+  "correct_pin_status": "0x37",
+  "retries_after_correct_pin": 8,
+  "legacy_correct_pin_status": "0x31",
+  "final_retries": 8,
+  "tests": [
+    {
+      "name": "wrong PIN is checked before forced-change policy",
+      "passed": true
+    },
+    {
+      "name": "wrong PIN decrements durable retries",
+      "passed": true
+    },
+    {
+      "name": "correct PIN restores retries before reporting policy",
+      "passed": true
+    },
+    {
+      "name": "legacy token uses PIN_INVALID for forced change",
+      "passed": true
+    }
+  ]
+}

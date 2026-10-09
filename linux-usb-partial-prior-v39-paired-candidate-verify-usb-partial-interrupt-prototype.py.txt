@@ -1,0 +1,268 @@
+"""Observe original large CCID prefix64 + same-generation SIGUSR1 in own guest."""
+import base64
+import copy
+import ctypes
+import hashlib
+import hmac
+import json
+import os
+import platform
+import re
+import shutil
+import signal
+import struct
+import tempfile
+import time
+import traceback
+from pathlib import Path
+
+import usb.backend.libusb1
+import usb.core
+import usb.util
+import verify_composite as base
+import verify_usb_state as state
+import verify_usb_runtime as runtime
+import verify_usb_reboot_pending as shared
+import verify_usb_long_cutover as long
+import usb_state_pending as pending
+import native_ccid_io as native_io
+from emucard.core import EncryptedState
+from emucard.profile import CCID_MESSAGE_LENGTH
+from fido2.ctap2 import ClientPin, PinProtocolV2
+from yubikit.core import TRANSPORT, Tlv
+from yubikit.core.smartcard import SmartCardProtocol
+from yubikit.management import CAPABILITY, DeviceConfig, ManagementSession
+from yubikit.oath import CredentialData, OathSession
+from yubikit.piv import DEFAULT_MANAGEMENT_KEY, OBJECT_ID, PivSession
+
+check, wait, worker = shared.check, shared.wait, native_io.worker
+checks = shared.checks
+
+
+def observed_bulk_read(device, request, timeout=1800):
+    """Actual owned libusb read, retaining actual_length even on a timeout/error."""
+    buffer = (ctypes.c_ubyte * request)()
+    count = ctypes.c_int()
+    result = device._ctx.backend.lib.libusb_bulk_transfer(
+        device._ctx.handle.handle, 0x82, buffer, request, ctypes.byref(count), timeout)
+    assert 0 <= count.value <= request
+    data = bytes(buffer[:count.value])
+    return {'libusb_result': result, 'actual_length': count.value,
+            'requested_length': request, 'data_hex': data.hex(),
+            'data_sha256': hashlib.sha256(data).hexdigest()}, data
+
+
+def main():
+    f = tmp = d = trace = None
+    report = {'passed': False, 'tests': checks, 'cycles': [], 'assertions': [],
+              'scope': 'actual same-generation original large CCID write SIGUSR1 after prefix64',
+              'physical_device_access': False, 'host_device_passthrough': False,
+              'host_hid_drivers_unbound': False, 'native_macos_registration_verified': False,
+              'production_udc_verified': False, 'physical_touch_verified': False,
+              'manufacturer_trust_reproduced': False, 'card_testing_auto_allow': False,
+              'fido_testing_auto_allow_only_for_owned_fixture': True,
+              'stock_libccid_transport_used_for_this_fixture': False,
+              'stock_piv_oath_sdk_unmodified': True, 'opaque_piv_object_is_valid_chuid': False,
+              'production_source_modified_for_this_original_trial': False,
+              'same_generation_continuation_verified': False}
+    report['candidate_bridge_source_applied'] = Path('/opt/ske-partial-interrupt-candidate').exists()
+    try:
+        check(Path('/opt/isolated-ske-usb-guest').exists() and platform.release() == '6.8.0-146-generic'
+              and platform.machine() == 'aarch64' and [p.name for p in Path('/sys/class/net').iterdir()] == ['lo'],
+              'actual private ARM64 kernel USB guest with only loopback')
+        tmp = Path(tempfile.mkdtemp(prefix='own-partial-interrupt-', dir='/guest-state'))
+        os.environ['SKE_TRACE_USB'] = '1'
+        f = base.CompositeFixture(Path('/opt/swpasskeyd'), tmp)
+        f.card = pending.PromptCardFixture(Path('/opt'), tmp / 'card', startup_timeout=30)
+        ct = f.start()
+        report['service_pids'] = [f.bridge.pid, f.process.pid, f.card.process.pid]
+        report['controller'] = f.controller
+        protocol = PinProtocolV2()
+        ClientPin(ct, protocol).set_pin(state.PIN)
+        token = ClientPin(ct, protocol).get_pin_token(state.PIN, ClientPin.PERMISSION.MAKE_CREDENTIAL, state.RP)
+        response = ct.make_credential(hashlib.sha256(b'own partial interruption registration').digest(),
+            {'id': state.RP}, {'id': state.USER, 'name': 'own-partial-interrupt'},
+            [{'type': 'public-key', 'alg': -7}], options={'rk': True}, pin_uv_protocol=2,
+            pin_uv_param=protocol.authenticate(token, hashlib.sha256(b'own partial interruption registration').digest()))
+        credential = response.auth_data.credential_data
+        check(response.auth_data.flags & 5 == 5, 'original native resident key created with PIN UVp2')
+        state.close_hid(f)
+        shared.prove_fido(f, credential, 'initial', report)
+        initial = state.reboot.snapshot(f.serial)
+        report['original_identity'] = initial
+        with state.reboot.connection('FIDO', f.serial) as conn:
+            ManagementSession(conn).write_device_config(DeviceConfig({TRANSPORT.USB: CAPABILITY(0x33a)}), reboot=True)
+        identity = wait(lambda: (lambda value: value if value and value['pid'] == 0x406 and value['address'] != initial['address'] else None)
+                        (state.reboot.snapshot(f.serial)), 'initial native profile6', 8)
+        report['profile6_identity'] = identity
+        reference = json.loads(Path('/opt/usb-reference-observation.json').read_text())
+        check(identity['host_visible_configuration_descriptor_hex'] == reference['configuration_descriptor_hex'],
+              'initial native profile6 byte equal saved reference configuration')
+        backend = usb.backend.libusb1.get_backend(find_library=lambda name: '/usr/lib/aarch64-linux-gnu/libusb-1.0.so.0')
+
+        def owned_device():
+            matches = list(usb.core.find(find_all=True, idVendor=0x1050, idProduct=0x406, backend=backend))
+            owned = [candidate for candidate in matches if candidate.address == identity['address']
+                     and candidate.serial_number == f.serial]
+            assert len(owned) < 2
+            return owned[0] if owned else None
+
+        d = wait(owned_device, 'exact owned profile6 address and serial', 4)
+        connection = long.NativeLongCcid(d)
+        oath = OathSession(connection)
+        own = oath.put_credential(CredentialData.parse_uri('otpauth://hotp/PartialInterrupt:owned?secret=JBSWY3DPEHPK3PXP&counter=0'))
+        counter = lambda: EncryptedState(f.directory / 'card/state.bin').data['oath']['credentials'][own.id.hex()]['counter']
+
+        def durable():
+            data = copy.deepcopy(EncryptedState(f.directory / 'card/state.bin').data)
+            data.pop('management', None)
+            data['otp'].pop('sequence', None)
+            return hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()
+
+        check(counter() == 0, 'original owned HOTP counter zero')
+        check(bytes(d.read(0x83, 8, timeout=1500)) == b'\x50\x03', 'initial actual occupied slot notification')
+        trace = Path('/sys/kernel/tracing')
+        runtime.ensure_mount('tracefs', trace)
+        (trace / 'buffer_size_kb').write_text('256\n')
+        syscall_events = ['sys_enter_write', 'sys_exit_write', 'sys_enter_io_submit', 'sys_exit_io_submit',
+                          'sys_enter_io_getevents', 'sys_exit_io_getevents']
+        events = [trace / 'events/syscalls' / name for name in syscall_events] + [trace / 'events/signal/signal_deliver']
+        report['trace_formats'] = {event.name: (event / 'format').read_text() for event in events}
+
+        def arm():
+            tids = [int(p.name) for p in (Path('/proc') / str(f.bridge.pid) / 'task').iterdir()]
+            own_filter = ' || '.join('common_pid == ' + str(tid) for tid in tids)
+            for event in events:
+                (event / 'filter').write_text(own_filter + '\n')
+                (event / 'enable').write_text('1\n')
+            (trace / 'trace').write_text('')
+            (trace / 'tracing_on').write_text('1\n')
+
+        libc = ctypes.CDLL(None, use_errno=True)
+        libc.tgkill.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_int]
+        libc.tgkill.restype = ctypes.c_int
+        for index, total_size in enumerate([2047, 2048, 2049, 3071, 3072, 3073]):
+            label = str(total_size) + '-partial64-signal'
+            row = {'index': index, 'phase': label, 'total_response_bytes': total_size,
+                   'before_usb': state.reboot.snapshot(f.serial)}
+            report['active_cycle'] = row
+            opaque = bytes((offset * 17 + total_size) & 255 for offset in range(total_size - 16))
+            response_data = bytes(Tlv(0x53, opaque)) + b'\x90\x00'
+            check(len(response_data) + 10 == total_size, 'actual encoded TLV APDU CCID boundary ' + label)
+            piv = PivSession(connection)
+            if total_size >= 3071:
+                piv.protocol = SmartCardProtocol(connection)
+                piv.protocol.configure(piv.version, force_short=True)
+            piv.authenticate(DEFAULT_MANAGEMENT_KEY)
+            piv.put_object(OBJECT_ID.CHUID, opaque)
+            check(piv.get_object(OBJECT_ID.CHUID) == opaque, 'native stock PIV SDK original object before interruption ' + label)
+            saved = durable()
+            arm()
+            body = Tlv(0x5c, int(OBJECT_ID.CHUID).to_bytes(3, 'big'))
+            sequence = connection.write(0x6f, bytes([0, 0xcb, 0x3f, 0xff, len(body)]) + body)
+            packet_size = min(total_size, CCID_MESSAGE_LENGTH)
+            expected = struct.pack('<BIBBBBB', 0x80, packet_size - 10, 0, sequence, 0, 0,
+                                   1 if total_size > CCID_MESSAGE_LENGTH else 0) + response_data[:packet_size - 10]
+            target = wait(lambda: worker(f.bridge.pid, packet_size), 'original full large write blocked ' + label, 3)
+            entry = native_io.original_entry((trace / 'trace').read_text(), target)
+            check(bool(entry), 'trace armed before original large write entry ' + label)
+            row.update(original_worker=target, original_sequence=sequence, original_packet_bytes=packet_size,
+                       original_write_entry=entry, expected_original_packet_sha256=hashlib.sha256(expected).hexdigest(),
+                       opaque_object_sha256=hashlib.sha256(opaque).hexdigest(), durable_plaintext_sha256=saved)
+            prefix = bytes(d.read(0x82, 64, timeout=1500))
+            row['original_prefix_hex'] = prefix.hex()
+            row['worker_after_prefix64'] = worker(f.bridge.pid, packet_size)
+            check(prefix == expected[:64], 'actual original prefix64 header sequence and object bytes ' + label)
+            check(row['worker_after_prefix64'] == target, 'same original write TID FD buffer after prefix64 ' + label)
+            check(durable() == saved and counter() == index, 'prefix64 GET has no durable or HOTP mutation ' + label)
+            row['tgkill_result'] = libc.tgkill(f.bridge.pid, target['tid'], signal.SIGUSR1)
+            row['tgkill_errno'] = ctypes.get_errno() if row['tgkill_result'] else 0
+            check(row['tgkill_result'] == 0, 'actual targeted signal accepted for own endpoint TID ' + label)
+
+            def interrupted_trace():
+                text = (trace / 'trace').read_text()
+                selected = [line for line in text.splitlines() if re.search(r'\bske-usbd-' + str(target['tid']) + r'\s', line)]
+                operation = 'io_getevents' if target.get('kind') == 'native-aio' else 'write'
+                returns = [line for line in selected if re.search(r'(?:sys_exit_' + operation + r':|sys_' + operation + r' ->)\s*(?:0xfffffffffffffffc|-4)\b', line)]
+                deliveries = [line for line in selected if re.search(r'signal_deliver:\s+sig=10\b', line)]
+                if returns and deliveries:
+                    return {'original_tid_lines': selected, 'original_tid_write_returns': returns,
+                            'actual_signal_deliveries': deliveries, 'actual_trace': text}
+
+            row.update(wait(interrupted_trace, 'actual original write return and signal delivery ' + label, 3))
+            check(bool(row['actual_signal_deliveries']), 'actual kernel delivers SIGUSR1 to original write thread ' + label)
+            row['bridge_status_before_tail'] = f.bridge.poll()
+            row['worker_after_signal'] = worker(f.bridge.pid, packet_size) if row['bridge_status_before_tail'] is None else None
+            row['native_tail_read'], tail = observed_bulk_read(d, packet_size)
+            row['actual_whole_data_hex'] = (prefix + tail).hex()
+            row['actual_whole_data_sha256'] = hashlib.sha256(prefix + tail).hexdigest()
+            row['after_native_tail_usb'] = state.reboot.snapshot(f.serial)
+            row['service_status_after_tail'] = {name: process.poll() for name, process in [('bridge', f.bridge), ('fido', f.process), ('card', f.card.process)]}
+            row['actual_trace_after_tail'] = (trace / 'trace').read_text()
+            row['usb_log_after_tail'] = (f.directory / 'usb.log').read_text(errors='replace')[-12000:]
+            check(row['native_tail_read']['libusb_result'] == 0 and tail == expected[64:],
+                  'same-generation native tail exactly original remaining bytes without repeated prefix ' + label)
+            check(all(value is None for value in row['service_status_after_tail'].values()), 'same three original services alive after partial interruption ' + label)
+            check(row['after_native_tail_usb'] == row['before_usb'], 'same native USB generation and descriptors after partial interruption ' + label)
+            if total_size > CCID_MESSAGE_LENGTH:
+                continuation_sequence = connection.write(0x6f, level=0x10)
+                header, continuation = connection.read(continuation_sequence)
+                row['continuation_header'] = list(header)
+                row['continuation_hex'] = continuation.hex()
+                check(header[6] == 2 and prefix[10:] + tail + continuation == response_data,
+                      'same-generation original response chain finishes exact APDU ' + label)
+            else:
+                check(prefix[10:] + tail == response_data, 'original APDU reconstructed exactly after partial interruption ' + label)
+            check(durable() == saved and counter() == index, 'interrupted GET preserves card plaintext and HOTP ' + label)
+            check(piv.get_object(OBJECT_ID.CHUID) == opaque, 'following stock PIV SDK GET has no stale original tail or ZLP ' + label)
+            oath = OathSession(connection)
+            value = oath.calculate_code(own).value
+            digest = hmac.new(base64.b32decode('JBSWY3DPEHPK3PXP'), index.to_bytes(8, 'big'), 'sha1').digest()
+            offset = digest[-1] & 15
+            expected_hotp = str((int.from_bytes(digest[offset:offset + 4], 'big') & 0x7fffffff) % 1000000).zfill(6)
+            check(value == expected_hotp and counter() == index + 1, 'independent following native HOTP result and one commit ' + label)
+            shared.prove_fido(f, credential, label, report)
+            row['same_generation_exact_continuation_verified'] = True
+            report['cycles'].append(row)
+            report.pop('active_cycle')
+        report['same_generation_continuation_verified'] = True
+        report['final_hotp_counter'] = counter()
+        report['passed'] = True
+    except Exception as exc:
+        report.update(error=f'{type(exc).__name__}: {exc}', traceback=traceback.format_exc())
+        if trace and (trace / 'trace').exists():
+            report['last_actual_trace'] = (trace / 'trace').read_text()[-24000:]
+    finally:
+        if trace:
+            for event in ['events/syscalls/' + name for name in ['sys_enter_write', 'sys_exit_write', 'sys_enter_io_submit', 'sys_exit_io_submit', 'sys_enter_io_getevents', 'sys_exit_io_getevents']] + ['events/signal/signal_deliver']:
+                if (trace / event / 'enable').exists():
+                    (trace / event / 'enable').write_text('0\n')
+            if (trace / 'tracing_on').exists():
+                (trace / 'tracing_on').write_text('0\n')
+        if d is not None:
+            usb.util.dispose_resources(d)
+        if f:
+            for name in ['usb.log', 'daemon.log', 'card/log.txt']:
+                p = f.directory / name
+                if p.exists():
+                    report[name] = p.read_text(errors='replace')[-18000:]
+            try:
+                f.stop()
+            except Exception as exc:
+                report.update(passed=False, cleanup_error=str(exc))
+        if tmp and tmp.exists():
+            shutil.rmtree(tmp)
+        report['test_count'] = len(checks)
+        for name, key in [('swpasskeyd', 'emulator_binary_sha256'), ('ske-usbd', 'usb_bridge_binary_sha256')]:
+            report[key] = hashlib.sha256(Path('/opt', name).read_bytes()).hexdigest()
+        report['card_service_sha256'] = hashlib.sha256(Path('/opt/emucard/service.py').read_bytes()).hexdigest()
+        report['helper_sha256'] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+        report['shared_helper_sha256'] = hashlib.sha256(Path(shared.__file__).read_bytes()).hexdigest()
+        report['long_cutover_helper_sha256'] = hashlib.sha256(Path(long.__file__).read_bytes()).hexdigest()
+        report['native_io_observer_sha256'] = hashlib.sha256(Path(native_io.__file__).read_bytes()).hexdigest()
+        print('SKE_USB_PARTIAL_INTERRUPT_PROBE_BEGIN\n' + json.dumps(report) + '\nSKE_USB_PARTIAL_INTERRUPT_PROBE_END', flush=True)
+    return 0 if report['passed'] else 1
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

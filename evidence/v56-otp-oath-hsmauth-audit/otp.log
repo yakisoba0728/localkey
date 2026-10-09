@@ -1,0 +1,12 @@
+PASS PCSC_APDU empty
+PASS PCSC_APDU single_zero
+PASS PCSC_APDU single_nonzero
+PASS PCSC_APDU embedded_zero
+PASS PCSC_APDU 63_bytes
+PASS PCSC_APDU fixed_64_zero_bytes
+PASS OTP_HID empty
+PASS OTP_HID single_zero
+PASS OTP_HID single_nonzero
+PASS OTP_HID embedded_zero
+PASS OTP_HID 63_bytes
+PASS OTP_HID fixed_64_zero_bytes

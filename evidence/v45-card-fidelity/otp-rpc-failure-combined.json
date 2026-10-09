@@ -1,0 +1,92 @@
+{
+  "passed": true,
+  "count": 9,
+  "checks": [
+    {
+      "name": "first_ticket",
+      "actual": {
+        "uid": "101112131415",
+        "use_counter": 1,
+        "session_counter": 0,
+        "crc_valid": true
+      },
+      "expected": {
+        "uid": "101112131415",
+        "use_counter": 1,
+        "session_counter": 0,
+        "crc_valid": true
+      },
+      "matched": true
+    },
+    {
+      "name": "failed_reboot_status",
+      "actual": "6581",
+      "expected": "6581",
+      "matched": true
+    },
+    {
+      "name": "failed_reboot_keeps_generation",
+      "actual": 0,
+      "expected": 0,
+      "matched": true
+    },
+    {
+      "name": "failed_reboot_keeps_disk",
+      "actual": "02564b154b9f558d28dd6cc37bfc752d981d85d8368e65606c51c8c7245d71f6",
+      "expected": "02564b154b9f558d28dd6cc37bfc752d981d85d8368e65606c51c8c7245d71f6",
+      "matched": true
+    },
+    {
+      "name": "unrelated_commit_status",
+      "actual": "9000",
+      "expected": "9000",
+      "matched": true
+    },
+    {
+      "name": "failure_keeps_otp_session",
+      "actual": {
+        "uid": "101112131415",
+        "use_counter": 1,
+        "session_counter": 1,
+        "crc_valid": true
+      },
+      "expected": {
+        "uid": "101112131415",
+        "use_counter": 1,
+        "session_counter": 1,
+        "crc_valid": true
+      },
+      "matched": true
+    },
+    {
+      "name": "successful_reboot_status",
+      "actual": "9000",
+      "expected": "9000",
+      "matched": true
+    },
+    {
+      "name": "successful_reboot_advances_generation",
+      "actual": 1,
+      "expected": 1,
+      "matched": true
+    },
+    {
+      "name": "successful_reboot_resets_otp_session",
+      "actual": {
+        "uid": "101112131415",
+        "use_counter": 2,
+        "session_counter": 0,
+        "crc_valid": true
+      },
+      "expected": {
+        "uid": "101112131415",
+        "use_counter": 2,
+        "session_counter": 0,
+        "crc_valid": true
+      },
+      "matched": true
+    }
+  ],
+  "physical_device_access": false,
+  "firmware_5_7_4_differential_verified": false
+}

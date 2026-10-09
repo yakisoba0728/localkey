@@ -1,0 +1,277 @@
+{
+  "passed": true,
+  "tests": [
+    {
+      "name": "SCP11a exclude update preserves previously active peer SCP03",
+      "passed": true
+    },
+    {
+      "name": "SCP11a peer exclude policy commit invalidates old cache; modeled 6985 and only durable retry changed",
+      "passed": true
+    },
+    {
+      "name": "SCP11a exclude revocation never replaces independent SD key",
+      "passed": true
+    },
+    {
+      "name": "SCP11a identical update preserves previously active peer SCP03",
+      "passed": true
+    },
+    {
+      "name": "SCP11a peer identical policy commit invalidates old cache; modeled 6985 and only durable retry changed",
+      "passed": true
+    },
+    {
+      "name": "SCP11a identical revocation never replaces independent SD key",
+      "passed": true
+    },
+    {
+      "name": "SCP11a clear update preserves previously active peer SCP03",
+      "passed": true
+    },
+    {
+      "name": "SCP11a peer clear policy commit invalidates old cache; modeled 6985 and only durable retry changed",
+      "passed": true
+    },
+    {
+      "name": "SCP11a clear revocation never replaces independent SD key",
+      "passed": true
+    },
+    {
+      "name": "SCP11a other CA update preserves previously active peer SCP03",
+      "passed": true
+    },
+    {
+      "name": "SCP11a peer other CA policy commit invalidates old cache; modeled 6985 and only durable retry changed",
+      "passed": true
+    },
+    {
+      "name": "SCP11a other CA revocation never replaces independent SD key",
+      "passed": true
+    },
+    {
+      "name": "SCP11a counter update preserves previously active peer SCP03",
+      "passed": true
+    },
+    {
+      "name": "SCP11a peer counter policy commit invalidates old cache; modeled 6985 and only durable retry changed",
+      "passed": true
+    },
+    {
+      "name": "SCP11a counter revocation never replaces independent SD key",
+      "passed": true
+    },
+    {
+      "name": "SCP11a rejected peer policy does not change shared state; encrypted state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11a prior peer cache survives rejected mutation and dictionary rollback",
+      "passed": true
+    },
+    {
+      "name": "SCP11a peer failed commit returns SDK-verified 6581",
+      "passed": true
+    },
+    {
+      "name": "SCP11a peer failed commit restores policy, generation and ciphertext together",
+      "passed": true
+    },
+    {
+      "name": "SCP11a failed peer commit leaves prior OCE cache valid",
+      "passed": true
+    },
+    {
+      "name": "SCP11a peer policy commit invalidates a partially uploaded chain; encrypted state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11a peer CA-key replacement retains previously validated own OCE",
+      "passed": true
+    },
+    {
+      "name": "SCP11a fresh PSO rejects replaced CA without state mutation",
+      "passed": true
+    },
+    {
+      "name": "SCP11a successful peer revocation retains already established SDK channel",
+      "passed": true
+    },
+    {
+      "name": "SCP11c exclude update preserves previously active peer SCP03",
+      "passed": true
+    },
+    {
+      "name": "SCP11c peer exclude policy commit invalidates old cache; modeled 6985 and only durable retry changed",
+      "passed": true
+    },
+    {
+      "name": "SCP11c exclude revocation never replaces independent SD key",
+      "passed": true
+    },
+    {
+      "name": "SCP11c identical update preserves previously active peer SCP03",
+      "passed": true
+    },
+    {
+      "name": "SCP11c peer identical policy commit invalidates old cache; modeled 6985 and only durable retry changed",
+      "passed": true
+    },
+    {
+      "name": "SCP11c identical revocation never replaces independent SD key",
+      "passed": true
+    },
+    {
+      "name": "SCP11c clear update preserves previously active peer SCP03",
+      "passed": true
+    },
+    {
+      "name": "SCP11c peer clear policy commit invalidates old cache; modeled 6985 and only durable retry changed",
+      "passed": true
+    },
+    {
+      "name": "SCP11c clear revocation never replaces independent SD key",
+      "passed": true
+    },
+    {
+      "name": "SCP11c other CA update preserves previously active peer SCP03",
+      "passed": true
+    },
+    {
+      "name": "SCP11c peer other CA policy commit invalidates old cache; modeled 6985 and only durable retry changed",
+      "passed": true
+    },
+    {
+      "name": "SCP11c other CA revocation never replaces independent SD key",
+      "passed": true
+    },
+    {
+      "name": "SCP11c counter update preserves previously active peer SCP03",
+      "passed": true
+    },
+    {
+      "name": "SCP11c peer counter policy commit invalidates old cache; modeled 6985 and only durable retry changed",
+      "passed": true
+    },
+    {
+      "name": "SCP11c counter revocation never replaces independent SD key",
+      "passed": true
+    },
+    {
+      "name": "SCP11c rejected peer policy does not change shared state; encrypted state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11c prior peer cache survives rejected mutation and dictionary rollback",
+      "passed": true
+    },
+    {
+      "name": "SCP11c peer failed commit returns SDK-verified 6581",
+      "passed": true
+    },
+    {
+      "name": "SCP11c peer failed commit restores policy, generation and ciphertext together",
+      "passed": true
+    },
+    {
+      "name": "SCP11c failed peer commit leaves prior OCE cache valid",
+      "passed": true
+    },
+    {
+      "name": "SCP11c peer policy commit invalidates a partially uploaded chain; encrypted state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11c peer CA-key replacement retains previously validated own OCE",
+      "passed": true
+    },
+    {
+      "name": "SCP11c fresh PSO rejects replaced CA without state mutation",
+      "passed": true
+    },
+    {
+      "name": "SCP11c successful peer revocation retains already established SDK channel",
+      "passed": true
+    },
+    {
+      "name": "failed shared reset returns SDK-verified 6581",
+      "passed": true
+    },
+    {
+      "name": "failed shared reset restores all keys/policy/identity/ciphertext together",
+      "passed": true
+    },
+    {
+      "name": "failed shared reset preserves another peer's SCP03 channel",
+      "passed": true
+    },
+    {
+      "name": "failed shared reset preserves another peer's SCP11c channel",
+      "passed": true
+    },
+    {
+      "name": "failed shared reset preserves cached own a authorization",
+      "passed": true
+    },
+    {
+      "name": "failed shared reset preserves cached own c authorization",
+      "passed": true
+    },
+    {
+      "name": "peer c channel is live immediately before shared reset",
+      "passed": true
+    },
+    {
+      "name": "shared Domain reset terminates old peer SCP03 channel; encrypted state unchanged",
+      "passed": true
+    },
+    {
+      "name": "shared Domain reset terminates an old peer SCP11c channel; encrypted state unchanged",
+      "passed": true
+    },
+    {
+      "name": "shared Domain reset rotates own identity",
+      "passed": true
+    },
+    {
+      "name": "old own a cache cannot cross reset/reprovision boundary; modeled 6985 and only durable retry changed",
+      "passed": true
+    },
+    {
+      "name": "old own c cache cannot cross reset/reprovision boundary; modeled 6985 and only durable retry changed",
+      "passed": true
+    },
+    {
+      "name": "shared policy/cache/reset changes retain every independent peer application",
+      "passed": true
+    },
+    {
+      "name": "legacy policy-generation migration preserves keys/certificates/retries/CPLC",
+      "passed": true
+    },
+    {
+      "name": "legacy Domain gains independent internal generation bookkeeping",
+      "passed": true
+    }
+  ],
+  "transport": "separate private CCID sockets",
+  "physical_device_access": false,
+  "manufacturer_trust_reproduced": false,
+  "system_pcsc_reader_registered": false,
+  "sdk_phase_control": "skip only already explicitly uploaded own PSO; unchanged SDK MUT/receipt/KDF/secure messaging",
+  "source": {
+    "url": "https://globalplatform.org/wp-content/uploads/2023/08/GPC_2.3_F_SCP11_v1.3.0.13_PublicRvw.pdf",
+    "version": "1.3.0.13 public review",
+    "sections": [
+      "7.5",
+      "7.6.1",
+      "7.9"
+    ]
+  },
+  "unverified": [
+    "actual firmware cross-channel lifecycle/status and finalGP1.4",
+    "transient OCE logical-channel scope and physical c replacement policy",
+    "SD content transaction/replay rollback",
+    "OS reader/browser interoperability"
+  ]
+}

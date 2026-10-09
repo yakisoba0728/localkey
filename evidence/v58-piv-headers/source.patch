@@ -1,0 +1,22 @@
+--- a/emucard/core.py
++++ b/emucard/core.py
+@@ -1002,6 +1002,8 @@
+             return
+         if ins == 0xFF:
+             require(self.mgmt_verified)
++            require(a.p1 == 0xFF and a.p2 in (0xFD, 0xFE, 0xFF), 0x6A86)
++            require(a.le is None, 0x6700)
+             require(len(a.data) >= 3, 0x6700)
+             alg = a.data[0]
+             key = Tlv.unpack(0x9B, a.data[1:])
+@@ -1013,7 +1015,9 @@
+             return
+         if ins == 0xFA:
+             require(self.mgmt_verified and ("piv", "pin") in self.verified)
+-            require(not a.data, 0x6700)
++            # Yubico SET PIN RETRIES has no Lc, command data, or Le.
++            # A fifth 00 byte is ambiguous with short Le=256.
++            require(not a.data and (a.le is None or a.short_zero_tail), 0x6700)
+             require(1 <= a.p1 <= 255 and 1 <= a.p2 <= 255, 0x6A80)
+             d.update(
+                 pin="123456",

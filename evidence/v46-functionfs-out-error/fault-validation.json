@@ -1,0 +1,114 @@
+{
+  "finding": "A synthetic negative FunctionFS OUT PREAD completion terminates the published v0.44 bridge; narrow OUT retry preserves the service for EPIPE, ESHUTDOWN, and ECONNRESET.",
+  "scope": "Single user-space fabricated completion before kernel submission; actual kernel negative io_event incidence remains unmeasured.",
+  "published_v44_bridge_sha256": "2bf02ac6da2d027f64478e0977220d367a029db3c239e8ab5ed4184b5b5ba102",
+  "candidate_bridge_sha256": "e63cd9ea49ee5ebcc6cc7b7389b7785e1393d6c39c926fb766ff61068f30c690",
+  "candidate_linux_cpp_sha256": "0d3bb88ce930f32acfad7a0a37b768c4470850d0d80eccb8ee717b17f15abdbb",
+  "source_patch_sha256": "d6b55c1eea4f40f1964e9aa04d3291b5de0f7008918efbbdb243e7f0ad01bd37",
+  "fault_matrix": {
+    "EPIPE": {
+      "synthetic_completed_res": -32,
+      "submitted_to_kernel": false,
+      "before": {
+        "passed": false,
+        "error": "BrokenPipeError: [Errno 32] Broken pipe",
+        "console_sha256": "c328f87efc6147c967674ecd7b45513e85436fa0ce9dcc75588f345cbc2b09cb",
+        "image_sha256": "68b1a3053866acb14ca1cf2a97eafd2ceca81915a811b040f49870b886b46873"
+      },
+      "after": {
+        "passed": true,
+        "checks": 28,
+        "out_retries": 1,
+        "console_sha256": "b7735044a7419b8660b8f70f564612c9f9bdfdeb53e225777557e301f5ced3ed",
+        "image_sha256": "1192e59575b1fcd46abe119452612bde749752e9cdb70bbbc0463f2776b3d16f"
+      }
+    },
+    "ESHUTDOWN": {
+      "synthetic_completed_res": -108,
+      "submitted_to_kernel": false,
+      "before": {
+        "passed": false,
+        "error": "BrokenPipeError: [Errno 32] Broken pipe",
+        "console_sha256": "db6d90abd1af5093f471b612773fe7c2c066e3342fc3cd340ceadce52e0acb9a",
+        "image_sha256": "444c5fc96c5e9f04cad5b1640dae458c767f2d54c9ca9766772eeab628dde555"
+      },
+      "after": {
+        "passed": true,
+        "checks": 28,
+        "out_retries": 1,
+        "console_sha256": "26cbf022a136ea87c0885abafd2a1840d571c2fd147d20699983a0ea32b0b58e",
+        "image_sha256": "ddb8aa7eecfd74418383d48c7422013804f151fd767194e21305179644875183"
+      }
+    },
+    "ECONNRESET": {
+      "synthetic_completed_res": -104,
+      "submitted_to_kernel": false,
+      "before": {
+        "passed": false,
+        "error": "BrokenPipeError: [Errno 32] Broken pipe",
+        "console_sha256": "b4dd241ce883b03be9a62888360e755ccad48f8ef2ebf5b078c8ee56c87667df",
+        "image_sha256": "e404a434fb1b076e858357252f27c202670fccb9aa2ef52c7cd8a93d8c4a2fc5"
+      },
+      "after": {
+        "passed": true,
+        "checks": 28,
+        "out_retries": 1,
+        "console_sha256": "1786cf3350f166dcebbd2c5214ddf61825abb0013763ffdbb4a18680463a47b3",
+        "image_sha256": "e63251f437fbf5ae3e9bf48e2d1d775985ba63d8433f37cae97493a44dee5fc1"
+      }
+    }
+  },
+  "in_error_safety_control": {
+    "synthetic_completed_res": -32,
+    "submitted_to_kernel": false,
+    "fail_stop_preserved": true,
+    "out_retry_marker_absent": true,
+    "console_sha256": "d883086ee4375b29e3b2f4926c9a11ab950094f0e73f9b46b3d84e38c82dc50e"
+  },
+  "normal_transport": {
+    "long_cutover_checks": 82,
+    "host_received_zlp_bytes": [
+      2048,
+      3072
+    ],
+    "state_checks": 91,
+    "halted_endpoints": 6,
+    "usbdevfs_resets": 3,
+    "pending_ccid_reset_without_counter_mutation": true,
+    "long_console_sha256": "9cdd74572316d2a3bd80bc479ddc9374abf9a9baf25e86dbf5656134fd112014",
+    "state_console_sha256": "68e3d7732e9fcaf0650a7974b0047af6f61e2d5d867c3df8d5afbabd041c97fa"
+  },
+  "independent_final_card_candidate_with_published_v44_aio": {
+    "card_file_sha256": {
+      "__init__.py": "b3ac50ebe9c426cf689415f135b9049ac19e67de6808ad213dd7ad21b0bdbf67",
+      "client.py": "2b3b9b250a8c58e5a69b7265d770da364a902c6443edbad26e13da4794df9628",
+      "core.py": "b72a424c36befae4cb0323d6bc1833201d48aec1d935f9e729a8db954e3ba386",
+      "domain.py": "87a192dd4f76d6d1562abd94d8cef4ea0bd932ddb4e35991c61baffc4c0ea6a1",
+      "ifd.py": "cf173daf50ace2bd3718438a92769d40e3f8c470e364f68aeba06dd3dff83ecf",
+      "keyboard.py": "d058cc356978b0477f49cef11673f734a46465e58ebe0edb3910de5098ff1ece",
+      "management.py": "92e5929cabf930d7bfc2391037144dba5ec6a1e7424951a428f4f19398128c64",
+      "otp_hid.py": "c7a5f9c73cdb1c506b99343785436b25cf85f772602f8a1727aa0b71e9756136",
+      "pgp_algorithms.py": "445333c3f9cf9643eb2f6a446b456ae8519dab8a7758ebfe0e74f2755eedc0a5",
+      "pgp_extensions.py": "234e049d977bde85c5e608327be8f74d5311e525add058b94ea688177d969bd1",
+      "pgp_objects.py": "1a8b4a15812b2d0eb748813c3999ebfd4d298536bef1c78787153d8dc3c0d2c3",
+      "piv_objects.py": "6503c64561e904929d1aff05d127b9e1369f8a1961540f965ee00708c7b41664",
+      "profile.py": "319745d0f753de27edb2997f18f98809268fe8ecf84d20fb5acd3a6300cfe2ed",
+      "secure_channel.py": "40cd0713d623722b418d3d67ca20025eb33d4da15583df8058545c25e5b82073",
+      "service.py": "b08b9b27cd0757df8e4a2b1162a289e80696de91dda01e981026cbdb6a7130f2"
+    },
+    "extra_checks": 28,
+    "stock_libccid_checks": 122,
+    "valid_x509_boundary_checks": 8,
+    "oversized_apdu_status": "6A80",
+    "console_sha256": "0e6cd097218f191b727c65bc4f94986cd2e3a9aa86807a3d5604cca9dfbb361e"
+  },
+  "guest_network_devices": false,
+  "host_usb_passthrough": false,
+  "physical_device_access": false,
+  "published_outputs_modified": false,
+  "limitations": [
+    "Fault shim fabricates a completed error without submitting a kernel request; it does not prove hardware or kernel will return these errors in the tested scenario.",
+    "No recovery of a negative IN completion is attempted because host-visible progress may be unknown.",
+    "Finite guest runs do not prove elimination of the rare kernel panic."
+  ]
+}

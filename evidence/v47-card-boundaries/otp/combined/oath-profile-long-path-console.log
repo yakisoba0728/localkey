@@ -1,0 +1,38 @@
+Traceback (most recent call last):
+  File "/Users/yakisoba0728/Documents/Codex/2026-10-07/new-chat/work/security-key-emulator-v47-candidate/security-key-emulator/tools/verify_oath_profile.py", line 515, in <module>
+    main()
+    ~~~~^^
+  File "/Users/yakisoba0728/Documents/Codex/2026-10-07/new-chat/work/security-key-emulator-v47-candidate/security-key-emulator/tools/verify_oath_profile.py", line 506, in main
+    run(
+    ~~~^
+        Path(__file__).resolve().parents[1],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        args.ifd_driver,
+        ^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/yakisoba0728/Documents/Codex/2026-10-07/new-chat/work/security-key-emulator-v47-candidate/security-key-emulator/tools/verify_oath_profile.py", line 91, in run
+    connection = fixture.start()
+  File "/Users/yakisoba0728/Documents/Codex/2026-10-07/new-chat/work/security-key-emulator-v47-candidate/security-key-emulator/tools/verify_smartcard.py", line 81, in start
+    raise RuntimeError((self.directory / "log.txt").read_text())
+RuntimeError: Traceback (most recent call last):
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/yakisoba0728/Documents/Codex/2026-10-07/new-chat/work/security-key-emulator-v47-candidate/security-key-emulator/emucard/service.py", line 367, in <module>
+    main()
+    ~~~~^^
+  File "/Users/yakisoba0728/Documents/Codex/2026-10-07/new-chat/work/security-key-emulator-v47-candidate/security-key-emulator/emucard/service.py", line 349, in main
+    with Server(a.socket, state, touch) as server:
+         ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yakisoba0728/Documents/Codex/2026-10-07/new-chat/work/security-key-emulator-v47-candidate/security-key-emulator/emucard/service.py", line 126, in __init__
+    super().__init__(str(path), Handler)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yakisoba0728/.local/share/uv/python/cpython-3.13.15-macos-aarch64-none/lib/python3.13/socketserver.py", line 457, in __init__
+    self.server_bind()
+    ~~~~~~~~~~~~~~~~^^
+  File "/Users/yakisoba0728/.local/share/uv/python/cpython-3.13.15-macos-aarch64-none/lib/python3.13/socketserver.py", line 478, in server_bind
+    self.socket.bind(self.server_address)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+OSError: AF_UNIX path too long
+

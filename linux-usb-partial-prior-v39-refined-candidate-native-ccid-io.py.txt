@@ -1,0 +1,69 @@
+"""Observe actual owned synchronous/AIO CCID requests inside the private guest."""
+import os
+import re
+import struct
+from pathlib import Path
+import verify_usb_reboot_pending as shared
+observations = []
+
+
+def worker(pid, size):
+    assert Path('/opt/isolated-ske-usb-guest').exists(), 'observer requires private USB guest'
+    synchronous = shared.worker(pid, size)
+    if synchronous:
+        return synchronous
+    command = (Path('/proc') / str(pid) / 'cmdline').read_bytes().split(b'\0')
+    assert command[0] == b'/opt/ske-usbd', 'observer only reads the owned guest bridge'
+    logs = list(Path('/guest-state').glob('own-*/usb.log'))
+    rows = []
+    for log in logs:
+        rows.extend(re.finditer(r'functionfs_async_queued address=130 tid=(\d+) fd=(\d+) context=(\d+) request=(0x[0-9a-f]+) buffer=(0x[0-9a-f]+) bytes=(\d+)', log.read_text(errors='replace')))
+    for match in reversed(rows):
+        tid, fd, context, request, buffer, count = match.groups()
+        if int(count) != size:
+            continue
+        task = Path('/proc') / str(pid) / 'task' / tid
+        try:
+            words = (task / 'syscall').read_text().strip().split()
+            if not words or words[0] != '4' or int(words[1], 0) != int(context):
+                continue
+            if int(words[2], 0) != 1 or int(words[3], 0) != 1:
+                continue
+            assert os.readlink(Path('/proc') / str(pid) / 'fd' / fd) == '/dev/ffs-ske/ep4'
+            with (Path('/proc') / str(pid) / 'mem').open('rb', buffering=0) as mem:
+                mem.seek(int(request, 0))
+                raw = mem.read(64)
+            fields = struct.unpack('<QIIHhIQQqQII', raw)
+            matched = fields[3] == 1 and fields[5] == int(fd) and fields[6] == int(buffer, 0) and fields[7] == size and fields[8] == 0
+            observations.append({'pid': pid, 'tid': int(tid), 'context': int(context),
+                                 'logged_request': request, 'logged_buffer': buffer,
+                                 'expected_bytes': size, 'actual_iocb_hex': raw.hex(),
+                                 'actual_wait_syscall': ' '.join(words), 'matched': matched})
+            # A new IO can reuse the previous context/stack IOCB address before
+            # its diagnostic line is visible. A mismatching line is not proof
+            # about the currently pending request; retain it and keep looking.
+            if not matched:
+                continue
+            return {'kind': 'native-aio', 'tid': int(tid), 'tgid': pid, 'fd': int(fd), 'bytes': size,
+                    'buffer': buffer, 'request': request, 'context': int(context), 'iocb_hex': raw.hex(),
+                    'endpoint': '/dev/ffs-ske/ep4', 'wchan': (task / 'wchan').read_text().strip(),
+                    'syscall': ' '.join(words), 'iocb_pwrite_fd_buffer_size_verified': True}
+        except (FileNotFoundError, ProcessLookupError):
+            continue
+    return None
+
+
+def original_entry(trace_text, target):
+    own = [line for line in trace_text.splitlines() if re.search(r'\bske-usbd-' + str(target['tid']) + r'\s', line)]
+    if target.get('kind') == 'native-aio':
+        wanted = 'ctx_id: ' + format(target['context'], 'x') + ', nr: 1'
+        entries = [line for line in own if ('sys_io_submit(' in line or 'sys_enter_io_submit:' in line) and wanted in line]
+        assert len(entries) == 1, ('original native AIO submission', wanted, own)
+        offset = own.index(entries[0])
+        following = own[offset + 1:]
+        assert following and re.search(r'(?:sys_exit_io_submit:|sys_io_submit ->)\s*(?:0x1|1)\b', following[0]), ('native io_submit accepted one IOCB', own)
+        return entries[0]
+    wanted = 'fd: ' + format(target['fd'], 'x') + ', buf: ' + format(int(target['buffer'], 0), 'x') + ', count: ' + format(target['bytes'], 'x')
+    entries = [line for line in own if wanted in line]
+    assert len(entries) == 1, ('original synchronous write', wanted, own)
+    return entries[0]

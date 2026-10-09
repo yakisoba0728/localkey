@@ -1,0 +1,11 @@
+{
+  "aio_1500_image_sha256": "8c4e8af3a517ab3c2501593e2d15a3b08cc65c6ffc2578fd2e5d6514010b3682",
+  "observer_image_sha256": "29f8c9c374716d0acf30f0abdb679531d5ebd5e27c81b870cd0f602a93fa4cfe",
+  "observer_helper_sha256": "68c4a043db9d15ee9169872ae70ed2fbddf9e4d3084d0f89eb7c56af2ebe52e0",
+  "readiness_only_patch_sha256": "36fc8363a165ea9c41fbd7d1c86e485c13dcb7fe6f0865832c3e0120b28c3a3e",
+  "init_sha256": "c99541dc654136393d5e800467524fbdcdc902dcf0833fb716a73b111bb9b54c",
+  "aio_usb_bridge_sha256": "2bf02ac6da2d027f64478e0977220d367a029db3c239e8ab5ed4184b5b5ba102",
+  "stock_libccid_pcscd_sdk_unchanged": true,
+  "guest_network_devices": false,
+  "physical_device_access": false
+}

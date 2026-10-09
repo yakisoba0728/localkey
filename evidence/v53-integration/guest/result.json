@@ -1,0 +1,54 @@
+{
+  "passed": true,
+  "checks_in_order": [
+    "reset boundary",
+    12,
+    28,
+    122,
+    8,
+    6,
+    6,
+    "hmac up=false USB 5",
+    49
+  ],
+  "hmac_upfalse_status": 43,
+  "hmac_positive_counter": 2,
+  "full_speed_attachments": 21,
+  "high_speed_attachments": 0,
+  "seven_profiles": true,
+  "card_file_sha256": {
+    "__init__.py": "b3ac50ebe9c426cf689415f135b9049ac19e67de6808ad213dd7ad21b0bdbf67",
+    "client.py": "8dd1fe3584f3e5cd2fdb885702bfc776536a0f82799b358dab6c9ca92897a283",
+    "core.py": "3ece45f45d268df3f2696d209bd72deaad33161209c3baf11a690fd304fc2c74",
+    "domain.py": "87a192dd4f76d6d1562abd94d8cef4ea0bd932ddb4e35991c61baffc4c0ea6a1",
+    "ifd.py": "cf173daf50ace2bd3718438a92769d40e3f8c470e364f68aeba06dd3dff83ecf",
+    "keyboard.py": "d058cc356978b0477f49cef11673f734a46465e58ebe0edb3910de5098ff1ece",
+    "management.py": "163d0f51dbb34b3f1c2d33ff63053d44b959ea478883b946771cd1a54cef7810",
+    "otp_hid.py": "c7a5f9c73cdb1c506b99343785436b25cf85f772602f8a1727aa0b71e9756136",
+    "pgp_algorithms.py": "445333c3f9cf9643eb2f6a446b456ae8519dab8a7758ebfe0e74f2755eedc0a5",
+    "pgp_extensions.py": "234e049d977bde85c5e608327be8f74d5311e525add058b94ea688177d969bd1",
+    "pgp_objects.py": "1a8b4a15812b2d0eb748813c3999ebfd4d298536bef1c78787153d8dc3c0d2c3",
+    "piv_objects.py": "6503c64561e904929d1aff05d127b9e1369f8a1961540f965ee00708c7b41664",
+    "profile.py": "319745d0f753de27edb2997f18f98809268fe8ecf84d20fb5acd3a6300cfe2ed",
+    "secure_channel.py": "40cd0713d623722b418d3d67ca20025eb33d4da15583df8058545c25e5b82073",
+    "service.py": "94640c0a5353fc75b7c46cfa8983d7da1f2a72965173036723b4471946b123d6"
+  },
+  "linux_binary_sha256": {
+    "ske-usbd": "bf4fa53e6ed7ce3fdf98adb8c3909bbf22da3d7b71014d122badd0ba0f69075e",
+    "swpasskeyd": "49be85694fbeca8af9c9867c554216dfc55423d8fcb49d4b89ec31bd4317d9f0",
+    "ske-otpd": "6fc3e1509c4ed9a07fa40057feb53e4f45fcd3fed8d7ca05e3509617d449695e"
+  },
+  "source_sha256": {
+    "include/swpasskey/usb/composite.hpp": "6c410eb5aa356be49fc7d022acc3713c2129bfc17e5e1b65955cefee2d4f2a90",
+    "src/usb/composite.cpp": "d8ae0049c691af2ad08cad7c851de45d025d72fe2d80b5f966d765b41672562a",
+    "src/usb/backend.hpp": "1bd0308b1d2d58e0498f49324c41f1d48b980ed43b088777756aab787cf3d2e2",
+    "src/ctap/get_assertion.cpp": "0a791223c9bcdb1fbaf8bad635a7bada86779d11974081fc571b84143e201ba9"
+  },
+  "guest_image_sha256": "ef1ae26ee70acbf70d97387687a63791454070f2d1d693d1d4e09c4989a2dab2",
+  "inputs_sha256": "177d9b03585bd1e3b98cddeb9dedc317e0ca6a51650cb8c618c203d8d8dea5e1",
+  "raw_console_sha256": "f2e423d3acf96af713715bcb33431ac4b751e799747e4b75ad913ef402038be0",
+  "kernel_panic_observed": false,
+  "guest_network_devices": false,
+  "host_usb_passthrough": false,
+  "physical_device_access": false
+}

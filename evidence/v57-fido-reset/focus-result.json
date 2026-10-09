@@ -1,0 +1,46 @@
+{
+  "passed": true,
+  "defect": "queued CTAPHID reports from the pre-reset USB generation replay on a new FIDO IN endpoint",
+  "baseline": {
+    "sent_reports": [
+      129,
+      129,
+      129,
+      129
+    ],
+    "bridge_alive_after_reset": true,
+    "stale_observed": true,
+    "stale_report_header": 127,
+    "stale_report_cid_hex": "156e02d0",
+    "raw_console_sha256": "6a5e30c459508df75c9db4b00d63ded6f7c5026923e1b1d3feacea0081e79b7d"
+  },
+  "fixed": {
+    "sent_reports": [
+      129,
+      129,
+      129,
+      129
+    ],
+    "bridge_alive_after_reset": true,
+    "stale_observed": false,
+    "fresh_init": true,
+    "raw_console_sha256": "bb8951a47bd11f981788b2e75676301c10b3d83b0501cf2d14622b6eefff5d58"
+  },
+  "source_sha256": {
+    "published_backend": "b67da4e9975920216ea71d9aa2596606b2aa9ce17a584ec765d06dc7f9401c3b",
+    "candidate_backend": "c57ecc0c180eddb5af727f11e13e0ac4fa2c3ef7f0492ce0f291b6e33604912b",
+    "source_patch": "3bbb42c8d64914a3576f6c27aff89e8cbea68b61cd2a5888efc0f10139b1f198"
+  },
+  "binary_sha256": {
+    "published_v56_ske_usbd": "4383bca61b292299b9bbcbc2ef2d0b9c0945ce1290012f22b3271fb0bd122813",
+    "candidate_ske_usbd": "71f24d609d608ac80e48300551bcee2d2701bac8a2bb292591eeb9f70bf397af",
+    "unchanged_v56_swpasskeyd": "a9c8d74bfa5c02dc0cb4ee7653dad7bffa9db9f8d7b64f75e95024a96c53b925"
+  },
+  "cpp_cases": 124,
+  "cpp_assertions": 12422,
+  "cpp_unit_log_sha256": "f934fc69861dcd7cb4b9438ac5a32ffba7a9e32f13fd258671ed2037a2907ba5",
+  "guest_network_devices": false,
+  "host_usb_passthrough": false,
+  "physical_device_access": false,
+  "kernel_panic_observed": false
+}

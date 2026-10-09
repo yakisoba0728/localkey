@@ -1,0 +1,16 @@
+{"ts":"2026-10-09T15:24:07.563Z","lvl":"info","event":"ctap","cmd":"getAssertion","cmd_byte":"0x02","status":"46","ms":"0"}
+{"ts":"2026-10-09T15:24:07.564Z","lvl":"info","event":"make_credential","rp":"example.com","key_backend":"software"}
+{"ts":"2026-10-09T15:24:07.564Z","lvl":"info","event":"ctap","cmd":"makeCredential","cmd_byte":"0x01","status":"0","ms":"0"}
+{"ts":"2026-10-09T15:24:07.564Z","lvl":"info","event":"ctap","cmd":"getAssertion","cmd_byte":"0x02","status":"46","ms":"0"}
+{"ts":"2026-10-09T15:24:07.564Z","lvl":"info","event":"ctap","cmd":"getAssertion","cmd_byte":"0x02","status":"46","ms":"0"}
+{"ts":"2026-10-09T15:24:07.564Z","lvl":"info","event":"get_assertion","rp":"example.com","up":"1","creds":"1"}
+{"ts":"2026-10-09T15:24:07.564Z","lvl":"info","event":"ctap","cmd":"getAssertion","cmd_byte":"0x02","status":"0","ms":"0"}
+{"ts":"2026-10-09T15:24:07.564Z","lvl":"info","event":"ctap","cmd":"getAssertion","cmd_byte":"0x02","status":"46","ms":"0"}
+{"ts":"2026-10-09T15:24:07.564Z","lvl":"info","event":"ctap","cmd":"getAssertion","cmd_byte":"0x02","status":"51","ms":"0"}
+{"ts":"2026-10-09T15:24:07.564Z","lvl":"info","event":"get_assertion","rp":"example.com","up":"1","creds":"1"}
+{"ts":"2026-10-09T15:24:07.564Z","lvl":"info","event":"ctap","cmd":"getAssertion","cmd_byte":"0x02","status":"0","ms":"0"}
+Filters: "getAssertion no credentials / wrong rp / allowList miss"
+Randomness seeded to: 1746468519
+===============================================================================
+All tests passed (9 assertions in 1 test case)
+

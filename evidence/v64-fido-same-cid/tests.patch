@@ -1,0 +1,81 @@
+--- a/source/tests/hid_device_test.cpp
++++ b/source/tests/hid_device_test.cpp
+@@ -202,6 +202,34 @@
+   REQUIRE(cmd_of(idle_ping.reply[0]) == ctap::kCmdPing);
+ }
+ 
++TEST_CASE("same-CID second requests wait for the first transaction", "[hiddev][same-cid-atomicity]") {
++  Fx f;
++  const auto cid = f.init();
++  const std::uint8_t ping[] = {0x42};
++  const std::uint8_t cbor[] = {0x04};
++  for (const auto& packet : {
++           make_frames(cid, ctap::kCmdPing, ping).front(),
++           make_frames(cid, ctap::kCmdWink, {}).front(),
++           make_frames(cid, ctap::kCmdCbor, cbor).front()}) {
++    const auto out = f.dev.ingest(packet, cid);
++    REQUIRE(out.reply.size() == 1);
++    REQUIRE(cmd_of(out.reply[0]) == ctap::kCmdError);
++    REQUIRE(out.reply[0][7] == static_cast<std::uint8_t>(ctap::HidErr::ChannelBusy));
++    REQUIRE_FALSE(out.to_worker.has_value());
++  }
++  const auto cancel = f.dev.ingest(make_frames(cid, ctap::kCmdCancel, {}).front(), cid);
++  REQUIRE(cancel.reply.empty());
++  REQUIRE(cancel.cancel_inflight);
++  const std::uint8_t nonce[8] = {1, 3, 5, 7, 9, 2, 4, 6};
++  const auto resync = f.dev.ingest(make_frames(cid, ctap::kCmdInit, nonce).front(), cid);
++  REQUIRE(resync.reply.size() == 1);
++  REQUIRE(cmd_of(resync.reply[0]) == ctap::kCmdInit);
++  REQUIRE(resync.cancel_inflight);
++  const auto idle = f.dev.ingest(make_frames(cid, ctap::kCmdPing, ping).front(), std::nullopt);
++  REQUIRE(idle.reply.size() == 1);
++  REQUIRE(cmd_of(idle.reply[0]) == ctap::kCmdPing);
++}
++
+ TEST_CASE("MSG without U2F is INVALID_CMD; LOCK is INVALID_CMD", "[hiddev]") {
+   Fx f;
+   auto cid = f.init();
+--- a/source/tests/keepalive_loop_test.cpp
++++ b/source/tests/keepalive_loop_test.cpp
+@@ -295,6 +295,41 @@
+   r.h.release = true;
+ }
+ 
++TEST_CASE("same CID cannot interleave PING with a processing CBOR request", "[loop][same-cid-atomicity]") {
++  Rig r;
++  const auto cid = r.init();
++  const std::uint8_t mc[] = {0x01};
++  r.t.host_write(make_frames(cid, ctap::kCmdCbor, mc).front());
++  auto keepalive = r.t.host_read(1s);
++  REQUIRE(keepalive.has_value());
++  REQUIRE(cmd_of(*keepalive) == ctap::kCmdKeepalive);
++  const std::uint8_t ping[] = {1, 2, 3};
++  r.t.host_write(make_frames(cid, ctap::kCmdPing, ping).front());
++  std::optional<hid::Report> busy;
++  for (int i = 0; i < 20; ++i) {
++    auto packet = r.t.host_read(1s);
++    REQUIRE(packet.has_value());
++    if (cmd_of(*packet) == ctap::kCmdKeepalive) continue;
++    busy = *packet;
++    break;
++  }
++  REQUIRE(busy.has_value());
++  REQUIRE(cmd_of(*busy) == ctap::kCmdError);
++  REQUIRE((*busy)[7] == static_cast<std::uint8_t>(ctap::HidErr::ChannelBusy));
++  r.h.release = true;
++  std::optional<hid::Report> original;
++  for (int i = 0; i < 20; ++i) {
++    auto packet = r.t.host_read(1s);
++    REQUIRE(packet.has_value());
++    if (cmd_of(*packet) == ctap::kCmdKeepalive) continue;
++    original = *packet;
++    break;
++  }
++  REQUIRE(original.has_value());
++  REQUIRE(cmd_of(*original) == ctap::kCmdCbor);
++  REQUIRE((*original)[7] == 0x00);
++}
++
+ TEST_CASE("reconnect discards a late worker response before the next INIT", "[loop][reconnect]") {
+   Rig r;
+   auto old_cid = r.init();

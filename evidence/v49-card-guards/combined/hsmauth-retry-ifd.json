@@ -1,0 +1,85 @@
+{
+  "passed": true,
+  "count": 24,
+  "expect": "fixed",
+  "transport": "direct IFD ABI",
+  "core_sha256": "4d2b50bf7a1a616696c66e1da1171f0b394a1c1a41b7e27323a7ba86eaa0f1d1",
+  "observations": {
+    "symmetric_initial": {
+      "victim": 8,
+      "peer": 8
+    },
+    "symmetric_first_seven": [
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "symmetric_one_retry_left": 1,
+    "symmetric_correct_password_works": true,
+    "symmetric_retries_restored": 8,
+    "symmetric_final_eight": [
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1,
+      0
+    ],
+    "symmetric_after_exhaustion": {
+      "peer": 8
+    },
+    "symmetric_management_retries": 8,
+    "symmetric_peer_derivation": true,
+    "symmetric_after_restart": {
+      "peer": 8
+    },
+    "symmetric_readd_sw": 36864,
+    "symmetric_readd_retries": 8,
+    "asymmetric_initial": {
+      "victim": 8,
+      "peer": 8
+    },
+    "asymmetric_first_seven": [
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "asymmetric_one_retry_left": 1,
+    "asymmetric_correct_password_works": true,
+    "asymmetric_retries_restored": 8,
+    "asymmetric_final_eight": [
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1,
+      0
+    ],
+    "asymmetric_after_exhaustion": {
+      "peer": 8
+    },
+    "asymmetric_management_retries": 8,
+    "asymmetric_peer_derivation": true,
+    "asymmetric_after_restart": {
+      "peer": 8
+    },
+    "asymmetric_readd_sw": 36864,
+    "asymmetric_readd_retries": 8
+  },
+  "mismatches": {},
+  "physical_key_accessed": false,
+  "source": "Yubico YubiHSM Auth Credential and Get AES-128 Session Keys documentation",
+  "note": "Exact final-failure status and firmware 5.7.4 persistence were not physically measured"
+}

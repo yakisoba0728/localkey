@@ -1,0 +1,39 @@
+{
+  "passed": true,
+  "mode": "fixed",
+  "scope": "owned no-NIC dummy_hcd FIDO HID interrupt OUT/IN with host IN unread",
+  "guest_network_devices": false,
+  "host_usb_passthrough": false,
+  "physical_device_access": false,
+  "ping_payload_length": 7609,
+  "request_count": 4,
+  "own_usb_address": 2,
+  "own_usb_serial": "3388042940",
+  "assigned_cid_hex": "b6e94a80",
+  "positive_control": true,
+  "sent_reports": [
+    129,
+    129,
+    129,
+    129
+  ],
+  "bridge_alive_after_unread": true,
+  "received_reports": [
+    129,
+    129,
+    129,
+    129
+  ],
+  "echo_matches": [
+    true,
+    true,
+    true,
+    true
+  ],
+  "followup_echo": true,
+  "bridge_alive_after_drain": true,
+  "overflow_observed": false,
+  "raw_console_sha256": "e52cbb2dd5fe0e26def480602525ec3a7cd6feffb09020fc8074bdf813437349",
+  "inputs_sha256": "f9cc2e6f6bf807c402daa51fffbd36f3104199d242cc379a2697b1a94b1069e1",
+  "kernel_panic_observed": false
+}

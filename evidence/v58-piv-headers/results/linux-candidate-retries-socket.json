@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "transport": "private CCID socket",
+  "fixed": true,
+  "rows": [
+    {
+      "name": "short_le_1",
+      "apdu": "00fa050501",
+      "sw": "6700",
+      "malformed_state_unchanged": true,
+      "pin_and_puk_checked_after_restart": true,
+      "normal_sdk_set_attempts_after_restart": true
+    },
+    {
+      "name": "extended_le_256",
+      "apdu": "00fa0505000100",
+      "sw": "6700",
+      "malformed_state_unchanged": true,
+      "pin_and_puk_checked_after_restart": true,
+      "normal_sdk_set_attempts_after_restart": true
+    }
+  ],
+  "scp03": {
+    "unmodified_sdk_scp03_set_attempts": true,
+    "restart_persisted": true
+  },
+  "physical_key_accessed": false
+}

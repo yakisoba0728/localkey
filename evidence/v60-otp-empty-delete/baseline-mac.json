@@ -1,0 +1,45 @@
+{
+  "variant": "baseline",
+  "platform": "darwin",
+  "source_sha256": "9ec868235c409c57d3699a32ba14e87c86d2b81c4c134391b923df0ff0fd3760",
+  "unmodified_yubikit": true,
+  "private_unix_ccid": true,
+  "physical_or_host_device_access": false,
+  "firmware_5_7_4_differential": false,
+  "checks": [
+    {
+      "configured": "none",
+      "deleted": "ONE",
+      "raw_sw": "9000",
+      "status_unchanged": true,
+      "passed": true
+    },
+    {
+      "configured": "ONE",
+      "deleted": "TWO",
+      "outcome": "accepted",
+      "sequence_before": 1,
+      "sequence_after": 2,
+      "remaining_hmac_sha1": "fd0507ddec09f0bc5810111ef9e92ca0febd6fcd",
+      "passed": true
+    },
+    {
+      "configured": "TWO",
+      "deleted": "ONE",
+      "outcome": "accepted",
+      "sequence_before": 1,
+      "sequence_after": 2,
+      "remaining_hmac_sha1": "2403106eef4fd5dc740578f2c3163d1fb7b2ca71",
+      "passed": true
+    },
+    {
+      "configured": "ONE,TWO",
+      "deleted": "ONE",
+      "outcome": "accepted",
+      "sequence_before": 2,
+      "sequence_after": 3,
+      "remaining_hmac_sha1": "2403106eef4fd5dc740578f2c3163d1fb7b2ca71",
+      "passed": true
+    }
+  ]
+}

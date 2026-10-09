@@ -1,0 +1,143 @@
+{
+  "passed": true,
+  "tests": [
+    {
+      "name": "modeled plaintext buffer accounts for object selector and outer TLV",
+      "passed": true
+    },
+    {
+      "name": "one byte above modeled APDU data buffer is rejected",
+      "passed": true
+    },
+    {
+      "name": "oversized short-APDU chain does not rewrite encrypted state",
+      "passed": true
+    },
+    {
+      "name": "SDK command chaining cannot bypass PIV data buffer limit",
+      "passed": true
+    },
+    {
+      "name": "failed chained replacement preserves previous object",
+      "passed": true
+    },
+    {
+      "name": "own software attestation is established before storage capacity test",
+      "passed": true
+    },
+    {
+      "name": "own attestation certificate occupies the shared data-object budget",
+      "passed": true
+    },
+    {
+      "name": "multiple independent objects fill the modeled shared 51200-byte budget",
+      "passed": true
+    },
+    {
+      "name": "new object cannot allocate one byte beyond shared storage budget",
+      "passed": true
+    },
+    {
+      "name": "capacity rejection is atomic on encrypted persistent state",
+      "passed": true
+    },
+    {
+      "name": "replacement cannot increase allocation beyond shared budget",
+      "passed": true
+    },
+    {
+      "name": "out-of-space replacement preserves old object bytes",
+      "passed": true
+    },
+    {
+      "name": "same-size replacement releases its old allocation before budgeting",
+      "passed": true
+    },
+    {
+      "name": "private-key generation remains available while data storage is full",
+      "passed": true
+    },
+    {
+      "name": "existing software CA can attest another generated key at full budget",
+      "passed": true
+    },
+    {
+      "name": "shrinking a replacement releases space for another object",
+      "passed": true
+    },
+    {
+      "name": "deleting an object releases its complete allocation",
+      "passed": true
+    },
+    {
+      "name": "shared capacity accounting survives encrypted-state reload",
+      "passed": true
+    },
+    {
+      "name": "deleted object remains absent after service restart",
+      "passed": true
+    },
+    {
+      "name": "protected PIV object 5fc103 requires PIN after reconnect",
+      "passed": true
+    },
+    {
+      "name": "protected PIV object 5fc108 requires PIN after reconnect",
+      "passed": true
+    },
+    {
+      "name": "protected PIV object 5fc109 requires PIN after reconnect",
+      "passed": true
+    },
+    {
+      "name": "protected PIV object 5fc121 requires PIN after reconnect",
+      "passed": true
+    },
+    {
+      "name": "verified PIN authorizes all four documented protected PIV data objects",
+      "passed": true
+    },
+    {
+      "name": "data tags outside documented PIV range are rejected",
+      "passed": true
+    },
+    {
+      "name": "PUT DATA rejects incorrect P1/P2 before writing an object",
+      "passed": true
+    },
+    {
+      "name": "GET DATA rejects incorrect P1/P2",
+      "passed": true
+    },
+    {
+      "name": "legacy over-capacity state permits a shrinking replacement",
+      "passed": true
+    },
+    {
+      "name": "legacy over-capacity state permits deleting objects to recover space",
+      "passed": true
+    },
+    {
+      "name": "preinitialized software issuer signs successfully when object storage is full",
+      "passed": true
+    },
+    {
+      "name": "attestation consumes no new allocation or key fields at full storage capacity",
+      "passed": true
+    }
+  ],
+  "scope": "fresh software model and independent SDK; no physical reader",
+  "buffer_model": "assembled plaintext APDU data <= 3072; outer TLV counted",
+  "storage_model": "sum of stored object values <= 51200; private keys excluded",
+  "hardware_allocation_boundaries_verified": false,
+  "known_unverified": [
+    "exact firmware APDU header and NVM record overhead",
+    "documented 3052-byte certificate boundary versus modeled APDU payload ceiling",
+    "firmware error status at allocation boundaries",
+    "own initial attestation object occupies a modeled value budget; exact firmware reservation overhead unmeasured"
+  ],
+  "sources": [
+    "https://docs.yubico.com/yesdk/users-manual/application-piv/cert-size.html",
+    "https://docs.yubico.com/yesdk/users-manual/application-piv/piv-objects.html"
+  ]
+}

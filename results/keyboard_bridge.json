@@ -1,0 +1,52 @@
+{
+  "passed": true,
+  "tests": [
+    {
+      "name": "serialized keyboard socket press, modifier and release reports",
+      "passed": true
+    },
+    {
+      "name": "compiled macOS bridge reads shared CCID device identity",
+      "passed": true
+    },
+    {
+      "name": "compiled macOS bridge gets eight-byte OTP feature report",
+      "passed": true
+    },
+    {
+      "name": "compiled macOS bridge reads successful software button response",
+      "passed": true
+    },
+    {
+      "name": "compiled macOS bridge keyboard records match independent socket client",
+      "passed": true
+    },
+    {
+      "name": "compiled native bridge hold/release request selects slot 2",
+      "passed": true
+    },
+    {
+      "name": "native bridge rejects out-of-range hold duration",
+      "passed": true
+    },
+    {
+      "name": "socket long hold arms update without emitting reports",
+      "passed": true
+    },
+    {
+      "name": "socket short confirmation changes and persists static password output",
+      "passed": true
+    },
+    {
+      "name": "native bridge rejects absent backend socket",
+      "passed": true
+    },
+    {
+      "name": "native bridge rejects shared-access socket",
+      "passed": true
+    }
+  ],
+  "physical_key_accessed": false,
+  "os_keyboard_events": false,
+  "native_hid_registration_verified": false
+}

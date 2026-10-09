@@ -1,0 +1,51 @@
+{
+  "passed": true,
+  "count": 7,
+  "checks": [
+    {
+      "name": "utf8_touch_calculation",
+      "actual": "751506c64a2a1a6a0a53c94146f565764af2736fcc390a",
+      "expected": "751506c64a2a1a6a0a53c94146f565764af2736fcc390a",
+      "matched": true
+    },
+    {
+      "name": "binary_name_listed",
+      "actual": true,
+      "expected": true,
+      "matched": true
+    },
+    {
+      "name": "binary_touch_calculation",
+      "actual": "751506c64a2a1a6a0a53c94146f565764af2736fcc390a",
+      "expected": "751506c64a2a1a6a0a53c94146f565764af2736fcc390a",
+      "matched": true
+    },
+    {
+      "name": "high_level_sdk_binary_calculation",
+      "actual": "c64a2a1a6a0a53c94146f565764af2736fcc390a",
+      "expected": "c64a2a1a6a0a53c94146f565764af2736fcc390a",
+      "matched": true
+    },
+    {
+      "name": "binary_touch_label_lossless",
+      "actual": "OATH \\xff\\x00binary",
+      "expected": "OATH \\xff\\x00binary",
+      "matched": true
+    },
+    {
+      "name": "binary_name_still_requires_touch",
+      "actual": "SW=6985",
+      "expected": "SW=6985",
+      "matched": true
+    },
+    {
+      "name": "socket_sdk_binary_calculation",
+      "actual": "c64a2a1a6a0a53c94146f565764af2736fcc390a",
+      "expected": "c64a2a1a6a0a53c94146f565764af2736fcc390a",
+      "matched": true
+    }
+  ],
+  "physical_device_access": false,
+  "firmware_5_7_4_differential_verified": false,
+  "sdk": "YubiKit SmartCardProtocol over in-memory EmulatorConnection"
+}

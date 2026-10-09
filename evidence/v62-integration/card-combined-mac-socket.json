@@ -1,0 +1,32 @@
+{
+  "passed": true,
+  "fixed": true,
+  "route": "private CCID socket",
+  "rows": [
+    {
+      "name": "wrong_p1_01",
+      "malformed_apdu": "0047019a05ac03800111",
+      "malformed_sw": "6a86",
+      "old_public_key_preserved": true,
+      "decrypted_key_state_unchanged": true,
+      "encrypted_state_bytes_unchanged": true,
+      "valid_sdk_apdu": "0047009a000005ac03800111",
+      "normal_sdk_key_persists_after_restart": true,
+      "passed": true
+    },
+    {
+      "name": "wrong_p1_ff",
+      "malformed_apdu": "0047ff9a05ac03800111",
+      "malformed_sw": "6a86",
+      "old_public_key_preserved": true,
+      "decrypted_key_state_unchanged": true,
+      "encrypted_state_bytes_unchanged": true,
+      "valid_sdk_apdu": "0047009a000005ac03800111",
+      "normal_sdk_key_persists_after_restart": true,
+      "passed": true
+    }
+  ],
+  "core_sha256": "e485006eb471c0f34055b190f40bc5d8b66b57f11924d5b6548b2bfa3da427df",
+  "physical_or_host_device_access": false,
+  "firmware_5_7_4_differential": false
+}

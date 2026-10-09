@@ -1,0 +1,14 @@
+{
+  "passed": false,
+  "scope": "guest initramfs failed to unpack at2GiB; native helper/large transfer never executed",
+  "native_large_transfer_bug_proven": false,
+  "prototype_helper_executed": false,
+  "qemu_memory_mib": 2048,
+  "next_memory_mib_matches_verified40_full_runner": 4096,
+  "original_guest_image_sha256": "cfc56c563be8a9e4b0d26933503d70c2372e41f7290c4da3834b706ac51427e5",
+  "helper_files_sha256": {
+    "verify-usb-large-partial-runtime-prototype.py": "25445871fa747fa586d302a9c7d83e554c5753fb6ce82b2f7c7d115c3957f27f",
+    "guest-init.sh": "36076aed677232176d75c3098eb9d3792085d741f3998b8417c95984fe728a89",
+    "build-guest.py": "d80e46fd6568ff5c121daa5be8fae47d1e957665baab6422811ca6bff00cb0ea"
+  }
+}

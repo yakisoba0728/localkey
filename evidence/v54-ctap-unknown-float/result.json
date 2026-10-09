@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "baseline_float_status": 18,
+  "fixed_float_status": 46,
+  "float_variants": 4,
+  "cpp_cases": 123,
+  "cpp_assertions": 11644,
+  "source_patch_sha256": "b099507365ea65d381770a8609054133b4d741aaa87d2f907b5d189f94d4a69a",
+  "macos_daemon_sha256": "4366c6ea090fb6d9ba566d56894f99f31378798a9d623b3ae06a6fb25f9ba4c8",
+  "physical_firmware_differential_verified": false
+}

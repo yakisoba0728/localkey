@@ -1,0 +1,26 @@
+--- a/emucard/core.py
++++ b/emucard/core.py
+@@ -760,7 +760,8 @@
+                 + Tlv(4, public_data(key))
+             )
+         if ins == 0x20:
+-            require(a.p2 == 0x80, 0x6A86)
++            require(a.p1 == 0 and a.p2 == 0x80, 0x6A86)
++            require(a.le is None, 0x6700)
+             if not a.data:
+                 require(
+                     ("piv", "pin") in self.verified, 0x63C0 | min(d["pin_retries"], 15)
+@@ -771,7 +772,12 @@
+             self.verify("piv", "pin", a.data.rstrip(b"\xff"))
+             return
+         if ins in (0x24, 0x2C):
+-            require(len(a.data) == 16 and a.p2 in (0x80, 0x81), 0x6700)
++            require(
++                a.p1 == 0
++                and (a.p2 == 0x80 if ins == 0x2C else a.p2 in (0x80, 0x81)),
++                0x6A86,
++            )
++            require(a.le is None and len(a.data) == 16, 0x6700)
+             name = "puk" if ins == 0x2C or a.p2 == 0x81 else "pin"
+             self.verify("piv", name, a.data[:8].rstrip(b"\xff"))
+             dest = "pin" if ins == 0x2C else name

@@ -1,0 +1,278 @@
+{
+  "recommend_candidate_promotion": true,
+  "promotion_qualification": "Finite no-NIC guest gates do not prove elimination of the rare kernel panic or complete physical-key equivalence. Unmodified stock immediate reconnect fails intermittently with NoCardException under both AIO and synchronous bridge; readiness-aware stock helper passes.",
+  "exact_v49_core_sha256": "c8fcc2fec3430aca2ffc10f560617babcd5e716dc1420ee675baa3f6ee9e88e5",
+  "exact_v49_otp_hid_sha256": "c7a5f9c73cdb1c506b99343785436b25cf85f772602f8a1727aa0b71e9756136",
+  "validated_aio_binary_sha256": "2bf02ac6da2d027f64478e0977220d367a029db3c239e8ab5ed4184b5b5ba102",
+  "aio_comment_fixed_source_sha256": "49b470889aa2c421ccd81272f2f4d21978d977d184c4d7f5df4775535cf9af1e",
+  "aio_source_patch_sha256": "755053fe71d4d9d7d9714dded8d0515d13ac02375b350831c857d883518ac1a4",
+  "stock_libccid_pcscd_sdk_unchanged": true,
+  "guest_network_devices": false,
+  "host_usb_passthrough": false,
+  "physical_device_access": false,
+  "cases": {
+    "retest1500": {
+      "image_sha256": "8c4e8af3a517ab3c2501593e2d15a3b08cc65c6ffc2578fd2e5d6514010b3682",
+      "console_sha256": "1b084a7242b721ba15340ef3dd438c92408ca2e6dd83605130973f2c7dd0b687",
+      "input_manifest_sha256": "7eb311422075122e7dd3e701c33dfe40357d9b15b9279dc6c9c5e0b2b00309cc",
+      "reports": [
+        {
+          "passed": true,
+          "test_count": 28,
+          "tests_reported": 28,
+          "error": null,
+          "stock_card_ready_attempts": null,
+          "oversized_apdu_status": null,
+          "requested_endpoint_addresses_all_profiles_verified": null,
+          "profile_snapshots": 0,
+          "bridge_sha256_reported": null,
+          "original_usb_address": null,
+          "profile6_usb_address": null,
+          "profile6_pcsc_no_card_before_atr": false,
+          "services_alive_at_failure": null
+        },
+        {
+          "passed": false,
+          "test_count": 13,
+          "tests_reported": 13,
+          "error": "NoCardException: Unable to connect: No smart card inserted. (0x8010000C)",
+          "stock_card_ready_attempts": null,
+          "oversized_apdu_status": null,
+          "requested_endpoint_addresses_all_profiles_verified": null,
+          "profile_snapshots": 0,
+          "bridge_sha256_reported": "2bf02ac6da2d027f64478e0977220d367a029db3c239e8ab5ed4184b5b5ba102",
+          "original_usb_address": 5,
+          "profile6_usb_address": 6,
+          "profile6_pcsc_no_card_before_atr": true,
+          "services_alive_at_failure": true
+        },
+        {
+          "passed": true,
+          "test_count": 328,
+          "tests_reported": 328,
+          "error": null,
+          "stock_card_ready_attempts": null,
+          "oversized_apdu_status": null,
+          "requested_endpoint_addresses_all_profiles_verified": null,
+          "profile_snapshots": 0,
+          "bridge_sha256_reported": "2bf02ac6da2d027f64478e0977220d367a029db3c239e8ab5ed4184b5b5ba102",
+          "original_usb_address": 7,
+          "profile6_usb_address": 8,
+          "profile6_pcsc_no_card_before_atr": false,
+          "services_alive_at_failure": null
+        },
+        {
+          "passed": true,
+          "test_count": 8,
+          "tests_reported": 8,
+          "error": null,
+          "stock_card_ready_attempts": null,
+          "oversized_apdu_status": "6A80",
+          "requested_endpoint_addresses_all_profiles_verified": null,
+          "profile_snapshots": 0,
+          "bridge_sha256_reported": null,
+          "original_usb_address": null,
+          "profile6_usb_address": null,
+          "profile6_pcsc_no_card_before_atr": false,
+          "services_alive_at_failure": null
+        }
+      ],
+      "markers": [
+        "SKE_MERGED_GUEST_START",
+        "SKE_MERGED_EXTRA_EXIT=0",
+        "SKE_STOCK_LIBCCID_LARGE_BEGIN",
+        "SKE_STOCK_LIBCCID_LARGE_END",
+        "SKE_MERGED_STOCK_EXIT=1",
+        "SKE_MERGED_LONG_EXIT=0",
+        "SKE_MERGED_CERT_BEGIN",
+        "SKE_MERGED_CERT_END",
+        "SKE_MERGED_CERT_EXIT=0",
+        "SKE_MERGED_GUEST_EXIT=1"
+      ],
+      "kernel_panic": false
+    },
+    "sync-baseline": {
+      "image_sha256": "6e70db4bd39fc6b80567d909f6e9e1c0148bb286e1a78b666af60312da6c43cd",
+      "console_sha256": "e7ec63b64629def645df32dbfa8697e8e544498f90a7b7d3c5543e5f566faeb5",
+      "input_manifest_sha256": "48ccd97e88440dd88a57a56ae2fc133153fa855b319fef573efca14f13dfccba",
+      "reports": [
+        {
+          "passed": true,
+          "test_count": 28,
+          "tests_reported": 28,
+          "error": null,
+          "stock_card_ready_attempts": null,
+          "oversized_apdu_status": null,
+          "requested_endpoint_addresses_all_profiles_verified": null,
+          "profile_snapshots": 0,
+          "bridge_sha256_reported": null,
+          "original_usb_address": null,
+          "profile6_usb_address": null,
+          "profile6_pcsc_no_card_before_atr": false,
+          "services_alive_at_failure": null
+        },
+        {
+          "passed": false,
+          "test_count": 13,
+          "tests_reported": 13,
+          "error": "NoCardException: Unable to connect: No smart card inserted. (0x8010000C)",
+          "stock_card_ready_attempts": null,
+          "oversized_apdu_status": null,
+          "requested_endpoint_addresses_all_profiles_verified": null,
+          "profile_snapshots": 0,
+          "bridge_sha256_reported": "04a9702cc19d7cb85735d0fd113b9390d65ca465bc10e5dd48954de52ed78099",
+          "original_usb_address": 5,
+          "profile6_usb_address": 6,
+          "profile6_pcsc_no_card_before_atr": true,
+          "services_alive_at_failure": true
+        }
+      ],
+      "markers": [
+        "SKE_SYNC_BASELINE_START",
+        "SKE_SYNC_EXTRA_EXIT=0",
+        "SKE_STOCK_LIBCCID_LARGE_BEGIN",
+        "SKE_STOCK_LIBCCID_LARGE_END",
+        "SKE_SYNC_STOCK_EXIT=1",
+        "SKE_SYNC_BASELINE_EXIT=1"
+      ],
+      "kernel_panic": false
+    },
+    "seven-profile": {
+      "image_sha256": "5f765b9c1dfa7ef209e367c3ccd70c1ad762579fe942fcdcd8e503b91071722e",
+      "console_sha256": "809fd3650b33afff2f4cfaecfb876e0c400995c8abec2fa6b0f368b650a51008",
+      "input_manifest_sha256": "306dcc3417f328daad0a6fbbbd7cd9855302ad1e47f49ca8d786741cf68535f1",
+      "reports": [
+        {
+          "passed": true,
+          "test_count": 49,
+          "tests_reported": 49,
+          "error": null,
+          "stock_card_ready_attempts": null,
+          "oversized_apdu_status": null,
+          "requested_endpoint_addresses_all_profiles_verified": true,
+          "profile_snapshots": 9,
+          "bridge_sha256_reported": null,
+          "original_usb_address": null,
+          "profile6_usb_address": null,
+          "profile6_pcsc_no_card_before_atr": false,
+          "services_alive_at_failure": null
+        }
+      ],
+      "markers": [
+        "SKE_MERGED_SEVEN_START",
+        "SKE_MERGED_SEVEN_EXIT=0"
+      ],
+      "kernel_panic": false
+    },
+    "ready-observer": {
+      "image_sha256": "29f8c9c374716d0acf30f0abdb679531d5ebd5e27c81b870cd0f602a93fa4cfe",
+      "console_sha256": "4d173990519c7d53d7c9c58f3cfc02869a285824d5677dabf3e1809da9b2229a",
+      "input_manifest_sha256": "da5ad6a2db99710ce88d091a9d075d635209527e34c6331394e320582359c270",
+      "reports": [
+        {
+          "passed": true,
+          "test_count": 28,
+          "tests_reported": 28,
+          "error": null,
+          "stock_card_ready_attempts": null,
+          "oversized_apdu_status": null,
+          "requested_endpoint_addresses_all_profiles_verified": null,
+          "profile_snapshots": 0,
+          "bridge_sha256_reported": null,
+          "original_usb_address": null,
+          "profile6_usb_address": null,
+          "profile6_pcsc_no_card_before_atr": false,
+          "services_alive_at_failure": null
+        },
+        {
+          "passed": true,
+          "test_count": 122,
+          "tests_reported": 122,
+          "error": null,
+          "stock_card_ready_attempts": 1,
+          "oversized_apdu_status": null,
+          "requested_endpoint_addresses_all_profiles_verified": null,
+          "profile_snapshots": 0,
+          "bridge_sha256_reported": "2bf02ac6da2d027f64478e0977220d367a029db3c239e8ab5ed4184b5b5ba102",
+          "original_usb_address": 5,
+          "profile6_usb_address": 6,
+          "profile6_pcsc_no_card_before_atr": false,
+          "services_alive_at_failure": true
+        }
+      ],
+      "markers": [
+        "SKE_READY_BASELINE_START",
+        "SKE_READY_EXTRA_EXIT=0",
+        "SKE_STOCK_LIBCCID_LARGE_BEGIN",
+        "SKE_STOCK_LIBCCID_LARGE_END",
+        "SKE_READY_STOCK_EXIT=0",
+        "SKE_READY_BASELINE_EXIT=0"
+      ],
+      "kernel_panic": false
+    },
+    "v49-card-aio": {
+      "image_sha256": "40f0d3a5c5363a297c7523c4c086d2a4643aa1f6e9928a54760bfa1806f6c400",
+      "console_sha256": "1cb8dd3c5581cfe24a458bc74c77820282df6de721a0d667ecbc2390657bf7a0",
+      "input_manifest_sha256": "03849a11cf10af90b054971cb3c4bdda2e47571e73817e20662497960e98a504",
+      "reports": [
+        {
+          "passed": true,
+          "test_count": 28,
+          "tests_reported": 28,
+          "error": null,
+          "stock_card_ready_attempts": null,
+          "oversized_apdu_status": null,
+          "requested_endpoint_addresses_all_profiles_verified": null,
+          "profile_snapshots": 0,
+          "bridge_sha256_reported": null,
+          "original_usb_address": null,
+          "profile6_usb_address": null,
+          "profile6_pcsc_no_card_before_atr": false,
+          "services_alive_at_failure": null
+        },
+        {
+          "passed": true,
+          "test_count": 122,
+          "tests_reported": 122,
+          "error": null,
+          "stock_card_ready_attempts": 1,
+          "oversized_apdu_status": null,
+          "requested_endpoint_addresses_all_profiles_verified": null,
+          "profile_snapshots": 0,
+          "bridge_sha256_reported": "2bf02ac6da2d027f64478e0977220d367a029db3c239e8ab5ed4184b5b5ba102",
+          "original_usb_address": 5,
+          "profile6_usb_address": 6,
+          "profile6_pcsc_no_card_before_atr": false,
+          "services_alive_at_failure": true
+        },
+        {
+          "passed": true,
+          "test_count": 8,
+          "tests_reported": 8,
+          "error": null,
+          "stock_card_ready_attempts": null,
+          "oversized_apdu_status": "6A80",
+          "requested_endpoint_addresses_all_profiles_verified": null,
+          "profile_snapshots": 0,
+          "bridge_sha256_reported": null,
+          "original_usb_address": null,
+          "profile6_usb_address": null,
+          "profile6_pcsc_no_card_before_atr": false,
+          "services_alive_at_failure": null
+        }
+      ],
+      "markers": [
+        "SKE_V49_CARD_AIO_START",
+        "SKE_MERGED_EXTRA_EXIT=0",
+        "SKE_STOCK_LIBCCID_LARGE_BEGIN",
+        "SKE_STOCK_LIBCCID_LARGE_END",
+        "SKE_MERGED_STOCK_EXIT=0",
+        "SKE_MERGED_CERT_BEGIN",
+        "SKE_MERGED_CERT_END",
+        "SKE_MERGED_CERT_EXIT=0",
+        "SKE_V49_CARD_AIO_EXIT=0"
+      ],
+      "kernel_panic": false
+    }
+  }
+}

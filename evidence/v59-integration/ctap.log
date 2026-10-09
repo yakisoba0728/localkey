@@ -1,0 +1,82 @@
+PASS GetInfo ES256 / Ed25519 / ES384
+PASS GetInfo implemented extensions
+PASS GetInfo implemented management commands
+PASS PIN protocols 1 and 2
+PASS CTAPHID multi-packet PING
+PASS algorithm negotiation -7
+PASS independent packed attestation verification -7
+PASS independent assertion verification -7
+PASS wrong challenge rejected -7
+PASS algorithm negotiation -8
+PASS independent packed attestation verification -8
+PASS independent assertion verification -8
+PASS wrong challenge rejected -8
+PASS algorithm negotiation -35
+PASS independent packed attestation verification -35
+PASS independent assertion verification -35
+PASS wrong challenge rejected -35
+PASS resident capacity accounting
+PASS nonresident does not consume resident slots
+PASS nonresident excluded from discovery
+PASS nonresident allowList signature
+PASS default rk=false
+PASS credBlob stored and largeBlobKey generated
+PASS credential extension retrieval
+PASS fragmented large blob encrypted round trip
+PASS large blob digest failure (0x3d)
+PASS bad large blob leaves committed data intact
+PASS out of sequence large blob (0x04)
+PASS largeBlobKey requires resident key (0x2c)
+PASS hmac-secret two salts protocol 1
+PASS hmac-secret invalid salt authentication protocol 1 (0xe0)
+PASS hmac-secret two salts protocol 2
+PASS hmac-secret protocols produce identical plaintext
+PASS hmac-secret invalid salt authentication protocol 2 (0xe0)
+PASS PIN v1 set
+PASS malformed encrypted PIN proof consumes a retry (0x31)
+PASS malformed encrypted PIN proof decrements durable retry counter
+PASS correct PIN restores retries after malformed proof
+PASS makeCredUvNotRqd permits nonresident without PIN token
+PASS PIN changes interoperable across protocol 1 and 2
+PASS credProtect 2 stored
+PASS credProtect 2 hidden without UV
+PASS credProtect 2 permits allowList
+PASS credProtect 2 authenticated assertion
+PASS credProtect 3 stored
+PASS credProtect 3 hidden without UV
+PASS credProtect 3 rejects allowList without UV (0x2e)
+PASS credProtect 3 authenticated assertion
+PASS credential management resident metadata
+PASS credential management RP enumeration
+PASS credential enumeration includes all algorithms
+PASS credential update user metadata
+PASS credential update cannot replace user ID (0x02)
+PASS credential deletion durable
+PASS deleted credential unavailable (0x2e)
+PASS credential management requires authenticated PIN token (0x36)
+PASS credential management preview interoperates with legacy PIN token
+PASS assertion token cannot manage credentials (0x33)
+PASS RP scoped token cannot list all metadata (0x33)
+PASS RP scoped credential enumeration
+PASS large blob write with correct token permission
+PASS large blob write requires PIN after setup (0x36)
+PASS config minimum PIN length
+PASS minimum PIN extension authorized RP
+PASS minimum PIN policy cannot decrease (0x37)
+PASS config always UV enabled
+PASS always UV rejects unverified assertion (0x36)
+PASS forced PIN change still checks a wrong PIN (0x31)
+PASS forced PIN change consumes one durable retry for a wrong PIN
+PASS forced PIN change blocks token issuance (0x37)
+PASS correct PIN under forced change restores durable retries
+PASS legacy token reports PIN_INVALID under forced change (0x31)
+PASS short PIN rejected after policy increase (0x37)
+PASS PIN change clears forced change
+PASS PIN policy survives encrypted store restart
+PASS large blob survives restart
+PASS algorithm -8 key and counter survive restart
+PASS algorithm -35 key and counter survive restart
+PASS U2F registration and assertion signatures
+PASS fixture reset restores credentials and PIN policy
+PASS fixture reset clears large blob array
+PASS fixture reset persists

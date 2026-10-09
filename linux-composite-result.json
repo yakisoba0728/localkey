@@ -1,0 +1,1119 @@
+{
+  "passed": true,
+  "tests": [
+    {
+      "name": "GetInfo ES256 / Ed25519 / ES384",
+      "passed": true
+    },
+    {
+      "name": "GetInfo implemented extensions",
+      "passed": true
+    },
+    {
+      "name": "GetInfo implemented management commands",
+      "passed": true
+    },
+    {
+      "name": "PIN protocols 1 and 2",
+      "passed": true
+    },
+    {
+      "name": "CTAPHID multi-packet PING",
+      "passed": true
+    },
+    {
+      "name": "algorithm negotiation -7",
+      "passed": true
+    },
+    {
+      "name": "independent packed attestation verification -7",
+      "passed": true
+    },
+    {
+      "name": "independent assertion verification -7",
+      "passed": true
+    },
+    {
+      "name": "wrong challenge rejected -7",
+      "passed": true
+    },
+    {
+      "name": "algorithm negotiation -8",
+      "passed": true
+    },
+    {
+      "name": "independent packed attestation verification -8",
+      "passed": true
+    },
+    {
+      "name": "independent assertion verification -8",
+      "passed": true
+    },
+    {
+      "name": "wrong challenge rejected -8",
+      "passed": true
+    },
+    {
+      "name": "algorithm negotiation -35",
+      "passed": true
+    },
+    {
+      "name": "independent packed attestation verification -35",
+      "passed": true
+    },
+    {
+      "name": "independent assertion verification -35",
+      "passed": true
+    },
+    {
+      "name": "wrong challenge rejected -35",
+      "passed": true
+    },
+    {
+      "name": "resident capacity accounting",
+      "passed": true
+    },
+    {
+      "name": "nonresident does not consume resident slots",
+      "passed": true
+    },
+    {
+      "name": "nonresident excluded from discovery",
+      "passed": true
+    },
+    {
+      "name": "nonresident allowList signature",
+      "passed": true
+    },
+    {
+      "name": "default rk=false",
+      "passed": true
+    },
+    {
+      "name": "credBlob stored and largeBlobKey generated",
+      "passed": true
+    },
+    {
+      "name": "credential extension retrieval",
+      "passed": true
+    },
+    {
+      "name": "fragmented large blob encrypted round trip",
+      "passed": true
+    },
+    {
+      "name": "large blob digest failure (0x3d)",
+      "passed": true
+    },
+    {
+      "name": "bad large blob leaves committed data intact",
+      "passed": true
+    },
+    {
+      "name": "out of sequence large blob (0x04)",
+      "passed": true
+    },
+    {
+      "name": "largeBlobKey requires resident key (0x2c)",
+      "passed": true
+    },
+    {
+      "name": "hmac-secret two salts protocol 1",
+      "passed": true
+    },
+    {
+      "name": "hmac-secret invalid salt authentication protocol 1 (0xe0)",
+      "passed": true
+    },
+    {
+      "name": "hmac-secret two salts protocol 2",
+      "passed": true
+    },
+    {
+      "name": "hmac-secret protocols produce identical plaintext",
+      "passed": true
+    },
+    {
+      "name": "hmac-secret invalid salt authentication protocol 2 (0xe0)",
+      "passed": true
+    },
+    {
+      "name": "PIN v1 set",
+      "passed": true
+    },
+    {
+      "name": "makeCredUvNotRqd permits nonresident without PIN token",
+      "passed": true
+    },
+    {
+      "name": "PIN changes interoperable across protocol 1 and 2",
+      "passed": true
+    },
+    {
+      "name": "credProtect 2 stored",
+      "passed": true
+    },
+    {
+      "name": "credProtect 2 hidden without UV",
+      "passed": true
+    },
+    {
+      "name": "credProtect 2 permits allowList",
+      "passed": true
+    },
+    {
+      "name": "credProtect 2 authenticated assertion",
+      "passed": true
+    },
+    {
+      "name": "credProtect 3 stored",
+      "passed": true
+    },
+    {
+      "name": "credProtect 3 hidden without UV",
+      "passed": true
+    },
+    {
+      "name": "credProtect 3 rejects allowList without UV (0x2e)",
+      "passed": true
+    },
+    {
+      "name": "credProtect 3 authenticated assertion",
+      "passed": true
+    },
+    {
+      "name": "credential management resident metadata",
+      "passed": true
+    },
+    {
+      "name": "credential management RP enumeration",
+      "passed": true
+    },
+    {
+      "name": "credential enumeration includes all algorithms",
+      "passed": true
+    },
+    {
+      "name": "credential update user metadata",
+      "passed": true
+    },
+    {
+      "name": "credential update cannot replace user ID (0x02)",
+      "passed": true
+    },
+    {
+      "name": "credential deletion durable",
+      "passed": true
+    },
+    {
+      "name": "deleted credential unavailable (0x2e)",
+      "passed": true
+    },
+    {
+      "name": "credential management requires authenticated PIN token (0x36)",
+      "passed": true
+    },
+    {
+      "name": "credential management preview interoperates with legacy PIN token",
+      "passed": true
+    },
+    {
+      "name": "assertion token cannot manage credentials (0x33)",
+      "passed": true
+    },
+    {
+      "name": "RP scoped token cannot list all metadata (0x33)",
+      "passed": true
+    },
+    {
+      "name": "RP scoped credential enumeration",
+      "passed": true
+    },
+    {
+      "name": "large blob write with correct token permission",
+      "passed": true
+    },
+    {
+      "name": "large blob write requires PIN after setup (0x36)",
+      "passed": true
+    },
+    {
+      "name": "config minimum PIN length",
+      "passed": true
+    },
+    {
+      "name": "minimum PIN extension authorized RP",
+      "passed": true
+    },
+    {
+      "name": "minimum PIN policy cannot decrease (0x37)",
+      "passed": true
+    },
+    {
+      "name": "config always UV enabled",
+      "passed": true
+    },
+    {
+      "name": "always UV rejects unverified assertion (0x36)",
+      "passed": true
+    },
+    {
+      "name": "forced PIN change blocks token issuance (0x37)",
+      "passed": true
+    },
+    {
+      "name": "short PIN rejected after policy increase (0x37)",
+      "passed": true
+    },
+    {
+      "name": "PIN change clears forced change",
+      "passed": true
+    },
+    {
+      "name": "PIN policy survives encrypted store restart",
+      "passed": true
+    },
+    {
+      "name": "large blob survives restart",
+      "passed": true
+    },
+    {
+      "name": "algorithm -8 key and counter survive restart",
+      "passed": true
+    },
+    {
+      "name": "algorithm -35 key and counter survive restart",
+      "passed": true
+    },
+    {
+      "name": "U2F registration and assertion signatures",
+      "passed": true
+    },
+    {
+      "name": "fixture reset restores credentials and PIN policy",
+      "passed": true
+    },
+    {
+      "name": "fixture reset clears large blob array",
+      "passed": true
+    },
+    {
+      "name": "fixture reset persists",
+      "passed": true
+    }
+  ],
+  "kernel": "6.8.0-146-generic",
+  "physical_device_access": false,
+  "host_usb_passthrough": false,
+  "guest_network_devices": false,
+  "manufacturer_trust_reproduced": false,
+  "browser_webauthn_verified": false,
+  "native_macos_registration_verified": false,
+  "native_linux_composite_usb_verified": true,
+  "userspace_usb_transport": "FunctionFS",
+  "discoveries": [
+    {
+      "serial": "1968132402",
+      "path": "/dev/hidraw1",
+      "vid": 4176,
+      "pid": 1031,
+      "kernel_link": "/sys/devices/platform/dummy_hcd.0/usb1/1-1/1-1:1.1/0003:1050:0407.0006",
+      "sdk_connection": "LinuxCtapHidConnection",
+      "userspace_usb_transport": "FunctionFS",
+      "controller": {
+        "base_source_url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/drivers/usb/gadget/udc/dummy_hcd.c",
+        "base_source_sha256": "6892efeaca7d13e0f8ba172fac6b9607f9ac5c60de1a5f1812a57eb7998fd993",
+        "source_license": "GPL",
+        "optional_parameter": "requested_ep_addresses",
+        "default_enabled": false,
+        "files": {
+          "dummy_hcd.c": "7ebdac59d1bee99d6acb4e811171c10d32618d3915d8b0ccdad43fe9d7a72918",
+          "dummy_hcd-addresses.patch": "16df2045ea6229954b57441894cf009a9fbf40b5ed0ec5e7e5c31685729fafcc",
+          "dummy_hcd.ko": "5e8481736a6dccd4788ff3fb07f06b8704dcf4a0a02a95888c310a3f594eb86a"
+        },
+        "requested_ep_addresses_enabled": true
+      },
+      "host_visible_endpoint_addresses": [
+        129,
+        4,
+        132,
+        2,
+        130,
+        131
+      ],
+      "host_visible_device_descriptor_hex": "120100020000004050100704740501020301",
+      "host_visible_configuration_descriptor_hex": "09029600030100800f090400000103010100092110010001224a000705810308000a090401000203000000092110010001222200070504034000020705840340000209040200030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020"
+    },
+    {
+      "serial": "1968132402",
+      "path": "/dev/hidraw1",
+      "vid": 4176,
+      "pid": 1031,
+      "kernel_link": "/sys/devices/platform/dummy_hcd.0/usb1/1-1/1-1:1.1/0003:1050:0407.0008",
+      "sdk_connection": "LinuxCtapHidConnection",
+      "userspace_usb_transport": "FunctionFS",
+      "controller": {
+        "base_source_url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/drivers/usb/gadget/udc/dummy_hcd.c",
+        "base_source_sha256": "6892efeaca7d13e0f8ba172fac6b9607f9ac5c60de1a5f1812a57eb7998fd993",
+        "source_license": "GPL",
+        "optional_parameter": "requested_ep_addresses",
+        "default_enabled": false,
+        "files": {
+          "dummy_hcd.c": "7ebdac59d1bee99d6acb4e811171c10d32618d3915d8b0ccdad43fe9d7a72918",
+          "dummy_hcd-addresses.patch": "16df2045ea6229954b57441894cf009a9fbf40b5ed0ec5e7e5c31685729fafcc",
+          "dummy_hcd.ko": "5e8481736a6dccd4788ff3fb07f06b8704dcf4a0a02a95888c310a3f594eb86a"
+        },
+        "requested_ep_addresses_enabled": true
+      },
+      "host_visible_endpoint_addresses": [
+        129,
+        4,
+        132,
+        2,
+        130,
+        131
+      ],
+      "host_visible_device_descriptor_hex": "120100020000004050100704740501020301",
+      "host_visible_configuration_descriptor_hex": "09029600030100800f090400000103010100092110010001224a000705810308000a090401000203000000092110010001222200070504034000020705840340000209040200030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020"
+    },
+    {
+      "serial": "1968132402",
+      "path": "/dev/hidraw1",
+      "vid": 4176,
+      "pid": 1031,
+      "kernel_link": "/sys/devices/platform/dummy_hcd.0/usb1/1-1/1-1:1.1/0003:1050:0407.000A",
+      "sdk_connection": "LinuxCtapHidConnection",
+      "userspace_usb_transport": "FunctionFS",
+      "controller": {
+        "base_source_url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/drivers/usb/gadget/udc/dummy_hcd.c",
+        "base_source_sha256": "6892efeaca7d13e0f8ba172fac6b9607f9ac5c60de1a5f1812a57eb7998fd993",
+        "source_license": "GPL",
+        "optional_parameter": "requested_ep_addresses",
+        "default_enabled": false,
+        "files": {
+          "dummy_hcd.c": "7ebdac59d1bee99d6acb4e811171c10d32618d3915d8b0ccdad43fe9d7a72918",
+          "dummy_hcd-addresses.patch": "16df2045ea6229954b57441894cf009a9fbf40b5ed0ec5e7e5c31685729fafcc",
+          "dummy_hcd.ko": "5e8481736a6dccd4788ff3fb07f06b8704dcf4a0a02a95888c310a3f594eb86a"
+        },
+        "requested_ep_addresses_enabled": true
+      },
+      "host_visible_endpoint_addresses": [
+        129,
+        4,
+        132,
+        2,
+        130,
+        131
+      ],
+      "host_visible_device_descriptor_hex": "120100020000004050100704740501020301",
+      "host_visible_configuration_descriptor_hex": "09029600030100800f090400000103010100092110010001224a000705810308000a090401000203000000092110010001222200070504034000020705840340000209040200030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020"
+    }
+  ],
+  "versions": {
+    "fido2": "2.2.1",
+    "yubikey-manager": "5.9.2",
+    "pyscard": "2.3.1",
+    "pyusb": "1.3.1"
+  },
+  "capabilities": {
+    "versions": [
+      "U2F_V2",
+      "FIDO_2_0",
+      "FIDO_2_1_PRE",
+      "FIDO_2_1"
+    ],
+    "aaguid": "6fb1dfdd-51c0-43a0-a6f2-f74812cbf8fb",
+    "algorithms": [
+      {
+        "alg": -7,
+        "type": "public-key"
+      },
+      {
+        "alg": -8,
+        "type": "public-key"
+      },
+      {
+        "alg": -35,
+        "type": "public-key"
+      }
+    ],
+    "extensions": [
+      "credProtect",
+      "hmac-secret",
+      "largeBlobKey",
+      "credBlob",
+      "minPinLength"
+    ],
+    "options": {
+      "rk": true,
+      "up": true,
+      "plat": false,
+      "alwaysUv": false,
+      "credMgmt": true,
+      "authnrCfg": true,
+      "clientPin": false,
+      "largeBlobs": true,
+      "pinUvAuthToken": true,
+      "setMinPINLength": true,
+      "makeCredUvNotRqd": true,
+      "credentialMgmtPreview": true
+    },
+    "pin_uv_protocols": [
+      2,
+      1
+    ],
+    "max_msg_size": 1536,
+    "max_creds_in_list": 8,
+    "max_cred_blob_length": 32,
+    "max_large_blob": 4096,
+    "min_pin_length": 4,
+    "remaining_disc_creds": 100
+  },
+  "controller": {
+    "base_source_url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/drivers/usb/gadget/udc/dummy_hcd.c",
+    "base_source_sha256": "6892efeaca7d13e0f8ba172fac6b9607f9ac5c60de1a5f1812a57eb7998fd993",
+    "source_license": "GPL",
+    "optional_parameter": "requested_ep_addresses",
+    "default_enabled": false,
+    "files": {
+      "dummy_hcd.c": "7ebdac59d1bee99d6acb4e811171c10d32618d3915d8b0ccdad43fe9d7a72918",
+      "dummy_hcd-addresses.patch": "16df2045ea6229954b57441894cf009a9fbf40b5ed0ec5e7e5c31685729fafcc",
+      "dummy_hcd.ko": "5e8481736a6dccd4788ff3fb07f06b8704dcf4a0a02a95888c310a3f594eb86a"
+    },
+    "requested_ep_addresses_enabled": true
+  },
+  "requested_endpoint_addresses_verified": true,
+  "extra_checks": [
+    {
+      "name": "three USB composite creation/restart cycles",
+      "passed": true
+    },
+    {
+      "name": "own USB serial preserved across restarts",
+      "passed": true
+    }
+  ],
+  "test_count": 75,
+  "extra": {
+    "passed": true,
+    "userspace_usb_transport": "FunctionFS",
+    "control_transfer_diagnostic_tracing": false,
+    "sdk_retry_or_explicit_transport_delay_added": false,
+    "tests": [
+      {
+        "name": "stock PCSC SDK classifies independent software ATR as USB",
+        "passed": true
+      },
+      {
+        "name": "stock ykman combines USB interfaces into one own device",
+        "passed": true
+      },
+      {
+        "name": "stock ykman default smartcard reader discovery",
+        "passed": true
+      },
+      {
+        "name": "stock ykman enumerates native USB OTP keyboard interface",
+        "passed": true
+      },
+      {
+        "name": "stock USB OTP SDK reads feature version",
+        "passed": true
+      },
+      {
+        "name": "fresh USB OTP keeps serial API disabled until configuration",
+        "passed": true
+      },
+      {
+        "name": "USB OTP and CCID serials identify the same own device",
+        "passed": true
+      },
+      {
+        "name": "stock USB HID feature HMAC independently verified",
+        "passed": true
+      },
+      {
+        "name": "128 consecutive full-length USB OTP requests independently verify without SDK retries",
+        "passed": true
+      },
+      {
+        "name": "USB CCID and USB HID share programmed OTP state",
+        "passed": true
+      },
+      {
+        "name": "actual USB keyboard Shift+A, b, 1, Enter events",
+        "passed": true
+      },
+      {
+        "name": "USB keyboard releases every key and modifier",
+        "passed": true
+      },
+      {
+        "name": "OTP uses real guest USB controller and hidraw",
+        "passed": true
+      },
+      {
+        "name": "USB composite teardown removes HID and evdev devices",
+        "passed": true
+      },
+      {
+        "name": "real pcscd enumerates exactly the own software reader",
+        "passed": true
+      },
+      {
+        "name": "stock PCSC connection negotiates T=1",
+        "passed": true
+      },
+      {
+        "name": "stock management SDK over real PCSC resource manager",
+        "passed": true
+      },
+      {
+        "name": "stock PIV SDK over native USB CCID",
+        "passed": true
+      },
+      {
+        "name": "USB PCSC rejects unauthenticated key generation",
+        "passed": true
+      },
+      {
+        "name": "USB PCSC PIV signature independently verifies",
+        "passed": true
+      },
+      {
+        "name": "USB PCSC long APDU command/response round trip",
+        "passed": true
+      },
+      {
+        "name": "stock OATH SDK over USB PCSC",
+        "passed": true
+      },
+      {
+        "name": "stock OpenPGP SDK over USB PCSC",
+        "passed": true
+      },
+      {
+        "name": "USB PCSC SCP03 encrypted signature and SDK response MAC",
+        "passed": true
+      },
+      {
+        "name": "USB PCSC encrypted long command/response chaining",
+        "passed": true
+      },
+      {
+        "name": "USB PCSC encrypted session rejects plaintext downgrade",
+        "passed": true
+      },
+      {
+        "name": "PCSC resource manager and card restart preserve own identity",
+        "passed": true
+      },
+      {
+        "name": "PCSC restart preserves encrypted own credential and signature",
+        "passed": true
+      }
+    ],
+    "physical_device_access": false,
+    "host_usb_passthrough": false,
+    "manufacturer_trust_reproduced": false,
+    "native_linux_usb_otp_sdk_verified": true,
+    "native_linux_usb_keyboard_verified": true,
+    "native_linux_usb_ccid_pcsc_verified": true,
+    "consecutive_full_length_otp_hmac_requests": 128,
+    "full_length_hmac_slot_uses_fixed_64_byte_mode": true,
+    "observed_usb_keyboard_events": [
+      [
+        42,
+        1
+      ],
+      [
+        30,
+        1
+      ],
+      [
+        42,
+        0
+      ],
+      [
+        30,
+        0
+      ],
+      [
+        48,
+        1
+      ],
+      [
+        48,
+        0
+      ],
+      [
+        2,
+        1
+      ],
+      [
+        2,
+        0
+      ],
+      [
+        28,
+        1
+      ],
+      [
+        28,
+        0
+      ]
+    ],
+    "usb_otp": {
+      "kernel_path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1/1-1:1.0/0003:1050:0407.000B",
+      "sdk_connection": "HidrawConnection",
+      "key_events": [
+        [
+          42,
+          1
+        ],
+        [
+          30,
+          1
+        ],
+        [
+          42,
+          0
+        ],
+        [
+          30,
+          0
+        ],
+        [
+          48,
+          1
+        ],
+        [
+          48,
+          0
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          2,
+          0
+        ],
+        [
+          28,
+          1
+        ],
+        [
+          28,
+          0
+        ]
+      ],
+      "host_keyboard_affected": false,
+      "identity_and_keys": "fresh own software state"
+    },
+    "native_pcsc": {
+      "reader_name": "Yubico YubiKey OTP+FIDO+CCID (4289057809) 00 00",
+      "sdk_connection": "ScardSmartCardConnection",
+      "atr": "3bf011000001e0",
+      "sdk_atr_transport_classification": "USB",
+      "physical_usb_bus_device": false,
+      "reader_provider": "actual USB bus -> stock libccid -> actual pcscd -> stock PCSC SDK",
+      "kernel_usb_bus_device": true
+    },
+    "native_linux_pcsc_resource_manager_verified": true,
+    "test_count": 28
+  },
+  "reboot": {
+    "passed": true,
+    "tests": [
+      {
+        "name": "initial native USB composite preserves requested endpoint addresses",
+        "passed": true
+      },
+      {
+        "name": "settings write without reboot preserves live USB device",
+        "passed": true
+      },
+      {
+        "name": "pending USB configuration is readable through stock native SDK",
+        "passed": true
+      },
+      {
+        "name": "native FIDO rejects invalid configuration unlock",
+        "passed": true
+      },
+      {
+        "name": "native FIDO rejects invalid configuration unlock",
+        "passed": true
+      },
+      {
+        "name": "rejected reboot requests preserve live USB device",
+        "passed": true
+      },
+      {
+        "name": "native USB profile 1 preserves every requested endpoint address",
+        "passed": true
+      },
+      {
+        "name": "native USB profile 1 has new address and expected interfaces",
+        "passed": true
+      },
+      {
+        "name": "USB profile 1 reenumerates within the same live processes",
+        "passed": true
+      },
+      {
+        "name": "kernel FIDO hidraw matches active USB profile 1",
+        "passed": true
+      },
+      {
+        "name": "native USB profile 2 preserves every requested endpoint address",
+        "passed": true
+      },
+      {
+        "name": "native USB profile 2 has new address and expected interfaces",
+        "passed": true
+      },
+      {
+        "name": "USB profile 2 reenumerates within the same live processes",
+        "passed": true
+      },
+      {
+        "name": "kernel FIDO hidraw matches active USB profile 2",
+        "passed": true
+      },
+      {
+        "name": "native USB profile 3 preserves every requested endpoint address",
+        "passed": true
+      },
+      {
+        "name": "native USB profile 3 has new address and expected interfaces",
+        "passed": true
+      },
+      {
+        "name": "USB profile 3 reenumerates within the same live processes",
+        "passed": true
+      },
+      {
+        "name": "kernel FIDO hidraw matches active USB profile 3",
+        "passed": true
+      },
+      {
+        "name": "native USB profile 4 preserves every requested endpoint address",
+        "passed": true
+      },
+      {
+        "name": "native USB profile 4 has new address and expected interfaces",
+        "passed": true
+      },
+      {
+        "name": "USB profile 4 reenumerates within the same live processes",
+        "passed": true
+      },
+      {
+        "name": "kernel FIDO hidraw matches active USB profile 4",
+        "passed": true
+      },
+      {
+        "name": "native USB profile 5 preserves every requested endpoint address",
+        "passed": true
+      },
+      {
+        "name": "native USB profile 5 has new address and expected interfaces",
+        "passed": true
+      },
+      {
+        "name": "USB profile 5 reenumerates within the same live processes",
+        "passed": true
+      },
+      {
+        "name": "kernel FIDO hidraw matches active USB profile 5",
+        "passed": true
+      },
+      {
+        "name": "native USB profile 6 preserves every requested endpoint address",
+        "passed": true
+      },
+      {
+        "name": "actual 125-byte FIDO+CCID configuration equals saved physical reference",
+        "passed": true
+      },
+      {
+        "name": "actual kernel FIDO report descriptor equals saved physical reference",
+        "passed": true
+      },
+      {
+        "name": "native USB profile 6 has new address and expected interfaces",
+        "passed": true
+      },
+      {
+        "name": "USB profile 6 reenumerates within the same live processes",
+        "passed": true
+      },
+      {
+        "name": "kernel FIDO hidraw matches active USB profile 6",
+        "passed": true
+      },
+      {
+        "name": "native USB profile 7 preserves every requested endpoint address",
+        "passed": true
+      },
+      {
+        "name": "native USB profile 7 has new address and expected interfaces",
+        "passed": true
+      },
+      {
+        "name": "USB profile 7 reenumerates within the same live processes",
+        "passed": true
+      },
+      {
+        "name": "kernel FIDO hidraw matches active USB profile 7",
+        "passed": true
+      },
+      {
+        "name": "native USB profile 7 preserves every requested endpoint address",
+        "passed": true
+      },
+      {
+        "name": "native USB profile 7 has new address and expected interfaces",
+        "passed": true
+      },
+      {
+        "name": "USB profile 7 reenumerates within the same live processes",
+        "passed": true
+      },
+      {
+        "name": "kernel FIDO hidraw matches active USB profile 7",
+        "passed": true
+      },
+      {
+        "name": "native reboots preserve configured FIDO PIN",
+        "passed": true
+      },
+      {
+        "name": "native reboot replaces FIDO key agreement",
+        "passed": true
+      },
+      {
+        "name": "native reboot rejects pre-reboot FIDO token",
+        "passed": true
+      },
+      {
+        "name": "same FIDO credential independently verifies after all USB reboots",
+        "passed": true
+      },
+      {
+        "name": "native reboots preserve own OTP serial visibility",
+        "passed": true
+      },
+      {
+        "name": "native reboots preserve programmed OTP HMAC key",
+        "passed": true
+      },
+      {
+        "name": "stock libccid hotplug returns same own CCID identity",
+        "passed": true
+      },
+      {
+        "name": "eight acknowledged automatic USB reenumerations include unchanged profile",
+        "passed": true
+      },
+      {
+        "name": "native reboot fixture teardown removes every own HID device",
+        "passed": true
+      }
+    ],
+    "enumerations": [
+      {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "2992573542",
+        "vid": 4176,
+        "pid": 1031,
+        "address": 8,
+        "host_visible_configuration_descriptor_hex": "09029600030100800f090400000103010100092110010001224a000705810308000a090401000203000000092110010001222200070504034000020705840340000209040200030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+        "classes": [
+          3,
+          3,
+          11
+        ],
+        "host_visible_endpoint_addresses": [
+          129,
+          4,
+          132,
+          2,
+          130,
+          131
+        ]
+      },
+      {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "2992573542",
+        "vid": 4176,
+        "pid": 1025,
+        "address": 9,
+        "host_visible_configuration_descriptor_hex": "09022200010100800f090400000103010100092110010001224a000705810308000a",
+        "classes": [
+          3
+        ],
+        "host_visible_endpoint_addresses": [
+          129
+        ]
+      },
+      {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "2992573542",
+        "vid": 4176,
+        "pid": 1026,
+        "address": 10,
+        "host_visible_configuration_descriptor_hex": "09022900010100800f0904000002030000000921100100012222000705040340000207058403400002",
+        "classes": [
+          3
+        ],
+        "host_visible_endpoint_addresses": [
+          4,
+          132
+        ]
+      },
+      {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "2992573542",
+        "vid": 4176,
+        "pid": 1027,
+        "address": 11,
+        "host_visible_configuration_descriptor_hex": "09024200020100800f090400000103010100092110010001224a000705810308000a0904010002030000000921100100012222000705040340000207058403400002",
+        "classes": [
+          3,
+          3
+        ],
+        "host_visible_endpoint_addresses": [
+          129,
+          4,
+          132
+        ]
+      },
+      {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "2992573542",
+        "vid": 4176,
+        "pid": 1028,
+        "address": 12,
+        "host_visible_configuration_descriptor_hex": "09025d00010100800f09040000030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+        "classes": [
+          11
+        ],
+        "host_visible_endpoint_addresses": [
+          2,
+          130,
+          131
+        ]
+      },
+      {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "2992573542",
+        "vid": 4176,
+        "pid": 1029,
+        "address": 13,
+        "host_visible_configuration_descriptor_hex": "09027600020100800f090400000103010100092110010001224a000705810308000a09040100030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+        "classes": [
+          3,
+          11
+        ],
+        "host_visible_endpoint_addresses": [
+          129,
+          2,
+          130,
+          131
+        ]
+      },
+      {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "2992573542",
+        "vid": 4176,
+        "pid": 1030,
+        "address": 14,
+        "host_visible_configuration_descriptor_hex": "09027d00020100800f090400000203000000092110010001222200070504034000020705840340000209040100030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+        "classes": [
+          3,
+          11
+        ],
+        "host_visible_endpoint_addresses": [
+          4,
+          132,
+          2,
+          130,
+          131
+        ],
+        "host_visible_fido_report_descriptor_hex": "06d0f10901a1010920150026ff007508954081020921150026ff00750895409102c0"
+      },
+      {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "2992573542",
+        "vid": 4176,
+        "pid": 1031,
+        "address": 15,
+        "host_visible_configuration_descriptor_hex": "09029600030100800f090400000103010100092110010001224a000705810308000a090401000203000000092110010001222200070504034000020705840340000209040200030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+        "classes": [
+          3,
+          3,
+          11
+        ],
+        "host_visible_endpoint_addresses": [
+          129,
+          4,
+          132,
+          2,
+          130,
+          131
+        ]
+      },
+      {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "2992573542",
+        "vid": 4176,
+        "pid": 1031,
+        "address": 16,
+        "host_visible_configuration_descriptor_hex": "09029600030100800f090400000103010100092110010001224a000705810308000a090401000203000000092110010001222200070504034000020705840340000209040200030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+        "classes": [
+          3,
+          3,
+          11
+        ],
+        "host_visible_endpoint_addresses": [
+          129,
+          4,
+          132,
+          2,
+          130,
+          131
+        ]
+      }
+    ],
+    "physical_device_access": false,
+    "host_usb_passthrough": false,
+    "manufacturer_trust_reproduced": false,
+    "native_macos_registration_verified": false,
+    "firmware_reboot_timing_measured": false,
+    "userspace_usb_transport": "FunctionFS",
+    "pcsc_presence_wait_before_sdk_connect": true,
+    "controller": {
+      "base_source_url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/drivers/usb/gadget/udc/dummy_hcd.c",
+      "base_source_sha256": "6892efeaca7d13e0f8ba172fac6b9607f9ac5c60de1a5f1812a57eb7998fd993",
+      "source_license": "GPL",
+      "optional_parameter": "requested_ep_addresses",
+      "default_enabled": false,
+      "files": {
+        "dummy_hcd.c": "7ebdac59d1bee99d6acb4e811171c10d32618d3915d8b0ccdad43fe9d7a72918",
+        "dummy_hcd-addresses.patch": "16df2045ea6229954b57441894cf009a9fbf40b5ed0ec5e7e5c31685729fafcc",
+        "dummy_hcd.ko": "5e8481736a6dccd4788ff3fb07f06b8704dcf4a0a02a95888c310a3f594eb86a"
+      },
+      "requested_ep_addresses_enabled": true
+    },
+    "reference_descriptor_equivalence_verified": true,
+    "native_linux_usb_configuration_reenumeration_verified": true,
+    "native_linux_usb_all_interface_combinations_verified": true,
+    "native_linux_usb_reboot_volatile_state_verified": true,
+    "requested_endpoint_addresses_all_profiles_verified": true,
+    "test_count": 49
+  },
+  "usb_bridge_binary_sha256": "04a9702cc19d7cb85735d0fd113b9390d65ca465bc10e5dd48954de52ed78099"
+}

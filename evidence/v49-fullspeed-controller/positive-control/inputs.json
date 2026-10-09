@@ -1,0 +1,10 @@
+{
+  "base_highspeed_image_sha256": "6843cfabea4e24f3610aa77dd51e624933ca529e5fa353bd08dc1143303057e8",
+  "guest_image_sha256": "24ea7903c78197483e0f35a3d44321895c0d9ab94517a92e539c4486cb23453e",
+  "published_bridge_sha256": "e63cd9ea49ee5ebcc6cc7b7389b7785e1393d6c39c926fb766ff61068f30c690",
+  "gadget_max_speed": "full-speed",
+  "dummy_hcd_is_high_speed": true,
+  "guest_network_devices": false,
+  "host_usb_passthrough": false,
+  "physical_device_access": false
+}

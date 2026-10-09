@@ -1,0 +1,79 @@
+{
+  "passed": true,
+  "test_count": 161,
+  "original_frozen40_archive_sha256": "c327a32eb64f6f8fdb1fc0a343cf76e8c52d5680e170ae623f77f2a79ea6a7d5",
+  "original_linux_source_sha256": "d1be0586e061e3529bfea2fc4d3b716a137a6f10032dac94fe16d7eac3786dfc",
+  "original_source_or_binaries_changed": false,
+  "same_guest_image_as_preserved_unpack_setup_failure": true,
+  "total_reply_boundaries": [
+    2047,
+    2048,
+    2049,
+    3071,
+    3072,
+    3073
+  ],
+  "prefix_bytes": 64,
+  "actual_original_first_packet_remaining_bytes": [
+    1983,
+    1984,
+    1985,
+    3007,
+    3008,
+    3008
+  ],
+  "manual_resume_boundaries": [
+    2047,
+    2048,
+    2049
+  ],
+  "native_fido_sdk_resume_boundaries": [
+    3071,
+    3072,
+    3073
+  ],
+  "every_boundary_each_resume_mode_verified": false,
+  "new_usbfs_open_resume_verified": false,
+  "same_original_iocb_context_tid_buffer_before_during_after_runtime": true,
+  "single_original_io_submit_each_case": true,
+  "completion_wait_return_count_is_one": true,
+  "raw_io_event_completion_res_payload_recorded": false,
+  "same_original_generation_and_descriptor_all_six_cycles": true,
+  "actual_runtime_callbacks_and_return_zero": true,
+  "independent_original_fido_uvp2_signatures": 7,
+  "ordinary_hotp_final_counter": 6,
+  "3073_original_first3072_packet_retained": true,
+  "3073_complete_original_apdu_across_card_reset_verified": false,
+  "3073_following_response_chain_explicitly_inactive_denied": true,
+  "chain_error_header": [
+    128,
+    0,
+    0,
+    129,
+    65,
+    254,
+    0
+  ],
+  "runtime_reset_occupied_inactive_notification_then_explicit_poweron_verified": true,
+  "prototype_outside_frozen40_release": true,
+  "stock_libccid_large_transport_verified": false,
+  "physical_device_access": false,
+  "host_device_passthrough": false,
+  "native_macos_registration_verified": false,
+  "production_udc_verified": false,
+  "manufacturer_trust_reproduced": false,
+  "complete_yubikey_equivalence": false,
+  "goal_status": "active",
+  "files": {
+    "verify-usb-large-partial-runtime-prototype.py": "25445871fa747fa586d302a9c7d83e554c5753fb6ce82b2f7c7d115c3957f27f",
+    "build-guest.py": "d80e46fd6568ff5c121daa5be8fae47d1e957665baab6422811ca6bff00cb0ea",
+    "result.json": "9b79998f4d66cb40b748a427e81a3df451cc0fa8f2776a33534eb9c6b1590585",
+    "host-runner.log": "f7fed63eacca97c61567262fbee293644757fa89f901a1a67b813087dbdb11fe",
+    "console.log": "840c1ca258a5639a15c2a85b05ffa0852a6fa64821b67c1b01522155e1c690b7",
+    "guest-build-manifest.json": "59b16e8704c2939717faecbb3a36ff1669388d77d6de912d942637565c80ddff",
+    "validate-original40-runtime.py": "da4b2468dec926e5a34810276af32bb66c1b042a43905cf4ff6849c2e584dd00",
+    "guest-init.sh": "36076aed677232176d75c3098eb9d3792085d741f3998b8417c95984fe728a89",
+    "build-and-run.py": "30b57730ec6cee82c7b1ebc31188064a1dc075107fae3b4bb60b0a67ae765cb4",
+    "native-ccid-io.py": "19b0a8dae534d82eed031bf4748ead2f7e33a869ebff0b6734d234b025566763"
+  }
+}

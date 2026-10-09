@@ -1,0 +1,283 @@
+{
+  "version": "0.42.0",
+  "passed": true,
+  "actual_native_checks": 122,
+  "accepted_cases": 8,
+  "oversized_rejected_cases": 4,
+  "original_piv_signatures": 12,
+  "original_fido_signatures": 13,
+  "hotp_single_commits": 12,
+  "accepted_total_reply_sizes": [
+    2047,
+    2048,
+    2049,
+    3071,
+    3072,
+    3073,
+    3078,
+    3079
+  ],
+  "oversized_piv_data_sizes": [
+    3073,
+    4088,
+    4089,
+    8185
+  ],
+  "stock_driver_binary_and_sdk_unmodified": true,
+  "driver_info_plist_logging_only_changed": true,
+  "raw_extended_put_uses_stock_connection_api": true,
+  "stock_sdk_formatter_for_raw_puts": false,
+  "physical_piv_buffer_exact_header_boundary_verified": false,
+  "stock_large_configuration_cutover_verified": false,
+  "stock_large_runtime_pm_verified": false,
+  "raw_io_event_res_payload_recorded": false,
+  "source_transport_behavior_changed_from41": false,
+  "linux_source_sha256": "d1be0586e061e3529bfea2fc4d3b716a137a6f10032dac94fe16d7eac3786dfc",
+  "usb_bridge_binary_sha256": "04a9702cc19d7cb85735d0fd113b9390d65ca465bc10e5dd48954de52ed78099",
+  "current_native_console_sha256": "0825d371f773724868528662dc2031e0709fa380669d040b16bf6606b1f12028",
+  "original41_archive_sha256": "2af3b19f3ae804b974968eec176e00d26df32c28a6da748246853145efa55c91",
+  "original41_fido_binary_sha256": "de08b22e8e05fcca6ab4cd3025bfddd9f70e261631f98d27a87f8b360a42be87",
+  "preserved_original_trials": [
+    {
+      "label": "helper-import",
+      "native_test_count": 0,
+      "passed": false,
+      "directory": "evidence/stock-original41/helper-import",
+      "files": {
+        "build-guest.py.txt": "efa7babc0d0d8ab9391464b467d244c03950ed0923a320e0c7382dd262a23308",
+        "console.log": "a3aab053af961263d85d4c0dac39098cf02f39188718405138cdd59e8ca4603b",
+        "guest-build-manifest.json": "8acd47c731cdd566c21434fa20a8c71a1f2329173e3dab68e22c5bbcfafccd94",
+        "guest-init.sh.txt": "0d0afb3a9d38a433a93da4c91eb0e91d688c9bd707876edb6323fa694f3fd86b",
+        "host-runner.py.txt": "97997d9480cf12bc7a58353b58614ee6604649d8bde01d90a1027cfd8fc22e14",
+        "result.json": "4c3f1d005027fd705fa724770a988a555048cc9d9358e6ec633f8282d21eccd9",
+        "setup-observation.json": "dc20531c828079d18ca13bdf77299a4c47b354a6a34f46780a5306fe8a3d41cb",
+        "verify-stock-libccid-large-prototype.py.txt": "0d4dc2876a22c7978f3858308729dbc8197ff830f4e605e63f1cdf93f3f2e9c4"
+      }
+    },
+    {
+      "label": "package-observer",
+      "native_test_count": 2,
+      "passed": false,
+      "directory": "evidence/stock-original41/package-observer",
+      "files": {
+        "build-guest.py.txt": "efa7babc0d0d8ab9391464b467d244c03950ed0923a320e0c7382dd262a23308",
+        "console.log": "015c5171332a4bc7658d3a0c2d36d3fb8b21637a5f217b5a35afa9889ac76ff8",
+        "guest-build-manifest.json": "0fe6633d1719271f956e23e9110023141a73496ee636277fd74263529402111a",
+        "guest-init.sh.txt": "0d0afb3a9d38a433a93da4c91eb0e91d688c9bd707876edb6323fa694f3fd86b",
+        "host-run.log": "10e752f86d3a3f4968b0e6e7f70a93017a0b19d23d077a8daf8f6fcc16b4f5f1",
+        "host-runner.py.txt": "97997d9480cf12bc7a58353b58614ee6604649d8bde01d90a1027cfd8fc22e14",
+        "result.json": "0fc55003cffe8188eca7be1ea25073fa0467e787efaaebd91e5ed3ff06952bf7",
+        "setup-observation.json": "ea4fb78e7ff8481bb7c1eb910bc1de588cf426aad1f5d2094ac369a5f7b1a17a",
+        "verify-stock-libccid-large-prototype.py.txt": "d1a5d82a3c357e6ecb8e86cafdd168b5c6b4fa2fdd3a3c9a59117ca0bdd98635"
+      }
+    },
+    {
+      "label": "builder-metadata",
+      "native_test_count": 0,
+      "passed": false,
+      "directory": "evidence/stock-original41/builder-metadata",
+      "files": {
+        "build-guest.py.txt": "950acc0245cf958f1a20d56ab50ac7eb7324c140850f0625dc7becdff4263489",
+        "guest-init.sh.txt": "0d0afb3a9d38a433a93da4c91eb0e91d688c9bd707876edb6323fa694f3fd86b",
+        "host-run.log": "2256165052d4a8dda43bcd0923fdc6244856e15f2c7952abf03178f3f45b35a1",
+        "host-runner.py.txt": "97997d9480cf12bc7a58353b58614ee6604649d8bde01d90a1027cfd8fc22e14",
+        "setup-observation.json": "58f92346131590b7f68436651a849f69f35a1aa964f7466720f8689941aa1a7f",
+        "verify-stock-libccid-large-prototype.py.txt": "8fbf365d21840f44ba1833911cf2ea315dc4215d269a39d3331feb7fda213729"
+      }
+    },
+    {
+      "label": "six-then-reject",
+      "native_test_count": 64,
+      "passed": false,
+      "directory": "evidence/stock-original41/six-then-reject",
+      "files": {
+        "build-guest.py.txt": "514dad6ea0adf16b4169c7acbacba8303cd61f2bcd35b6325be728a5403d1b57",
+        "console.log": "ab4e1760c1665ca8f03e652614df0cd6b99da64e204c6c5193c9ce5e5d35e928",
+        "guest-build-manifest.json": "5a154b135504d3e679aac406f184d2a18a4a5d03d9aa1e8ef20aa93d6db97e4f",
+        "guest-init.sh.txt": "0d0afb3a9d38a433a93da4c91eb0e91d688c9bd707876edb6323fa694f3fd86b",
+        "host-run.log": "f67c07cffa9493c9f18d75a2cb6fa6b7abe1979be5e301610524a1ba82e52593",
+        "host-runner.py.txt": "97997d9480cf12bc7a58353b58614ee6604649d8bde01d90a1027cfd8fc22e14",
+        "observation.json": "d7ebc1b42fc8e6a2a9c2c8a1626707e5a9ddd5036bfd996377ea17edc1175075",
+        "result.json": "ccce1e50472f95b0c55f662ae5fba1401670d710e6040390988e3befdeaef190",
+        "stock-driver-provenance.json": "4cf6d9cbcc6b91b27f02f3e6a5e1c258ae631454e7f9bcc44ae22a1c340f992b",
+        "verify-stock-libccid-large-prototype.py.txt": "8fbf365d21840f44ba1833911cf2ea315dc4215d269a39d3331feb7fda213729"
+      }
+    },
+    {
+      "label": "stock122",
+      "native_test_count": 122,
+      "passed": true,
+      "directory": "evidence/stock-original41/stock122",
+      "files": {
+        "build-guest.py.txt": "514dad6ea0adf16b4169c7acbacba8303cd61f2bcd35b6325be728a5403d1b57",
+        "console.log": "122fb0d487772434ae0e69bc24e8c18b05d1b3b99ff3e8f0c325c36a179a5b8d",
+        "guest-build-manifest.json": "a10bea3a07c86607de76f7bb90463f1f0048a8fc3c940319d65dd154c69a8b29",
+        "guest-init.sh.txt": "0d0afb3a9d38a433a93da4c91eb0e91d688c9bd707876edb6323fa694f3fd86b",
+        "host-run.log": "bd79d622d8e6230d3019de74a2a59890197d1bcb44e0971da57a5d0db0f05c4c",
+        "host-runner.py.txt": "99900039662d5a34a5d38eb60cbb4341dbe4cbee1b15164ed2e0786dbfb57ac7",
+        "independent-validation.json": "9d783657f1515798d2c3d550e9c829767cbdf600e7c914346ee35f6b18059b22",
+        "observation.json": "60bc235adeead4707e7037c7da64aaa8af56e346ac4cdf6587284ce05f217736",
+        "result.json": "f71fb3db980e46ef8027231b6c7aa54fda81643cabef6b6284323a5d9bb8dca8",
+        "stock-driver-provenance.json": "4cf6d9cbcc6b91b27f02f3e6a5e1c258ae631454e7f9bcc44ae22a1c340f992b",
+        "verify-stock-libccid-large-prototype.py.txt": "3b6c80ed11a76e932409299e5ecb8087b9331533417c4def46e52e3f7680a43c"
+      }
+    }
+  ],
+  "physical_device_access": false,
+  "native_macos_registration_verified": false,
+  "complete_yubikey_equivalence": false,
+  "goal_status": "active",
+  "independent_wire": [
+    {
+      "phase": "2047-stock-libccid-accept",
+      "stock_ccid_exchange_count": 2,
+      "actual_get_response_packet_lengths": [
+        2047
+      ],
+      "first_native_aio_bytes": 2047,
+      "original_submit_count": 1,
+      "completion_event_count": 1,
+      "native_zlp_write_completed": false,
+      "raw_io_event_res_payload_verified": false
+    },
+    {
+      "phase": "2048-stock-libccid-accept",
+      "stock_ccid_exchange_count": 2,
+      "actual_get_response_packet_lengths": [
+        2048
+      ],
+      "first_native_aio_bytes": 2048,
+      "original_submit_count": 1,
+      "completion_event_count": 1,
+      "native_zlp_write_completed": true,
+      "raw_io_event_res_payload_verified": false
+    },
+    {
+      "phase": "2049-stock-libccid-accept",
+      "stock_ccid_exchange_count": 2,
+      "actual_get_response_packet_lengths": [
+        2049
+      ],
+      "first_native_aio_bytes": 2049,
+      "original_submit_count": 1,
+      "completion_event_count": 1,
+      "native_zlp_write_completed": false,
+      "raw_io_event_res_payload_verified": false
+    },
+    {
+      "phase": "3071-stock-libccid-accept",
+      "stock_ccid_exchange_count": 14,
+      "actual_get_response_packet_lengths": [
+        3071
+      ],
+      "first_native_aio_bytes": 3071,
+      "original_submit_count": 1,
+      "completion_event_count": 1,
+      "native_zlp_write_completed": false,
+      "raw_io_event_res_payload_verified": false
+    },
+    {
+      "phase": "3072-stock-libccid-accept",
+      "stock_ccid_exchange_count": 14,
+      "actual_get_response_packet_lengths": [
+        3072
+      ],
+      "first_native_aio_bytes": 3072,
+      "original_submit_count": 1,
+      "completion_event_count": 1,
+      "native_zlp_write_completed": true,
+      "raw_io_event_res_payload_verified": false
+    },
+    {
+      "phase": "3073-stock-libccid-accept",
+      "stock_ccid_exchange_count": 15,
+      "actual_get_response_packet_lengths": [
+        3072,
+        11
+      ],
+      "first_native_aio_bytes": 3072,
+      "original_submit_count": 1,
+      "completion_event_count": 1,
+      "native_zlp_write_completed": true,
+      "raw_io_event_res_payload_verified": false
+    },
+    {
+      "phase": "3078-stock-libccid-accept",
+      "stock_ccid_exchange_count": 4,
+      "actual_get_response_packet_lengths": [
+        3072,
+        16
+      ],
+      "first_native_aio_bytes": 3072,
+      "original_submit_count": 1,
+      "completion_event_count": 1,
+      "native_zlp_write_completed": true,
+      "raw_io_event_res_payload_verified": false
+    },
+    {
+      "phase": "3079-stock-libccid-accept",
+      "stock_ccid_exchange_count": 4,
+      "actual_get_response_packet_lengths": [
+        3072,
+        17
+      ],
+      "first_native_aio_bytes": 3072,
+      "original_submit_count": 1,
+      "completion_event_count": 1,
+      "native_zlp_write_completed": true,
+      "raw_io_event_res_payload_verified": false
+    },
+    {
+      "phase": "3080-stock-libccid-reject",
+      "stock_ccid_exchange_count": 4,
+      "actual_get_response_packet_lengths": [
+        3072,
+        17
+      ],
+      "first_native_aio_bytes": 3072,
+      "original_submit_count": 1,
+      "completion_event_count": 1,
+      "native_zlp_write_completed": true,
+      "raw_io_event_res_payload_verified": false
+    },
+    {
+      "phase": "4095-stock-libccid-reject",
+      "stock_ccid_exchange_count": 4,
+      "actual_get_response_packet_lengths": [
+        3072,
+        17
+      ],
+      "first_native_aio_bytes": 3072,
+      "original_submit_count": 1,
+      "completion_event_count": 1,
+      "native_zlp_write_completed": true,
+      "raw_io_event_res_payload_verified": false
+    },
+    {
+      "phase": "4096-stock-libccid-reject",
+      "stock_ccid_exchange_count": 4,
+      "actual_get_response_packet_lengths": [
+        3072,
+        17
+      ],
+      "first_native_aio_bytes": 3072,
+      "original_submit_count": 1,
+      "completion_event_count": 1,
+      "native_zlp_write_completed": true,
+      "raw_io_event_res_payload_verified": false
+    },
+    {
+      "phase": "8192-stock-libccid-reject",
+      "stock_ccid_exchange_count": 5,
+      "actual_get_response_packet_lengths": [
+        3072,
+        17
+      ],
+      "first_native_aio_bytes": 3072,
+      "original_submit_count": 1,
+      "completion_event_count": 1,
+      "native_zlp_write_completed": true,
+      "raw_io_event_res_payload_verified": false
+    }
+  ]
+}

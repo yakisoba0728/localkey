@@ -1,0 +1,1642 @@
+{
+  "passed": true,
+  "tests": [
+    {
+      "name": "complete 421-byte FA response matches saved physical public reference",
+      "passed": true
+    },
+    {
+      "name": "independent SDK decodes all captured attributes in their measured order",
+      "passed": true
+    },
+    {
+      "name": "inventory covers every 43-slot algorithm variant",
+      "passed": true
+    },
+    {
+      "name": "7A outer wrapper and three-byte counter schema match measured reference; software counter starts at zero",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 010800001100 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 010800001100 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 010800001100 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 010c00001100 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 010c00001100 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 010c00001100 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 011000001100 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 011000001100 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 011000001100 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 132a8648ce3d030107 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 132a8648ce3d030107 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 132a8648ce3d030107 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 132b81040022 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 132b81040022 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 132b81040022 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 132b81040023 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 132b81040023 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 132b81040023 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 132b8104000a public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 132b8104000a signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 132b8104000a changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 132b2403030208010107 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 132b2403030208010107 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 132b2403030208010107 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 132b240303020801010b public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 132b240303020801010b signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 132b240303020801010b changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 132b240303020801010d public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 132b240303020801010d signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 132b240303020801010d changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 162b06010401da470f01 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 162b06010401da470f01 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "generated SIG 162b06010401da470f01 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 010800001100 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 010800001100 decryption/shared secret independently matches",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 010800001100 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 010c00001100 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 010c00001100 decryption/shared secret independently matches",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 010c00001100 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 011000001100 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 011000001100 decryption/shared secret independently matches",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 011000001100 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 122a8648ce3d030107 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 122a8648ce3d030107 decryption/shared secret independently matches",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 122a8648ce3d030107 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 122b81040022 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 122b81040022 decryption/shared secret independently matches",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 122b81040022 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 122b81040023 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 122b81040023 decryption/shared secret independently matches",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 122b81040023 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 122b8104000a public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 122b8104000a decryption/shared secret independently matches",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 122b8104000a changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 122b2403030208010107 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 122b2403030208010107 decryption/shared secret independently matches",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 122b2403030208010107 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 122b240303020801010b public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 122b240303020801010b decryption/shared secret independently matches",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 122b240303020801010b changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 122b240303020801010d public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 122b240303020801010d decryption/shared secret independently matches",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 122b240303020801010d changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 122b060104019755010501 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 122b060104019755010501 decryption/shared secret independently matches",
+      "passed": true
+    },
+    {
+      "name": "generated DEC 122b060104019755010501 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 010800001100 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 010800001100 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 010800001100 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 010c00001100 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 010c00001100 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 010c00001100 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 011000001100 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 011000001100 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 011000001100 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 132a8648ce3d030107 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 132a8648ce3d030107 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 132a8648ce3d030107 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 132b81040022 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 132b81040022 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 132b81040022 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 132b81040023 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 132b81040023 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 132b81040023 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 132b8104000a public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 132b8104000a signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 132b8104000a changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 132b2403030208010107 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 132b2403030208010107 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 132b2403030208010107 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 132b240303020801010b public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 132b240303020801010b signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 132b240303020801010b changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 132b240303020801010d public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 132b240303020801010d signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 132b240303020801010d changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 162b06010401da470f01 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 162b06010401da470f01 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "generated AUT 162b06010401da470f01 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 010800001100 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 010800001100 own attestation signature independently verifies without exporting issuer",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 010800001100 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 010c00001100 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 010c00001100 own attestation signature independently verifies without exporting issuer",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 010c00001100 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 011000001100 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 011000001100 own attestation signature independently verifies without exporting issuer",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 011000001100 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 132a8648ce3d030107 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 132a8648ce3d030107 own attestation signature independently verifies without exporting issuer",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 132a8648ce3d030107 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 132b81040022 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 132b81040022 own attestation signature independently verifies without exporting issuer",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 132b81040022 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 132b81040023 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 132b81040023 own attestation signature independently verifies without exporting issuer",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 132b81040023 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 132b8104000a public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 132b8104000a own attestation signature independently verifies without exporting issuer",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 132b8104000a changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 132b2403030208010107 public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 132b2403030208010107 own attestation signature independently verifies without exporting issuer",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 132b2403030208010107 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 132b240303020801010b public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 132b240303020801010b own attestation signature independently verifies without exporting issuer",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 132b240303020801010b changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 132b240303020801010d public key/status/counter decoded by independent SDK",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 132b240303020801010d own attestation signature independently verifies without exporting issuer",
+      "passed": true
+    },
+    {
+      "name": "generated ATT 132b240303020801010d changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 010800001100 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 010800001100 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 010800001100 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 010c00001100 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 010c00001100 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 010c00001100 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 011000001100 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 011000001100 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 011000001100 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 132a8648ce3d030107 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 132a8648ce3d030107 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 132a8648ce3d030107 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 132b81040022 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 132b81040022 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 132b81040022 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 132b81040023 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 132b81040023 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 132b81040023 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 132b8104000a retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 132b8104000a signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 132b8104000a changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 132b2403030208010107 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 132b2403030208010107 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 132b2403030208010107 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 132b240303020801010b retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 132b240303020801010b signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 132b240303020801010b changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 132b240303020801010d retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 132b240303020801010d signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 132b240303020801010d changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 162b06010401da470f01 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 162b06010401da470f01 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "imported SIG 162b06010401da470f01 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 010800001100 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 010800001100 decryption/shared secret independently matches",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 010800001100 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 010c00001100 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 010c00001100 decryption/shared secret independently matches",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 010c00001100 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 011000001100 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 011000001100 decryption/shared secret independently matches",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 011000001100 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 122a8648ce3d030107 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 122a8648ce3d030107 decryption/shared secret independently matches",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 122a8648ce3d030107 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 122b81040022 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 122b81040022 decryption/shared secret independently matches",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 122b81040022 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 122b81040023 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 122b81040023 decryption/shared secret independently matches",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 122b81040023 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 122b8104000a retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 122b8104000a decryption/shared secret independently matches",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 122b8104000a changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 122b2403030208010107 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 122b2403030208010107 decryption/shared secret independently matches",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 122b2403030208010107 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 122b240303020801010b retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 122b240303020801010b decryption/shared secret independently matches",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 122b240303020801010b changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 122b240303020801010d retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 122b240303020801010d decryption/shared secret independently matches",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 122b240303020801010d changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 122b060104019755010501 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 122b060104019755010501 decryption/shared secret independently matches",
+      "passed": true
+    },
+    {
+      "name": "imported DEC 122b060104019755010501 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 010800001100 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 010800001100 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 010800001100 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 010c00001100 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 010c00001100 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 010c00001100 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 011000001100 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 011000001100 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 011000001100 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 132a8648ce3d030107 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 132a8648ce3d030107 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 132a8648ce3d030107 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 132b81040022 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 132b81040022 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 132b81040022 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 132b81040023 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 132b81040023 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 132b81040023 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 132b8104000a retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 132b8104000a signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 132b8104000a changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 132b2403030208010107 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 132b2403030208010107 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 132b2403030208010107 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 132b240303020801010b retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 132b240303020801010b signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 132b240303020801010b changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 132b240303020801010d retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 132b240303020801010d signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 132b240303020801010d changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 162b06010401da470f01 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 162b06010401da470f01 signature independently verifies",
+      "passed": true
+    },
+    {
+      "name": "imported AUT 162b06010401da470f01 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 010800001100 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 010800001100 own attestation signature independently verifies without exporting issuer",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 010800001100 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 010c00001100 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 010c00001100 own attestation signature independently verifies without exporting issuer",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 010c00001100 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 011000001100 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 011000001100 own attestation signature independently verifies without exporting issuer",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 011000001100 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 132a8648ce3d030107 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 132a8648ce3d030107 own attestation signature independently verifies without exporting issuer",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 132a8648ce3d030107 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 132b81040022 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 132b81040022 own attestation signature independently verifies without exporting issuer",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 132b81040022 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 132b81040023 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 132b81040023 own attestation signature independently verifies without exporting issuer",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 132b81040023 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 132b8104000a retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 132b8104000a own attestation signature independently verifies without exporting issuer",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 132b8104000a changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 132b2403030208010107 retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 132b2403030208010107 own attestation signature independently verifies without exporting issuer",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 132b2403030208010107 changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 132b240303020801010b retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 132b240303020801010b own attestation signature independently verifies without exporting issuer",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 132b240303020801010b changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 132b240303020801010d retains independent private key and resets only SIG counter",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 132b240303020801010d own attestation signature independently verifies without exporting issuer",
+      "passed": true
+    },
+    {
+      "name": "imported ATT 132b240303020801010d changes only the digital-signature counter for SIG",
+      "passed": true
+    },
+    {
+      "name": "wrong-role SIG attributes 122a8648ce3d030107; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "wrong-role AUT attributes 122a8648ce3d030107; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "wrong-role ATT attributes 122a8648ce3d030107; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "wrong-role DEC attributes 132a8648ce3d030107; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "wrong-role SIG attributes 122b060104019755010501; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "wrong-role AUT attributes 122b060104019755010501; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "wrong-role ATT attributes 122b060104019755010501; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "wrong-role DEC attributes 162b06010401da470f01; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "wrong-role ATT attributes 162b06010401da470f01; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "wrong-role SIG attributes 132b06010401da470f01; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "wrong-role DEC attributes 122b06010401da470f01; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "wrong-role SIG attributes 162b060104019755010501; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "unadvertised attributes empty; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "unadvertised attributes 010400001100; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "unadvertised attributes 010800000000; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "unadvertised attributes 010800002000; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "unadvertised attributes 010800001101; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "unadvertised attributes 010800001102; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "unadvertised attributes 010800001103; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "unadvertised attributes 010800001104; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "unadvertised attributes 01080000110000; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "unadvertised attributes 132a8648ce3d030107ff; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "unadvertised attributes 132a8648ce3d03010700; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "unadvertised attributes 132a; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "unadvertised attributes ff; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "RSA standard import rejects duplicate exponent; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "RSA standard import rejects wrong field order; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "RSA standard import rejects unknown field; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "RSA standard import rejects unexpected modulus; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "RSA standard import rejects missing prime; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "RSA standard import rejects short prime; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "RSA standard import rejects padded extra prime byte; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "RSA standard import rejects unsupported exponent; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "RSA standard import rejects extra exponent byte; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "RSA standard import rejects undersized modulus; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "import parser rejects truncated header; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "import parser rejects indefinite header; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "import parser rejects truncated long length; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "import parser rejects zero length; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "import parser rejects unconsumed value; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "import parser rejects value underflow; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "key generation rejects nonzero P2; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "public key read rejects nonzero P2; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "retained RSA key independently signs after all rejected imports and headers",
+      "passed": true
+    },
+    {
+      "name": "extended CRT SIG imports and reads matching public key",
+      "passed": true
+    },
+    {
+      "name": "extended CRT SIG rejects mismatched key reference; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "extended CRT DEC imports and reads matching public key",
+      "passed": true
+    },
+    {
+      "name": "extended CRT DEC rejects mismatched key reference; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "extended CRT AUT imports and reads matching public key",
+      "passed": true
+    },
+    {
+      "name": "extended CRT AUT rejects mismatched key reference; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "EC private scalar rejects wrong 31-byte width; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "EC private scalar rejects wrong 33-byte width; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "EC scalar rejects zero; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "EC scalar rejects out-of-range; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "P-521 scalar requires adjusted 66-byte standard field width; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "P-521 imported key persists and public read needs no PIN after restart",
+      "passed": true
+    },
+    {
+      "name": "retained P-521 private key independently verifies SDK signature after restart",
+      "passed": true
+    }
+  ],
+  "generation_matrix": [
+    {
+      "slot": "SIG",
+      "attributes": "010800001100"
+    },
+    {
+      "slot": "SIG",
+      "attributes": "010c00001100"
+    },
+    {
+      "slot": "SIG",
+      "attributes": "011000001100"
+    },
+    {
+      "slot": "SIG",
+      "attributes": "132a8648ce3d030107"
+    },
+    {
+      "slot": "SIG",
+      "attributes": "132b81040022"
+    },
+    {
+      "slot": "SIG",
+      "attributes": "132b81040023"
+    },
+    {
+      "slot": "SIG",
+      "attributes": "132b8104000a"
+    },
+    {
+      "slot": "SIG",
+      "attributes": "132b2403030208010107"
+    },
+    {
+      "slot": "SIG",
+      "attributes": "132b240303020801010b"
+    },
+    {
+      "slot": "SIG",
+      "attributes": "132b240303020801010d"
+    },
+    {
+      "slot": "SIG",
+      "attributes": "162b06010401da470f01"
+    },
+    {
+      "slot": "DEC",
+      "attributes": "010800001100"
+    },
+    {
+      "slot": "DEC",
+      "attributes": "010c00001100"
+    },
+    {
+      "slot": "DEC",
+      "attributes": "011000001100"
+    },
+    {
+      "slot": "DEC",
+      "attributes": "122a8648ce3d030107"
+    },
+    {
+      "slot": "DEC",
+      "attributes": "122b81040022"
+    },
+    {
+      "slot": "DEC",
+      "attributes": "122b81040023"
+    },
+    {
+      "slot": "DEC",
+      "attributes": "122b8104000a"
+    },
+    {
+      "slot": "DEC",
+      "attributes": "122b2403030208010107"
+    },
+    {
+      "slot": "DEC",
+      "attributes": "122b240303020801010b"
+    },
+    {
+      "slot": "DEC",
+      "attributes": "122b240303020801010d"
+    },
+    {
+      "slot": "DEC",
+      "attributes": "122b060104019755010501"
+    },
+    {
+      "slot": "AUT",
+      "attributes": "010800001100"
+    },
+    {
+      "slot": "AUT",
+      "attributes": "010c00001100"
+    },
+    {
+      "slot": "AUT",
+      "attributes": "011000001100"
+    },
+    {
+      "slot": "AUT",
+      "attributes": "132a8648ce3d030107"
+    },
+    {
+      "slot": "AUT",
+      "attributes": "132b81040022"
+    },
+    {
+      "slot": "AUT",
+      "attributes": "132b81040023"
+    },
+    {
+      "slot": "AUT",
+      "attributes": "132b8104000a"
+    },
+    {
+      "slot": "AUT",
+      "attributes": "132b2403030208010107"
+    },
+    {
+      "slot": "AUT",
+      "attributes": "132b240303020801010b"
+    },
+    {
+      "slot": "AUT",
+      "attributes": "132b240303020801010d"
+    },
+    {
+      "slot": "AUT",
+      "attributes": "162b06010401da470f01"
+    },
+    {
+      "slot": "ATT",
+      "attributes": "010800001100"
+    },
+    {
+      "slot": "ATT",
+      "attributes": "010c00001100"
+    },
+    {
+      "slot": "ATT",
+      "attributes": "011000001100"
+    },
+    {
+      "slot": "ATT",
+      "attributes": "132a8648ce3d030107"
+    },
+    {
+      "slot": "ATT",
+      "attributes": "132b81040022"
+    },
+    {
+      "slot": "ATT",
+      "attributes": "132b81040023"
+    },
+    {
+      "slot": "ATT",
+      "attributes": "132b8104000a"
+    },
+    {
+      "slot": "ATT",
+      "attributes": "132b2403030208010107"
+    },
+    {
+      "slot": "ATT",
+      "attributes": "132b240303020801010b"
+    },
+    {
+      "slot": "ATT",
+      "attributes": "132b240303020801010d"
+    }
+  ],
+  "import_matrix": [
+    {
+      "slot": "SIG",
+      "attributes": "010800001100"
+    },
+    {
+      "slot": "SIG",
+      "attributes": "010c00001100"
+    },
+    {
+      "slot": "SIG",
+      "attributes": "011000001100"
+    },
+    {
+      "slot": "SIG",
+      "attributes": "132a8648ce3d030107"
+    },
+    {
+      "slot": "SIG",
+      "attributes": "132b81040022"
+    },
+    {
+      "slot": "SIG",
+      "attributes": "132b81040023"
+    },
+    {
+      "slot": "SIG",
+      "attributes": "132b8104000a"
+    },
+    {
+      "slot": "SIG",
+      "attributes": "132b2403030208010107"
+    },
+    {
+      "slot": "SIG",
+      "attributes": "132b240303020801010b"
+    },
+    {
+      "slot": "SIG",
+      "attributes": "132b240303020801010d"
+    },
+    {
+      "slot": "SIG",
+      "attributes": "162b06010401da470f01"
+    },
+    {
+      "slot": "DEC",
+      "attributes": "010800001100"
+    },
+    {
+      "slot": "DEC",
+      "attributes": "010c00001100"
+    },
+    {
+      "slot": "DEC",
+      "attributes": "011000001100"
+    },
+    {
+      "slot": "DEC",
+      "attributes": "122a8648ce3d030107"
+    },
+    {
+      "slot": "DEC",
+      "attributes": "122b81040022"
+    },
+    {
+      "slot": "DEC",
+      "attributes": "122b81040023"
+    },
+    {
+      "slot": "DEC",
+      "attributes": "122b8104000a"
+    },
+    {
+      "slot": "DEC",
+      "attributes": "122b2403030208010107"
+    },
+    {
+      "slot": "DEC",
+      "attributes": "122b240303020801010b"
+    },
+    {
+      "slot": "DEC",
+      "attributes": "122b240303020801010d"
+    },
+    {
+      "slot": "DEC",
+      "attributes": "122b060104019755010501"
+    },
+    {
+      "slot": "AUT",
+      "attributes": "010800001100"
+    },
+    {
+      "slot": "AUT",
+      "attributes": "010c00001100"
+    },
+    {
+      "slot": "AUT",
+      "attributes": "011000001100"
+    },
+    {
+      "slot": "AUT",
+      "attributes": "132a8648ce3d030107"
+    },
+    {
+      "slot": "AUT",
+      "attributes": "132b81040022"
+    },
+    {
+      "slot": "AUT",
+      "attributes": "132b81040023"
+    },
+    {
+      "slot": "AUT",
+      "attributes": "132b8104000a"
+    },
+    {
+      "slot": "AUT",
+      "attributes": "132b2403030208010107"
+    },
+    {
+      "slot": "AUT",
+      "attributes": "132b240303020801010b"
+    },
+    {
+      "slot": "AUT",
+      "attributes": "132b240303020801010d"
+    },
+    {
+      "slot": "AUT",
+      "attributes": "162b06010401da470f01"
+    },
+    {
+      "slot": "ATT",
+      "attributes": "010800001100"
+    },
+    {
+      "slot": "ATT",
+      "attributes": "010c00001100"
+    },
+    {
+      "slot": "ATT",
+      "attributes": "011000001100"
+    },
+    {
+      "slot": "ATT",
+      "attributes": "132a8648ce3d030107"
+    },
+    {
+      "slot": "ATT",
+      "attributes": "132b81040022"
+    },
+    {
+      "slot": "ATT",
+      "attributes": "132b81040023"
+    },
+    {
+      "slot": "ATT",
+      "attributes": "132b8104000a"
+    },
+    {
+      "slot": "ATT",
+      "attributes": "132b2403030208010107"
+    },
+    {
+      "slot": "ATT",
+      "attributes": "132b240303020801010b"
+    },
+    {
+      "slot": "ATT",
+      "attributes": "132b240303020801010d"
+    }
+  ],
+  "scope": "fresh software cards; independent SDK/crypto over private CCID socket",
+  "public_algorithm_inventory_reference": "openpgp-reference-observation.json; GET DATA FA only; no physical key writes",
+  "physical_device_access_in_this_verifier": false,
+  "manufacturer_trust_reproduced": false,
+  "physical_algorithm_write_import_rejection_or_counter_boundaries_measured": false,
+  "sdk_notes": [
+    "pinned SDK EC import uses floor key_size/8; P-521 fixed standard width is sent as raw SDK APDU with 66-byte zero padding"
+  ],
+  "unverified": [
+    "physical acceptance/rejection tolerance of unadvertised attributes and malformed import layouts",
+    "physical key replacement/extended CRT and digital-signature counter behavior",
+    "actual modified-emulator OS discovery and reference crypto/touch timing"
+  ]
+}

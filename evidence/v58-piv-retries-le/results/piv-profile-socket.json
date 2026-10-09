@@ -1,0 +1,253 @@
+{
+  "passed": true,
+  "tests": [
+    {
+      "name": "PIV SELECT returns application template for 5-byte AID",
+      "passed": true
+    },
+    {
+      "name": "PIV SELECT returns application template for 5-byte AID",
+      "passed": true
+    },
+    {
+      "name": "PIV SELECT returns application template for 11-byte AID",
+      "passed": true
+    },
+    {
+      "name": "SDK reads fixed Discovery AID and PIN policy without authentication",
+      "passed": true
+    },
+    {
+      "name": "unsupported biometric group template is absent on fresh non-biometric card",
+      "passed": true
+    },
+    {
+      "name": "initial standard object 5fc102 remains empty",
+      "passed": true
+    },
+    {
+      "name": "initial standard object 5fc105 remains empty",
+      "passed": true
+    },
+    {
+      "name": "initial standard object 5fc106 remains empty",
+      "passed": true
+    },
+    {
+      "name": "initial standard object 5fc107 remains empty",
+      "passed": true
+    },
+    {
+      "name": "initial standard object 5fc10c remains empty",
+      "passed": true
+    },
+    {
+      "name": "own F9 key and certificate are present before generating or attesting a user key",
+      "passed": true
+    },
+    {
+      "name": "read-only PIV object 7e rejects PUT DATA",
+      "passed": true
+    },
+    {
+      "name": "rejected object 7e write leaves ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "read-only PIV object 7f61 rejects PUT DATA",
+      "passed": true
+    },
+    {
+      "name": "rejected object 7f61 write leaves ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "wrong PIN status saturates at 15 remaining attempts",
+      "passed": true
+    },
+    {
+      "name": "wrong PUK status saturates at 15 remaining attempts",
+      "passed": true
+    },
+    {
+      "name": "metadata preserves actual 8-bit PIN/PUK counters beyond status-word nibble",
+      "passed": true
+    },
+    {
+      "name": "PIN status query saturates at 15 without consuming an attempt",
+      "passed": true
+    },
+    {
+      "name": "malformed VERIFY length is rejected without a PIN comparison",
+      "passed": true
+    },
+    {
+      "name": "malformed PIN input and status query preserve actual retries",
+      "passed": true
+    },
+    {
+      "name": "large retry counters and preinitialized issuer survive process restart",
+      "passed": true
+    },
+    {
+      "name": "successful PIN verification restores complete configured retry count",
+      "passed": true
+    },
+    {
+      "name": "16-attempt PIN limit reports 15 after first failure",
+      "passed": true
+    },
+    {
+      "name": "retry status resumes exact value below nibble limit",
+      "passed": true
+    },
+    {
+      "name": "status and metadata agree after crossing 15-attempt boundary",
+      "passed": true
+    },
+    {
+      "name": "zero PIN retry configuration is rejected",
+      "passed": true
+    },
+    {
+      "name": "SET PIN RETRIES rejects unexpected body",
+      "passed": true
+    },
+    {
+      "name": "invalid retry settings leave metadata unchanged",
+      "passed": true
+    },
+    {
+      "name": "own attestation verifies, copies issuer dates and uses 16-byte random serial profile",
+      "passed": true
+    },
+    {
+      "name": "attestation carries own serial, public profile and policies without factory certification claims",
+      "passed": true
+    },
+    {
+      "name": "F9 key is restricted to attestation rather than arbitrary GENERAL AUTHENTICATE",
+      "passed": true
+    },
+    {
+      "name": "F9 cannot recursively attest itself",
+      "passed": true
+    },
+    {
+      "name": "unsupported F9 algorithm RSA1024 is rejected",
+      "passed": true
+    },
+    {
+      "name": "unsupported F9 algorithm ED25519 is rejected",
+      "passed": true
+    },
+    {
+      "name": "unsupported F9 algorithm X25519 is rejected",
+      "passed": true
+    },
+    {
+      "name": "generated F9 ECCP256 signs independently verified statements under custom issuer",
+      "passed": true
+    },
+    {
+      "name": "generated F9 ECCP384 signs independently verified statements under custom issuer",
+      "passed": true
+    },
+    {
+      "name": "generated F9 RSA2048 signs independently verified statements under custom issuer",
+      "passed": true
+    },
+    {
+      "name": "generated F9 RSA3072 signs independently verified statements under custom issuer",
+      "passed": true
+    },
+    {
+      "name": "generated F9 RSA4096 signs independently verified statements under custom issuer",
+      "passed": true
+    },
+    {
+      "name": "imported F9 ECPrivateKey is the actual attesting key",
+      "passed": true
+    },
+    {
+      "name": "imported F9 RSAPrivateKey is the actual attesting key",
+      "passed": true
+    },
+    {
+      "name": "mismatched replacement certificate remains loadable but its attestation fails independent signature verification",
+      "passed": true
+    },
+    {
+      "name": "mismatched F9 certificate is retained rather than silently repaired",
+      "passed": true
+    },
+    {
+      "name": "malformed stored issuer cannot produce an attestation",
+      "passed": true
+    },
+    {
+      "name": "failed attestation preserves malformed issuer and durable state",
+      "passed": true
+    },
+    {
+      "name": "independent OATH HOTP fixture advances before PIV reset",
+      "passed": true
+    },
+    {
+      "name": "PIV app reset retains replacement F9 key and certificate",
+      "passed": true
+    },
+    {
+      "name": "PIV reset clears generated user private key",
+      "passed": true
+    },
+    {
+      "name": "PIV reset clears user data objects",
+      "passed": true
+    },
+    {
+      "name": "reset restores defaults and immutable Discovery",
+      "passed": true
+    },
+    {
+      "name": "PIV reset preserves other application's OATH key and durable HOTP counter",
+      "passed": true
+    },
+    {
+      "name": "replacement F9 survives app reset followed by process restart",
+      "passed": true
+    },
+    {
+      "name": "retained custom F9 signs newly generated user key after reset",
+      "passed": true
+    },
+    {
+      "name": "deliberately deleted F9 certificate is not silently regenerated after reset/restart",
+      "passed": true
+    },
+    {
+      "name": "deleted F9 certificate leaves its private key metadata intact",
+      "passed": true
+    },
+    {
+      "name": "legacy lazy-CA state migrates to F9 while preserving issuer certificate and other objects",
+      "passed": true
+    },
+    {
+      "name": "legacy migration preserves existing user private key proven by independent signature",
+      "passed": true
+    },
+    {
+      "name": "migrated F9 retains original private key verified through independent certificate signature",
+      "passed": true
+    }
+  ],
+  "scope": "fresh software card; independent SDK and crypto over CCID socket",
+  "physical_device_access": false,
+  "manufacturer_trust_reproduced": false,
+  "differential_firmware_verification": false,
+  "unverified": [
+    "reference status at F9/readonly/malformed-input rejection boundaries",
+    "exact replacement-certificate parsing restrictions and firmware allocation overhead"
+  ]
+}

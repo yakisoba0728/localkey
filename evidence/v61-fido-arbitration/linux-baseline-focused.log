@@ -1,0 +1,44 @@
+Filters: [arbitration]
+Randomness seeded to: 4050308114
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+swpasskey_tests is a Catch2 v3.8.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+broadcast INIT is busy while another CID is assembling
+-------------------------------------------------------------------------------
+/candidate/source/tests/hid_device_test.cpp:152
+...............................................................................
+
+/candidate/source/tests/hid_device_test.cpp:163: FAILED:
+  REQUIRE( cmd_of(busy.reply[0]) == ctap::kCmdError )
+with expansion:
+  6 == '?'
+
+-------------------------------------------------------------------------------
+other allocated CID requests are busy during an in-flight transaction
+-------------------------------------------------------------------------------
+/candidate/source/tests/hid_device_test.cpp:173
+...............................................................................
+
+/candidate/source/tests/hid_device_test.cpp:186: FAILED:
+  REQUIRE( cmd_of(out.reply[0]) == ctap::kCmdError )
+with expansion:
+  1 == '?'
+
+-------------------------------------------------------------------------------
+another CID gets CHANNEL_BUSY for PING while the worker is busy
+-------------------------------------------------------------------------------
+/candidate/source/tests/keepalive_loop_test.cpp:183
+...............................................................................
+
+/candidate/source/tests/keepalive_loop_test.cpp:202: FAILED:
+  REQUIRE( cmd_of(*busy) == ctap::kCmdError )
+with expansion:
+  1 == '?'
+
+===============================================================================
+test cases:  3 |  0 passed | 3 failed
+assertions: 41 | 38 passed | 3 failed
+

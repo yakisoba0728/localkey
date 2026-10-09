@@ -1,0 +1,29 @@
+{
+  "scope": "Pinned upstream6.8 helps interpret UAPI/source; actual Ubuntu6.8.0-146 behavior independently traced; exact distro source delta not reproduced",
+  "references": [
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/include/uapi/linux/usbdevice_fs.h",
+      "destination": "work/linux-usb-power-probe/reference/include_uapi_linux_usbdevice_fs.h",
+      "sha256": "d822c4c7ac5dd7fa54cf0d1a440fe3413edfee443a611a6d8d4ce69856393d25",
+      "scope": "pinned upstream6.8; distro6.8.0-146 may differ; actual runtime independently verified"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/drivers/usb/core/devio.c",
+      "destination": "work/linux-usb-power-probe/reference/drivers_usb_core_devio.c",
+      "sha256": "8aee2c8210aa6bb28029ccdf6a75bd1cf1239abcc192afe5587ebf7301f40627",
+      "scope": "pinned upstream6.8; distro6.8.0-146 may differ; actual runtime independently verified"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/Documentation/driver-api/usb/power-management.rst",
+      "destination": "work/linux-usb-power-probe/reference/Documentation_driver-api_usb_power-management.rst",
+      "sha256": "b795955ec4e9cd62966cfef608f50134f2d9c9d524056ce2498b0158a857b0e1",
+      "scope": "pinned upstream6.8; distro6.8.0-146 may differ; actual runtime independently verified"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/drivers/usb/core/driver.c",
+      "destination": "work/linux-usb-power-probe/reference/drivers_usb_core_driver.c",
+      "sha256": "2f81e953001354db884b6ce1624839d64399acef0150a14cf357ae77cb2aca37",
+      "scope": "pinned upstream6.8; distro kernel may differ; actual runtime independently verified"
+    }
+  ]
+}

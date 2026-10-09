@@ -1,0 +1,43 @@
+{
+  "passed": true,
+  "count": 9,
+  "tests": [
+    {
+      "name": "initial_touch_outputs",
+      "passed": true
+    },
+    {
+      "name": "failed_reboot_keeps_owner",
+      "passed": true
+    },
+    {
+      "name": "owner_can_release_after_failed_reboot",
+      "passed": true
+    },
+    {
+      "name": "new_touch_after_failed_reboot",
+      "passed": true
+    },
+    {
+      "name": "committed_reboot_releases_owner",
+      "passed": true
+    },
+    {
+      "name": "old_release_denied_after_reboot",
+      "passed": true
+    },
+    {
+      "name": "new_touch_after_reboot",
+      "passed": true
+    },
+    {
+      "name": "other_card_power_cycle_clears_owner",
+      "passed": true
+    },
+    {
+      "name": "old_release_denied_after_other_power_cycle",
+      "passed": true
+    }
+  ],
+  "physical_key_access": false
+}

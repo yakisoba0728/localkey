@@ -1,0 +1,27 @@
+{
+  "frozen_v48_card_file_sha256": {
+    "__init__.py": "b3ac50ebe9c426cf689415f135b9049ac19e67de6808ad213dd7ad21b0bdbf67",
+    "client.py": "2b3b9b250a8c58e5a69b7265d770da364a902c6443edbad26e13da4794df9628",
+    "core.py": "0e7595b17ea9709fab195fcfbbf43653a8d1af455cbe75d6f0181661424c7f1a",
+    "domain.py": "87a192dd4f76d6d1562abd94d8cef4ea0bd932ddb4e35991c61baffc4c0ea6a1",
+    "ifd.py": "cf173daf50ace2bd3718438a92769d40e3f8c470e364f68aeba06dd3dff83ecf",
+    "keyboard.py": "d058cc356978b0477f49cef11673f734a46465e58ebe0edb3910de5098ff1ece",
+    "management.py": "92e5929cabf930d7bfc2391037144dba5ec6a1e7424951a428f4f19398128c64",
+    "otp_hid.py": "c7a5f9c73cdb1c506b99343785436b25cf85f772602f8a1727aa0b71e9756136",
+    "pgp_algorithms.py": "445333c3f9cf9643eb2f6a446b456ae8519dab8a7758ebfe0e74f2755eedc0a5",
+    "pgp_extensions.py": "234e049d977bde85c5e608327be8f74d5311e525add058b94ea688177d969bd1",
+    "pgp_objects.py": "1a8b4a15812b2d0eb748813c3999ebfd4d298536bef1c78787153d8dc3c0d2c3",
+    "piv_objects.py": "6503c64561e904929d1aff05d127b9e1369f8a1961540f965ee00708c7b41664",
+    "profile.py": "319745d0f753de27edb2997f18f98809268fe8ecf84d20fb5acd3a6300cfe2ed",
+    "secure_channel.py": "40cd0713d623722b418d3d67ca20025eb33d4da15583df8058545c25e5b82073",
+    "service.py": "b08b9b27cd0757df8e4a2b1162a289e80696de91dda01e981026cbdb6a7130f2"
+  },
+  "published_v47_bridge_sha256": "e63cd9ea49ee5ebcc6cc7b7389b7785e1393d6c39c926fb766ff61068f30c690",
+  "published_v47_daemon_sha256": "4a34289e3d8a6eb2e3dbde984ce5433b78b12aa8f419ac7a198ca843d562ba7a",
+  "base_v47_guest_image_sha256": "e5d3bac4e95b917d1fde04e5aaaa204a6ce9b055619dfdf2fb7184a126b038f2",
+  "guest_image_sha256": "912c2afd98b44f2aefa9798df6dcf90ddf4f628a13df6d2dcec861bd678ccd1c",
+  "kernel_sha256": "6001f54164a5201cd5a80e0a09bb05c43fa6e910a0abfe0f5a4e8d7d781cc737",
+  "guest_network_devices": false,
+  "host_usb_passthrough": false,
+  "physical_device_access": false
+}

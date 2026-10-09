@@ -1,0 +1,12 @@
+{
+  "mode": "fixed",
+  "base_v52_stage_guest_sha256": "7ce9dc2a39c4d445e870185094c5309fcdd17478e8d90ef7cf7c08b996eac7bc",
+  "test_sha256": "e3d464cf8a9a5c9ad47dcb2c6a5c84a79d8a75b3cd88a14c2b877cf43221dfae",
+  "service_sha256": "94640c0a5353fc75b7c46cfa8983d7da1f2a72965173036723b4471946b123d6",
+  "bridge_sha256": "862800edbc9f7cacd9d0d18d8032b6e2d32867d0d8b10a017d05b3cdd4200377",
+  "guest_image_sha256": "1fb633438b8d99c6d4bcf03bd1198c3ac909d4b723ffb69eef05f77c6db54396",
+  "kernel_sha256": "6001f54164a5201cd5a80e0a09bb05c43fa6e910a0abfe0f5a4e8d7d781cc737",
+  "guest_network_devices": false,
+  "host_usb_passthrough": false,
+  "physical_device_access": false
+}

@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "u2f_status_hex": "6985",
+  "u2f_reply_length": 2,
+  "guest_report": {
+    "passed": true,
+    "mode": "baseline",
+    "guest_network_devices": false,
+    "host_usb_passthrough": false,
+    "physical_device_access": false,
+    "transport": "owned dummy_hcd FunctionFS FIDO endpoint 0x04/0x84",
+    "serial": "1863430876",
+    "active_cid_hex": "dd2d6344",
+    "worker_held_during_cancel": true,
+    "u2f_status_hex": "6985",
+    "u2f_reply_length": 2,
+    "u2f_reply_sha256": "7f32305d6fd0cc6010aebeb78e6a2a5e4f5a42bac47bedf92e9cae4d9bdd69c7",
+    "u2f_registration_tag_hex": "69",
+    "fresh_ping_ok": true
+  },
+  "inputs_sha256": "8d25515a5f5e2c49ff834b306ef0d2a94cee753a225c5889671372e48a2bf949",
+  "raw_console_sha256": "af06765168b3548a340f10642123e8ae403697a5943439f401a8a2262e1cc60c",
+  "guest_init_sha256": "8bdce22708b4c6f550f6eacceac754899fb15bf89795ba6188ab9224fc81d511",
+  "kernel_panic_observed": false
+}

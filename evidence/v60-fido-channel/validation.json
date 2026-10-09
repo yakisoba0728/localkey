@@ -1,0 +1,94 @@
+{
+  "passed": true,
+  "scope": "FIDO CTAPHID CID prevalidation and spurious CONT",
+  "source_patch_sha256": "a349edfb8f2cdd4b35e28dc7becce5f2c2851eeec59e3c67c4b749779f54744a",
+  "test_patch_sha256": "d12e0507525d98af66aa4d2dfbab7dce012a9ae0b251d8a2afd56e593cec53bd",
+  "probe_sha256": "9acd184f2bee8cc2876614d37fb6cb348a9d58f44fa70a3f45c44d2d73b17632",
+  "private_socket": {
+    "baseline.json": {
+      "passed": true,
+      "sha256": "1206155c6f40064f3f362a233e43101108ee96f0835916853429f03c21bcf02e"
+    },
+    "fixed.json": {
+      "passed": true,
+      "sha256": "611c2e2d2e09c581f93ee3f2fdc3199d439d91e23bdc6bf567c35a8085df5a70"
+    },
+    "linux-baseline.json": {
+      "passed": true,
+      "sha256": "4c45ff0e18db3e180ae7613dbf7a6934cd4d4b56358bfda20ba5b568ae1c1bd7"
+    },
+    "linux-fixed.json": {
+      "passed": true,
+      "sha256": "44d7eac6fc4494f0ff75f0943bf83606433946011cabf50cdb95fb744c9cbe34"
+    }
+  },
+  "unit_tests": {
+    "mac_full": "135 cases, 13642 assertions passed",
+    "linux_full": "135 cases, 13642 assertions passed",
+    "mac_full_log_sha256": "440ae0bcd2403d80463e58091dd0398e8afdf0dbc55e4648c99f560b90fdc9c6",
+    "linux_full_log_sha256": "73f0cb860030ee7291f257dd0f9b4654fd91ebc87a7a9a0bd0660c055f2277e7"
+  },
+  "usb_no_nic_dummy_hcd": {
+    "baseline": {
+      "passed": true,
+      "guest_report": {
+        "passed": true,
+        "mode": "baseline",
+        "guest_network_devices": false,
+        "host_usb_passthrough": false,
+        "physical_device_access": false,
+        "scope": "owned dummy_hcd FunctionFS FIDO CID prevalidation",
+        "serial": "3535693464",
+        "valid_cid_hex": "f24f6a92",
+        "unknown_cid_hex": "10203040",
+        "unknown_initial_reply_hex": null,
+        "valid_ping_during_unknown_assembly_hex": "f24f6a92bf0001060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "unknown_timeout_hex": "10203040bf0001050000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "spurious_cont_reply_hex": "10203040bf0001040000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "zero_cid_spurious_cont_reply_hex": "00000000bf00010b0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "late_reports_before_fresh": [],
+        "fresh_ping_hex": "f24f6a92810005667265736800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "daemon_log_tail": "{\"ts\":\"1970-01-01T00:00:19.778Z\",\"lvl\":\"warn\",\"event\":\"presence_auto_allow\",\"warning\":\"SWPASSKEY_TESTING: every request is approved\"}\n{\"ts\":\"1970-01-01T00:00:19.798Z\",\"lvl\":\"warn\",\"event\":\"hid_socket_transport\",\"path\":\"/guest-state/v60-fido-channel-b0g79dta/h.sock\",\"note\":\"development transport, not a HID device\"}\n"
+      },
+      "input_sha256": "ed62853fe832348e37e6238a61c48861364b0845b307cf90220630df28939542",
+      "raw_console_sha256": "d38b62042f2c04e464677ade63e1f9a0ec917b95ad240dc7114858e78dc816ee",
+      "guest_init_sha256": "9b3d273c1900a27ae1d41d31ae2a6ddb28cea56ac4d8b8d953d358f014721bb0",
+      "image_sha256": "2629030697b81c809da8ebc3bc2b479c44a1e3329c6f9e3aae875a5c3dbf3aae",
+      "kernel_panic_observed": false,
+      "initial_timing_attempt": {
+        "passed": false,
+        "reason": "orphan CONT response not observed within original 180ms baseline assertion; primary CHANNEL_BUSY defect was reproduced",
+        "raw_console_sha256": "2bbc23857919fb7e4a779913d2a3954aba407cf228b1668262f079309c172250",
+        "inputs_sha256": "a155e9c76aefaa23c36e5c71e5861724ae3d44803bf9d684755188beeae06512"
+      }
+    },
+    "fixed": {
+      "passed": true,
+      "guest_report": {
+        "passed": true,
+        "mode": "fixed",
+        "guest_network_devices": false,
+        "host_usb_passthrough": false,
+        "physical_device_access": false,
+        "scope": "owned dummy_hcd FunctionFS FIDO CID prevalidation",
+        "serial": "958595577",
+        "valid_cid_hex": "21f18195",
+        "unknown_cid_hex": "10203040",
+        "unknown_initial_reply_hex": "10203040bf00010b0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "valid_ping_during_unknown_assembly_hex": "21f181958100046f6b61790000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "unknown_timeout_hex": null,
+        "spurious_cont_reply_hex": null,
+        "zero_cid_spurious_cont_reply_hex": null,
+        "late_reports_before_fresh": [],
+        "fresh_ping_hex": "21f18195810005667265736800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "daemon_log_tail": "{\"ts\":\"1970-01-01T00:00:20.541Z\",\"lvl\":\"warn\",\"event\":\"presence_auto_allow\",\"warning\":\"SWPASSKEY_TESTING: every request is approved\"}\n{\"ts\":\"1970-01-01T00:00:20.561Z\",\"lvl\":\"warn\",\"event\":\"hid_socket_transport\",\"path\":\"/guest-state/v60-fido-channel-fr429zza/h.sock\",\"note\":\"development transport, not a HID device\"}\n"
+      },
+      "input_sha256": "79d1c98277d5643f06438dd07655ef915fe04b1802ef5a6ae370bace78e1af5b",
+      "raw_console_sha256": "89b5f9afa5adf98f78a8f64ed2622fc732d8e1137c05587bbd5ed89a89702917",
+      "guest_init_sha256": "9b23eab41eb313b6d0f76f0ea471de601fd2f5b33ef3f692c204ad509499c61b",
+      "image_sha256": "9b2e4952ac673e1fb219b26f433b33d91758894d6264b4744c94b3b174b98381",
+      "kernel_panic_observed": false
+    }
+  },
+  "observed_limit": "Physical YubiKey firmware behavior and production UDC were not measured; first baseline USB run had an overstrict 180ms orphan observation and remains preserved."
+}

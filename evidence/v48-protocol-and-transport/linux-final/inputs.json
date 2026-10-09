@@ -1,0 +1,11 @@
+{
+  "base_v48_card_bridge_image_sha256": "912c2afd98b44f2aefa9798df6dcf90ddf4f628a13df6d2dcec861bd678ccd1c",
+  "candidate_linux_daemon_sha256": "fc0258674f0c42ccc087686589b90b34f6720af42db96b10451f1ed29555ef2d",
+  "published_v47_bridge_sha256": "e63cd9ea49ee5ebcc6cc7b7389b7785e1393d6c39c926fb766ff61068f30c690",
+  "frozen_v48_core_sha256": "0e7595b17ea9709fab195fcfbbf43653a8d1af455cbe75d6f0181661424c7f1a",
+  "guest_image_sha256": "b775654015f44e5493ea0df18d3b12cbf87190e890c198acb47a17faf2be98f4",
+  "kernel_sha256": "6001f54164a5201cd5a80e0a09bb05c43fa6e910a0abfe0f5a4e8d7d781cc737",
+  "guest_network_devices": false,
+  "host_usb_passthrough": false,
+  "physical_device_access": false
+}

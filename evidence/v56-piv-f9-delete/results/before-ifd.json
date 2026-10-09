@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "transport": "direct IFD",
+  "expect_fixed": false,
+  "f9_delete_succeeded": false,
+  "f9_move_rejected": true,
+  "f9_deletion_persisted_across_restart": false,
+  "f9_deletion_persisted_across_piv_reset": false,
+  "normal_sdk_move_delete_and_attestation": true,
+  "replacement_f9_survives_reset_after_deletion": false,
+  "physical_key_accessed": false
+}

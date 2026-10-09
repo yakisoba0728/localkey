@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "transport": "private CCID socket",
+  "expect_fixed": true,
+  "f9_delete_succeeded": true,
+  "f9_move_rejected": true,
+  "f9_deletion_persisted_across_restart": true,
+  "f9_deletion_persisted_across_piv_reset": true,
+  "normal_sdk_move_delete_and_attestation": true,
+  "replacement_f9_survives_reset_after_deletion": true,
+  "physical_key_accessed": false
+}

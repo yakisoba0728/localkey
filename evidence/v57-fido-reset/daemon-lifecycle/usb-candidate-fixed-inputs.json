@@ -1,0 +1,30 @@
+{
+  "stage_bridge_sha256": "2169db177cba1234d601b7724b87ce2b3384bad1e3ab4cf0ec206024fac4aaa8",
+  "stage_card_file_sha256": {
+    "__init__.py": "b3ac50ebe9c426cf689415f135b9049ac19e67de6808ad213dd7ad21b0bdbf67",
+    "client.py": "8dd1fe3584f3e5cd2fdb885702bfc776536a0f82799b358dab6c9ca92897a283",
+    "core.py": "b104af76f876607a6d46bb9ab8066c768a2b6449d3633023c1dc51773723ebd4",
+    "domain.py": "87a192dd4f76d6d1562abd94d8cef4ea0bd932ddb4e35991c61baffc4c0ea6a1",
+    "ifd.py": "cf173daf50ace2bd3718438a92769d40e3f8c470e364f68aeba06dd3dff83ecf",
+    "keyboard.py": "d058cc356978b0477f49cef11673f734a46465e58ebe0edb3910de5098ff1ece",
+    "management.py": "163d0f51dbb34b3f1c2d33ff63053d44b959ea478883b946771cd1a54cef7810",
+    "otp_hid.py": "c7a5f9c73cdb1c506b99343785436b25cf85f772602f8a1727aa0b71e9756136",
+    "pgp_algorithms.py": "445333c3f9cf9643eb2f6a446b456ae8519dab8a7758ebfe0e74f2755eedc0a5",
+    "pgp_extensions.py": "234e049d977bde85c5e608327be8f74d5311e525add058b94ea688177d969bd1",
+    "pgp_objects.py": "1a8b4a15812b2d0eb748813c3999ebfd4d298536bef1c78787153d8dc3c0d2c3",
+    "piv_objects.py": "b3c656f90d3f5ba5aeb7129529a4e2f0a86887e8a2ece2837e67e715e568d0ba",
+    "profile.py": "319745d0f753de27edb2997f18f98809268fe8ecf84d20fb5acd3a6300cfe2ed",
+    "secure_channel.py": "40cd0713d623722b418d3d67ca20025eb33d4da15583df8058545c25e5b82073",
+    "service.py": "94640c0a5353fc75b7c46cfa8983d7da1f2a72965173036723b4471946b123d6"
+  },
+  "stage_daemon_baseline_sha256": "3a30e5ae95c70225b627da141995d3f5663e9738b1b3c3551cdfe407ee0e5c6b",
+  "candidate_daemon_sha256": "e6d31697f9cc67ee8e248cac625f0b5ac42eb62bc735c57b31bedef29d45ce6c",
+  "daemon_lifecycle_patch_sha256": "a86a5f5f1b2d1a4379bb13710598292d9430f66a33e6bed21f89025a5b6e29ec",
+  "probe_sha256": "6b6e7e3df9a7f783eba66346a8da32504e477b64e1147ab785e9bc92f8801dd1",
+  "base_guest_sha256": "596c985e8cc9c69f6ae48823073ff5bcb3aff3a0dc13c06d435a6936f0d262ec",
+  "guest_image_sha256": "e1c36d6cd74a5e82852c62f6a62762547bbbf91c4597b54ac614a4f814d0861f",
+  "kernel_sha256": "6001f54164a5201cd5a80e0a09bb05c43fa6e910a0abfe0f5a4e8d7d781cc737",
+  "guest_network_devices": false,
+  "host_usb_passthrough": false,
+  "physical_device_access": false
+}

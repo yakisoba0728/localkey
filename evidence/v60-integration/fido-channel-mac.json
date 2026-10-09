@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "mode": "fixed",
+  "physical_device_access": false,
+  "host_usb_access": false,
+  "host_hid_access": false,
+  "host_keychain_access": false,
+  "guest_network_devices": false,
+  "valid_cid_hex": "0a6d5cf5",
+  "unknown_cid_hex": "10203040",
+  "unknown_initial_reply_hex": "10203040bf00010b0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+  "valid_ping_during_unknown_assembly_hex": "0a6d5cf58100046f6b61790000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+  "unknown_timeout_hex": null,
+  "spurious_cont_reply_hex": null,
+  "zero_cid_spurious_cont_reply_hex": null,
+  "fresh_ping_hex": "0a6d5cf5810005667265736800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+}

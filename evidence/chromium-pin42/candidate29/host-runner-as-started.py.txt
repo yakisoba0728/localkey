@@ -1,0 +1,41 @@
+"""Fresh owned noNIC guest; observe original UI without retrying or bypassing PIN."""
+import hashlib
+import importlib.util
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+probe=Path('work/v42-chromium-ui-probe').resolve()
+if len(sys.argv)>1:probe=Path(sys.argv[1]).resolve()
+saved=Path('work/v42-first-full-native-chromium-largeblob-failure').resolve()
+inputs=json.loads((probe/'inputs.json').read_text())
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+assert sha(probe/'guest-initramfs.gz')==inputs['probe_guest_image_sha256']
+assert sha(saved/'artifacts/guest-kernel')==inputs['kernel_sha256']
+command=['docker','run','--rm','--network','none','--name','ske-v42-chromium-pin-observer',
+         '--mount',f'type=bind,source={probe},target=/probe,readonly',
+         '--mount',f'type=bind,source={saved}/artifacts,target=/saved,readonly',
+         'ske-linux-native:0.36','timeout','--kill-after=10s','600s','qemu-system-aarch64',
+         '-machine','virt','-cpu','cortex-a72','-accel','tcg','-m','4096','-smp','2',
+         '-kernel','/saved/guest-kernel','-initrd','/probe/guest-initramfs.gz',
+         '-append','console=ttyAMA0 rdinit=/init panic=1','-nic','none',
+         '-display','none','-serial','stdio','-monitor','none','-no-reboot']
+log=probe/'console.log'
+assert not log.exists(), 'Preserve each actual execution before another run'
+with log.open('wb') as out:result=subprocess.run(command,stdout=out,stderr=subprocess.STDOUT)
+s=log.read_text(errors='replace');report={'passed':False,'runner_exit':result.returncode}
+try:
+    start,end='SKE_BROWSER_LARGE_BLOB_BEGIN','SKE_BROWSER_LARGE_BLOB_END'
+    assert s.count(start)==s.count(end)==1
+    report.update(json.loads(s.split(start)[1].split(end)[0].strip()))
+    spec=importlib.util.spec_from_file_location('gate',saved/'helpers/validate-browser-largeblob.py')
+    gate=importlib.util.module_from_spec(spec);spec.loader.exec_module(gate)
+    assert result.returncode==0 and 'SKE_CHROMIUM_PIN_OBSERVER_EXIT=0' in s
+    gate.validate(report)
+except Exception as exc:
+    report.update(passed=False,host_gate_error=f'{type(exc).__name__}: {exc}')
+report.update(inputs=inputs,console_sha256=sha(log),runner_exit=result.returncode)
+(probe/'result.json').write_text(json.dumps(report,indent=2)+'\n')
+print(json.dumps({k:report.get(k) for k in ['passed','test_count','error','runner_exit','host_gate_error','actual_pin_observations','actual_pin_input_detail']},indent=2))
+raise SystemExit(0 if report['passed'] else 1)

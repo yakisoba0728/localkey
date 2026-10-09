@@ -1,0 +1,16 @@
+{
+  "published_v51_core_sha256": "f72d3d0c3fd01516d085077c8926871c21f388d60f230e6517cf827d63cc9103",
+  "published_v51_bridge_sha256": "43d51da274874ea515a567e7bb54aa5bae6110cc6c5c428c2a3acedcfc808c31",
+  "candidate_bridge_sha256": "1a52933aa759cb891d3f46f9ca2611908b63423d8182dffd4b3bbb0053d98d12",
+  "candidate_backend_source_sha256": "1d4b9da9e2af086ff31699827a90ba27dc78655691f6f306d64d96ff0f23b3ac",
+  "candidate_service_sha256": "7bdfd452375d5c0d1493177e9b9d63a8a22e7cfc82aeed7df38715c827190a70",
+  "candidate_client_sha256": "8dd1fe3584f3e5cd2fdb885702bfc776536a0f82799b358dab6c9ca92897a283",
+  "touch_test_sha256": "fbff8d07e5a871c6184e71c1825b353c4ee1d0c2f70bb62363063ef85e74c72f",
+  "seven_profile_test_sha256": "8178a07ed5935dfdc0bbe9437a41cc5ec76cdcdd85150a27d0a09392aaada2a7",
+  "base_v51_guest_sha256": "c6e12a449cba6d84cc2fa983bcc58baf36867c119624d08912a1fdd3134b6d88",
+  "guest_image_sha256": "5ebf8257b9753b03cd64a0b8b6ee5c63278f36af7d0287ce75282f67e8df5931",
+  "kernel_sha256": "6001f54164a5201cd5a80e0a09bb05c43fa6e910a0abfe0f5a4e8d7d781cc737",
+  "guest_network_devices": false,
+  "host_usb_passthrough": false,
+  "physical_device_access": false
+}

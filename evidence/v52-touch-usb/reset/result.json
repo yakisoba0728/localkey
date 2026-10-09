@@ -1,0 +1,175 @@
+{
+  "passed": true,
+  "defect": "same-generation USB disconnect replays software touch queued while disconnected",
+  "before": {
+    "report": {
+      "passed": true,
+      "mode": "baseline",
+      "software_touch_input": true,
+      "guest_network_devices": false,
+      "host_usb_passthrough": false,
+      "physical_device_access": false,
+      "touch_after_disconnect_ms": 77,
+      "stale_evdev_keys": [
+        [
+          28,
+          1
+        ],
+        [
+          28,
+          0
+        ]
+      ],
+      "generation_before": 0,
+      "generation_after": 0,
+      "fresh_evdev_keys": [
+        [
+          42,
+          1
+        ],
+        [
+          30,
+          1
+        ],
+        [
+          42,
+          0
+        ],
+        [
+          30,
+          0
+        ],
+        [
+          48,
+          1
+        ],
+        [
+          48,
+          0
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          2,
+          0
+        ],
+        [
+          28,
+          1
+        ],
+        [
+          28,
+          0
+        ]
+      ],
+      "stale_down": [
+        28
+      ],
+      "fresh_down": [
+        42,
+        30,
+        48,
+        2,
+        28
+      ]
+    },
+    "guest_image_sha256": "51332e5587a63d79e1724c90539d709518f47c81c719b7b1e7f30659463a01fe",
+    "inputs_sha256": "80644a89cb65b292853e3bfde56e8967b1d272cd6b15d731a3200ddc7ae87553",
+    "raw_console_sha256": "a91984675b6fc3cc760efd57dfbb78c4df3a51adc225962f71f11b959377b1b0",
+    "full_speed_attachments": 2,
+    "kernel_panic": false
+  },
+  "after": {
+    "report": {
+      "passed": true,
+      "mode": "fixed",
+      "software_touch_input": true,
+      "guest_network_devices": false,
+      "host_usb_passthrough": false,
+      "physical_device_access": false,
+      "touch_after_disconnect_ms": 50,
+      "stale_evdev_keys": [],
+      "generation_before": 0,
+      "generation_after": 0,
+      "fresh_evdev_keys": [
+        [
+          42,
+          1
+        ],
+        [
+          30,
+          1
+        ],
+        [
+          42,
+          0
+        ],
+        [
+          30,
+          0
+        ],
+        [
+          48,
+          1
+        ],
+        [
+          48,
+          0
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          2,
+          0
+        ],
+        [
+          28,
+          1
+        ],
+        [
+          28,
+          0
+        ]
+      ],
+      "stale_down": [],
+      "fresh_down": [
+        42,
+        30,
+        48,
+        2,
+        28
+      ],
+      "wrong_token_retained_report_count": 8,
+      "owner_pause_cleared_queue": true,
+      "malformed_pause_frame_rejected": true
+    },
+    "guest_image_sha256": "1fb633438b8d99c6d4bcf03bd1198c3ac909d4b723ffb69eef05f77c6db54396",
+    "inputs_sha256": "213cbfd9039dec18b54cd51429e684fb58963ae3ef3f4ef2d32fdba126b0dd5b",
+    "raw_console_sha256": "cf05ce8f9d7b5d20f5aae8c21dc047b123b1a5d74f84d6c382cb85805dafc1f7",
+    "full_speed_attachments": 2,
+    "kernel_panic": false
+  },
+  "v52_stage_service_sha256": "41ab2edf1a3642166995d559495c2dc17950b4bc8d8dd00d6ab2257bef06ce59",
+  "v52_stage_bridge_sha256": "1a52933aa759cb891d3f46f9ca2611908b63423d8182dffd4b3bbb0053d98d12",
+  "candidate_service_sha256": "94640c0a5353fc75b7c46cfa8983d7da1f2a72965173036723b4471946b123d6",
+  "candidate_backend_source_sha256": "7f74326becfb8fb107d29800d1a46e43f64c969d0c00542b9425950d094aa126",
+  "candidate_bridge_sha256": "862800edbc9f7cacd9d0d18d8032b6e2d32867d0d8b10a017d05b3cdd4200377",
+  "source_patch_sha256": "7953a26ed1f1bc03faffeaca07a445a397825899e4f8a66909e28d76fa904d38",
+  "cpp_test_binary_sha256": "eb54c58ef3b133b53deccc5c3dac4c2174b3f283e5aded4655cd2e556bd51462",
+  "cpp_test_log_sha256": "de084fb5adb84a682feebfade190bd2dd03df35c1db91356da991cf812787224",
+  "cpp_test_cases": 121,
+  "cpp_assertions": 11631,
+  "guest_network_devices": false,
+  "host_usb_passthrough": false,
+  "physical_device_access": false,
+  "physical_touch_sensor": false,
+  "limitations": [
+    "The button input is a private software RPC, not a physical contact sensor.",
+    "The USB path was tested only with private dummy_hcd; no external physical host was tested.",
+    "Finite test runs cannot exclude rare kernel failures."
+  ]
+}

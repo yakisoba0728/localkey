@@ -1,0 +1,107 @@
+PASS fresh OATH published version with empty unlocked credential store
+PASS VALIDATE without enabled access code reports auth-not-enabled; persistent state unchanged
+PASS HOTP IMF rejects 0-byte input instead of required four bytes; persistent state unchanged
+PASS HOTP IMF rejects 1-byte input instead of required four bytes; persistent state unchanged
+PASS HOTP IMF rejects 3-byte input instead of required four bytes; persistent state unchanged
+PASS HOTP IMF rejects 5-byte input instead of required four bytes; persistent state unchanged
+PASS HOTP IMF rejects 8-byte input instead of required four bytes; persistent state unchanged
+PASS TOTP credential rejects HOTP-only IMF even when four bytes; persistent state unchanged
+PASS PUT rejects empty name; persistent state unchanged
+PASS PUT rejects 65-byte name; persistent state unchanged
+PASS PUT rejects missing name; persistent state unchanged
+PASS PUT rejects missing key; persistent state unchanged
+PASS PUT rejects duplicate name; persistent state unchanged
+PASS PUT rejects duplicate key; persistent state unchanged
+PASS PUT rejects duplicate IMF; persistent state unchanged
+PASS PUT rejects duplicate property; persistent state unchanged
+PASS PUT rejects unknown property bits; persistent state unchanged
+PASS PUT rejects truncated property; persistent state unchanged
+PASS PUT rejects unknown TLV; persistent state unchanged
+PASS PUT rejects truncated key; persistent state unchanged
+PASS command 01 rejects nonzero P1; persistent state unchanged
+PASS command 01 rejects unsupported P2; persistent state unchanged
+PASS command 02 rejects nonzero P1; persistent state unchanged
+PASS command 02 rejects unsupported P2; persistent state unchanged
+PASS command 03 rejects nonzero P1; persistent state unchanged
+PASS command 03 rejects unsupported P2; persistent state unchanged
+PASS command 05 rejects nonzero P1; persistent state unchanged
+PASS command 05 rejects unsupported P2; persistent state unchanged
+PASS command a1 rejects nonzero P1; persistent state unchanged
+PASS command a1 rejects unsupported P2; persistent state unchanged
+PASS command a2 rejects nonzero P1; persistent state unchanged
+PASS command a2 rejects unsupported P2; persistent state unchanged
+PASS command a3 rejects nonzero P1; persistent state unchanged
+PASS command a3 rejects unsupported P2; persistent state unchanged
+PASS command a4 rejects nonzero P1; persistent state unchanged
+PASS command a4 rejects unsupported P2; persistent state unchanged
+PASS LIST rejects unexpected body; persistent state unchanged
+PASS RESET requires DE/AD header; persistent state unchanged
+PASS RESET rejects unexpected body; persistent state unchanged
+PASS CALCULATE missing credential returns documented missing-object status; persistent state unchanged
+PASS DELETE missing credential returns documented missing-object status; persistent state unchanged
+PASS CALCULATE requires explicit challenge tag; persistent state unchanged
+PASS CALCULATE ALL requires explicit challenge tag; persistent state unchanged
+PASS four-byte IMF initializes HOTP moving factor; raw full HMAC independently verifies
+PASS HOTP counter persists restart and truncated response independently verifies
+PASS RFC6238 SHA1 vector at 59
+PASS RFC6238 SHA1 vector at 1111111109
+PASS RFC6238 SHA1 vector at 1111111111
+PASS RFC6238 SHA1 vector at 1234567890
+PASS RFC6238 SHA1 vector at 2000000000
+PASS RFC6238 SHA1 vector at 20000000000
+PASS SDK full SHA1 TOTP response matches independent arbitrary-challenge HMAC
+PASS independent SHA1 HOTP at durable counter 17
+PASS independent SHA1 HOTP at durable counter 18
+PASS RFC6238 SHA256 vector at 59
+PASS RFC6238 SHA256 vector at 1111111109
+PASS RFC6238 SHA256 vector at 1111111111
+PASS RFC6238 SHA256 vector at 1234567890
+PASS RFC6238 SHA256 vector at 2000000000
+PASS RFC6238 SHA256 vector at 20000000000
+PASS SDK full SHA256 TOTP response matches independent arbitrary-challenge HMAC
+PASS independent SHA256 HOTP at durable counter 17
+PASS independent SHA256 HOTP at durable counter 18
+PASS RFC6238 SHA512 vector at 59
+PASS RFC6238 SHA512 vector at 1111111109
+PASS RFC6238 SHA512 vector at 1111111111
+PASS RFC6238 SHA512 vector at 1234567890
+PASS RFC6238 SHA512 vector at 2000000000
+PASS RFC6238 SHA512 vector at 20000000000
+PASS SDK full SHA512 TOTP response matches independent arbitrary-challenge HMAC
+PASS independent SHA512 HOTP at durable counter 17
+PASS independent SHA512 HOTP at durable counter 18
+PASS CALCULATE ALL mode 0 reports HOTP/touch placeholders
+PASS CALCULATE ALL mode 0 SHA1 independent response
+PASS CALCULATE ALL mode 0 SHA256 independent response
+PASS CALCULATE ALL mode 0 SHA512 independent response
+PASS CALCULATE ALL mode 1 reports HOTP/touch placeholders
+PASS CALCULATE ALL mode 1 SHA1 independent response
+PASS CALCULATE ALL mode 1 SHA256 independent response
+PASS CALCULATE ALL mode 1 SHA512 independent response
+PASS CALCULATE ALL placeholders never consume HOTP counters
+PASS explicit SDK touch-required calculation completes in opted-in test presence mode
+PASS only-increasing property accepts first challenge with independent HMAC
+PASS only-increasing challenge survives restart and rejects repeated value; persistent state unchanged
+PASS only-increasing credential rejects malformed moving-factor length; persistent state unchanged
+PASS independent PBKDF2-SHA1 verifies SDK access-key derivation from own SELECT salt
+PASS SET CODE rejects 7-byte authentication challenge; persistent state unchanged
+PASS SET CODE rejects 9-byte authentication challenge; persistent state unchanged
+PASS SET CODE incorrect proof returns documented mismatch status; persistent state unchanged
+PASS SET CODE rejects 19-byte proof instead of SHA1 length; persistent state unchanged
+PASS SET CODE rejects 21-byte proof instead of SHA1 length; persistent state unchanged
+PASS access-code removal rejects unexpected challenge body; persistent state unchanged
+PASS reselected OATH session requires access-code validation; persistent state unchanged
+PASS VALIDATE authenticates 7-byte host challenge using independent HMAC
+PASS VALIDATE authenticates 9-byte host challenge using independent HMAC
+PASS VALIDATE rejects 19-byte proof without consuming card challenge; persistent state unchanged
+PASS VALIDATE rejects 21-byte proof without consuming card challenge; persistent state unchanged
+PASS incorrect access key leaves OATH session locked; persistent state unchanged
+PASS valid mutual SDK proof unlocks unchanged credentials after malformed attempts
+PASS SDK removes access code using empty KEY tag without deleting credentials
+PASS RESET is permitted while locked, clears OATH credentials/access code and rotates own salt
+PASS OATH application reset preserves PIV own F9 issuer
+PASS firmware-5.7 published capacity accepts 64 OATH credentials
+PASS 65th OATH credential returns documented no-space status; persistent state unchanged
+PASS overwrite at full capacity succeeds and installs new algorithm/moving factor
+PASS rename at full capacity does not allocate a new credential slot
+PASS deletion releases one slot and full capacity survives process restart

@@ -1,0 +1,364 @@
+{
+  "passed": true,
+  "tests": [
+    {
+      "name": "SCP11 15 independently checks public point/receipt response format",
+      "passed": true
+    },
+    {
+      "name": "SCP11c response returns own static SD point",
+      "passed": true
+    },
+    {
+      "name": "SCP11 15 independent ECDH/SHA256 counter-KDF/CMAC receipt agrees",
+      "passed": true
+    },
+    {
+      "name": "SCP11 15 independently derived keys drive unchanged SDK encrypted/MAC read",
+      "passed": true
+    },
+    {
+      "name": "SCP11 15 independently checks public point/receipt response format",
+      "passed": true
+    },
+    {
+      "name": "SCP11c response returns own static SD point",
+      "passed": true
+    },
+    {
+      "name": "SCP11 15 independent ECDH/SHA256 counter-KDF/CMAC receipt agrees",
+      "passed": true
+    },
+    {
+      "name": "SCP11 15 repeated own request has correct static/re-randomized response",
+      "passed": true
+    },
+    {
+      "name": "SCP11 15 repeated own request still passes SDK secure messaging",
+      "passed": true
+    },
+    {
+      "name": "SCP11 11 independently checks public point/receipt response format",
+      "passed": true
+    },
+    {
+      "name": "SCP11 11 response keeps card ephemeral key",
+      "passed": true
+    },
+    {
+      "name": "SCP11 11 independent ECDH/SHA256 counter-KDF/CMAC receipt agrees",
+      "passed": true
+    },
+    {
+      "name": "SCP11 11 independently derived keys drive unchanged SDK encrypted/MAC read",
+      "passed": true
+    },
+    {
+      "name": "SCP11 11 independently checks public point/receipt response format",
+      "passed": true
+    },
+    {
+      "name": "SCP11 11 response keeps card ephemeral key",
+      "passed": true
+    },
+    {
+      "name": "SCP11 11 independent ECDH/SHA256 counter-KDF/CMAC receipt agrees",
+      "passed": true
+    },
+    {
+      "name": "SCP11 11 repeated own request has correct static/re-randomized response",
+      "passed": true
+    },
+    {
+      "name": "SCP11 11 repeated own request still passes SDK secure messaging",
+      "passed": true
+    },
+    {
+      "name": "SCP11 13 independently checks public point/receipt response format",
+      "passed": true
+    },
+    {
+      "name": "SCP11 13 response keeps card ephemeral key",
+      "passed": true
+    },
+    {
+      "name": "SCP11 13 independent ECDH/SHA256 counter-KDF/CMAC receipt agrees",
+      "passed": true
+    },
+    {
+      "name": "SCP11 13 independently derived keys drive unchanged SDK encrypted/MAC read",
+      "passed": true
+    },
+    {
+      "name": "SCP11 13 independently checks public point/receipt response format",
+      "passed": true
+    },
+    {
+      "name": "SCP11 13 response keeps card ephemeral key",
+      "passed": true
+    },
+    {
+      "name": "SCP11 13 independent ECDH/SHA256 counter-KDF/CMAC receipt agrees",
+      "passed": true
+    },
+    {
+      "name": "SCP11 13 repeated own request has correct static/re-randomized response",
+      "passed": true
+    },
+    {
+      "name": "SCP11 13 repeated own request still passes SDK secure messaging",
+      "passed": true
+    },
+    {
+      "name": "normal SDK SCP11 11 authentication/receipt/KDF still interoperates",
+      "passed": true
+    },
+    {
+      "name": "normal SDK SCP11 15 authentication/receipt/KDF still interoperates",
+      "passed": true
+    },
+    {
+      "name": "SCP11c denies encrypted private PUT KEY; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11c denies public PUT KEY; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11c denies AES-set PUT KEY; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11c denies current c key DELETE (pinned vendor SDK expectation); ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11c denies other key DELETE; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11c denies version-wildcard DELETE; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11c denies SET STATUS; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11c command rejections keep current SDK response MAC/channel usable",
+      "passed": true
+    },
+    {
+      "name": "SCP11a still allows private PUT KEY with session DEK",
+      "passed": true
+    },
+    {
+      "name": "SCP11a still allows key DELETE",
+      "passed": true
+    },
+    {
+      "name": "SCP11c SDK allowlist without counter is denied; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11c rejects counter shape/range ; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11c rejects counter shape/range 01; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11c rejects counter shape/range 0000; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11c rejects counter shape/range 000001; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11c rejects counter shape/range 8000; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11c rejects counter shape/range ffff; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "first SCP11c allowlist stores counter one atomically",
+      "passed": true
+    },
+    {
+      "name": "equal counter cannot clear a list; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "separate CA anchors have independent anti-replay counters",
+      "passed": true
+    },
+    {
+      "name": "SCP11c list clear advances and retains counter",
+      "passed": true
+    },
+    {
+      "name": "SCP03 list replacement/clear never resets remembered c counter",
+      "passed": true
+    },
+    {
+      "name": "SCP11 15 independently checks public point/receipt response format",
+      "passed": true
+    },
+    {
+      "name": "SCP11c response returns own static SD point",
+      "passed": true
+    },
+    {
+      "name": "SCP11 15 independent ECDH/SHA256 counter-KDF/CMAC receipt agrees",
+      "passed": true
+    },
+    {
+      "name": "SCP11 15 independently checks public point/receipt response format",
+      "passed": true
+    },
+    {
+      "name": "SCP11c response returns own static SD point",
+      "passed": true
+    },
+    {
+      "name": "SCP11 15 independent ECDH/SHA256 counter-KDF/CMAC receipt agrees",
+      "passed": true
+    },
+    {
+      "name": "own c replay fixture re-establishes identical static-key receipt",
+      "passed": true
+    },
+    {
+      "name": "successful same-key c handshake rotates only ownership token; keys/list/counter preserved",
+      "passed": true
+    },
+    {
+      "name": "replayed own packet has independently verified valid C-MAC",
+      "passed": true
+    },
+    {
+      "name": "valid encrypted own c replay receives counter rejection with independently verified R-MAC",
+      "passed": true
+    },
+    {
+      "name": "rejected authenticated replay never changes persistent list/counter",
+      "passed": true
+    },
+    {
+      "name": "service restart preserves replay counter",
+      "passed": true
+    },
+    {
+      "name": "SCP11c rejects duplicate counter; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11c rejects bad serial tag with valid counter; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11c rejects ambiguous certificate/list envelope; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11c rejects counter without allowlist; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "rejected list data does not consume counter; corrected counter four succeeds",
+      "passed": true
+    },
+    {
+      "name": "non-c session forbids tag92: SCP03; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "non-c session forbids tag92: SCP11a; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "non-c allowlist writes retain per-CA replay counter",
+      "passed": true
+    },
+    {
+      "name": "CA replacement retains counter even while its list is absent",
+      "passed": true
+    },
+    {
+      "name": "replacement/restart cannot resurrect an older list counter; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "list/counter storage failure returns SDK-MAC-verified modeled 6581",
+      "passed": true
+    },
+    {
+      "name": "pre-rename storage failure preserves encrypted prior list/counter atomically",
+      "passed": true
+    },
+    {
+      "name": "failed commit terminates its old c channel; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "failed commit also rolls back live counter so same corrected counter succeeds",
+      "passed": true
+    },
+    {
+      "name": "counter upper boundary 32767 is accepted",
+      "passed": true
+    },
+    {
+      "name": "exhausted counter never clears/decreases/wraps: 7fff; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "exhausted counter never clears/decreases/wraps: 7ffe; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "exhausted counter never clears/decreases/wraps: 8000; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP03 clear and restart cannot reset exhausted c counter; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11c crypto/replay/counter/failure/restart tests preserve every peer application",
+      "passed": true
+    }
+  ],
+  "transport": "private CCID socket",
+  "physical_device_access": false,
+  "manufacturer_trust_reproduced": false,
+  "system_pcsc_reader_registered": false,
+  "independent_crypto": "ECDH, explicit SHA256 counter-KDF, AES-CMAC receipt/command/response; unchanged SDK secure messaging",
+  "source": {
+    "url": "https://globalplatform.org/wp-content/uploads/2023/08/GPC_2.3_F_SCP11_v1.3.0.13_PublicRvw.pdf",
+    "version": "1.3.0.13 public review",
+    "sections": [
+      "4.6",
+      "7.6.2.3",
+      "7.6.3.1",
+      "7.9"
+    ]
+  },
+  "vendor_sdk_expectation": "pinned Android/.NET c-session key-delete rejection; suites read only, never run on hardware",
+  "counter_range": [
+    1,
+    32767
+  ],
+  "unverified": [
+    "physical KDF/response/rejection/lifecycle vs finalized GP1.4",
+    "firmware SCP11c proprietary GENERATE and SD content transaction/rollback",
+    "multi-connection one-c-session-per-SD enforcement",
+    "critical subject-ID and certificate/allowlist scope",
+    "actual OS reader/browser interoperability"
+  ]
+}

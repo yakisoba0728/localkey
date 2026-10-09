@@ -1,0 +1,62 @@
+{
+  "passed": true,
+  "expected_fixed": false,
+  "transport": "private CTAPHID Unix socket",
+  "physical_device_access": false,
+  "malformed_statuses": [
+    "0x33",
+    "0x33",
+    "0x33",
+    "0x33"
+  ],
+  "retry_states": [
+    [
+      8,
+      null
+    ],
+    [
+      8,
+      null
+    ],
+    [
+      8,
+      null
+    ],
+    [
+      8,
+      null
+    ]
+  ],
+  "correct_before_power_cycle_status": "0x00",
+  "retries_after_power_cycle": [
+    8,
+    null
+  ],
+  "correct_after_power_cycle_status": "0x00",
+  "final_retries": [
+    8,
+    null
+  ],
+  "tests": [
+    {
+      "name": "malformed encrypted PIN proof consumes durable retry",
+      "passed": true
+    },
+    {
+      "name": "third malformed proof triggers PIN_AUTH_BLOCKED",
+      "passed": true
+    },
+    {
+      "name": "fourth malformed proof consumes no additional retry while softblocked",
+      "passed": true
+    },
+    {
+      "name": "correct PIN remains blocked until power cycle",
+      "passed": true
+    },
+    {
+      "name": "correct PIN after power cycle restores eight retries",
+      "passed": true
+    }
+  ]
+}

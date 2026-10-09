@@ -1,0 +1,18 @@
+--- a/emucard/core.py
++++ b/emucard/core.py
+@@ -1582,12 +1582,14 @@
+                     else ec.generate_private_key(ec.SECP256R1())
+                 )
+                 key = dump_key(private)
++            touch_policy = v.get(0x7A, b"\0")
++            require(len(touch_policy) == 1 and touch_policy[0] in (0, 1), 0x6A80)
+             d["credentials"][labelkey] = {
+                 "alg": alg,
+                 "key": key,
+                 "password": password.hex(),
+                 "retries": 8,
+-                "touch": bool(v.get(0x7A, b"\0")[0]),
++                "touch": bool(touch_policy[0]),
+             }
+             return
+         require(labelkey in d["credentials"], 0x6A82)

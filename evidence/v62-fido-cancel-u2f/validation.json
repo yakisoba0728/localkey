@@ -1,0 +1,134 @@
+{
+  "passed": true,
+  "reference": {
+    "document": "FIDO CTAP 2.1 Proposed Standard 2021-06-15",
+    "section": "11.2.9.1.5 CTAPHID_CANCEL",
+    "rule": "CANCEL received while no CTAPHID_CBOR request is being processed SHALL be ignored; same-CID INIT abort remains available under 11.2.5.3.",
+    "url": "https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html"
+  },
+  "source_patch_sha256": "f325d77e66df244934c528320e985ee1bbb33603fd198c6f34991d8b5d931c78",
+  "test_patch_sha256": "c1b9beefc4d627b6050294a5f632436372418c806ad69f2d3985ec8cfeb017b7",
+  "modified_loop_source_sha256": "22322d716c725bb73d1c2e894a1e9acc04616fe25c1d9552c49ec51c6ae10a00",
+  "binary_sha256": {
+    "public_v61_mac": "217b7bba225856e819fabfcc268c021c0b410fde864735590306484e8e355706",
+    "public_v61_linux": "7695ea56f875a2d8879a5a97c463b0b74c92d27212659210339f7c8eab34125c",
+    "candidate_v62_mac": "0d78e0cf19c9c2bfa421f2d939011d4cb635fc18036fd2db0cc42049c4a55bc8",
+    "candidate_v62_linux": "be775afaa71be1c04ed01e9b959857f3e6cebfbaa75e482ff924b8b9b86a032d"
+  },
+  "unit_tests": {
+    "linux_baseline_expected_failure": "one [u2f-cancel] case failed: old MSG was cancelled",
+    "mac_focused": "2 cases / 19 assertions passed",
+    "linux_focused": "2 cases / 19 assertions passed",
+    "mac_full": "138 cases / 13706 assertions passed",
+    "linux_full": "138 cases / 13706 assertions passed",
+    "logs_sha256": {
+      "linux-baseline-focused.log": "551e14f85e329e1a726c212617231f97043e9941b7d377a67e9e5b60d86eb616",
+      "mac-final-focused.log": "f0f14c21b3aa523c99393250589b400d94a783f9bec194998030b19b60fc7eb9",
+      "linux-final-focused.log": "0a8523e6c4bd249bedc792eec27c9444a2c07a4413833aa3067861aaa6fe2bae",
+      "mac-final-full.log": "8f7013d7de44d97385c81589cf10fc4e85181872384455a2e56279422e2fbeab",
+      "linux-final-full.log": "8c635e311adc3ca586b7e99828b230b1b49588acc81e220c9991fe7682749b0b"
+    }
+  },
+  "private_socket": {
+    "mac-baseline": {
+      "passed": true,
+      "u2f_status_hex": "6985",
+      "u2f_reply_length": 2,
+      "result_sha256": "5588355f5d243907bcb51ff753f0863738b3f92e1cd61dd73e56f4eb9129c640",
+      "daemon_log_sha256": "6d7ed1734ba5e66c3770d505d5a2a36a48ad50a7e0d68cec6ef083b24b943cdc",
+      "console_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "mac-fixed": {
+      "passed": true,
+      "u2f_status_hex": "9000",
+      "u2f_reply_length": 590,
+      "result_sha256": "5072f7d651e76855bfe59f11b0a8bf97bf6e8b890902590ffa6d3b539a185db0",
+      "daemon_log_sha256": "5e34499b205942c50337e470f2d158d8cfa9e44e6fb64a93585e3ed7450a40d6",
+      "console_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "linux-baseline": {
+      "passed": true,
+      "u2f_status_hex": "6985",
+      "u2f_reply_length": 2,
+      "result_sha256": "54ec1b900920327ba92f66c03f6c0211e1fbf8fdee37b3e1e52be6015aa67127",
+      "daemon_log_sha256": "a22122162d6450521a31fd7fc2126b75c7e7a955f432a9e9e8d38cc0cd168a12",
+      "console_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "linux-fixed": {
+      "passed": true,
+      "u2f_status_hex": "9000",
+      "u2f_reply_length": 589,
+      "result_sha256": "4421f8ce680ce2e89e75c6fdd1eb704f9ec9e3a8eb285f784339440d77a257d4",
+      "daemon_log_sha256": "f8cc48b19b81f1e33e236dd489ebd7fa00650f084de48634e1d2fc9a9c244214",
+      "console_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "owned_no_nic_usb": {
+    "baseline": {
+      "passed": true,
+      "u2f_status_hex": "6985",
+      "u2f_reply_length": 2,
+      "guest_report": {
+        "passed": true,
+        "mode": "baseline",
+        "guest_network_devices": false,
+        "host_usb_passthrough": false,
+        "physical_device_access": false,
+        "transport": "owned dummy_hcd FunctionFS FIDO endpoint 0x04/0x84",
+        "serial": "1863430876",
+        "active_cid_hex": "dd2d6344",
+        "worker_held_during_cancel": true,
+        "u2f_status_hex": "6985",
+        "u2f_reply_length": 2,
+        "u2f_reply_sha256": "7f32305d6fd0cc6010aebeb78e6a2a5e4f5a42bac47bedf92e9cae4d9bdd69c7",
+        "u2f_registration_tag_hex": "69",
+        "fresh_ping_ok": true
+      },
+      "inputs_sha256": "8d25515a5f5e2c49ff834b306ef0d2a94cee753a225c5889671372e48a2bf949",
+      "raw_console_sha256": "af06765168b3548a340f10642123e8ae403697a5943439f401a8a2262e1cc60c",
+      "guest_init_sha256": "8bdce22708b4c6f550f6eacceac754899fb15bf89795ba6188ab9224fc81d511",
+      "kernel_panic_observed": false
+    },
+    "fixed": {
+      "passed": true,
+      "u2f_status_hex": "9000",
+      "u2f_reply_length": 590,
+      "guest_report": {
+        "passed": true,
+        "mode": "fixed",
+        "guest_network_devices": false,
+        "host_usb_passthrough": false,
+        "physical_device_access": false,
+        "transport": "owned dummy_hcd FunctionFS FIDO endpoint 0x04/0x84",
+        "serial": "1200702341",
+        "active_cid_hex": "99e31481",
+        "worker_held_during_cancel": true,
+        "u2f_status_hex": "9000",
+        "u2f_reply_length": 590,
+        "u2f_reply_sha256": "38e1e2b113226204c731d8f599fdc2e5459cad3b7363ec9409dde7eccc819f46",
+        "u2f_registration_tag_hex": "05",
+        "fresh_ping_ok": true
+      },
+      "inputs_sha256": "23b2f87cda0b73ced9cc6cc42b6b4836d288ae8574a66efdc2ec06fb0ad52246",
+      "raw_console_sha256": "2d29958ba4fd4b25fbbcf492bdd97a707138b44bb0d9a052185d9ac37488a9a3",
+      "guest_init_sha256": "97f12f3fd15e8e4a98f1c91d84adb3cd3b97ba388425991a86ebcd9bb485e2e3",
+      "kernel_panic_observed": false
+    }
+  },
+  "safety": {
+    "physical_device_access": false,
+    "host_usb_access": false,
+    "host_hid_access": false,
+    "host_pcsc_access": false,
+    "host_keychain_access": false,
+    "host_keyboard_access": false,
+    "guest_network_devices": false,
+    "host_device_passthrough": false
+  },
+  "limits": [
+    "Physical YubiKey firmware response not measured.",
+    "USB A/B used owned no-NIC Linux dummy_hcd/FunctionFS guest with frozen v58 card/bridge and overlaid public v61/candidate v62 daemon; production UDC not exercised.",
+    "The first Linux socket baseline attempt raced CANCEL after worker completion and was not preserved as a file; final probe waits 200 ms while worker is held. The first attempt remains visible in tool transcript.",
+    "Finite USB runs cannot exclude rare kernel panic."
+  ]
+}

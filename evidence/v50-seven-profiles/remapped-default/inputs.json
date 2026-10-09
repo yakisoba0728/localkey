@@ -1,0 +1,31 @@
+{
+  "published_v49_version": "0.49.0",
+  "published_v49_bridge_sha256": "43d51da274874ea515a567e7bb54aa5bae6110cc6c5c428c2a3acedcfc808c31",
+  "published_v49_daemon_sha256": "fc0258674f0c42ccc087686589b90b34f6720af42db96b10451f1ed29555ef2d",
+  "published_v49_card_file_sha256": {
+    "__init__.py": "b3ac50ebe9c426cf689415f135b9049ac19e67de6808ad213dd7ad21b0bdbf67",
+    "client.py": "2b3b9b250a8c58e5a69b7265d770da364a902c6443edbad26e13da4794df9628",
+    "core.py": "4d2b50bf7a1a616696c66e1da1171f0b394a1c1a41b7e27323a7ba86eaa0f1d1",
+    "domain.py": "87a192dd4f76d6d1562abd94d8cef4ea0bd932ddb4e35991c61baffc4c0ea6a1",
+    "ifd.py": "cf173daf50ace2bd3718438a92769d40e3f8c470e364f68aeba06dd3dff83ecf",
+    "keyboard.py": "d058cc356978b0477f49cef11673f734a46465e58ebe0edb3910de5098ff1ece",
+    "management.py": "92e5929cabf930d7bfc2391037144dba5ec6a1e7424951a428f4f19398128c64",
+    "otp_hid.py": "c7a5f9c73cdb1c506b99343785436b25cf85f772602f8a1727aa0b71e9756136",
+    "pgp_algorithms.py": "445333c3f9cf9643eb2f6a446b456ae8519dab8a7758ebfe0e74f2755eedc0a5",
+    "pgp_extensions.py": "234e049d977bde85c5e608327be8f74d5311e525add058b94ea688177d969bd1",
+    "pgp_objects.py": "1a8b4a15812b2d0eb748813c3999ebfd4d298536bef1c78787153d8dc3c0d2c3",
+    "piv_objects.py": "6503c64561e904929d1aff05d127b9e1369f8a1961540f965ee00708c7b41664",
+    "profile.py": "319745d0f753de27edb2997f18f98809268fe8ecf84d20fb5acd3a6300cfe2ed",
+    "secure_channel.py": "40cd0713d623722b418d3d67ca20025eb33d4da15583df8058545c25e5b82073",
+    "service.py": "b08b9b27cd0757df8e4a2b1162a289e80696de91dda01e981026cbdb6a7130f2"
+  },
+  "base_v49_guest_image_sha256": "4d5885919a5312ab9c22c668dfdcf5f660dbff99778affd6928cbaa564983795",
+  "guest_image_sha256": "1085ebf1386594fa5cd245724897f8e66fc1c552c543384520979466622d1cb0",
+  "seven_profile_helper_sha256": "0be99361a7c0a88edd22276407e07eeeb1e033e095f4e0a88bb3421325b337e2",
+  "observer_sha256": "993707fa8bc663df551356b716a2ec3eae6b8eaf538cb519fb62d56cc65a42ad",
+  "dummy_hcd_is_high_speed": true,
+  "requested_ep_addresses": false,
+  "guest_network_devices": false,
+  "host_usb_passthrough": false,
+  "physical_device_access": false
+}

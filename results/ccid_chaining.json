@@ -1,0 +1,254 @@
+{
+  "passed": true,
+  "tests": [
+    {
+      "name": "CCID first command fragment acknowledges without APDU status",
+      "passed": true
+    },
+    {
+      "name": "first fragment does not dispatch or persist incomplete PIV command",
+      "passed": true
+    },
+    {
+      "name": "CCID middle command fragment preserves sequence wrap",
+      "passed": true
+    },
+    {
+      "name": "CCID final command fragment dispatches one complete extended APDU",
+      "passed": true
+    },
+    {
+      "name": "multi-frame PIV write commits its complete object",
+      "passed": true
+    },
+    {
+      "name": "large response begins with one bounded CCID part",
+      "passed": true
+    },
+    {
+      "name": "PIV response ends with the final chain indicator",
+      "passed": true
+    },
+    {
+      "name": "reassembled response preserves object bytes and final ISO status",
+      "passed": true
+    },
+    {
+      "name": "response continuation after completion is rejected",
+      "passed": true
+    },
+    {
+      "name": "orphan command continuation level 2 is rejected",
+      "passed": true
+    },
+    {
+      "name": "orphan command continuation level 3 is rejected",
+      "passed": true
+    },
+    {
+      "name": "reserved level parameter 4 is rejected",
+      "passed": true
+    },
+    {
+      "name": "reserved level parameter 17 is rejected",
+      "passed": true
+    },
+    {
+      "name": "reserved level parameter 255 is rejected",
+      "passed": true
+    },
+    {
+      "name": "duplicate first fragment drops incomplete command without dispatch",
+      "passed": true
+    },
+    {
+      "name": "whole APDU cannot silently replace a pending command fragment",
+      "passed": true
+    },
+    {
+      "name": "response continuation requires an empty command body",
+      "passed": true
+    },
+    {
+      "name": "new command cannot silently consume pending response continuation",
+      "passed": true
+    },
+    {
+      "name": "command accumulation rejects total size above 65544 bytes",
+      "passed": true
+    },
+    {
+      "name": "one CCID frame cannot exceed measured descriptor payload length",
+      "passed": true
+    },
+    {
+      "name": "ISO decoder accepts the full extended APDU envelope",
+      "passed": true
+    },
+    {
+      "name": "maximum ISO command is carried by CCID but exceeds PIV application buffer",
+      "passed": true
+    },
+    {
+      "name": "14 KiB PIV write is rejected atomically at the application boundary",
+      "passed": true
+    },
+    {
+      "name": "CCID transport fixture dispatches maximum ISO APDU exactly once",
+      "passed": true
+    },
+    {
+      "name": "14 KiB transport fixture exercises actual middle and final response parts",
+      "passed": true
+    },
+    {
+      "name": "large transport-only response preserves bytes and one final status",
+      "passed": true
+    },
+    {
+      "name": "completed ABORT discards incomplete command fragments",
+      "passed": true
+    },
+    {
+      "name": "completed ABORT discards unread response fragments",
+      "passed": true
+    },
+    {
+      "name": "power cycle discards outstanding CCID response chain",
+      "passed": true
+    },
+    {
+      "name": "socket client fragments bounded 3 KiB PIV extended write",
+      "passed": true
+    },
+    {
+      "name": "socket client collects all CCID response parts",
+      "passed": true
+    },
+    {
+      "name": "independent SDK reads chained object over socket",
+      "passed": true
+    },
+    {
+      "name": "socket carries maximum ISO command to PIV buffer rejection",
+      "passed": true
+    },
+    {
+      "name": "socket rejects oversized PIV replacement without data loss",
+      "passed": true
+    },
+    {
+      "name": "ifd client fragments bounded 3 KiB PIV extended write",
+      "passed": true
+    },
+    {
+      "name": "ifd client collects all CCID response parts",
+      "passed": true
+    },
+    {
+      "name": "independent SDK reads chained object over ifd",
+      "passed": true
+    },
+    {
+      "name": "ifd carries maximum ISO command to PIV buffer rejection",
+      "passed": true
+    },
+    {
+      "name": "ifd rejects oversized PIV replacement without data loss",
+      "passed": true
+    },
+    {
+      "name": "FIDO+CCID USB configuration matches reference bytes exactly",
+      "passed": true
+    },
+    {
+      "name": "FIDO HID report descriptor matches cached physical reference",
+      "passed": true
+    },
+    {
+      "name": "public USB release/class/control-size fields match reference metadata",
+      "passed": true
+    },
+    {
+      "name": "optional USB matching IDs follow measured 1050:0406 profile",
+      "passed": true
+    },
+    {
+      "name": "matching public descriptors preserve explicit independent software identity",
+      "passed": true
+    },
+    {
+      "name": "native USB routes a bounded multi-frame 3 KiB PIV write",
+      "passed": true
+    },
+    {
+      "name": "native USB collects multi-frame PIV response with final status",
+      "passed": true
+    },
+    {
+      "name": "independent PIV SDK reads complete object over measured USB profile",
+      "passed": true
+    },
+    {
+      "name": "native USB rejects oversized PIV object and preserves stored data",
+      "passed": true
+    },
+    {
+      "name": "time-extension test reaches pending actual service touch",
+      "passed": true
+    },
+    {
+      "name": "native CCID sends bounded WTX multiplier with original sequence",
+      "passed": true
+    },
+    {
+      "name": "WTX repeats while operation remains pending",
+      "passed": true
+    },
+    {
+      "name": "ABORT completes after WTX without another successful APDU",
+      "passed": true
+    },
+    {
+      "name": "waiting-time extensions and cancellation leave HOTP ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "independent SDK request enters delayed approval with WTX",
+      "passed": true
+    },
+    {
+      "name": "independent CCID client consumes WTX and keeps its SDK request pending",
+      "passed": true
+    },
+    {
+      "name": "independent OATH SDK completes after time extension and approval",
+      "passed": true
+    },
+    {
+      "name": "WTX followed by approval commits exactly one HOTP counter",
+      "passed": true
+    },
+    {
+      "name": "disconnect test enters card presence wait",
+      "passed": true
+    },
+    {
+      "name": "disconnect ends pending client request",
+      "passed": true
+    },
+    {
+      "name": "peer EOF releases shared state lock and allows a new reader",
+      "passed": true
+    },
+    {
+      "name": "disconnected operation rolls back without durable mutation",
+      "passed": true
+    },
+    {
+      "name": "independent SDK resumes after disconnected presence request",
+      "passed": true
+    }
+  ],
+  "scope": "fresh software fixtures; saved public USB metadata; no physical USB or OS registration"
+}

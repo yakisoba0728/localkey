@@ -1,0 +1,9 @@
+{
+  "runner_exit": 0,
+  "console_sha256": "ad2a2fd951ebcd0ece20abbbc8c5e7df5581086190905fbfd4f08f5672dfeb18",
+  "guest_image_sha256": "14a3b8a0c826401b63d93efba8bf0ec765e51ab2d0b001ac2100382cb82fd147",
+  "kernel_sha256": "6001f54164a5201cd5a80e0a09bb05c43fa6e910a0abfe0f5a4e8d7d781cc737",
+  "guest_network_devices": false,
+  "host_usb_passthrough": false,
+  "physical_device_access": false
+}

@@ -1,0 +1,96 @@
+{
+  "observed_utc": "2026-10-08T08:14:07.096578+00:00",
+  "reference": {
+    "product": "YubiKey FIDO+CCID",
+    "vid": 4176,
+    "pid": 1030,
+    "get_info_fields": {
+      "versions": [
+        "U2F_V2",
+        "FIDO_2_0",
+        "FIDO_2_1_PRE",
+        "FIDO_2_1"
+      ],
+      "extensions": [
+        "credProtect",
+        "hmac-secret",
+        "largeBlobKey",
+        "credBlob",
+        "minPinLength"
+      ],
+      "aaguid": "ff4dac45ede84ec2acedcf66103f4335",
+      "options": {
+        "rk": true,
+        "up": true,
+        "plat": false,
+        "alwaysUv": false,
+        "credMgmt": true,
+        "authnrCfg": true,
+        "clientPin": true,
+        "largeBlobs": true,
+        "pinUvAuthToken": true,
+        "setMinPINLength": true,
+        "makeCredUvNotRqd": true,
+        "credentialMgmtPreview": true
+      },
+      "max_msg_size": 1536,
+      "pin_uv_protocols": [
+        2,
+        1
+      ],
+      "max_creds_in_list": 8,
+      "max_cred_id_length": 128,
+      "transports": [
+        "usb"
+      ],
+      "algorithms": [
+        {
+          "alg": -7,
+          "type": "public-key"
+        },
+        {
+          "alg": -8,
+          "type": "public-key"
+        },
+        {
+          "alg": -35,
+          "type": "public-key"
+        }
+      ],
+      "max_large_blob": 4096,
+      "force_pin_change": false,
+      "min_pin_length": 4,
+      "firmware_version": 329476,
+      "max_cred_blob_length": 32,
+      "max_rpids_for_min_pin": 1,
+      "remaining_disc_creds": 99
+    },
+    "present_cbor_keys": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      20
+    ]
+  },
+  "commands_sent": [
+    "CTAPHID_INIT",
+    "authenticatorGetInfo"
+  ],
+  "pin_attempts_performed": 0,
+  "credential_mutations_performed": 0,
+  "device_config_writes_performed": 0,
+  "serial_number_saved": false
+}

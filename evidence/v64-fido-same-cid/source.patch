@@ -1,0 +1,17 @@
+--- a/source/src/ctap/hid_device.cpp
++++ b/source/src/ctap/hid_device.cpp
+@@ -189,6 +189,14 @@
+     return fail(cid, HidErr::ChannelBusy);
+   }
+ 
++  // The processing CID also owns the current transaction. Only INIT may
++  // resynchronize it and CANCEL may abort it; a second request must wait.
++  if (inflight && cid == *inflight && (report[4] & kTypeInit) &&
++      report[4] != (kTypeInit | kCmdInit) &&
++      report[4] != (kTypeInit | kCmdCancel)) {
++    return fail(cid, HidErr::ChannelBusy);
++  }
++
+   auto r = framer_.ingest(report);
+   if (!r) {
+     return fail(cid, r.error());

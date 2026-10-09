@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  launchd LaunchAgent for swpasskeyd.app (macOS).
+
+    cp packaging/macos/com.tangzixiang.swpasskey.daemon.plist ~/Library/LaunchAgents/
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.tangzixiang.swpasskey.daemon.plist
+
+  Manual alternative to Preferences > "Launch at login" in the app's menu bar
+  item, which registers the copy of this agent embedded in the bundle
+  (Contents/Library/LaunchAgents, BundleProgram) via SMAppService. Do not use
+  both. Presence is an
+  NSAlert on the main thread, so the agent must run in the Aqua session
+  (LimitLoadToSessionType). Edit ProgramArguments if the bundle lives
+  elsewhere than /Applications. No StandardErrorPath: the daemon writes its
+  log to ~/Library/Logs/swpasskey/swpasskeyd.log itself (a fixed /tmp path
+  is shared by every local user).
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.tangzixiang.swpasskey.daemon</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Applications/swpasskeyd.app/Contents/MacOS/swpasskeyd</string>
+    <string>--key-backend=auto</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>SWPASSKEY_LOG</key>
+    <string>info</string>
+    <key>SWPASSKEY_PRESENCE</key>
+    <string>alert</string>
+  </dict>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <dict>
+    <key>SuccessfulExit</key>
+    <false/>
+  </dict>
+  <key>LimitLoadToSessionType</key>
+  <string>Aqua</string>
+  <key>ProcessType</key>
+  <string>Interactive</string>
+</dict>
+</plist>

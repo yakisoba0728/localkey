@@ -1,0 +1,104 @@
+{
+  "passed": true,
+  "native_checks": 534,
+  "same_original40_source_and_binaries": true,
+  "frozen40_archive_sha256": "c327a32eb64f6f8fdb1fc0a343cf76e8c52d5680e170ae623f77f2a79ea6a7d5",
+  "original_source_sha256": "d1be0586e061e3529bfea2fc4d3b716a137a6f10032dac94fe16d7eac3786dfc",
+  "full_size_mode_matrix": [
+    {
+      "total_response_bytes": 2047,
+      "mode": "manual-on"
+    },
+    {
+      "total_response_bytes": 2047,
+      "mode": "native-fido-sdk"
+    },
+    {
+      "total_response_bytes": 2047,
+      "mode": "new-usbfs-open"
+    },
+    {
+      "total_response_bytes": 2048,
+      "mode": "manual-on"
+    },
+    {
+      "total_response_bytes": 2048,
+      "mode": "native-fido-sdk"
+    },
+    {
+      "total_response_bytes": 2048,
+      "mode": "new-usbfs-open"
+    },
+    {
+      "total_response_bytes": 2049,
+      "mode": "manual-on"
+    },
+    {
+      "total_response_bytes": 2049,
+      "mode": "native-fido-sdk"
+    },
+    {
+      "total_response_bytes": 2049,
+      "mode": "new-usbfs-open"
+    },
+    {
+      "total_response_bytes": 3071,
+      "mode": "manual-on"
+    },
+    {
+      "total_response_bytes": 3071,
+      "mode": "native-fido-sdk"
+    },
+    {
+      "total_response_bytes": 3071,
+      "mode": "new-usbfs-open"
+    },
+    {
+      "total_response_bytes": 3072,
+      "mode": "manual-on"
+    },
+    {
+      "total_response_bytes": 3072,
+      "mode": "native-fido-sdk"
+    },
+    {
+      "total_response_bytes": 3072,
+      "mode": "new-usbfs-open"
+    },
+    {
+      "total_response_bytes": 3073,
+      "mode": "manual-on"
+    },
+    {
+      "total_response_bytes": 3073,
+      "mode": "native-fido-sdk"
+    },
+    {
+      "total_response_bytes": 3073,
+      "mode": "new-usbfs-open"
+    }
+  ],
+  "prefix_bytes": 64,
+  "runtime_cycles": 18,
+  "independent_original_fido_signatures": 19,
+  "independent_original_piv_signatures": 19,
+  "ordinary_hotp_final_counter": 18,
+  "post_resume_pin_and_management_authorization_revoked_cases": 18,
+  "original3073_first_packet_retained_and_following_chain_inactive_denied_cases": 3,
+  "original3073_complete_original_apdu_across_card_reset_verified": false,
+  "raw_io_event_completion_res_payload_recorded": false,
+  "current_published_release40_extended_runtime_report_added": false,
+  "source_repair_justified": false,
+  "files": {
+    "verify-usb-large-partial-runtime-prototype.py": "213ecf07b2354b13e4da5c50283ba6ed505473709774aeaa1eb23ab94c5355f6",
+    "build-guest.py": "d80e46fd6568ff5c121daa5be8fae47d1e957665baab6422811ca6bff00cb0ea",
+    "validate-original40-runtime-expanded.py": "800eeab47c2e99adb40c6b4209346da94887cf1fe54906905c515328f4272a27",
+    "result.json": "1b60b672262b2cb89cb3a51b049f661dc55f59a24ce4f85f7f045d52cefe25b8",
+    "host-runner.log": "0c645ad13dc86714e739a826d5eb9090ff2269fcb7c183053a3e2b9012c2bf35",
+    "console.log": "f09dd32a7c58035274ad5b882042a127ec2b296ff8e33aad6e7bd509b5d6d30b",
+    "guest-build-manifest.json": "261e56894e646b93e6af35726fd6f10d27c1a8f15aeec28ab913b582fb75a76b",
+    "guest-init.sh": "36076aed677232176d75c3098eb9d3792085d741f3998b8417c95984fe728a89",
+    "native-ccid-io.py": "19b0a8dae534d82eed031bf4748ead2f7e33a869ebff0b6734d234b025566763",
+    "build-and-run-expanded.py": "a733aa33eba8feb50dc103eef368560678c239f73fc4552ce3ce0a581b421928"
+  }
+}

@@ -1,0 +1,46 @@
+--- v52-stage/emucard/service.py
++++ v53-reset/emucard/service.py
+@@ -186,6 +186,10 @@
+                 self.keyboard_usb_events.clear()
+                 self.keyboard_last_poll = float("-inf")
+                 self.keyboard_subscriber = None
++
++    def pause_keyboard_usb_subscriber(self, subscriber):
++        """Discard pending reports when the USB transport loses configuration."""
++        self.end_keyboard_usb_subscriber(subscriber)
+ 
+ 
+ class Handler(socketserver.BaseRequestHandler):
+@@ -247,6 +251,13 @@
+                     response = self.server.drain_keyboard_usb_events(
+                         int.from_bytes(packet[1:9], "big"), capacity, token
+                     )
++                    self.request.sendall(struct.pack(">I", len(response)) + response)
++                    continue
++                if n == 9 and packet[0] == 13:
++                    if any(packet[1:]):
++                        raise ValueError("invalid USB keyboard reset RPC frame")
++                    self.server.pause_keyboard_usb_subscriber(token)
++                    response = struct.pack(">HH", 0x9000, 0)
+                     self.request.sendall(struct.pack(">I", len(response)) + response)
+                     continue
+                 if n == 9 and packet[:2] == b"\x05\0":
+--- v52-stage/source/src/usb/backend.hpp
++++ v53-reset/source/src/usb/backend.hpp
+@@ -319,6 +319,16 @@
+   void reset() {
+     usb_suspended_ = false;
+ 
++#ifdef __linux__
++    // A plain USB bus reset can leave the management generation unchanged.
++    // Stop the service-side software-touch subscription before reenabling USB,
++    // or a report produced while disconnected could be typed on reconnect.
++    std::array<std::uint8_t,9> pause_keyboard{};
++    pause_keyboard[0] = 13;
++    if (auxiliary.exchange(pause_keyboard) != Bytes{0x90,0,0,0})
++      throw std::runtime_error("USB keyboard reset failed");
++#endif
++
+     (void)abort_rpc(0,255);
+     {
+       std::lock_guard guard(ccid_mutex_);

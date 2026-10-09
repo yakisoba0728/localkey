@@ -1,0 +1,71 @@
+--- a/source/src/ctap/make_credential.cpp
++++ b/source/src/ctap/make_credential.cpp
+@@ -28,7 +28,7 @@
+   detail::Options options;
+   std::optional<std::vector<std::uint8_t>> pin_uv_auth_param;
+   std::optional<std::uint64_t> pin_uv_auth_protocol;
+-  bool enterprise_attestation{false};
++  std::optional<std::uint64_t> enterprise_attestation;
+ };
+ 
+ Result<MakeCredentialRequest> parse(std::span<const std::uint8_t> body) {
+@@ -102,9 +102,12 @@
+         break;
+       }
+       case 0x0A: {
+-        auto v = r.boolean();
+-        if (!v) return std::unexpected(v.error());
+-        q.enterprise_attestation = true;
++        // CTAP 2.1 defines enterpriseAttestation as an unsigned integer.
++        // Preserve presence, including a value of zero, for the unsupported
++        // feature check below.
++        auto v = r.uint();
++        if (!v) return std::unexpected(v.error());
++        q.enterprise_attestation = *v;
+         break;
+       }
+       default:
+@@ -132,7 +135,7 @@
+   if (!q) {
+     return fail(q.error());
+   }
+-  if (q->enterprise_attestation) {
++  if (q->enterprise_attestation.has_value()) {
+     return fail(Status::InvalidParameter);
+   }
+   if (q->rp->id.empty() || q->rp->id.size() > 255) {
+--- a/source/tests/ctap_test_util.hpp
++++ b/source/tests/ctap_test_util.hpp
+@@ -135,7 +135,7 @@
+   std::optional<bool> rk{true}, up, uv;
+   std::optional<std::uint64_t> cred_protect;
+   bool hmac_create_secret{false};
+-  bool enterprise{false};
++  std::optional<std::uint64_t> enterprise;
+   std::optional<std::vector<std::uint8_t>> pin_auth;
+   std::optional<std::uint64_t> pin_protocol;
+   int alg{-7};
+@@ -205,7 +205,7 @@
+   }
+   if (o.pin_auth) m.emplace_back(Writer::encode_uint(8), Writer::encode_bstr(*o.pin_auth));
+   if (o.pin_protocol) m.emplace_back(Writer::encode_uint(9), Writer::encode_uint(*o.pin_protocol));
+-  if (o.enterprise) m.emplace_back(Writer::encode_uint(10), Writer::encode_bool(true));
++  if (o.enterprise) m.emplace_back(Writer::encode_uint(10), Writer::encode_uint(*o.enterprise));
+   Writer w;
+   w.write_map(std::move(m));
+   auto body = w.finish();
+--- a/source/tests/make_credential_test.cpp
++++ b/source/tests/make_credential_test.cpp
+@@ -82,7 +82,11 @@
+   o.cred_protect = 1;
+   REQUIRE(rig.call(make_cred_request(o)).has_value());
+   o = {};
+-  o.enterprise = true;
++  o.enterprise = 1;
++  REQUIRE(rig.call(make_cred_request(o)).error() == Status::InvalidParameter);
++  o.enterprise = 2;
++  REQUIRE(rig.call(make_cred_request(o)).error() == Status::InvalidParameter);
++  o.enterprise = 0;
+   REQUIRE(rig.call(make_cred_request(o)).error() == Status::InvalidParameter);
+   o = {};
+   o.alg = -257;

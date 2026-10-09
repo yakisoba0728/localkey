@@ -1,0 +1,18 @@
+{
+  "root": "/Users/yakisoba0728/Documents/Codex/2026-10-07/new-chat/work/v54-card-candidate",
+  "missing_symmetric_status": {
+    "71": 27264,
+    "74": 27264,
+    "73": 27264,
+    "75": 27264,
+    "76": 27264
+  },
+  "missing_asymmetric_7D_status": 27264,
+  "zero_length_asymmetric_7D_status": 36864,
+  "valid_symmetric_status": 36864,
+  "stored_labels": [
+    "asymmetric",
+    "symmetric"
+  ],
+  "management_retries": 8
+}

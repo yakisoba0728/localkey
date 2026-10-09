@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "variant": "baseline",
+  "platform": "mac",
+  "route": "socket",
+  "unmodified_yubikit": true,
+  "private_ccid_or_direct_ifd": true,
+  "physical_or_host_device_access": false,
+  "network_devices": false,
+  "core_sha256": "f6587c70da88ca9f4e73779c49642471b3d0dbc84c58b84d6c26980404163a59",
+  "credential_count": 24,
+  "expected_list_length": 504,
+  "first_sw": "61ff",
+  "malformed_cla_sw": "61f7",
+  "malformed_cla_consumed_bytes": 256,
+  "valid_remainder_matches_expected": false,
+  "continuation_statuses": [
+    "9000"
+  ],
+  "state_sha256": "41a54cd4a439d65ae60ed1a22aebe3540ab8ef9cab72f7bf65fceb2e6649c293"
+}

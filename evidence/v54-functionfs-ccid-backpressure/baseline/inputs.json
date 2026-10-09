@@ -1,0 +1,12 @@
+{
+  "mode": "baseline",
+  "published_bridge_sha256": "bf4fa53e6ed7ce3fdf98adb8c3909bbf22da3d7b71014d122badd0ba0f69075e",
+  "bridge_sha256": "bf4fa53e6ed7ce3fdf98adb8c3909bbf22da3d7b71014d122badd0ba0f69075e",
+  "probe_sha256": "b6555b7e3904ffedad23f7f0f65ddb230d5c9ec36e41ca51c57c6d38fdede384",
+  "base_guest_sha256": "ef1ae26ee70acbf70d97387687a63791454070f2d1d693d1d4e09c4989a2dab2",
+  "guest_image_sha256": "6d4359a3934a22af17e7976a7bd8f2294876ef1e4462d6d6fbb88e4305525d1f",
+  "kernel_sha256": "6001f54164a5201cd5a80e0a09bb05c43fa6e910a0abfe0f5a4e8d7d781cc737",
+  "guest_network_devices": false,
+  "host_usb_passthrough": false,
+  "physical_device_access": false
+}

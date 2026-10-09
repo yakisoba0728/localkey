@@ -1,0 +1,13 @@
+--- a/emucard/core.py
++++ b/emucard/core.py
+@@ -509,6 +509,10 @@
+             header = (apdu.cla & ~0x10, apdu.ins, apdu.p1, apdu.p2)
+             if self.chain_header is not None:
+                 require(header == self.chain_header, 0x6883)
++            if self.selected == AID.OPENPGP and apdu.ins == 0xCA:
++                # OpenPGP GET DATA has only CLA 00/0C in section 7.2.6;
++                # reject an invalid chained prefix before recording it.
++                require(not (apdu.cla & 0x10), 0x6E00)
+             if apdu.cla & 0x10:
+                 limit = PIV_APDU_DATA_LENGTH if self.selected == AID.PIV else 32768
+                 require(len(self.chained) + len(apdu.data) <= limit, 0x6700)

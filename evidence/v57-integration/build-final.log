@@ -1,0 +1,51 @@
+[  8%] Built target swpasskey_cbor
+[ 12%] Built target swpasskey_log
+[ 16%] Building CXX object CMakeFiles/swpasskey_hid.dir/src/hid/socket_transport.cpp.o
+[ 16%] Building CXX object CMakeFiles/swpasskey_hid.dir/src/hid/uhid_transport.cpp.o
+[ 29%] Built target swpasskey_crypto
+[ 37%] Built target swpasskey_store
+[ 45%] Built target swpasskey_ui
+[ 50%] Building CXX object CMakeFiles/swpasskey_ctap.dir/src/ctap/hid_device.cpp.o
+[ 50%] Building CXX object CMakeFiles/swpasskey_ctap.dir/src/ctap/client_pin.cpp.o
+[ 54%] Linking CXX static library libswpasskey_hid.a
+[ 54%] Built target swpasskey_hid
+[ 54%] Linking CXX static library libswpasskey_ctap.a
+[ 75%] Built target swpasskey_ctap
+[ 75%] Building CXX object CMakeFiles/swpasskey_daemon.dir/src/daemon/loop.cpp.o
+[ 75%] Linking CXX static library libswpasskey_daemon.a
+[ 83%] Built target swpasskey_daemon
+[ 87%] Building CXX object CMakeFiles/swpasskey_ctl.dir/src/ctl/server.cpp.o
+[ 87%] Linking CXX static library libswpasskey_ctl.a
+[ 91%] Built target swpasskey_ctl
+[ 95%] Building CXX object CMakeFiles/swpasskeyd.dir/src/daemon/main.cpp.o
+[100%] Linking CXX executable swpasskeyd
+[100%] Built target swpasskeyd
+[ 13%] Built target swpasskey_log
+[ 13%] Built target swpasskey_cbor
+[ 26%] Built target swpasskey_crypto
+[ 34%] Built target swpasskey_store
+[ 43%] Built target swpasskey_ui
+[ 52%] Built target swpasskey_hid
+[ 78%] Built target swpasskey_ctap
+[ 86%] Built target swpasskey_daemon
+[ 95%] Built target swpasskey_ctl
+[100%] Building CXX object CMakeFiles/swpasskeyctl.dir/src/ctl/main.cpp.o
+[100%] Linking CXX executable swpasskeyctl
+[100%] Built target swpasskeyctl
+[  1%] Built target swpasskey_log
+[  3%] Built target swpasskey_cbor
+[  5%] Built target swpasskey_hid
+[  8%] Built target swpasskey_crypto
+[ 10%] Built target swpasskey_store
+[ 13%] Built target swpasskey_ui
+[ 19%] Built target swpasskey_ctap
+[ 21%] Built target swpasskey_daemon
+[ 23%] Built target swpasskey_ctl
+[ 84%] Built target Catch2
+[ 85%] Built target Catch2WithMain
+[ 86%] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/hid_device_test.cpp.o
+[ 86%] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/ctl_test.cpp.o
+[ 86%] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/pin_test.cpp.o
+[ 86%] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/keepalive_loop_test.cpp.o
+[ 86%] Linking CXX executable swpasskey_tests
+[100%] Built target swpasskey_tests

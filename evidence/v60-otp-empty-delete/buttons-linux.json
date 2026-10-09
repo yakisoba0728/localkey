@@ -1,0 +1,184 @@
+{
+  "passed": true,
+  "tests": [
+    {
+      "name": "software button HOTP RFC4226 vectors",
+      "passed": true
+    },
+    {
+      "name": "software button Yubico OTP independently decrypted and CRC verified",
+      "passed": true
+    },
+    {
+      "name": "software button Yubico OTP independently decrypted and CRC verified",
+      "passed": true
+    },
+    {
+      "name": "software button OTP session counter increases",
+      "passed": true
+    },
+    {
+      "name": "software button OTP use counter advances after power reset",
+      "passed": true
+    },
+    {
+      "name": "software button static password preserves HID scan codes",
+      "passed": true
+    },
+    {
+      "name": "static ticket stays constant across button presses",
+      "passed": true
+    },
+    {
+      "name": "static ticket independent AES and CRC verification",
+      "passed": true
+    },
+    {
+      "name": "Yubico manual static password digit transform example",
+      "passed": true
+    },
+    {
+      "name": "Yubico manual static password combined uppercase transform example",
+      "passed": true
+    },
+    {
+      "name": "Yubico manual static password special-character example",
+      "passed": true
+    },
+    {
+      "name": "short static ticket with strong-password prefix",
+      "passed": true
+    },
+    {
+      "name": "USB keyboard shift, press and release reports",
+      "passed": true
+    },
+    {
+      "name": "USB keyboard appends configured enter",
+      "passed": true
+    },
+    {
+      "name": "USB keyboard navigation ordering",
+      "passed": true
+    },
+    {
+      "name": "USB keyboard pacing and half-second delays",
+      "passed": true
+    },
+    {
+      "name": "software button denied user presence produces no output",
+      "passed": true
+    },
+    {
+      "name": "400 malformed APDUs return bounded status responses",
+      "passed": true
+    },
+    {
+      "name": "OATH only-increasing property rejects repeated challenge",
+      "passed": true
+    },
+    {
+      "name": "OATH only-increasing property accepts newer challenge",
+      "passed": true
+    },
+    {
+      "name": "failed PIN retry persistence returns storage error and restores memory",
+      "passed": true
+    },
+    {
+      "name": "Yubico challenge-response independently decrypted with nonzero private UID",
+      "passed": true
+    },
+    {
+      "name": "OTP session rollover advances persistent usage counter",
+      "passed": true
+    },
+    {
+      "name": "OTP persistent counter saturates at its documented 15-bit limit",
+      "passed": true
+    },
+    {
+      "name": "slot 1 protection blocks initial slot 2 provisioning",
+      "passed": true
+    },
+    {
+      "name": "slot 1 protection also prevents swap into slot 2",
+      "passed": true
+    },
+    {
+      "name": "preexisting slot 2 self-protection overrides slot 1 lock",
+      "passed": true
+    },
+    {
+      "name": "deleting self-protected slot 2 restores slot 1 provisioning lock",
+      "passed": true
+    },
+    {
+      "name": "dormant slot produces no keyboard output",
+      "passed": true
+    },
+    {
+      "name": "authenticated configuration update wakes dormant slot",
+      "passed": true
+    },
+    {
+      "name": "flags-only update restores dormancy after activation",
+      "passed": true
+    },
+    {
+      "name": "OTP serial API hidden when no slot opts in",
+      "passed": true
+    },
+    {
+      "name": "OTP serial visibility is merged across slots",
+      "passed": true
+    },
+    {
+      "name": "SDK 45-byte scan map controls modhex keyboard usage and modifier",
+      "passed": true
+    },
+    {
+      "name": "scan map preserves explicitly stored static-password scan codes",
+      "passed": true
+    },
+    {
+      "name": "long hold arms manual update without changing or typing the password",
+      "passed": true
+    },
+    {
+      "name": "manual update confirmation requires fresh user presence",
+      "passed": true
+    },
+    {
+      "name": "denied manual update preserves existing password",
+      "passed": true
+    },
+    {
+      "name": "confirmed manual update randomizes static password and keeps new output stable",
+      "passed": true
+    },
+    {
+      "name": "manual update rejects a changed configuration after arming",
+      "passed": true
+    },
+    {
+      "name": "session reset cancels pending manual password update",
+      "passed": true
+    },
+    {
+      "name": "documented long release window selects slot 2",
+      "passed": true
+    },
+    {
+      "name": "button duration between slot windows produces no output",
+      "passed": true
+    },
+    {
+      "name": "ambiguous two-slot manual update changes neither password",
+      "passed": true
+    }
+  ],
+  "physical_device_access": false,
+  "transport": "software button API and serialized in-process APDUs",
+  "os_keyboard_events": false
+}

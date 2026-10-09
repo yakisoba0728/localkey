@@ -1,0 +1,7 @@
+# v0.60 PIV MOVE/DELETE KEY APDU shape candidate
+
+Published v0.59 accepts `INS F6` with extra command data or an explicit `Le=1` and moves or deletes a private key. The [YubiKey 5.7 PIV command table](https://docs.yubico.com/hardware/yubikey/yk-tech-manual/yk5-firmware-5.7.html#move-a-key) defines MOVE/DELETE KEY by CLA, INS, P1 and P2, and the current unmodified YubiKit `PivSession.move_key`/`delete_key` sends exactly those four fields. The candidate rejects malformed forms before key mutation. A five-byte trailing `00` remains accepted because it is indistinguishable from YubiKit's short no-data/no-Le encoding.
+
+The private CCID socket and direct IFD ABI A/B tests ran on macOS and no-network Linux ARM64, using only newly generated emulator keys. In all four routes, the published baseline accepted four malformed commands (`move` and `delete`, each with extra data or explicit `Le=1`) with `9000` and changed the stored key map. The candidate returned the software-model `6700` and preserved the key map. After each malformed command, an unmodified YubiKit session survived restart and performed a normal move and delete. Candidate broad smartcard/SDK regression passed 97/97 on macOS and Linux. The command, status, state comparison and route are retained in the eight `*-{mac,linux}-{socket,ifd}.json` files and `summary.json`.
+
+This is source-backed APDU syntax and software-state validation. The physical YubiKey 5C Nano 5.7.4 error status and malformed-command tolerance were not measured. No physical key, host USB/PCSC reader or Keychain was accessed.

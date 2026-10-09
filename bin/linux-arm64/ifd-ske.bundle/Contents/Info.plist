@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>CFBundleIdentifier</key><string>local.ske.ifd</string>
+  <key>CFBundleName</key><string>Software Emulator CCID Reader</string>
+  <key>CFBundleExecutable</key><string>ske-ifd.so</string>
+  <key>CFBundlePackageType</key><string>BNDL</string>
+  <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+  <key>CFBundleVersion</key><string>0.42.0</string>
+  <key>ifdManufacturerString</key><string>Local software emulator</string>
+  <key>ifdProductString</key><string>Private CCID socket reader</string>
+  <key>ifdProtocolSupport</key><string>0x00000002</string>
+  <key>ifdVersionNumber</key><string>0x00030000</string>
+  <key>ifdCapabilities</key><string>0x00000000</string>
+</dict></plist>

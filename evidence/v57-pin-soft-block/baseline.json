@@ -1,0 +1,66 @@
+{
+  "passed": true,
+  "expected_fixed": false,
+  "transport": "private CTAPHID Unix socket",
+  "physical_device_access": false,
+  "wrong_pin_statuses": [
+    "0x31",
+    "0x31",
+    "0x31",
+    "0x31"
+  ],
+  "wrong_pin_retry_states": [
+    [
+      7,
+      null
+    ],
+    [
+      6,
+      null
+    ],
+    [
+      5,
+      null
+    ],
+    [
+      4,
+      null
+    ]
+  ],
+  "correct_before_power_cycle_status": "0x00",
+  "retries_before_power_cycle": [
+    8,
+    null
+  ],
+  "retries_after_power_cycle": [
+    8,
+    null
+  ],
+  "correct_after_power_cycle_status": "0x00",
+  "final_retries": [
+    8,
+    null
+  ],
+  "tests": [
+    {
+      "name": "baseline lacks third-attempt soft block",
+      "passed": true
+    },
+    {
+      "name": "baseline consumes a fourth retry",
+      "passed": true
+    },
+    {
+      "name": "baseline accepts correct PIN without power cycle",
+      "passed": true
+    },
+    {
+      "name": "baseline correct PIN resets durable retries",
+      "passed": true
+    },
+    {
+      "name": "correct PIN after power cycle restores eight retries",
+      "passed": true
+    }
+  ]
+}

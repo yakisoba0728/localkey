@@ -1,0 +1,22 @@
+Filters: [loop] [resync]
+Randomness seeded to: 913397252
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+swpasskey_tests is a Catch2 v3.8.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+allocated INIT discards a late response from its aborted transaction
+-------------------------------------------------------------------------------
+/Users/yakisoba0728/Documents/Codex/2026-10-07/new-chat/work/v58-usb-candidate/baseline-source/tests/keepalive_loop_test.cpp:227
+...............................................................................
+
+/Users/yakisoba0728/Documents/Codex/2026-10-07/new-chat/work/v58-usb-candidate/baseline-source/tests/keepalive_loop_test.cpp:252: FAILED:
+  REQUIRE_FALSE( r.t.host_read(500ms).has_value() )
+with expansion:
+  !true
+
+===============================================================================
+test cases: 1 | 1 failed
+assertions: 9 | 8 passed | 1 failed
+

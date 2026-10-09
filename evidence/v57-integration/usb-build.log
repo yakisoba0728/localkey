@@ -1,0 +1,5 @@
+[ 50%] Building CXX object CMakeFiles/ske-usbd.dir/src/usb/composite.cpp.o
+[100%] Building CXX object CMakeFiles/ske-usbd.dir/src/pcsc/reader.cpp.o
+[100%] Building CXX object CMakeFiles/ske-usbd.dir/src/usb/linux.cpp.o
+[100%] Linking CXX executable ske-usbd
+[100%] Built target ske-usbd

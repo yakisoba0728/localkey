@@ -1,0 +1,31 @@
+{
+  "card_file_sha256": {
+    "__init__.py": "b3ac50ebe9c426cf689415f135b9049ac19e67de6808ad213dd7ad21b0bdbf67",
+    "client.py": "8dd1fe3584f3e5cd2fdb885702bfc776536a0f82799b358dab6c9ca92897a283",
+    "core.py": "01d693a5ee5e1ab4781a62d6617822b9113d1e66a557dc6d359becc23d384086",
+    "domain.py": "87a192dd4f76d6d1562abd94d8cef4ea0bd932ddb4e35991c61baffc4c0ea6a1",
+    "ifd.py": "cf173daf50ace2bd3718438a92769d40e3f8c470e364f68aeba06dd3dff83ecf",
+    "keyboard.py": "d058cc356978b0477f49cef11673f734a46465e58ebe0edb3910de5098ff1ece",
+    "management.py": "163d0f51dbb34b3f1c2d33ff63053d44b959ea478883b946771cd1a54cef7810",
+    "otp_hid.py": "c7a5f9c73cdb1c506b99343785436b25cf85f772602f8a1727aa0b71e9756136",
+    "pgp_algorithms.py": "445333c3f9cf9643eb2f6a446b456ae8519dab8a7758ebfe0e74f2755eedc0a5",
+    "pgp_extensions.py": "234e049d977bde85c5e608327be8f74d5311e525add058b94ea688177d969bd1",
+    "pgp_objects.py": "1a8b4a15812b2d0eb748813c3999ebfd4d298536bef1c78787153d8dc3c0d2c3",
+    "piv_objects.py": "b3c656f90d3f5ba5aeb7129529a4e2f0a86887e8a2ece2837e67e715e568d0ba",
+    "profile.py": "319745d0f753de27edb2997f18f98809268fe8ecf84d20fb5acd3a6300cfe2ed",
+    "secure_channel.py": "40cd0713d623722b418d3d67ca20025eb33d4da15583df8058545c25e5b82073",
+    "service.py": "94640c0a5353fc75b7c46cfa8983d7da1f2a72965173036723b4471946b123d6"
+  },
+  "linux_binary_sha256": {
+    "ske-usbd": "fea776ed901cdcff295ae9dba1190394964dec38f1020a7290d14478a677066c",
+    "swpasskeyd": "317f02d89bb42d7ebabd65425d4bcae71d6392ef756c11b5ac71849b1ffafc0a",
+    "ske-otpd": "a0b7dc5f346df4ff390070fbba0574b113d99677271a2516b6cfa2cd283fc3ac"
+  },
+  "backend_source_sha256": "c57ecc0c180eddb5af727f11e13e0ac4fa2c3ef7f0492ce0f291b6e33604912b",
+  "base_guest_sha256": "3ab43741f396c63bb3b2fe62a79afb0598b4f4f59b0be57d65ac47acb7b90fb1",
+  "guest_image_sha256": "f6bf63c6ad749249bed1b739aaea56cc5130a4eb3ef8251feb8ccd3071330492",
+  "kernel_sha256": "6001f54164a5201cd5a80e0a09bb05c43fa6e910a0abfe0f5a4e8d7d781cc737",
+  "guest_network_devices": false,
+  "host_usb_passthrough": false,
+  "physical_device_access": false
+}

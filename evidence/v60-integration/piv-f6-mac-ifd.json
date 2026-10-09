@@ -1,0 +1,41 @@
+{
+  "passed": true,
+  "fixed": true,
+  "route": "direct IFD",
+  "rows": [
+    {
+      "name": "move_extra_data",
+      "command_hex": "00f6829a0101",
+      "sw": "6700",
+      "malformed_state_unchanged": true,
+      "normal_sdk_move_delete_after_restart": true,
+      "passed": true
+    },
+    {
+      "name": "move_explicit_le",
+      "command_hex": "00f6829a01",
+      "sw": "6700",
+      "malformed_state_unchanged": true,
+      "normal_sdk_move_delete_after_restart": true,
+      "passed": true
+    },
+    {
+      "name": "delete_extra_data",
+      "command_hex": "00f6ff9a0101",
+      "sw": "6700",
+      "malformed_state_unchanged": true,
+      "normal_sdk_move_delete_after_restart": true,
+      "passed": true
+    },
+    {
+      "name": "delete_explicit_le",
+      "command_hex": "00f6ff9a01",
+      "sw": "6700",
+      "malformed_state_unchanged": true,
+      "normal_sdk_move_delete_after_restart": true,
+      "passed": true
+    }
+  ],
+  "core_sha256": "f6587c70da88ca9f4e73779c49642471b3d0dbc84c58b84d6c26980404163a59",
+  "physical_or_host_device_access": false
+}

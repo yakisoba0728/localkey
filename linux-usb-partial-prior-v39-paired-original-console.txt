@@ -1,0 +1,310 @@
+[    0.000000] Booting Linux on physical CPU 0x0000000000 [0x410fd083]
+[    0.000000] Linux version 6.8.0-146-generic (buildd@bos03-arm64-107) (aarch64-linux-gnu-gcc-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #146-Ubuntu SMP PREEMPT_DYNAMIC Thu Sep  3 16:20:48 UTC 2026 (Ubuntu 6.8.0-146.146-generic 6.8.12)
+[    0.000000] KASLR enabled
+[    0.000000] random: crng init done
+[    0.000000] Machine model: linux,dummy-virt
+[    0.000000] efi: UEFI not found.
+[    0.000000] NUMA: No NUMA configuration found
+[    0.000000] NUMA: Faking a node at [mem 0x0000000040000000-0x00000000bfffffff]
+[    0.000000] NUMA: NODE_DATA [mem 0xbfbf05c0-0xbfbf5fff]
+[    0.000000] Zone ranges:
+[    0.000000]   DMA      [mem 0x0000000040000000-0x00000000bfffffff]
+[    0.000000]   DMA32    empty
+[    0.000000]   Normal   empty
+[    0.000000]   Device   empty
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000040000000-0x00000000bfffffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000040000000-0x00000000bfffffff]
+[    0.000000] cma: Reserved 32 MiB at 0x00000000bba00000 on node -1
+[    0.000000] psci: probing for conduit method from DT.
+[    0.000000] psci: PSCIv1.1 detected in firmware.
+[    0.000000] psci: Using standard PSCI v0.2 function IDs
+[    0.000000] psci: Trusted OS migration not required
+[    0.000000] psci: SMC Calling Convention v1.0
+[    0.000000] percpu: Embedded 54 pages/cpu s95528 r8192 d117464 u221184
+[    0.000000] Detected PIPT I-cache on CPU0
+[    0.000000] CPU features: detected: Spectre-v2
+[    0.000000] CPU features: detected: Spectre-v3a
+[    0.000000] CPU features: detected: Spectre-v4
+[    0.000000] CPU features: detected: Spectre-BHB
+[    0.000000] CPU features: kernel page table isolation forced ON by KASLR
+[    0.000000] CPU features: detected: Kernel page table isolation (KPTI)
+[    0.000000] CPU features: detected: ARM erratum 1742098
+[    0.000000] CPU features: detected: ARM errata 1165522, 1319367, or 1530923
+[    0.000000] alternatives: applying boot alternatives
+[    0.000000] Kernel command line: console=ttyAMA0 rdinit=/init panic=1
+[    0.000000] Dentry cache hash table entries: 262144 (order: 9, 2097152 bytes, linear)
+[    0.000000] Inode-cache hash table entries: 131072 (order: 8, 1048576 bytes, linear)
+[    0.000000] Fallback order for Node 0: 0 
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 516096
+[    0.000000] Policy zone: DMA
+[    0.000000] mem auto-init: stack:all(zero), heap alloc:on, heap free:off
+[    0.000000] software IO TLB: SWIOTLB bounce buffer size adjusted to 2MB
+[    0.000000] software IO TLB: area num 2.
+[    0.000000] software IO TLB: mapped [mem 0x00000000bb600000-0x00000000bb800000] (2MB)
+[    0.000000] Memory: 1903288K/2097152K available (23552K kernel code, 5212K rwdata, 16460K rodata, 12288K init, 1234K bss, 161096K reserved, 32768K cma-reserved)
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=2, Nodes=1
+[    0.000000] ftrace: allocating 63089 entries in 247 pages
+[    0.000000] ftrace: allocated 247 pages with 7 groups
+[    0.000000] Dynamic Preempt: voluntary
+[    0.000000] rcu: Preemptible hierarchical RCU implementation.
+[    0.000000] rcu: 	RCU restricting CPUs from NR_CPUS=512 to nr_cpu_ids=2.
+[    0.000000] 	Trampoline variant of Tasks RCU enabled.
+[    0.000000] 	Rude variant of Tasks RCU enabled.
+[    0.000000] 	Tracing variant of Tasks RCU enabled.
+[    0.000000] rcu: RCU calculated value of scheduler-enlistment delay is 100 jiffies.
+[    0.000000] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=2
+[    0.000000] RCU Tasks: Setting shift to 1 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=2.
+[    0.000000] RCU Tasks Rude: Setting shift to 1 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=2.
+[    0.000000] RCU Tasks Trace: Setting shift to 1 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=2.
+[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000] Root IRQ handler: gic_handle_irq
+[    0.000000] GICv2m: range[mem 0x08020000-0x08020fff], SPI[80:143]
+[    0.000000] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.000000] arch_timer: cp15 timer(s) running at 62.50MHz (virt).
+[    0.000000] clocksource: arch_sys_counter: mask: 0x1ffffffffffffff max_cycles: 0x1cd42e208c, max_idle_ns: 881590405314 ns
+[    0.000041] sched_clock: 57 bits at 63MHz, resolution 16ns, wraps every 4398046511096ns
+[    0.005787] Console: colour dummy device 80x25
+[    0.007751] Calibrating delay loop (skipped), value calculated using timer frequency.. 125.00 BogoMIPS (lpj=62500)
+[    0.007874] pid_max: default: 32768 minimum: 301
+[    0.009007] LSM: initializing lsm=lockdown,capability,landlock,yama,apparmor,integrity
+[    0.009353] landlock: Up and running.
+[    0.009373] Yama: becoming mindful.
+[    0.011044] AppArmor: AppArmor initialized
+[    0.012537] Mount-cache hash table entries: 4096 (order: 3, 32768 bytes, linear)
+[    0.012566] Mountpoint-cache hash table entries: 4096 (order: 3, 32768 bytes, linear)
+[    0.026585] cacheinfo: Unable to detect cache hierarchy for CPU 0
+[    0.033578] rcu: Hierarchical SRCU implementation.
+[    0.033600] rcu: 	Max phase no-delay instances is 400.
+[    0.037739] EFI services will not be available.
+[    0.039568] smp: Bringing up secondary CPUs ...
+[    0.041561] Detected PIPT I-cache on CPU1
+[    0.042255] CPU1: Booted secondary processor 0x0000000001 [0x410fd083]
+[    0.044539] smp: Brought up 1 node, 2 CPUs
+[    0.044557] SMP: Total of 2 processors activated.
+[    0.044585] CPU: All CPU(s) started at EL1
+[    0.044826] CPU features: detected: 32-bit EL0 Support
+[    0.044840] CPU features: detected: 32-bit EL1 Support
+[    0.044917] CPU features: detected: CRC32 instructions
+[    0.050744] alternatives: applying system-wide alternatives
+[    0.055792] CPU features: emulated: Privileged Access Never (PAN) using TTBR0_EL1 switching
+[    0.082038] devtmpfs: initialized
+[    0.095183] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1911260446275000 ns
+[    0.095539] futex hash table entries: 512 (order: 3, 32768 bytes, linear)
+[    0.098917] pinctrl core: initialized pinctrl subsystem
+[    0.104197] DMI not present or invalid.
+[    0.109461] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    0.115914] DMA: preallocated 256 KiB GFP_KERNEL pool for atomic allocations
+[    0.116430] DMA: preallocated 256 KiB GFP_KERNEL|GFP_DMA pool for atomic allocations
+[    0.116948] DMA: preallocated 256 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations
+[    0.117198] audit: initializing netlink subsys (disabled)
+[    0.118925] audit: type=2000 audit(0.090:1): state=initialized audit_enabled=0 res=1
+[    0.124340] thermal_sys: Registered thermal governor 'fair_share'
+[    0.124379] thermal_sys: Registered thermal governor 'bang_bang'
+[    0.124396] thermal_sys: Registered thermal governor 'step_wise'
+[    0.124400] thermal_sys: Registered thermal governor 'user_space'
+[    0.124403] thermal_sys: Registered thermal governor 'power_allocator'
+[    0.125126] cpuidle: using governor ladder
+[    0.125208] cpuidle: using governor menu
+[    0.125861] hw-breakpoint: found 6 breakpoint and 4 watchpoint registers.
+[    0.126192] ASID allocator initialised with 32768 entries
+[    0.127993] Serial: AMBA PL011 UART driver
+[    0.149449] 9000000.pl011: ttyAMA0 at MMIO 0x9000000 (irq = 13, base_baud = 0) is a PL011 rev1
+[    0.150373] printk: legacy console [ttyAMA0] enabled
+[    0.166822] Modules: 2G module region forced by RANDOMIZE_MODULE_REGION_FULL
+[    0.166939] Modules: 0 pages in range for non-PLT usage
+[    0.166951] Modules: 509536 pages in range for PLT usage
+[    0.173455] HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
+[    0.173648] HugeTLB: 0 KiB vmemmap can be freed for a 1.00 GiB page
+[    0.174061] HugeTLB: registered 32.0 MiB page size, pre-allocated 0 pages
+[    0.174135] HugeTLB: 0 KiB vmemmap can be freed for a 32.0 MiB page
+[    0.174204] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    0.174343] HugeTLB: 0 KiB vmemmap can be freed for a 2.00 MiB page
+[    0.174403] HugeTLB: registered 64.0 KiB page size, pre-allocated 0 pages
+[    0.174478] HugeTLB: 0 KiB vmemmap can be freed for a 64.0 KiB page
+[    0.182904] ACPI: Interpreter disabled.
+[    0.184963] iommu: Default domain type: Translated
+[    0.185043] iommu: DMA domain TLB invalidation policy: strict mode
+[    0.188882] SCSI subsystem initialized
+[    0.190324] usbcore: registered new interface driver usbfs
+[    0.190536] usbcore: registered new interface driver hub
+[    0.190677] usbcore: registered new device driver usb
+[    0.191112] pps_core: LinuxPPS API ver. 1 registered
+[    0.191175] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[    0.191422] PTP clock support registered
+[    0.192005] EDAC MC: Ver: 3.0.0
+[    0.193101] scmi_core: SCMI protocol bus registered
+[    0.201879] NetLabel: Initializing
+[    0.201963] NetLabel:  domain hash size = 128
+[    0.202045] NetLabel:  protocols = UNLABELED CIPSOv4 CALIPSO
+[    0.202862] NetLabel:  unlabeled traffic allowed by default
+[    0.204061] mctp: management component transport protocol core
+[    0.204316] NET: Registered PF_MCTP protocol family
+[    0.205460] vgaarb: loaded
+[    0.208049] clocksource: Switched to clocksource arch_sys_counter
+[    0.210930] VFS: Disk quotas dquot_6.6.0
+[    0.211189] VFS: Dquot-cache hash table entries: 512 (order 0, 4096 bytes)
+[    0.216250] AppArmor: AppArmor Filesystem Enabled
+[    0.216611] pnp: PnP ACPI: disabled
+[    0.239793] NET: Registered PF_INET protocol family
+[    0.241079] IP idents hash table entries: 32768 (order: 6, 262144 bytes, linear)
+[    0.296536] tcp_listen_portaddr_hash hash table entries: 1024 (order: 2, 16384 bytes, linear)
+[    0.296811] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    0.297065] TCP established hash table entries: 16384 (order: 5, 131072 bytes, linear)
+[    0.297423] TCP bind hash table entries: 16384 (order: 7, 524288 bytes, linear)
+[    0.297746] TCP: Hash tables configured (established 16384 bind 16384)
+[    0.298783] MPTCP token hash table entries: 2048 (order: 4, 49152 bytes, linear)
+[    0.299164] UDP hash table entries: 1024 (order: 3, 32768 bytes, linear)
+[    0.299410] UDP-Lite hash table entries: 1024 (order: 3, 32768 bytes, linear)
+[    0.300300] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    0.300576] NET: Registered PF_XDP protocol family
+[    0.300739] PCI: CLS 0 bytes, default 64
+[    0.301671] kvm [1]: HYP mode not available
+[    0.303448] Trying to unpack rootfs image as initramfs...
+[    0.303930] Initialise system trusted keyrings
+[    0.304988] Key type blacklist registered
+[    0.305658] workingset: timestamp_bits=40 max_order=19 bucket_order=0
+[    0.305954] zbud: loaded
+[    0.308498] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[    0.309795] fuse: init (API version 7.39)
+[    0.312009] integrity: Platform Keyring initialized
+[    0.312240] integrity: Machine keyring initialized
+[    0.346320] Key type asymmetric registered
+[    0.346438] Asymmetric key parser 'x509' registered
+[    0.346664] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 242)
+[    0.348307] io scheduler mq-deadline registered
+[    0.356286] pl061_gpio 9030000.pl061: PL061 GPIO chip registered
+[    0.357453] shpchp: Standard Hot Plug PCI Controller Driver version: 0.4
+[    0.359231] pci-host-generic 4010000000.pcie: host bridge /pcie@10000000 ranges:
+[    0.359628] pci-host-generic 4010000000.pcie:       IO 0x003eff0000..0x003effffff -> 0x0000000000
+[    0.360053] pci-host-generic 4010000000.pcie:      MEM 0x0010000000..0x003efeffff -> 0x0010000000
+[    0.360211] pci-host-generic 4010000000.pcie:      MEM 0x8000000000..0xffffffffff -> 0x8000000000
+[    0.360597] pci-host-generic 4010000000.pcie: Memory resource size exceeds max for 32 bits
+[    0.360992] pci-host-generic 4010000000.pcie: ECAM at [mem 0x4010000000-0x401fffffff] for [bus 00-ff]
+[    0.362150] pci-host-generic 4010000000.pcie: PCI host bridge to bus 0000:00
+[    0.362379] pci_bus 0000:00: root bus resource [bus 00-ff]
+[    0.362495] pci_bus 0000:00: root bus resource [io  0x0000-0xffff]
+[    0.362585] pci_bus 0000:00: root bus resource [mem 0x10000000-0x3efeffff]
+[    0.362668] pci_bus 0000:00: root bus resource [mem 0x8000000000-0xffffffffff]
+[    0.363864] pci 0000:00:00.0: [1b36:0008] type 00 class 0x060000 conventional PCI endpoint
+[    0.389670] Serial: 8250/16550 driver, 32 ports, IRQ sharing enabled
+[    0.403336] msm_serial: driver initialized
+[    0.403566] SuperH (H)SCI(F) driver initialized
+[    0.418418] loop: module loaded
+[    0.422765] tun: Universal TUN/TAP device driver, 1.6
+[    0.423817] PPP generic driver version 2.4.2
+[    0.425634] mousedev: PS/2 mouse device common for all mice
+[    0.426638] i2c_dev: i2c /dev entries driver
+[    0.428203] device-mapper: core: CONFIG_IMA_DISABLE_HTABLE is disabled. Duplicate IMA measurements will not be recorded in the IMA log.
+[    0.428409] device-mapper: uevent: version 1.0.3
+[    0.428859] device-mapper: ioctl: 4.48.0-ioctl (2023-03-01) initialised: dm-devel@redhat.com
+[    0.432562] ledtrig-cpu: registered to indicate activity on CPUs
+[    0.437051] hw perfevents: enabled with armv8_pmuv3 PMU driver, 7 counters available
+[    0.437658] watchdog: Delayed init of the lockup detector failed: -19
+[    0.437759] watchdog: Hard watchdog permanently disabled
+[    0.438590] drop_monitor: Initializing network drop monitor service
+[    0.439690] NET: Registered PF_INET6 protocol family
+[    2.012893] Freeing initrd memory: 58556K
+[    2.197325] Segment Routing with IPv6
+[    2.197630] In-situ OAM (IOAM) with IPv6
+[    2.198158] NET: Registered PF_PACKET protocol family
+[    2.198667] Key type dns_resolver registered
+[    2.213864] registered taskstats version 1
+[    2.217178] Loading compiled-in X.509 certificates
+[    2.228448] Loaded X.509 cert 'Build time autogenerated kernel key: f077b620820550864c99dea090c9f187de8a452a'
+[    2.229550] Loaded X.509 cert 'Canonical Ltd. Live Patch Signing 2025 Kmod: d541cef61dc7e793b7eb7e899970a2eef0b5dc8c'
+[    2.230494] Loaded X.509 cert 'Canonical Ltd. Live Patch Signing: 14df34d1a87cf37625abec039ef2bf521249b969'
+[    2.231470] Loaded X.509 cert 'Canonical Ltd. Kernel Module Signing 2025 Kmod: 4627603d2357a2a3f81006370894c221175893e9'
+[    2.232461] Loaded X.509 cert 'Canonical Ltd. Kernel Module Signing: 88f752e560a1e0737e31163a466ad7b70a850c19'
+[    2.232601] blacklist: Loading compiled-in revocation X.509 certificates
+[    2.233254] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing: 61482aa2830d0ab2ad5af10b7250da9033ddcef0'
+[    2.233469] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2017): 242ade75ac4a15e50d50c84b0d45ff3eae707a03'
+[    2.233653] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (ESM 2018): 365188c1d374d6b07c3c8f240f8ef722433d6a8b'
+[    2.233880] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2019): c0746fd6c5da3ae827864651ad66ae47fe24b3e8'
+[    2.234064] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2021 v1): a8d54bbb3825cfb94fa13c9f8a594a195c107b8d'
+[    2.234212] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2021 v2): 4cf046892d6fd3c9a5b03f98d845f90851dc6a8c'
+[    2.234359] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2021 v3): 100437bb6de6e469b581e61cd66bce3ef4ed53af'
+[    2.234524] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (Ubuntu Core 2019): c1d57b8f6b743f23ee41f4f7ee292f06eecadfb9'
+[    2.260533] Key type .fscrypt registered
+[    2.260623] Key type fscrypt-provisioning registered
+[    2.605580] Key type encrypted registered
+[    2.605723] AppArmor: AppArmor sha256 policy hashing enabled
+[    2.606138] ima: No TPM chip found, activating TPM-bypass!
+[    2.606282] Loading compiled-in module X.509 certificates
+[    2.607319] Loaded X.509 cert 'Build time autogenerated kernel key: f077b620820550864c99dea090c9f187de8a452a'
+[    2.607481] ima: Allocated hash algorithm: sha256
+[    2.608744] ima: No architecture policies found
+[    2.609244] evm: Initialising EVM extended attributes:
+[    2.609329] evm: security.selinux
+[    2.609378] evm: security.SMACK64
+[    2.609413] evm: security.SMACK64EXEC
+[    2.609488] evm: security.SMACK64TRANSMUTE
+[    2.609528] evm: security.SMACK64MMAP
+[    2.609579] evm: security.apparmor
+[    2.609614] evm: security.ima
+[    2.609646] evm: security.capability
+[    2.609689] evm: HMAC attrs: 0x1
+[    2.653204] clk: Disabling unused clocks
+[    2.702296] Freeing unused kernel memory: 12288K
+[    2.728902] Checked W+X mappings: passed, no W+X pages found
+[    2.729222] Run /init as init process
+Starting systemd-udevd version 255.4-1ubuntu8.17
+[    2.936366] hid: raw HID events driver (C) Jiri Kosina
+[    3.032796] dummy_hcd: loading out-of-tree module taints kernel.
+[    3.033025] dummy_hcd: module verification failed: signature and/or required key missing - tainting kernel
+[    3.035632] dummy_hcd dummy_hcd.0: USB Host+Gadget Emulator, driver 02 May 2005
+[    3.036029] dummy_hcd dummy_hcd.0: Dummy host controller
+[    3.036211] dummy_hcd dummy_hcd.0: new USB bus registered, assigned bus number 1
+[    3.042293] usb usb1: New USB device found, idVendor=1d6b, idProduct=0002, bcdDevice= 6.08
+[    3.042454] usb usb1: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[    3.042545] usb usb1: Product: Dummy host controller
+[    3.042994] usb usb1: Manufacturer: Linux 6.8.0-146-generic dummy_hcd
+[    3.043074] usb usb1: SerialNumber: dummy_hcd.0
+[    3.045442] hub 1-0:1.0: USB hub found
+[    3.045982] hub 1-0:1.0: 1 port detected
+[    3.109409] gadgetfs: USB Gadget filesystem, version 24 Aug 2004
+[    3.155578] usbcore: registered new interface driver usbhid
+[    3.155700] usbhid: USB HID core driver
+[    3.286307] file system registered
+PASS actual private ARM64 kernel USB guest with only loopback
+[    7.318418] read descriptors
+[    7.319265] read strings
+[    7.549160] usb 1-1: new full-speed USB device number 2 using dummy_hcd
+[    7.703020] usb 1-1: New USB device found, idVendor=1050, idProduct=0407, bcdDevice= 5.74
+[    7.703197] usb 1-1: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[    7.703296] usb 1-1: Product: Yubico YubiKey compatible software OTP FIDO CCID
+[    7.703389] usb 1-1: Manufacturer: Local software authenticator
+[    7.703460] usb 1-1: SerialNumber: 3291423002
+[    7.744414] input: Local software authenticator Yubico YubiKey compatible software OTP FIDO CCID as /devices/platform/dummy_hcd.0/usb1/1-1/1-1:1.0/0003:1050:0407.0001/input/input0
+[    7.799059] hid-generic 0003:1050:0407.0001: input,hidraw0: USB HID v1.10 Keyboard [Local software authenticator Yubico YubiKey compatible software OTP FIDO CCID] on usb-dummy_hcd.0-1/input0
+[    7.812710] hid-generic 0003:1050:0407.0002: hiddev0,hidraw1: USB HID v1.10 Device [Local software authenticator Yubico YubiKey compatible software OTP FIDO CCID] on usb-dummy_hcd.0-1/input1
+PASS original native resident key created with PIN UVp2
+PASS actual native PIN UVp2 original credential signature RP and user initial
+[    9.123112] usb 1-1: USB disconnect, device number 2
+[    9.245817] read descriptors
+[    9.246063] read strings
+[    9.495027] usb 1-1: new full-speed USB device number 3 using dummy_hcd
+[    9.644924] usb 1-1: New USB device found, idVendor=1050, idProduct=0406, bcdDevice= 5.74
+[    9.645143] usb 1-1: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[    9.645256] usb 1-1: Product: Yubico YubiKey compatible software FIDO CCID
+[    9.645357] usb 1-1: Manufacturer: Local software authenticator
+[    9.645425] usb 1-1: SerialNumber: 3291423002
+[    9.666477] hid-generic 0003:1050:0406.0003: hiddev0,hidraw0: USB HID v1.10 Device [Local software authenticator Yubico YubiKey compatible software FIDO CCID] on usb-dummy_hcd.0-1/input0
+PASS initial native profile6 byte equal saved reference configuration
+PASS original owned HOTP counter zero
+PASS initial actual occupied slot notification
+PASS actual encoded TLV APDU CCID boundary 2047-partial64-signal
+PASS native stock PIV SDK original object before interruption 2047-partial64-signal
+PASS trace armed before original large write entry 2047-partial64-signal
+PASS actual original prefix64 header sequence and object bytes 2047-partial64-signal
+PASS same original write TID FD buffer after prefix64 2047-partial64-signal
+PASS prefix64 GET has no durable or HOTP mutation 2047-partial64-signal
+PASS actual targeted signal accepted for own endpoint TID 2047-partial64-signal
+PASS actual kernel delivers SIGUSR1 to original write thread 2047-partial64-signal
+[   10.196624] usb 1-1: USB disconnect, device number 3
+SKE_USB_PARTIAL_INTERRUPT_PROBE_BEGIN
+{"passed": false, "tests": [{"name": "actual private ARM64 kernel USB guest with only loopback", "passed": true}, {"name": "original native resident key created with PIN UVp2", "passed": true}, {"name": "actual native PIN UVp2 original credential signature RP and user initial", "passed": true}, {"name": "initial native profile6 byte equal saved reference configuration", "passed": true}, {"name": "original owned HOTP counter zero", "passed": true}, {"name": "initial actual occupied slot notification", "passed": true}, {"name": "actual encoded TLV APDU CCID boundary 2047-partial64-signal", "passed": true}, {"name": "native stock PIV SDK original object before interruption 2047-partial64-signal", "passed": true}, {"name": "trace armed before original large write entry 2047-partial64-signal", "passed": true}, {"name": "actual original prefix64 header sequence and object bytes 2047-partial64-signal", "passed": true}, {"name": "same original write TID FD buffer after prefix64 2047-partial64-signal", "passed": true}, {"name": "prefix64 GET has no durable or HOTP mutation 2047-partial64-signal", "passed": true}, {"name": "actual targeted signal accepted for own endpoint TID 2047-partial64-signal", "passed": true}, {"name": "actual kernel delivers SIGUSR1 to original write thread 2047-partial64-signal", "passed": true}], "cycles": [], "assertions": [{"phase": "initial", "counter": 2, "signature_verified": true, "pin_uv_protocol": 2, "credential_sha256": "75dd938752c42420a7c72735fd2626d3494287110dbcf0db6ae24cf2bdc85303", "challenge_sha256": "57b282adac3adad563ba8b641a7000007e45ab82e63fd5779c87f02a047e6b9d", "rp_user_uv_verified": true}], "scope": "actual same-generation original large CCID write SIGUSR1 after prefix64", "physical_device_access": false, "host_device_passthrough": false, "host_hid_drivers_unbound": false, "native_macos_registration_verified": false, "production_udc_verified": false, "physical_touch_verified": false, "manufacturer_trust_reproduced": false, "card_testing_auto_allow": false, "fido_testing_auto_allow_only_for_owned_fixture": true, "stock_libccid_transport_used_for_this_fixture": false, "stock_piv_oath_sdk_unmodified": true, "opaque_piv_object_is_valid_chuid": false, "production_source_modified_for_this_original_trial": false, "same_generation_continuation_verified": false, "candidate_bridge_source_applied": false, "service_pids": [128, 113, 110], "controller": {"base_source_url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/drivers/usb/gadget/udc/dummy_hcd.c", "base_source_sha256": "6892efeaca7d13e0f8ba172fac6b9607f9ac5c60de1a5f1812a57eb7998fd993", "source_license": "GPL", "optional_parameter": "requested_ep_addresses", "default_enabled": false, "files": {"dummy_hcd.c": "7ebdac59d1bee99d6acb4e811171c10d32618d3915d8b0ccdad43fe9d7a72918", "dummy_hcd-addresses.patch": "16df2045ea6229954b57441894cf009a9fbf40b5ed0ec5e7e5c31685729fafcc", "dummy_hcd.ko": "5e8481736a6dccd4788ff3fb07f06b8704dcf4a0a02a95888c310a3f594eb86a"}, "requested_ep_addresses_enabled": true}, "original_identity": {"path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1", "serial": "3291423002", "vid": 4176, "pid": 1031, "address": 2, "host_visible_configuration_descriptor_hex": "09029600030100800f090400000103010100092110010001224a000705810308000a090401000203000000092110010001222200070504034000020705840340000209040200030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020", "classes": [3, 3, 11], "host_visible_endpoint_addresses": [129, 4, 132, 2, 130, 131]}, "profile6_identity": {"path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1", "serial": "3291423002", "vid": 4176, "pid": 1030, "address": 3, "host_visible_configuration_descriptor_hex": "09027d00020100800f090400000203000000092110010001222200070504034000020705840340000209040100030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020", "classes": [3, 11], "host_visible_endpoint_addresses": [4, 132, 2, 130, 131]}, "trace_formats": {"sys_enter_write": "name: sys_enter_write\nID: 672\nformat:\n\tfield:unsigned short common_type;\toffset:0;\tsize:2;\tsigned:0;\n\tfield:unsigned char common_flags;\toffset:2;\tsize:1;\tsigned:0;\n\tfield:unsigned char common_preempt_count;\toffset:3;\tsize:1;\tsigned:0;\n\tfield:int common_pid;\toffset:4;\tsize:4;\tsigned:1;\n\n\tfield:int __syscall_nr;\toffset:8;\tsize:4;\tsigned:1;\n\tfield:unsigned int fd;\toffset:16;\tsize:8;\tsigned:0;\n\tfield:const char * buf;\toffset:24;\tsize:8;\tsigned:0;\n\tfield:size_t count;\toffset:32;\tsize:8;\tsigned:0;\n\nprint fmt: \"fd: 0x%08lx, buf: 0x%08lx, count: 0x%08lx\", ((unsigned long)(REC->fd)), ((unsigned long)(REC->buf)), ((unsigned long)(REC->count))\n", "sys_exit_write": "name: sys_exit_write\nID: 671\nformat:\n\tfield:unsigned short common_type;\toffset:0;\tsize:2;\tsigned:0;\n\tfield:unsigned char common_flags;\toffset:2;\tsize:1;\tsigned:0;\n\tfield:unsigned char common_preempt_count;\toffset:3;\tsize:1;\tsigned:0;\n\tfield:int common_pid;\toffset:4;\tsize:4;\tsigned:1;\n\n\tfield:int __syscall_nr;\toffset:8;\tsize:4;\tsigned:1;\n\tfield:long ret;\toffset:16;\tsize:8;\tsigned:1;\n\nprint fmt: \"0x%lx\", REC->ret\n", "sys_enter_io_submit": "name: sys_enter_io_submit\nID: 860\nformat:\n\tfield:unsigned short common_type;\toffset:0;\tsize:2;\tsigned:0;\n\tfield:unsigned char common_flags;\toffset:2;\tsize:1;\tsigned:0;\n\tfield:unsigned char common_preempt_count;\toffset:3;\tsize:1;\tsigned:0;\n\tfield:int common_pid;\toffset:4;\tsize:4;\tsigned:1;\n\n\tfield:int __syscall_nr;\toffset:8;\tsize:4;\tsigned:1;\n\tfield:aio_context_t ctx_id;\toffset:16;\tsize:8;\tsigned:0;\n\tfield:long nr;\toffset:24;\tsize:8;\tsigned:0;\n\tfield:struct iocb * * iocbpp;\toffset:32;\tsize:8;\tsigned:0;\n\nprint fmt: \"ctx_id: 0x%08lx, nr: 0x%08lx, iocbpp: 0x%08lx\", ((unsigned long)(REC->ctx_id)), ((unsigned long)(REC->nr)), ((unsigned long)(REC->iocbpp))\n", "sys_exit_io_submit": "name: sys_exit_io_submit\nID: 859\nformat:\n\tfield:unsigned short common_type;\toffset:0;\tsize:2;\tsigned:0;\n\tfield:unsigned char common_flags;\toffset:2;\tsize:1;\tsigned:0;\n\tfield:unsigned char common_preempt_count;\toffset:3;\tsize:1;\tsigned:0;\n\tfield:int common_pid;\toffset:4;\tsize:4;\tsigned:1;\n\n\tfield:int __syscall_nr;\toffset:8;\tsize:4;\tsigned:1;\n\tfield:long ret;\toffset:16;\tsize:8;\tsigned:1;\n\nprint fmt: \"0x%lx\", REC->ret\n", "sys_enter_io_getevents": "name: sys_enter_io_getevents\nID: 856\nformat:\n\tfield:unsigned short common_type;\toffset:0;\tsize:2;\tsigned:0;\n\tfield:unsigned char common_flags;\toffset:2;\tsize:1;\tsigned:0;\n\tfield:unsigned char common_preempt_count;\toffset:3;\tsize:1;\tsigned:0;\n\tfield:int common_pid;\toffset:4;\tsize:4;\tsigned:1;\n\n\tfield:int __syscall_nr;\toffset:8;\tsize:4;\tsigned:1;\n\tfield:aio_context_t ctx_id;\toffset:16;\tsize:8;\tsigned:0;\n\tfield:long min_nr;\toffset:24;\tsize:8;\tsigned:0;\n\tfield:long nr;\toffset:32;\tsize:8;\tsigned:0;\n\tfield:struct io_event * events;\toffset:40;\tsize:8;\tsigned:0;\n\tfield:struct __kernel_timespec * timeout;\toffset:48;\tsize:8;\tsigned:0;\n\nprint fmt: \"ctx_id: 0x%08lx, min_nr: 0x%08lx, nr: 0x%08lx, events: 0x%08lx, timeout: 0x%08lx\", ((unsigned long)(REC->ctx_id)), ((unsigned long)(REC->min_nr)), ((unsigned long)(REC->nr)), ((unsigned long)(REC->events)), ((unsigned long)(REC->timeout))\n", "sys_exit_io_getevents": "name: sys_exit_io_getevents\nID: 855\nformat:\n\tfield:unsigned short common_type;\toffset:0;\tsize:2;\tsigned:0;\n\tfield:unsigned char common_flags;\toffset:2;\tsize:1;\tsigned:0;\n\tfield:unsigned char common_preempt_count;\toffset:3;\tsize:1;\tsigned:0;\n\tfield:int common_pid;\toffset:4;\tsize:4;\tsigned:1;\n\n\tfield:int __syscall_nr;\toffset:8;\tsize:4;\tsigned:1;\n\tfield:long ret;\toffset:16;\tsize:8;\tsigned:1;\n\nprint fmt: \"0x%lx\", REC->ret\n", "signal_deliver": "name: signal_deliver\nID: 135\nformat:\n\tfield:unsigned short common_type;\toffset:0;\tsize:2;\tsigned:0;\n\tfield:unsigned char common_flags;\toffset:2;\tsize:1;\tsigned:0;\n\tfield:unsigned char common_preempt_count;\toffset:3;\tsize:1;\tsigned:0;\n\tfield:int common_pid;\toffset:4;\tsize:4;\tsigned:1;\n\n\tfield:int sig;\toffset:8;\tsize:4;\tsigned:1;\n\tfield:int errno;\toffset:12;\tsize:4;\tsigned:1;\n\tfield:int code;\toffset:16;\tsize:4;\tsigned:1;\n\tfield:unsigned long sa_handler;\toffset:24;\tsize:8;\tsigned:0;\n\tfield:unsigned long sa_flags;\toffset:32;\tsize:8;\tsigned:0;\n\nprint fmt: \"sig=%d errno=%d code=%d sa_handler=%lx sa_flags=%lx\", REC->sig, REC->errno, REC->code, REC->sa_handler, REC->sa_flags\n"}, "active_cycle": {"index": 0, "phase": "2047-partial64-signal", "total_response_bytes": 2047, "before_usb": {"path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1", "serial": "3291423002", "vid": 4176, "pid": 1030, "address": 3, "host_visible_configuration_descriptor_hex": "09027d00020100800f090400000203000000092110010001222200070504034000020705840340000209040100030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020", "classes": [3, 11], "host_visible_endpoint_addresses": [4, 132, 2, 130, 131]}, "original_worker": {"tid": 260, "tgid": 128, "fd": 10, "bytes": 2047, "buffer": "0xc37c660a0050", "endpoint": "/dev/ffs-ske/ep4", "wchan": "ffs_epfile_io", "syscall": "64 0xa 0xc37c660a0050 0x7ff 0x0 0x0 0xc37c6609da20 0xf983c535e5f0 0xf983c7d41e4c"}, "original_sequence": 11, "original_packet_bytes": 2047, "original_write_entry": "        ske-usbd-260     [000] ...1.    10.076227: sys_write(fd: a, buf: c37c660a0050, count: 7ff)", "expected_original_packet_sha256": "7813b8cacfca114442d42e88204115e33e2762aade5c81d68b54545120eb32c5", "opaque_object_sha256": "c2022f0d9f1824f37815e64d21e6dea389d3b1bd933ec6486c4799865dfcc880", "durable_plaintext_sha256": "6e1aaff501e749f12378b0cef4fd599c5035953fd3a6bfc3b024b9f5262ecd65", "original_prefix_hex": "80f5070000000b000000538207efff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f40", "worker_after_prefix64": {"tid": 260, "tgid": 128, "fd": 10, "bytes": 2047, "buffer": "0xc37c660a0050", "endpoint": "/dev/ffs-ske/ep4", "wchan": "ffs_epfile_io", "syscall": "64 0xa 0xc37c660a0050 0x7ff 0x0 0x0 0xc37c6609da20 0xf983c535e5f0 0xf983c7d41e4c"}, "tgkill_result": 0, "tgkill_errno": 0, "original_tid_lines": ["        ske-usbd-260     [000] ...1.    10.076227: sys_write(fd: a, buf: c37c660a0050, count: 7ff)", "        ske-usbd-260     [000] ...1.    10.117733: sys_write -> 0xfffffffffffffffc", "        ske-usbd-260     [000] d..1.    10.117818: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c37c3b236b04 sa_flags=0", "        ske-usbd-260     [000] ...1.    10.118821: sys_write(fd: a, buf: c37c660a0050, count: 7ff)"], "original_tid_write_returns": ["        ske-usbd-260     [000] ...1.    10.117733: sys_write -> 0xfffffffffffffffc"], "actual_signal_deliveries": ["        ske-usbd-260     [000] d..1.    10.117818: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c37c3b236b04 sa_flags=0"], "actual_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 3/3   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-260     [000] ...1.    10.076227: sys_write(fd: a, buf: c37c660a0050, count: 7ff)\n        ske-usbd-260     [000] ...1.    10.117733: sys_write -> 0xfffffffffffffffc\n        ske-usbd-260     [000] d..1.    10.117818: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c37c3b236b04 sa_flags=0\n        ske-usbd-260     [000] ...1.    10.118821: sys_write(fd: a, buf: c37c660a0050, count: 7ff)\n", "bridge_status_before_tail": null, "worker_after_signal": {"tid": 260, "tgid": 128, "fd": 10, "bytes": 2047, "buffer": "0xc37c660a0050", "endpoint": "/dev/ffs-ske/ep4", "wchan": "ffs_epfile_io", "syscall": "64 0xa 0xc37c660a0050 0x7ff 0x0 0x0 0xc37c6609da20 0xf983c535e5f0 0xf983c7d41e4c"}, "native_tail_read": {"libusb_result": 0, "actual_length": 2047, "requested_length": 2047, "data_hex": "80f5070000000b000000538207efff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccd9000", "data_sha256": "7813b8cacfca114442d42e88204115e33e2762aade5c81d68b54545120eb32c5"}, "actual_whole_data_hex": "80f5070000000b000000538207efff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f4080f5070000000b000000538207efff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccd9000", "actual_whole_data_sha256": "50dcfb6052645538e680244beac3387696a63efa06e86cc5b1df942dc13c065a", "after_native_tail_usb": {"path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1", "serial": "3291423002", "vid": 4176, "pid": 1030, "address": 3, "host_visible_configuration_descriptor_hex": "09027d00020100800f090400000203000000092110010001222200070504034000020705840340000209040100030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020", "classes": [3, 11], "host_visible_endpoint_addresses": [4, 132, 2, 130, 131]}, "service_status_after_tail": {"bridge": null, "fido": null, "card": null}, "actual_trace_after_tail": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 5/5   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-260     [000] ...1.    10.076227: sys_write(fd: a, buf: c37c660a0050, count: 7ff)\n        ske-usbd-260     [000] ...1.    10.117733: sys_write -> 0xfffffffffffffffc\n        ske-usbd-260     [000] d..1.    10.117818: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c37c3b236b04 sa_flags=0\n        ske-usbd-260     [000] ...1.    10.118821: sys_write(fd: a, buf: c37c660a0050, count: 7ff)\n        ske-usbd-260     [000] ...1.    10.131954: sys_write -> 0x7ff\n", "usb_log_after_tail": "functionfs_bound controller=dummy_udc.0\nfunctionfs_configured endpoints=6\nfunctionfs_setup type=33 request=10 value=0 index=0 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=0 length=74 stalled=0\nfunctionfs_setup type=33 request=9 value=512 index=0 length=1 stalled=0\nfunctionfs_setup type=33 request=10 value=0 index=1 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=1 length=34 stalled=0\nfunctionfs_bound controller=dummy_udc.0\nfunctionfs_reenumerated generation=1\nfunctionfs_configured endpoints=5\nfunctionfs_setup type=33 request=10 value=0 index=0 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=0 length=34 stalled=0\n"}, "error": "AssertionError: same-generation native tail exactly original remaining bytes without repeated prefix 2047-partial64-signal", "traceback": "Traceback (most recent call last):\n  File \"/opt/verification/verify-usb-partial-interrupt-prototype.py\", line 203, in main\n    check(row['native_tail_read']['libusb_result'] == 0 and tail == expected[64:],\n  File \"/opt/verification/verify_usb_reboot_pending.py\", line 62, in check\n    assert value,name\n           ^^^^^\nAssertionError: same-generation native tail exactly original remaining bytes without repeated prefix 2047-partial64-signal\n", "last_actual_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 5/5   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-260     [000] ...1.    10.076227: sys_write(fd: a, buf: c37c660a0050, count: 7ff)\n        ske-usbd-260     [000] ...1.    10.117733: sys_write -> 0xfffffffffffffffc\n        ske-usbd-260     [000] d..1.    10.117818: signal_deliver: sig=10 errno=0 code=-6 sa_handler=c37c3b236b04 sa_flags=0\n        ske-usbd-260     [000] ...1.    10.118821: sys_write(fd: a, buf: c37c660a0050, count: 7ff)\n        ske-usbd-260     [000] ...1.    10.131954: sys_write -> 0x7ff\n", "usb.log": "functionfs_bound controller=dummy_udc.0\nfunctionfs_configured endpoints=6\nfunctionfs_setup type=33 request=10 value=0 index=0 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=0 length=74 stalled=0\nfunctionfs_setup type=33 request=9 value=512 index=0 length=1 stalled=0\nfunctionfs_setup type=33 request=10 value=0 index=1 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=1 length=34 stalled=0\nfunctionfs_bound controller=dummy_udc.0\nfunctionfs_reenumerated generation=1\nfunctionfs_configured endpoints=5\nfunctionfs_setup type=33 request=10 value=0 index=0 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=0 length=34 stalled=0\n", "daemon.log": "{\"ts\":\"1970-01-01T00:00:07.122Z\",\"lvl\":\"warn\",\"event\":\"presence_auto_allow\",\"warning\":\"SWPASSKEY_TESTING: every request is approved\"}\n{\"ts\":\"1970-01-01T00:00:07.140Z\",\"lvl\":\"warn\",\"event\":\"hid_socket_transport\",\"path\":\"/guest-state/own-partial-interrupt-om5wsqap/h.sock\",\"note\":\"development transport, not a HID device\"}\n", "card/log.txt": "", "test_count": 14, "emulator_binary_sha256": "63ada4ee4764be2a02405f24babae35953d664abcb228eb4bf8cf5596a2a7ad6", "usb_bridge_binary_sha256": "ac848b6fe5bb22605a132eeaaa9034c8e5d63e7ef1410ffefbc43776bcc2f82e", "card_service_sha256": "f68038ad664fcc4756535ffe85fdd1460048cf6bb9ecfba5fbb2a67ab7187687", "helper_sha256": "023fb3b3c128298138d1e3036a96264e59ee57ecb8a7a4aea90cbca728ace085", "shared_helper_sha256": "445dab690b654dba21421e1b75047dcf2e07089ba39bb0da62e70ae56e42774a", "long_cutover_helper_sha256": "bb4f678e038615ba96fdaa866b0589e3a063cc0a0e77e53336f6191f7df8ddb8", "native_io_observer_sha256": "9c05acc35cb48d658e915ebd3622ba22a105568b7e428f9055825ad4a1c96932"}
+SKE_USB_PARTIAL_INTERRUPT_PROBE_END
+SKE_USB_PARTIAL_INTERRUPT_PROBE_GUEST_EXIT=1
+[   11.105604] reboot: Power down

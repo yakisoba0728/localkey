@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "variant": "baseline",
+  "platform": "linux",
+  "route": "ifd",
+  "unmodified_yubikit": true,
+  "private_ccid_or_direct_ifd": true,
+  "physical_or_host_device_access": false,
+  "network_devices": false,
+  "core_sha256": "f6587c70da88ca9f4e73779c49642471b3d0dbc84c58b84d6c26980404163a59",
+  "credential_count": 24,
+  "expected_list_length": 504,
+  "first_sw": "61ff",
+  "malformed_cla_sw": "61f7",
+  "malformed_cla_consumed_bytes": 256,
+  "valid_remainder_matches_expected": false,
+  "continuation_statuses": [
+    "9000"
+  ],
+  "state_sha256": "c2725e5472f351bd03f3e8e8bfdef02792e3e04121dcc43c09d08eb1d6e65539"
+}

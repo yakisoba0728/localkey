@@ -1,0 +1,302 @@
+{
+  "passed": true,
+  "tests": [
+    {
+      "name": "fresh own SCP11b certificate independently self-verifies with software identity",
+      "passed": true
+    },
+    {
+      "name": "own SCP11b certificate carries critical GP SD role policy",
+      "passed": true
+    },
+    {
+      "name": "own SCP11b certificate key usage is ECKA without CA signing privilege",
+      "passed": true
+    },
+    {
+      "name": "own SCP11b certificate has no CA or manufacturer trust",
+      "passed": true
+    },
+    {
+      "name": "independent SDK accepts role-bearing own SCP11b identity",
+      "passed": true
+    },
+    {
+      "name": "SCP11 11 critical OCE/CA/KA role policies accepted for chain length 3",
+      "passed": true
+    },
+    {
+      "name": "SCP11 11 critical OCE/CA/KA role policies accepted for chain length 2",
+      "passed": true
+    },
+    {
+      "name": "SCP11 11 critical OCE/CA/KA role policies accepted for chain length 1",
+      "passed": true
+    },
+    {
+      "name": "SCP11 15 critical OCE/CA/KA role policies accepted for chain length 3",
+      "passed": true
+    },
+    {
+      "name": "SCP11 15 critical OCE/CA/KA role policies accepted for chain length 2",
+      "passed": true
+    },
+    {
+      "name": "SCP11 15 critical OCE/CA/KA role policies accepted for chain length 1",
+      "passed": true
+    },
+    {
+      "name": "SCP11 11 accepts eight-certificate software chain budget",
+      "passed": true
+    },
+    {
+      "name": "SCP11 15 accepts eight-certificate software chain budget",
+      "passed": true
+    },
+    {
+      "name": "ninth host certificate exceeds software chain budget; persistent state unchanged across SDK selection/certificate APDUs",
+      "passed": true
+    },
+    {
+      "name": "eight-certificate SD software store round-trips with explicit test MAC envelope, short chaining and independent signatures",
+      "passed": true
+    },
+    {
+      "name": "ninth stored certificate rejected without overwriting prior bundle; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "certificate constraint rejects OCE claims SD role; persistent state unchanged across SDK selection/certificate APDUs",
+      "passed": true
+    },
+    {
+      "name": "certificate constraint rejects OCE claims root role; persistent state unchanged across SDK selection/certificate APDUs",
+      "passed": true
+    },
+    {
+      "name": "certificate constraint rejects unknown critical role policy; persistent state unchanged across SDK selection/certificate APDUs",
+      "passed": true
+    },
+    {
+      "name": "certificate constraint rejects unsupported role qualifier; persistent state unchanged across SDK selection/certificate APDUs",
+      "passed": true
+    },
+    {
+      "name": "certificate constraint rejects wrong leaf issuer AKI; persistent state unchanged across SDK selection/certificate APDUs",
+      "passed": true
+    },
+    {
+      "name": "certificate constraint rejects expired OCE; persistent state unchanged across SDK selection/certificate APDUs",
+      "passed": true
+    },
+    {
+      "name": "certificate constraint rejects OCE without key agreement; persistent state unchanged across SDK selection/certificate APDUs",
+      "passed": true
+    },
+    {
+      "name": "certificate constraint rejects OCE carrying CA signing privilege; persistent state unchanged across SDK selection/certificate APDUs",
+      "passed": true
+    },
+    {
+      "name": "certificate constraint rejects unknown critical extension; persistent state unchanged across SDK selection/certificate APDUs",
+      "passed": true
+    },
+    {
+      "name": "root certificate cannot substitute intermediate role; persistent state unchanged across SDK selection/certificate APDUs",
+      "passed": true
+    },
+    {
+      "name": "intermediate cannot substitute root role; persistent state unchanged across SDK selection/certificate APDUs",
+      "passed": true
+    },
+    {
+      "name": "intermediate issuer AKI must match preceding SKI; persistent state unchanged across SDK selection/certificate APDUs",
+      "passed": true
+    },
+    {
+      "name": "unknown noncritical metadata does not replace critical role checks",
+      "passed": true
+    },
+    {
+      "name": "existing independent policy-free certificate profile remains supported",
+      "passed": true
+    },
+    {
+      "name": "SCP11 host authentication does not grant PIV management-key authorization; persistent state unchanged across SDK selection/certificate APDUs",
+      "passed": true
+    },
+    {
+      "name": "explicit disallowed anchor cannot use another anchor allowlist; persistent state unchanged across SDK selection/certificate APDUs",
+      "passed": true
+    },
+    {
+      "name": "wildcard host anchor selection continues past a disallowed matching anchor",
+      "passed": true
+    },
+    {
+      "name": "64-entry software allowlist model is stored exactly",
+      "passed": true
+    },
+    {
+      "name": "65-entry allowlist exceeds software model atomically; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "empty allowlist clears restriction without deleting owned anchor",
+      "passed": true
+    },
+    {
+      "name": "documented SCP03 set capacity admits independent KVN 1",
+      "passed": true
+    },
+    {
+      "name": "documented SCP03 set capacity admits independent KVN 2",
+      "passed": true
+    },
+    {
+      "name": "documented SCP03 set capacity admits independent KVN 127",
+      "passed": true
+    },
+    {
+      "name": "custom SCP03 sets replace development default",
+      "passed": true
+    },
+    {
+      "name": "fourth SCP03 set rejected at documented capacity; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "replacement at full SCP03 capacity releases previous version atomically",
+      "passed": true
+    },
+    {
+      "name": "SCP03 replacement cannot collide with another existing version; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP03 replacement of missing version leaves keys intact; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "independent SDK authenticates highest custom SCP03 version",
+      "passed": true
+    },
+    {
+      "name": "16-row software EC budget includes private and public anchors",
+      "passed": true
+    },
+    {
+      "name": "17th EC row exceeds software budget; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "public anchor shares software EC budget; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "encrypted private import shares software EC budget; ciphertext unchanged",
+      "passed": true
+    },
+    {
+      "name": "EC replacement at full capacity is atomic and returns independent key",
+      "passed": true
+    },
+    {
+      "name": "EC deletion makes room for a fresh private key",
+      "passed": true
+    },
+    {
+      "name": "full SCP03/EC key table and anchor metadata survive restart",
+      "passed": true
+    },
+    {
+      "name": "last modeled SCP11 11 retry authenticates role-bearing host and restores tries",
+      "passed": true
+    },
+    {
+      "name": "last modeled SCP11 15 retry authenticates role-bearing host and restores tries",
+      "passed": true
+    },
+    {
+      "name": "full-table failure-driven reset terminates the prior authenticated channel; persistent state unchanged across SDK selection/certificate APDUs",
+      "passed": true
+    },
+    {
+      "name": "SDK reset reaches all three SCP03 versions and all sixteen EC rows",
+      "passed": true
+    },
+    {
+      "name": "Domain reset creates fresh independent SCP11b identity",
+      "passed": true
+    },
+    {
+      "name": "Domain reset retains independent PIV issuer",
+      "passed": true
+    },
+    {
+      "name": "Domain reset retains OATH secret and durable HOTP progression",
+      "passed": true
+    },
+    {
+      "name": "last modeled SCP03 retry can complete authentication and restore all tries",
+      "passed": true
+    },
+    {
+      "name": "last modeled SCP11b retry completes independent SDK receipt and restores tries",
+      "passed": true
+    },
+    {
+      "name": "invalid final SCP11b request consumes final try; durable failure",
+      "passed": true
+    },
+    {
+      "name": "failed final SCP11b retry persists as zero",
+      "passed": true
+    },
+    {
+      "name": "zero-retry SCP11b stays blocked across restart; persistent state unchanged across SDK selection/certificate APDUs",
+      "passed": true
+    },
+    {
+      "name": "invalid final OCE certificate consumes final anchor try; durable failure",
+      "passed": true
+    },
+    {
+      "name": "failed final anchor retry persists as zero",
+      "passed": true
+    },
+    {
+      "name": "blocked public anchor stays unavailable; persistent state unchanged across SDK selection/certificate APDUs",
+      "passed": true
+    },
+    {
+      "name": "final SCP03 INIT reserves final attempt durably before external authentication",
+      "passed": true
+    },
+    {
+      "name": "next zero-retry attempt restores default Domain when all rows are blocked; durable failure",
+      "passed": true
+    },
+    {
+      "name": "blocked-domain recovery replenishes development defaults and independent identity",
+      "passed": true
+    },
+    {
+      "name": "independent SDK can authenticate after blocking reset recovery",
+      "passed": true
+    }
+  ],
+  "scope": "fresh software cards; direct IFD ABI",
+  "physical_device_access": false,
+  "manufacturer_trust_reproduced": false,
+  "role_policy_source": "GP SCP11 X509 certificate tables and Annex D; public review v1.3.0.13",
+  "policy_free_legacy_profile_preserved": true,
+  "retry_and_ec_allowlist_limits": "software model; physical values/rejection/lifecycle unmeasured",
+  "scp03_three_set_limit_source": "published Yubico SCP03 manual; no physical boundary writes",
+  "large_certificate_store_fixture": "fresh short SDK protocol and per-instance extended MAC formatter 65544; pinned normal SDK envelope limit 3062 unchanged; physical acceptance unverified",
+  "unverified": [
+    "critical SD subject-ID handling and physical certificate rejection/status; reference advertises no BF20, software returns GP-model 6A81",
+    "physical SCP03 version boundaries/status, SCP11 version reservations, retry/delete timing, EC/allowlist/certificate ceilings",
+    "actual OS resource-manager/USB discovery and physical certificate rejection behavior"
+  ]
+}

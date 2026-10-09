@@ -1,0 +1,894 @@
+{
+  "passed": true,
+  "count": 176,
+  "tests": [
+    {
+      "name": "sig_le1_sw",
+      "passed": true
+    },
+    {
+      "name": "sig_le1_signature_valid",
+      "passed": true
+    },
+    {
+      "name": "sig_le1_decoded_le",
+      "passed": true
+    },
+    {
+      "name": "sig_le1_decoded_lc",
+      "passed": true
+    },
+    {
+      "name": "sig_le1_header_matches",
+      "passed": true
+    },
+    {
+      "name": "sig_le1_state_unchanged",
+      "passed": true
+    },
+    {
+      "name": "sig_le1_counter_after",
+      "passed": true
+    },
+    {
+      "name": "sig_le1_auth_status_after",
+      "passed": true
+    },
+    {
+      "name": "sig_le1_normal_sdk_verified",
+      "passed": true
+    },
+    {
+      "name": "sig_le1_key_persists",
+      "passed": true
+    },
+    {
+      "name": "sig_le1_counter_final",
+      "passed": true
+    },
+    {
+      "name": "sig_le16_sw",
+      "passed": true
+    },
+    {
+      "name": "sig_le16_signature_valid",
+      "passed": true
+    },
+    {
+      "name": "sig_le16_decoded_le",
+      "passed": true
+    },
+    {
+      "name": "sig_le16_decoded_lc",
+      "passed": true
+    },
+    {
+      "name": "sig_le16_header_matches",
+      "passed": true
+    },
+    {
+      "name": "sig_le16_state_unchanged",
+      "passed": true
+    },
+    {
+      "name": "sig_le16_counter_after",
+      "passed": true
+    },
+    {
+      "name": "sig_le16_auth_status_after",
+      "passed": true
+    },
+    {
+      "name": "sig_le16_normal_sdk_verified",
+      "passed": true
+    },
+    {
+      "name": "sig_le16_key_persists",
+      "passed": true
+    },
+    {
+      "name": "sig_le16_counter_final",
+      "passed": true
+    },
+    {
+      "name": "sig_max256_sw",
+      "passed": true
+    },
+    {
+      "name": "sig_max256_signature_valid",
+      "passed": true
+    },
+    {
+      "name": "sig_max256_decoded_le",
+      "passed": true
+    },
+    {
+      "name": "sig_max256_decoded_lc",
+      "passed": true
+    },
+    {
+      "name": "sig_max256_header_matches",
+      "passed": true
+    },
+    {
+      "name": "sig_max256_state_unchanged",
+      "passed": true
+    },
+    {
+      "name": "sig_max256_counter_after",
+      "passed": true
+    },
+    {
+      "name": "sig_max256_auth_status_after",
+      "passed": true
+    },
+    {
+      "name": "sig_max256_normal_sdk_verified",
+      "passed": true
+    },
+    {
+      "name": "sig_max256_key_persists",
+      "passed": true
+    },
+    {
+      "name": "sig_max256_counter_final",
+      "passed": true
+    },
+    {
+      "name": "sig_max65536_sw",
+      "passed": true
+    },
+    {
+      "name": "sig_max65536_signature_valid",
+      "passed": true
+    },
+    {
+      "name": "sig_max65536_decoded_le",
+      "passed": true
+    },
+    {
+      "name": "sig_max65536_decoded_lc",
+      "passed": true
+    },
+    {
+      "name": "sig_max65536_header_matches",
+      "passed": true
+    },
+    {
+      "name": "sig_max65536_state_unchanged",
+      "passed": true
+    },
+    {
+      "name": "sig_max65536_counter_after",
+      "passed": true
+    },
+    {
+      "name": "sig_max65536_auth_status_after",
+      "passed": true
+    },
+    {
+      "name": "sig_max65536_normal_sdk_verified",
+      "passed": true
+    },
+    {
+      "name": "sig_max65536_key_persists",
+      "passed": true
+    },
+    {
+      "name": "sig_max65536_counter_final",
+      "passed": true
+    },
+    {
+      "name": "sig_lc_empty_sw",
+      "passed": true
+    },
+    {
+      "name": "sig_lc_empty_signature_valid",
+      "passed": true
+    },
+    {
+      "name": "sig_lc_empty_decoded_le",
+      "passed": true
+    },
+    {
+      "name": "sig_lc_empty_decoded_lc",
+      "passed": true
+    },
+    {
+      "name": "sig_lc_empty_header_matches",
+      "passed": true
+    },
+    {
+      "name": "sig_lc_empty_state_unchanged",
+      "passed": true
+    },
+    {
+      "name": "sig_lc_empty_counter_after",
+      "passed": true
+    },
+    {
+      "name": "sig_lc_empty_auth_status_after",
+      "passed": true
+    },
+    {
+      "name": "sig_lc_empty_normal_sdk_verified",
+      "passed": true
+    },
+    {
+      "name": "sig_lc_empty_key_persists",
+      "passed": true
+    },
+    {
+      "name": "sig_lc_empty_counter_final",
+      "passed": true
+    },
+    {
+      "name": "sig_lc_one_sw",
+      "passed": true
+    },
+    {
+      "name": "sig_lc_one_signature_valid",
+      "passed": true
+    },
+    {
+      "name": "sig_lc_one_decoded_le",
+      "passed": true
+    },
+    {
+      "name": "sig_lc_one_decoded_lc",
+      "passed": true
+    },
+    {
+      "name": "sig_lc_one_header_matches",
+      "passed": true
+    },
+    {
+      "name": "sig_lc_one_state_unchanged",
+      "passed": true
+    },
+    {
+      "name": "sig_lc_one_counter_after",
+      "passed": true
+    },
+    {
+      "name": "sig_lc_one_auth_status_after",
+      "passed": true
+    },
+    {
+      "name": "sig_lc_one_normal_sdk_verified",
+      "passed": true
+    },
+    {
+      "name": "sig_lc_one_key_persists",
+      "passed": true
+    },
+    {
+      "name": "sig_lc_one_counter_final",
+      "passed": true
+    },
+    {
+      "name": "sig_bad_p1_sw",
+      "passed": true
+    },
+    {
+      "name": "sig_bad_p1_signature_valid",
+      "passed": true
+    },
+    {
+      "name": "sig_bad_p1_decoded_le",
+      "passed": true
+    },
+    {
+      "name": "sig_bad_p1_decoded_lc",
+      "passed": true
+    },
+    {
+      "name": "sig_bad_p1_header_matches",
+      "passed": true
+    },
+    {
+      "name": "sig_bad_p1_state_unchanged",
+      "passed": true
+    },
+    {
+      "name": "sig_bad_p1_counter_after",
+      "passed": true
+    },
+    {
+      "name": "sig_bad_p1_auth_status_after",
+      "passed": true
+    },
+    {
+      "name": "sig_bad_p1_normal_sdk_verified",
+      "passed": true
+    },
+    {
+      "name": "sig_bad_p1_key_persists",
+      "passed": true
+    },
+    {
+      "name": "sig_bad_p1_counter_final",
+      "passed": true
+    },
+    {
+      "name": "sig_bad_p2_sw",
+      "passed": true
+    },
+    {
+      "name": "sig_bad_p2_signature_valid",
+      "passed": true
+    },
+    {
+      "name": "sig_bad_p2_decoded_le",
+      "passed": true
+    },
+    {
+      "name": "sig_bad_p2_decoded_lc",
+      "passed": true
+    },
+    {
+      "name": "sig_bad_p2_header_matches",
+      "passed": true
+    },
+    {
+      "name": "sig_bad_p2_state_unchanged",
+      "passed": true
+    },
+    {
+      "name": "sig_bad_p2_counter_after",
+      "passed": true
+    },
+    {
+      "name": "sig_bad_p2_auth_status_after",
+      "passed": true
+    },
+    {
+      "name": "sig_bad_p2_normal_sdk_verified",
+      "passed": true
+    },
+    {
+      "name": "sig_bad_p2_key_persists",
+      "passed": true
+    },
+    {
+      "name": "sig_bad_p2_counter_final",
+      "passed": true
+    },
+    {
+      "name": "aut_le1_sw",
+      "passed": true
+    },
+    {
+      "name": "aut_le1_signature_valid",
+      "passed": true
+    },
+    {
+      "name": "aut_le1_decoded_le",
+      "passed": true
+    },
+    {
+      "name": "aut_le1_decoded_lc",
+      "passed": true
+    },
+    {
+      "name": "aut_le1_header_matches",
+      "passed": true
+    },
+    {
+      "name": "aut_le1_state_unchanged",
+      "passed": true
+    },
+    {
+      "name": "aut_le1_counter_after",
+      "passed": true
+    },
+    {
+      "name": "aut_le1_auth_status_after",
+      "passed": true
+    },
+    {
+      "name": "aut_le1_normal_sdk_verified",
+      "passed": true
+    },
+    {
+      "name": "aut_le1_key_persists",
+      "passed": true
+    },
+    {
+      "name": "aut_le1_counter_final",
+      "passed": true
+    },
+    {
+      "name": "aut_le16_sw",
+      "passed": true
+    },
+    {
+      "name": "aut_le16_signature_valid",
+      "passed": true
+    },
+    {
+      "name": "aut_le16_decoded_le",
+      "passed": true
+    },
+    {
+      "name": "aut_le16_decoded_lc",
+      "passed": true
+    },
+    {
+      "name": "aut_le16_header_matches",
+      "passed": true
+    },
+    {
+      "name": "aut_le16_state_unchanged",
+      "passed": true
+    },
+    {
+      "name": "aut_le16_counter_after",
+      "passed": true
+    },
+    {
+      "name": "aut_le16_auth_status_after",
+      "passed": true
+    },
+    {
+      "name": "aut_le16_normal_sdk_verified",
+      "passed": true
+    },
+    {
+      "name": "aut_le16_key_persists",
+      "passed": true
+    },
+    {
+      "name": "aut_le16_counter_final",
+      "passed": true
+    },
+    {
+      "name": "aut_max256_sw",
+      "passed": true
+    },
+    {
+      "name": "aut_max256_signature_valid",
+      "passed": true
+    },
+    {
+      "name": "aut_max256_decoded_le",
+      "passed": true
+    },
+    {
+      "name": "aut_max256_decoded_lc",
+      "passed": true
+    },
+    {
+      "name": "aut_max256_header_matches",
+      "passed": true
+    },
+    {
+      "name": "aut_max256_state_unchanged",
+      "passed": true
+    },
+    {
+      "name": "aut_max256_counter_after",
+      "passed": true
+    },
+    {
+      "name": "aut_max256_auth_status_after",
+      "passed": true
+    },
+    {
+      "name": "aut_max256_normal_sdk_verified",
+      "passed": true
+    },
+    {
+      "name": "aut_max256_key_persists",
+      "passed": true
+    },
+    {
+      "name": "aut_max256_counter_final",
+      "passed": true
+    },
+    {
+      "name": "aut_max65536_sw",
+      "passed": true
+    },
+    {
+      "name": "aut_max65536_signature_valid",
+      "passed": true
+    },
+    {
+      "name": "aut_max65536_decoded_le",
+      "passed": true
+    },
+    {
+      "name": "aut_max65536_decoded_lc",
+      "passed": true
+    },
+    {
+      "name": "aut_max65536_header_matches",
+      "passed": true
+    },
+    {
+      "name": "aut_max65536_state_unchanged",
+      "passed": true
+    },
+    {
+      "name": "aut_max65536_counter_after",
+      "passed": true
+    },
+    {
+      "name": "aut_max65536_auth_status_after",
+      "passed": true
+    },
+    {
+      "name": "aut_max65536_normal_sdk_verified",
+      "passed": true
+    },
+    {
+      "name": "aut_max65536_key_persists",
+      "passed": true
+    },
+    {
+      "name": "aut_max65536_counter_final",
+      "passed": true
+    },
+    {
+      "name": "aut_lc_empty_sw",
+      "passed": true
+    },
+    {
+      "name": "aut_lc_empty_signature_valid",
+      "passed": true
+    },
+    {
+      "name": "aut_lc_empty_decoded_le",
+      "passed": true
+    },
+    {
+      "name": "aut_lc_empty_decoded_lc",
+      "passed": true
+    },
+    {
+      "name": "aut_lc_empty_header_matches",
+      "passed": true
+    },
+    {
+      "name": "aut_lc_empty_state_unchanged",
+      "passed": true
+    },
+    {
+      "name": "aut_lc_empty_counter_after",
+      "passed": true
+    },
+    {
+      "name": "aut_lc_empty_auth_status_after",
+      "passed": true
+    },
+    {
+      "name": "aut_lc_empty_normal_sdk_verified",
+      "passed": true
+    },
+    {
+      "name": "aut_lc_empty_key_persists",
+      "passed": true
+    },
+    {
+      "name": "aut_lc_empty_counter_final",
+      "passed": true
+    },
+    {
+      "name": "aut_lc_one_sw",
+      "passed": true
+    },
+    {
+      "name": "aut_lc_one_signature_valid",
+      "passed": true
+    },
+    {
+      "name": "aut_lc_one_decoded_le",
+      "passed": true
+    },
+    {
+      "name": "aut_lc_one_decoded_lc",
+      "passed": true
+    },
+    {
+      "name": "aut_lc_one_header_matches",
+      "passed": true
+    },
+    {
+      "name": "aut_lc_one_state_unchanged",
+      "passed": true
+    },
+    {
+      "name": "aut_lc_one_counter_after",
+      "passed": true
+    },
+    {
+      "name": "aut_lc_one_auth_status_after",
+      "passed": true
+    },
+    {
+      "name": "aut_lc_one_normal_sdk_verified",
+      "passed": true
+    },
+    {
+      "name": "aut_lc_one_key_persists",
+      "passed": true
+    },
+    {
+      "name": "aut_lc_one_counter_final",
+      "passed": true
+    },
+    {
+      "name": "aut_bad_p1_sw",
+      "passed": true
+    },
+    {
+      "name": "aut_bad_p1_signature_valid",
+      "passed": true
+    },
+    {
+      "name": "aut_bad_p1_decoded_le",
+      "passed": true
+    },
+    {
+      "name": "aut_bad_p1_decoded_lc",
+      "passed": true
+    },
+    {
+      "name": "aut_bad_p1_header_matches",
+      "passed": true
+    },
+    {
+      "name": "aut_bad_p1_state_unchanged",
+      "passed": true
+    },
+    {
+      "name": "aut_bad_p1_counter_after",
+      "passed": true
+    },
+    {
+      "name": "aut_bad_p1_auth_status_after",
+      "passed": true
+    },
+    {
+      "name": "aut_bad_p1_normal_sdk_verified",
+      "passed": true
+    },
+    {
+      "name": "aut_bad_p1_key_persists",
+      "passed": true
+    },
+    {
+      "name": "aut_bad_p1_counter_final",
+      "passed": true
+    },
+    {
+      "name": "aut_bad_p2_sw",
+      "passed": true
+    },
+    {
+      "name": "aut_bad_p2_signature_valid",
+      "passed": true
+    },
+    {
+      "name": "aut_bad_p2_decoded_le",
+      "passed": true
+    },
+    {
+      "name": "aut_bad_p2_decoded_lc",
+      "passed": true
+    },
+    {
+      "name": "aut_bad_p2_header_matches",
+      "passed": true
+    },
+    {
+      "name": "aut_bad_p2_state_unchanged",
+      "passed": true
+    },
+    {
+      "name": "aut_bad_p2_counter_after",
+      "passed": true
+    },
+    {
+      "name": "aut_bad_p2_auth_status_after",
+      "passed": true
+    },
+    {
+      "name": "aut_bad_p2_normal_sdk_verified",
+      "passed": true
+    },
+    {
+      "name": "aut_bad_p2_key_persists",
+      "passed": true
+    },
+    {
+      "name": "aut_bad_p2_counter_final",
+      "passed": true
+    }
+  ],
+  "expect": "guarded",
+  "transport": "direct IFD ABI",
+  "observations": {
+    "sig_le1_sw": 26368,
+    "sig_le1_signature_valid": false,
+    "sig_le1_decoded_le": 1,
+    "sig_le1_decoded_lc": 32,
+    "sig_le1_header_matches": true,
+    "sig_le1_state_unchanged": true,
+    "sig_le1_counter_after": 0,
+    "sig_le1_auth_status_after": 36864,
+    "sig_le1_normal_sdk_verified": true,
+    "sig_le1_key_persists": true,
+    "sig_le1_counter_final": 1,
+    "sig_le16_sw": 26368,
+    "sig_le16_signature_valid": false,
+    "sig_le16_decoded_le": 16,
+    "sig_le16_decoded_lc": 32,
+    "sig_le16_header_matches": true,
+    "sig_le16_state_unchanged": true,
+    "sig_le16_counter_after": 0,
+    "sig_le16_auth_status_after": 36864,
+    "sig_le16_normal_sdk_verified": true,
+    "sig_le16_key_persists": true,
+    "sig_le16_counter_final": 1,
+    "sig_max256_sw": 36864,
+    "sig_max256_signature_valid": true,
+    "sig_max256_decoded_le": 256,
+    "sig_max256_decoded_lc": 32,
+    "sig_max256_header_matches": true,
+    "sig_max256_state_unchanged": false,
+    "sig_max256_counter_after": 1,
+    "sig_max256_auth_status_after": 25539,
+    "sig_max256_normal_sdk_verified": true,
+    "sig_max256_key_persists": true,
+    "sig_max256_counter_final": 2,
+    "sig_max65536_sw": 36864,
+    "sig_max65536_signature_valid": true,
+    "sig_max65536_decoded_le": 65536,
+    "sig_max65536_decoded_lc": 32,
+    "sig_max65536_header_matches": true,
+    "sig_max65536_state_unchanged": false,
+    "sig_max65536_counter_after": 1,
+    "sig_max65536_auth_status_after": 25539,
+    "sig_max65536_normal_sdk_verified": true,
+    "sig_max65536_key_persists": true,
+    "sig_max65536_counter_final": 2,
+    "sig_lc_empty_sw": 27264,
+    "sig_lc_empty_signature_valid": false,
+    "sig_lc_empty_decoded_le": null,
+    "sig_lc_empty_decoded_lc": 0,
+    "sig_lc_empty_header_matches": true,
+    "sig_lc_empty_state_unchanged": true,
+    "sig_lc_empty_counter_after": 0,
+    "sig_lc_empty_auth_status_after": 36864,
+    "sig_lc_empty_normal_sdk_verified": true,
+    "sig_lc_empty_key_persists": true,
+    "sig_lc_empty_counter_final": 1,
+    "sig_lc_one_sw": 27264,
+    "sig_lc_one_signature_valid": false,
+    "sig_lc_one_decoded_le": null,
+    "sig_lc_one_decoded_lc": 1,
+    "sig_lc_one_header_matches": true,
+    "sig_lc_one_state_unchanged": true,
+    "sig_lc_one_counter_after": 0,
+    "sig_lc_one_auth_status_after": 36864,
+    "sig_lc_one_normal_sdk_verified": true,
+    "sig_lc_one_key_persists": true,
+    "sig_lc_one_counter_final": 1,
+    "sig_bad_p1_sw": 27270,
+    "sig_bad_p1_signature_valid": false,
+    "sig_bad_p1_decoded_le": null,
+    "sig_bad_p1_decoded_lc": 32,
+    "sig_bad_p1_header_matches": true,
+    "sig_bad_p1_state_unchanged": true,
+    "sig_bad_p1_counter_after": 0,
+    "sig_bad_p1_auth_status_after": 36864,
+    "sig_bad_p1_normal_sdk_verified": true,
+    "sig_bad_p1_key_persists": true,
+    "sig_bad_p1_counter_final": 1,
+    "sig_bad_p2_sw": 27270,
+    "sig_bad_p2_signature_valid": false,
+    "sig_bad_p2_decoded_le": null,
+    "sig_bad_p2_decoded_lc": 32,
+    "sig_bad_p2_header_matches": true,
+    "sig_bad_p2_state_unchanged": true,
+    "sig_bad_p2_counter_after": 0,
+    "sig_bad_p2_auth_status_after": 36864,
+    "sig_bad_p2_normal_sdk_verified": true,
+    "sig_bad_p2_key_persists": true,
+    "sig_bad_p2_counter_final": 1,
+    "aut_le1_sw": 26368,
+    "aut_le1_signature_valid": false,
+    "aut_le1_decoded_le": 1,
+    "aut_le1_decoded_lc": 32,
+    "aut_le1_header_matches": true,
+    "aut_le1_state_unchanged": true,
+    "aut_le1_counter_after": 0,
+    "aut_le1_auth_status_after": 36864,
+    "aut_le1_normal_sdk_verified": true,
+    "aut_le1_key_persists": true,
+    "aut_le1_counter_final": 0,
+    "aut_le16_sw": 26368,
+    "aut_le16_signature_valid": false,
+    "aut_le16_decoded_le": 16,
+    "aut_le16_decoded_lc": 32,
+    "aut_le16_header_matches": true,
+    "aut_le16_state_unchanged": true,
+    "aut_le16_counter_after": 0,
+    "aut_le16_auth_status_after": 36864,
+    "aut_le16_normal_sdk_verified": true,
+    "aut_le16_key_persists": true,
+    "aut_le16_counter_final": 0,
+    "aut_max256_sw": 36864,
+    "aut_max256_signature_valid": true,
+    "aut_max256_decoded_le": 256,
+    "aut_max256_decoded_lc": 32,
+    "aut_max256_header_matches": true,
+    "aut_max256_state_unchanged": false,
+    "aut_max256_counter_after": 0,
+    "aut_max256_auth_status_after": 36864,
+    "aut_max256_normal_sdk_verified": true,
+    "aut_max256_key_persists": true,
+    "aut_max256_counter_final": 0,
+    "aut_max65536_sw": 36864,
+    "aut_max65536_signature_valid": true,
+    "aut_max65536_decoded_le": 65536,
+    "aut_max65536_decoded_lc": 32,
+    "aut_max65536_header_matches": true,
+    "aut_max65536_state_unchanged": false,
+    "aut_max65536_counter_after": 0,
+    "aut_max65536_auth_status_after": 36864,
+    "aut_max65536_normal_sdk_verified": true,
+    "aut_max65536_key_persists": true,
+    "aut_max65536_counter_final": 0,
+    "aut_lc_empty_sw": 27264,
+    "aut_lc_empty_signature_valid": false,
+    "aut_lc_empty_decoded_le": null,
+    "aut_lc_empty_decoded_lc": 0,
+    "aut_lc_empty_header_matches": true,
+    "aut_lc_empty_state_unchanged": true,
+    "aut_lc_empty_counter_after": 0,
+    "aut_lc_empty_auth_status_after": 36864,
+    "aut_lc_empty_normal_sdk_verified": true,
+    "aut_lc_empty_key_persists": true,
+    "aut_lc_empty_counter_final": 0,
+    "aut_lc_one_sw": 27264,
+    "aut_lc_one_signature_valid": false,
+    "aut_lc_one_decoded_le": null,
+    "aut_lc_one_decoded_lc": 1,
+    "aut_lc_one_header_matches": true,
+    "aut_lc_one_state_unchanged": true,
+    "aut_lc_one_counter_after": 0,
+    "aut_lc_one_auth_status_after": 36864,
+    "aut_lc_one_normal_sdk_verified": true,
+    "aut_lc_one_key_persists": true,
+    "aut_lc_one_counter_final": 0,
+    "aut_bad_p1_sw": 27270,
+    "aut_bad_p1_signature_valid": false,
+    "aut_bad_p1_decoded_le": null,
+    "aut_bad_p1_decoded_lc": 32,
+    "aut_bad_p1_header_matches": true,
+    "aut_bad_p1_state_unchanged": true,
+    "aut_bad_p1_counter_after": 0,
+    "aut_bad_p1_auth_status_after": 36864,
+    "aut_bad_p1_normal_sdk_verified": true,
+    "aut_bad_p1_key_persists": true,
+    "aut_bad_p1_counter_final": 0,
+    "aut_bad_p2_sw": 27270,
+    "aut_bad_p2_signature_valid": false,
+    "aut_bad_p2_decoded_le": null,
+    "aut_bad_p2_decoded_lc": 32,
+    "aut_bad_p2_header_matches": true,
+    "aut_bad_p2_state_unchanged": true,
+    "aut_bad_p2_counter_after": 0,
+    "aut_bad_p2_auth_status_after": 36864,
+    "aut_bad_p2_normal_sdk_verified": true,
+    "aut_bad_p2_key_persists": true,
+    "aut_bad_p2_counter_final": 0
+  },
+  "mismatches": {},
+  "physical_key_accessed": false,
+  "source": "OpenPGP Smart Card Application 3.4.1 sections 7.2.10 and 7.2.13",
+  "note": "6700 is the emulator's status choice; physical 5.7.4 tolerance/status unmeasured"
+}

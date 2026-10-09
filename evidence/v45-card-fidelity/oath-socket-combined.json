@@ -1,0 +1,61 @@
+{
+  "passed": true,
+  "test_count": 8,
+  "tests": [
+    {
+      "name": "socket selects OATH",
+      "passed": true,
+      "observed": "0x9000"
+    },
+    {
+      "name": "socket HOTP at 18446744073709551614 uses exact counter",
+      "passed": true,
+      "observed": {
+        "sw": "0x9000",
+        "response": "751506351145ccdc074caa7feec5d73e91e7fbadfb32b3"
+      }
+    },
+    {
+      "name": "socket HOTP at 18446744073709551615 uses exact counter",
+      "passed": true,
+      "observed": {
+        "sw": "0x9000",
+        "response": "751506f616fd66b7f06290686b6320ceb34d65b1fe93ea"
+      }
+    },
+    {
+      "name": "next-counter sentinel persists across service restart",
+      "passed": true,
+      "observed": 18446744073709551616
+    },
+    {
+      "name": "restarted socket selects OATH",
+      "passed": true,
+      "observed": "0x9000"
+    },
+    {
+      "name": "exhausted socket HOTP rejects without transport failure",
+      "passed": true,
+      "observed": {
+        "sw": "0x6581",
+        "response": ""
+      }
+    },
+    {
+      "name": "exhausted socket rejection keeps ciphertext unchanged",
+      "passed": true,
+      "observed": "e7163faeb446ee366da101f0513248dd7a2030eec60b448a39c16684e2be49a0"
+    },
+    {
+      "name": "service remains usable for LIST after exhaustion",
+      "passed": true,
+      "observed": {
+        "sw": "0x9000",
+        "listing": "72021101"
+      }
+    }
+  ],
+  "transport": "private CCID socket",
+  "physical_device_access": false,
+  "physical_firmware_5_7_4_exhaustion_response_measured": false
+}

@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "native_browser_checks": 29,
+  "actual_pin_submissions": 9,
+  "actual_pin_characters": 15,
+  "keyboard_control_changes_and_restorations": 9,
+  "original_ui_repeat_root_cause_classified": false,
+  "raw_report_joined": true,
+  "report_sha256": "76e2080dad7a67ca6fe7c85ec698958c22da16d106ef47bdb9c05c1417c38642",
+  "console_sha256": "503fb8f757fede742b0b7fa3faf0f618a1c4c12c37950c8f087f4ed387abc3d0",
+  "validator_sha256": "c663237123f6912a3af8b7366dbf43c9305dadb9ef90b854c61f2fa4ed335b18",
+  "emulator_binary_sha256": "4a34289e3d8a6eb2e3dbde984ce5433b78b12aa8f419ac7a198ca843d562ba7a",
+  "browser_binary_sha256": "4f8459f639cd128f701fc84b04bbdc496a56202cdd78beec5db721bdda260911",
+  "native_macos_registration_verified": false,
+  "physical_device_access": false,
+  "complete_yubikey_equivalence": false
+}

@@ -1,0 +1,280 @@
+{
+  "passed": true,
+  "tests": [
+    {
+      "name": "independent OATH peer advances before OpenPGP reset",
+      "passed": true
+    },
+    {
+      "name": "lifecycle command 44 rejects malformed header; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "lifecycle command e6 rejects malformed header; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "app reset preserves preinitialized own issuer certificate and public key",
+      "passed": true
+    },
+    {
+      "name": "app reset removes all three user keys",
+      "passed": true
+    },
+    {
+      "name": "app reset removes user objects and restores plain PIN/counter defaults",
+      "passed": true
+    },
+    {
+      "name": "retained original own private issuer signs a new generated user key after reset",
+      "passed": true
+    },
+    {
+      "name": "OpenPGP reset preserves separate PIV own issuer",
+      "passed": true
+    },
+    {
+      "name": "OpenPGP reset preserves separate OATH key and durable HOTP counter",
+      "passed": true
+    },
+    {
+      "name": "SIG own attestation independently verifies public key/issuer/software label",
+      "passed": true
+    },
+    {
+      "name": "SIG attestation copies exact template validity",
+      "passed": true
+    },
+    {
+      "name": "SIG RSA issuer uses SHA256 PKCS1v1.5",
+      "passed": true
+    },
+    {
+      "name": "SIG attestation has positive 128-bit serial profile and bounded certificate",
+      "passed": true
+    },
+    {
+      "name": "SIG public extension set includes counter only for SIG",
+      "passed": true
+    },
+    {
+      "name": "SIG Latin1 cardholder name encodes as DER UTF8String",
+      "passed": true
+    },
+    {
+      "name": "SIG generated software source and compatible firmware fields decode independently",
+      "passed": true
+    },
+    {
+      "name": "SIG fingerprint and generation date refer to the attested key",
+      "passed": true
+    },
+    {
+      "name": "SIG owned card serial retains positive DER integer sign",
+      "passed": true
+    },
+    {
+      "name": "SIG key UIF/profile form factor decoded; FIPS/CSPN claims absent",
+      "passed": true
+    },
+    {
+      "name": "SIG public metadata extensions are noncritical",
+      "passed": true
+    },
+    {
+      "name": "SIG attestation captures current counter without incrementing it",
+      "passed": true
+    },
+    {
+      "name": "DEC own attestation independently verifies public key/issuer/software label",
+      "passed": true
+    },
+    {
+      "name": "DEC attestation copies exact template validity",
+      "passed": true
+    },
+    {
+      "name": "DEC RSA issuer uses SHA256 PKCS1v1.5",
+      "passed": true
+    },
+    {
+      "name": "DEC attestation has positive 128-bit serial profile and bounded certificate",
+      "passed": true
+    },
+    {
+      "name": "DEC public extension set includes counter only for SIG",
+      "passed": true
+    },
+    {
+      "name": "DEC Latin1 cardholder name encodes as DER UTF8String",
+      "passed": true
+    },
+    {
+      "name": "DEC generated software source and compatible firmware fields decode independently",
+      "passed": true
+    },
+    {
+      "name": "DEC fingerprint and generation date refer to the attested key",
+      "passed": true
+    },
+    {
+      "name": "DEC owned card serial retains positive DER integer sign",
+      "passed": true
+    },
+    {
+      "name": "DEC key UIF/profile form factor decoded; FIPS/CSPN claims absent",
+      "passed": true
+    },
+    {
+      "name": "DEC public metadata extensions are noncritical",
+      "passed": true
+    },
+    {
+      "name": "AUT own attestation independently verifies public key/issuer/software label",
+      "passed": true
+    },
+    {
+      "name": "AUT attestation copies exact template validity",
+      "passed": true
+    },
+    {
+      "name": "AUT RSA issuer uses SHA256 PKCS1v1.5",
+      "passed": true
+    },
+    {
+      "name": "AUT attestation has positive 128-bit serial profile and bounded certificate",
+      "passed": true
+    },
+    {
+      "name": "AUT public extension set includes counter only for SIG",
+      "passed": true
+    },
+    {
+      "name": "AUT Latin1 cardholder name encodes as DER UTF8String",
+      "passed": true
+    },
+    {
+      "name": "AUT generated software source and compatible firmware fields decode independently",
+      "passed": true
+    },
+    {
+      "name": "AUT fingerprint and generation date refer to the attested key",
+      "passed": true
+    },
+    {
+      "name": "AUT owned card serial retains positive DER integer sign",
+      "passed": true
+    },
+    {
+      "name": "AUT key UIF/profile form factor decoded; FIPS/CSPN claims absent",
+      "passed": true
+    },
+    {
+      "name": "AUT public metadata extensions are noncritical",
+      "passed": true
+    },
+    {
+      "name": "independent attestation requests use different random own certificate serials",
+      "passed": true
+    },
+    {
+      "name": "attestation requires proprietary CLA 80; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "attestation rejects nonzero P2; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "attestation rejects unexpected data; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "attestation issuer cannot attest itself; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "EC replacement issuer certificate/private-key identity survives reset/restart",
+      "passed": true
+    },
+    {
+      "name": "EC retained issuer preserves own attributes/fingerprint/date/fixed UIF model",
+      "passed": true
+    },
+    {
+      "name": "EC retained private issuer independently signs new key with copied expired-template dates",
+      "passed": true
+    },
+    {
+      "name": "EC issuer selects published SHA256 signature encoding",
+      "passed": true
+    },
+    {
+      "name": "RSA replacement issuer certificate/private-key identity survives reset/restart",
+      "passed": true
+    },
+    {
+      "name": "RSA retained issuer preserves own attributes/fingerprint/date/fixed UIF model",
+      "passed": true
+    },
+    {
+      "name": "RSA retained private issuer independently signs new key with copied expired-template dates",
+      "passed": true
+    },
+    {
+      "name": "RSA issuer selects published SHA256 signature encoding",
+      "passed": true
+    },
+    {
+      "name": "mismatched template refuses attestation and retains existing user certificate; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "reset retains opaque mismatched template instead of regenerating issuer",
+      "passed": true
+    },
+    {
+      "name": "malformed template cannot issue certificate and leaves persistent state unchanged; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "malformed stored template survives reset/restart without silent repair",
+      "passed": true
+    },
+    {
+      "name": "deleted issuer certificate stays deleted while private issuer remains after reset/restart",
+      "passed": true
+    },
+    {
+      "name": "deleted template never silently returns during attestation; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "deliberately deleted issuer key and certificate are not resurrected by reset/restart",
+      "passed": true
+    },
+    {
+      "name": "deleted own issuer has no public key after reset; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "oversized generated attestation refuses before overwriting user certificate; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "certificate-budget failure retains previous selected certificate occurrence",
+      "passed": true
+    }
+  ],
+  "scope": "fresh software cards; independent SDK/crypto over direct IFD ABI",
+  "physical_device_access_in_this_verifier": false,
+  "public_reference": "openpgp-reference-observation.json; template firmware extension wrapper measured, generated leaf extensions unmeasured",
+  "manufacturer_trust_reproduced": false,
+  "software_labels_own_serial_and_uncertified_flags": true,
+  "hardware_reset_metadata_uif_or_attestation_rejection_verified": false,
+  "unverified": [
+    "exact physical generated-leaf extension presence/order/encoding and certificate parsing/rejection rules",
+    "exact physical retention/reset of issuer fingerprint/date/UIF metadata",
+    "actual modified-emulator OS enumeration and physical attestation timing"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "passed": true,
+  "transport": "direct IFD",
+  "expect_fixed": false,
+  "rows": [
+    {
+      "name": "nonzero_p1",
+      "malformed_apdu": "00fb0100",
+      "sw": "9000",
+      "state_unchanged_on_malformed": false,
+      "normal_sdk_reset": true
+    },
+    {
+      "name": "nonzero_p2",
+      "malformed_apdu": "00fb0001",
+      "sw": "9000",
+      "state_unchanged_on_malformed": false,
+      "normal_sdk_reset": true
+    },
+    {
+      "name": "command_data",
+      "malformed_apdu": "00fb000001aa",
+      "sw": "9000",
+      "state_unchanged_on_malformed": false,
+      "normal_sdk_reset": true
+    },
+    {
+      "name": "explicit_le_1",
+      "malformed_apdu": "00fb000001",
+      "sw": "9000",
+      "state_unchanged_on_malformed": false,
+      "normal_sdk_reset": true
+    }
+  ],
+  "scp03": {
+    "unmodified_sdk_scp03_reset": true,
+    "reset_persisted_after_restart": true
+  },
+  "physical_key_accessed": false
+}

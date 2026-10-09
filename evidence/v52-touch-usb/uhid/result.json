@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "checks": 25,
+  "unchanged_ske_otpd_sha256": "6fc3e1509c4ed9a07fa40057feb53e4f45fcd3fed8d7ca05e3509617d449695e",
+  "candidate_service_sha256": "7bdfd452375d5c0d1493177e9b9d63a8a22e7cfc82aeed7df38715c827190a70",
+  "guest_image_sha256": "5afbfe1bd77efd6f10121dc41148bd121da3340c1ce688b1df12551798e23807",
+  "raw_console_sha256": "a179c0d7113d2c86aaf55275344ab67d00b5be3f7ea8f35ca6d91f11e322db9b",
+  "guest_network_devices": false,
+  "host_usb_passthrough": false,
+  "physical_device_access": false,
+  "kernel_panic": false
+}

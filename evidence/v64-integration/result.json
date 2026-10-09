@@ -1,0 +1,23 @@
+{
+  "passed": true,
+  "version": "0.64.0",
+  "main_python_reports": 59,
+  "main_python_checks": 5889,
+  "cpp_cases_each_platform": 140,
+  "cpp_assertions_each_platform": 13748,
+  "main_check_count": 6029,
+  "linux_ctap_sdk_checks": 82,
+  "usb_guest_exit_markers": 12,
+  "usb_guest_retry_success_after_first_failure": true,
+  "fido_same_cid_mac_linux_socket_and_usb": true,
+  "hsmauth_scp03_piv_mac_linux_socket_and_ifd": true,
+  "core_sha256": "29a132b08225043620c95142a5ebc40e6a212969f432f3a0e641f6c30730042d",
+  "domain_sha256": "8e867c2c00eddc776a68c0d1fa5adc0349a27b378010486e228213516f9bc4c4",
+  "fido_source_sha256": "629e1289a3293bc96e1161f23357d44b181f45d6f616f6b0343020bca29189b4",
+  "mac_daemon_sha256": "4249c154c87603780aff9131716d26b22cf5c19c40b85cbbafcb77213ad5b48a",
+  "linux_daemon_sha256": "47f383d48f3d381431c185b816a67131191348cadb3da2b9d16a843df2befaac",
+  "guest_raw_console_sha256": "ad2a2fd951ebcd0ece20abbbc8c5e7df5581086190905fbfd4f08f5672dfeb18",
+  "physical_reference_differential": false,
+  "apple_entitled_registration": false,
+  "host_or_physical_device_access": false
+}

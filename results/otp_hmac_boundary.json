@@ -1,0 +1,154 @@
+{
+  "passed": true,
+  "count": 12,
+  "tests": [
+    {
+      "name": "PCSC_APDU empty",
+      "passed": true
+    },
+    {
+      "name": "PCSC_APDU single_zero",
+      "passed": true
+    },
+    {
+      "name": "PCSC_APDU single_nonzero",
+      "passed": true
+    },
+    {
+      "name": "PCSC_APDU embedded_zero",
+      "passed": true
+    },
+    {
+      "name": "PCSC_APDU 63_bytes",
+      "passed": true
+    },
+    {
+      "name": "PCSC_APDU fixed_64_zero_bytes",
+      "passed": true
+    },
+    {
+      "name": "OTP_HID empty",
+      "passed": true
+    },
+    {
+      "name": "OTP_HID single_zero",
+      "passed": true
+    },
+    {
+      "name": "OTP_HID single_nonzero",
+      "passed": true
+    },
+    {
+      "name": "OTP_HID embedded_zero",
+      "passed": true
+    },
+    {
+      "name": "OTP_HID 63_bytes",
+      "passed": true
+    },
+    {
+      "name": "OTP_HID fixed_64_zero_bytes",
+      "passed": true
+    }
+  ],
+  "checks": [
+    {
+      "backend": "PCSC_APDU",
+      "case": "empty",
+      "input_bytes": 0,
+      "expected_sha1_hmac": "1e5fd6a5cbc98bd4c1fe20d5e5fb2ed1df330c93",
+      "actual_sha1_hmac": "1e5fd6a5cbc98bd4c1fe20d5e5fb2ed1df330c93",
+      "matched": true
+    },
+    {
+      "backend": "PCSC_APDU",
+      "case": "single_zero",
+      "input_bytes": 1,
+      "expected_sha1_hmac": "1e5fd6a5cbc98bd4c1fe20d5e5fb2ed1df330c93",
+      "actual_sha1_hmac": "1e5fd6a5cbc98bd4c1fe20d5e5fb2ed1df330c93",
+      "matched": true
+    },
+    {
+      "backend": "PCSC_APDU",
+      "case": "single_nonzero",
+      "input_bytes": 1,
+      "expected_sha1_hmac": "c65ddee752f472a7f9da30d7e0e5933bd78da560",
+      "actual_sha1_hmac": "c65ddee752f472a7f9da30d7e0e5933bd78da560",
+      "matched": true
+    },
+    {
+      "backend": "PCSC_APDU",
+      "case": "embedded_zero",
+      "input_bytes": 3,
+      "expected_sha1_hmac": "ea91a7630003317fa5e2efcd77397ba984b9fd5a",
+      "actual_sha1_hmac": "ea91a7630003317fa5e2efcd77397ba984b9fd5a",
+      "matched": true
+    },
+    {
+      "backend": "PCSC_APDU",
+      "case": "63_bytes",
+      "input_bytes": 63,
+      "expected_sha1_hmac": "308410de020d4f0b5102b1a311a64ef22b525f69",
+      "actual_sha1_hmac": "308410de020d4f0b5102b1a311a64ef22b525f69",
+      "matched": true
+    },
+    {
+      "backend": "PCSC_APDU",
+      "case": "fixed_64_zero_bytes",
+      "input_bytes": 64,
+      "expected_sha1_hmac": "c71c70f1b8f9dce8c2114df29990faab6b361296",
+      "actual_sha1_hmac": "c71c70f1b8f9dce8c2114df29990faab6b361296",
+      "matched": true
+    },
+    {
+      "backend": "OTP_HID",
+      "case": "empty",
+      "input_bytes": 0,
+      "expected_sha1_hmac": "1e5fd6a5cbc98bd4c1fe20d5e5fb2ed1df330c93",
+      "actual_sha1_hmac": "1e5fd6a5cbc98bd4c1fe20d5e5fb2ed1df330c93",
+      "matched": true
+    },
+    {
+      "backend": "OTP_HID",
+      "case": "single_zero",
+      "input_bytes": 1,
+      "expected_sha1_hmac": "1e5fd6a5cbc98bd4c1fe20d5e5fb2ed1df330c93",
+      "actual_sha1_hmac": "1e5fd6a5cbc98bd4c1fe20d5e5fb2ed1df330c93",
+      "matched": true
+    },
+    {
+      "backend": "OTP_HID",
+      "case": "single_nonzero",
+      "input_bytes": 1,
+      "expected_sha1_hmac": "c65ddee752f472a7f9da30d7e0e5933bd78da560",
+      "actual_sha1_hmac": "c65ddee752f472a7f9da30d7e0e5933bd78da560",
+      "matched": true
+    },
+    {
+      "backend": "OTP_HID",
+      "case": "embedded_zero",
+      "input_bytes": 3,
+      "expected_sha1_hmac": "ea91a7630003317fa5e2efcd77397ba984b9fd5a",
+      "actual_sha1_hmac": "ea91a7630003317fa5e2efcd77397ba984b9fd5a",
+      "matched": true
+    },
+    {
+      "backend": "OTP_HID",
+      "case": "63_bytes",
+      "input_bytes": 63,
+      "expected_sha1_hmac": "308410de020d4f0b5102b1a311a64ef22b525f69",
+      "actual_sha1_hmac": "308410de020d4f0b5102b1a311a64ef22b525f69",
+      "matched": true
+    },
+    {
+      "backend": "OTP_HID",
+      "case": "fixed_64_zero_bytes",
+      "input_bytes": 64,
+      "expected_sha1_hmac": "c71c70f1b8f9dce8c2114df29990faab6b361296",
+      "actual_sha1_hmac": "c71c70f1b8f9dce8c2114df29990faab6b361296",
+      "matched": true
+    }
+  ],
+  "physical_device_access": false,
+  "firmware_5_7_4_differential_verified": false
+}

@@ -1,0 +1,13 @@
+--- a/emucard/core.py
++++ b/emucard/core.py
+@@ -1675,7 +1675,9 @@
+                         del d["credentials"][labelkey]
+                     fail(0x63C0 | remaining)
+                 row["retries"] = 8
+-            if row["touch"]:
++            # Symmetric GET CHALLENGE only returns a fresh random host value;
++            # the credential is used (and touch required) by CALCULATE.
++            if row["touch"] and not (ins == 4 and row["alg"] == 38):
+                 require(self.touch("YubiHSM Auth " + label.decode()), 0x6985)
+             if ins == 4:
+                 if row["alg"] == 38:

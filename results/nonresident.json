@@ -1,0 +1,186 @@
+{
+  "passed": true,
+  "tests": [
+    {
+      "name": "algorithm -7 packed self-attestation carries bounded independent wrapped ID",
+      "passed": true
+    },
+    {
+      "name": "algorithm -7 verifies independently with empty credBlob and no stored user identity",
+      "passed": true
+    },
+    {
+      "name": "algorithm -8 packed self-attestation carries bounded independent wrapped ID",
+      "passed": true
+    },
+    {
+      "name": "algorithm -8 verifies independently with empty credBlob and no stored user identity",
+      "passed": true
+    },
+    {
+      "name": "algorithm -35 packed self-attestation carries bounded independent wrapped ID",
+      "passed": true
+    },
+    {
+      "name": "algorithm -35 verifies independently with empty credBlob and no stored user identity",
+      "passed": true
+    },
+    {
+      "name": "actual encrypted store contains one root and no nonresident credential rows",
+      "passed": true
+    },
+    {
+      "name": "repeated account registrations have unique randomized opaque IDs",
+      "passed": true
+    },
+    {
+      "name": "nonresident registration does not rewrite initialized store or consume discoverable capacity",
+      "passed": true
+    },
+    {
+      "name": "nonresident credentials cannot be discovered by RP alone",
+      "passed": true
+    },
+    {
+      "name": "excludeList recognizes stateless credential after registration",
+      "passed": true
+    },
+    {
+      "name": "credential from another RP does not incorrectly trigger exclusion",
+      "passed": true
+    },
+    {
+      "name": "wrapped key is cryptographically bound to the RP hash",
+      "passed": true
+    },
+    {
+      "name": "wrapped ID tampering at byte 0 is rejected",
+      "passed": true
+    },
+    {
+      "name": "wrapped ID tampering at byte 3 is rejected",
+      "passed": true
+    },
+    {
+      "name": "wrapped ID tampering at byte 4 is rejected",
+      "passed": true
+    },
+    {
+      "name": "wrapped ID tampering at byte 16 is rejected",
+      "passed": true
+    },
+    {
+      "name": "wrapped ID tampering at byte 52 is rejected",
+      "passed": true
+    },
+    {
+      "name": "wrapped ID tampering at byte 127 is rejected",
+      "passed": true
+    },
+    {
+      "name": "wrong-sized stateless ID cannot resolve a key",
+      "passed": true
+    },
+    {
+      "name": "wrong-sized stateless ID cannot resolve a key",
+      "passed": true
+    },
+    {
+      "name": "stateless hmac-secret produces distinct results for two salts",
+      "passed": true
+    },
+    {
+      "name": "PIN protocols 1 and 2 produce identical no-UV stateless hmac-secret",
+      "passed": true
+    },
+    {
+      "name": "algorithm -7 resumes from ID with durable shared counter after process restart",
+      "passed": true
+    },
+    {
+      "name": "algorithm -8 resumes from ID with durable shared counter after process restart",
+      "passed": true
+    },
+    {
+      "name": "algorithm -35 resumes from ID with durable shared counter after process restart",
+      "passed": true
+    },
+    {
+      "name": "stateless hmac-secret remains stable after encrypted-store restart",
+      "passed": true
+    },
+    {
+      "name": "stateless hmac-secret preserves independent stable UV and no-UV secrets",
+      "passed": true
+    },
+    {
+      "name": "authenticated wrapped credProtect 3 blocks assertions without PIN",
+      "passed": true
+    },
+    {
+      "name": "PIN-authorized wrapped protected key signs successfully",
+      "passed": true
+    },
+    {
+      "name": "U2F authentication cannot bypass wrapped credProtect 3",
+      "passed": true
+    },
+    {
+      "name": "U2F rejects wrapped algorithm -8",
+      "passed": true
+    },
+    {
+      "name": "U2F rejects wrapped algorithm -35",
+      "passed": true
+    },
+    {
+      "name": "wrapped ES256 CTAP2 credential is usable through U2F with its RP application hash",
+      "passed": true
+    },
+    {
+      "name": "U2F wrapped registration and signature require no credential row",
+      "passed": true
+    },
+    {
+      "name": "U2F wrapped handle resolves through CTAP2 without a user entity",
+      "passed": true
+    },
+    {
+      "name": "credential management counts exclude all stateless CTAP2 and U2F registrations",
+      "passed": true
+    },
+    {
+      "name": "discoverable credential capacity remains exactly 100",
+      "passed": true
+    },
+    {
+      "name": "CTAP2 and U2F stateless registration both work when discoverable storage is full",
+      "passed": true
+    },
+    {
+      "name": "factory reset invalidates old wrapped ID even though it had no store row",
+      "passed": true
+    },
+    {
+      "name": "post-reset registrations use a fresh root and restored discoverable capacity",
+      "passed": true
+    },
+    {
+      "name": "previous v2 nonresident row retains its original key and migrates durably to v3",
+      "passed": true
+    },
+    {
+      "name": "new wrapped registrations coexist with retained legacy nonresident row",
+      "passed": true
+    }
+  ],
+  "scope": "fresh software backend, independent fido2 SDK and crypto; actual encrypted test store inspection",
+  "physical_device_access": false,
+  "manufacturer_wrapping_format_reproduced": false,
+  "remaining": [
+    "exact reference counter timing/rollover and opaque credential ID format",
+    "published discoverable-only credBlob profile has not been differentially measured",
+    "hardware primary backends retain stored-handle behavior",
+    "legacy nonresident rows remain stored for compatibility"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "transport": "private CCID socket",
+  "expect_fixed": false,
+  "malformed_sw": "6145",
+  "malformed_advanced_occurrence": true,
+  "normal_sdk_certificate_selection": true,
+  "normal_get_next_data": true,
+  "physical_key_accessed": false
+}

@@ -1,0 +1,92 @@
+--- a/tests/fake_transport.hpp
++++ b/tests/fake_transport.hpp
+@@ -4,6 +4,7 @@
+ #include "swpasskey/hid/transport.hpp"
+ 
+ #include <chrono>
++#include <atomic>
+ #include <condition_variable>
+ #include <cstring>
+ #include <deque>
+@@ -40,11 +41,24 @@
+     return {};
+   }
+ 
++  std::uint64_t connection_generation() const noexcept override {
++    return connection_generation_.load();
++  }
++
+   // --- host side ---
+   void host_write(const hid::Report& r) {
+     std::lock_guard<std::mutex> lk(mu_);
+     to_device_.push_back(r);
+     cv_.notify_one();
++  }
++
++  void host_reconnect() {
++    std::lock_guard<std::mutex> lk(mu_);
++    to_device_.clear();
++    to_host_.clear();
++    connection_generation_.fetch_add(1);
++    cv_.notify_all();
++    host_cv_.notify_all();
+   }
+ 
+   std::optional<hid::Report> host_read(std::chrono::milliseconds timeout) {
+@@ -70,6 +84,7 @@
+   std::condition_variable host_cv_;
+   std::deque<hid::Report> to_device_;
+   std::deque<hid::Report> to_host_;
++  std::atomic<std::uint64_t> connection_generation_{};
+ };
+ 
+ // --- packet helpers ---------------------------------------------------------
+--- a/tests/keepalive_loop_test.cpp
++++ b/tests/keepalive_loop_test.cpp
+@@ -18,6 +18,7 @@
+ class SlowHandler final : public ctap::RequestHandler {
+ public:
+   std::atomic<bool> release{false};
++  std::atomic<bool> signing{false};
+   std::atomic<int> calls{0};
+ 
+   Result<std::vector<std::uint8_t>> handle_cbor(std::span<const std::uint8_t> req,
+@@ -35,6 +36,7 @@
+         std::this_thread::sleep_for(2ms);
+       }
+       cancel.set_up_needed(false);
++      signing = true;
+       std::this_thread::sleep_for(250ms);  // "TPM sign" while PROCESSING
+       return std::vector<std::uint8_t>{0xA0};
+     }
+@@ -194,3 +196,30 @@
+   REQUIRE(bcnt_of(*pong) == 3);
+   r.h.release = true;
+ }
++
++TEST_CASE("reconnect discards a late worker response before the next INIT", "[loop][reconnect]") {
++  Rig r;
++  auto old_cid = r.init();
++  const std::uint8_t mc[] = {0x01};
++  r.t.host_write(make_frames(old_cid, ctap::kCmdCbor, mc).front());
++  auto keepalive = r.t.host_read(1s);
++  REQUIRE(keepalive.has_value());
++  REQUIRE(cmd_of(*keepalive) == ctap::kCmdKeepalive);
++  r.h.release = true;
++  for (int i = 0; i < 100 && !r.h.signing.load(); ++i) {
++    std::this_thread::sleep_for(2ms);
++  }
++  REQUIRE(r.h.signing.load());
++  r.t.host_reconnect();
++  REQUIRE_FALSE(r.t.host_read(500ms).has_value());
++  auto new_cid = r.init();
++  REQUIRE(new_cid != old_cid);
++  const std::uint8_t gi[] = {0x04};
++  r.t.host_write(make_frames(new_cid, ctap::kCmdCbor, gi).front());
++  auto response = r.t.host_read(2s);
++  REQUIRE(response.has_value());
++  REQUIRE(cid_of(*response) == new_cid);
++  REQUIRE(cmd_of(*response) == ctap::kCmdCbor);
++  REQUIRE((*response)[7] == 0x00);
++  REQUIRE_FALSE(r.t.host_read(150ms).has_value());
++}

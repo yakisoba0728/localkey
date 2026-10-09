@@ -1,0 +1,113 @@
+4/4 fixed delete checks passed
+{
+  "passed": true,
+  "core_sha256": "f6587c70da88ca9f4e73779c49642471b3d0dbc84c58b84d6c26980404163a59",
+  "transport": "private CCID socket",
+  "fixed": true,
+  "malformed_apdu": "00a502040660045c027f2101",
+  "malformed_sw": "6700",
+  "persistent_state_unchanged_on_malformed": true,
+  "malformed_selection_preserved": true,
+  "valid_spec_le_zero_select": true,
+  "normal_unmodified_sdk_select_and_read": true,
+  "sdk_malformed_select_detected": true,
+  "certificates_persist_after_restart": true,
+  "physical_key_accessed": false
+}
+{
+  "passed": true,
+  "core_sha256": "f6587c70da88ca9f4e73779c49642471b3d0dbc84c58b84d6c26980404163a59",
+  "transport": "direct IFD",
+  "fixed": true,
+  "malformed_apdu": "00a502040660045c027f2101",
+  "malformed_sw": "6700",
+  "persistent_state_unchanged_on_malformed": true,
+  "malformed_selection_preserved": true,
+  "valid_spec_le_zero_select": true,
+  "normal_unmodified_sdk_select_and_read": true,
+  "sdk_malformed_select_detected": true,
+  "certificates_persist_after_restart": true,
+  "physical_key_accessed": false
+}
+{
+  "passed": true,
+  "fixed": true,
+  "route": "private CCID socket",
+  "rows": [
+    {
+      "name": "move_extra_data",
+      "command_hex": "00f6829a0101",
+      "sw": "6700",
+      "malformed_state_unchanged": true,
+      "normal_sdk_move_delete_after_restart": true,
+      "passed": true
+    },
+    {
+      "name": "move_explicit_le",
+      "command_hex": "00f6829a01",
+      "sw": "6700",
+      "malformed_state_unchanged": true,
+      "normal_sdk_move_delete_after_restart": true,
+      "passed": true
+    },
+    {
+      "name": "delete_extra_data",
+      "command_hex": "00f6ff9a0101",
+      "sw": "6700",
+      "malformed_state_unchanged": true,
+      "normal_sdk_move_delete_after_restart": true,
+      "passed": true
+    },
+    {
+      "name": "delete_explicit_le",
+      "command_hex": "00f6ff9a01",
+      "sw": "6700",
+      "malformed_state_unchanged": true,
+      "normal_sdk_move_delete_after_restart": true,
+      "passed": true
+    }
+  ],
+  "core_sha256": "f6587c70da88ca9f4e73779c49642471b3d0dbc84c58b84d6c26980404163a59",
+  "physical_or_host_device_access": false
+}
+{
+  "passed": true,
+  "fixed": true,
+  "route": "direct IFD",
+  "rows": [
+    {
+      "name": "move_extra_data",
+      "command_hex": "00f6829a0101",
+      "sw": "6700",
+      "malformed_state_unchanged": true,
+      "normal_sdk_move_delete_after_restart": true,
+      "passed": true
+    },
+    {
+      "name": "move_explicit_le",
+      "command_hex": "00f6829a01",
+      "sw": "6700",
+      "malformed_state_unchanged": true,
+      "normal_sdk_move_delete_after_restart": true,
+      "passed": true
+    },
+    {
+      "name": "delete_extra_data",
+      "command_hex": "00f6ff9a0101",
+      "sw": "6700",
+      "malformed_state_unchanged": true,
+      "normal_sdk_move_delete_after_restart": true,
+      "passed": true
+    },
+    {
+      "name": "delete_explicit_le",
+      "command_hex": "00f6ff9a01",
+      "sw": "6700",
+      "malformed_state_unchanged": true,
+      "normal_sdk_move_delete_after_restart": true,
+      "passed": true
+    }
+  ],
+  "core_sha256": "f6587c70da88ca9f4e73779c49642471b3d0dbc84c58b84d6c26980404163a59",
+  "physical_or_host_device_access": false
+}

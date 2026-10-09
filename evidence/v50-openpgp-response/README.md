@@ -1,0 +1,15 @@
+# v50 isolated OpenPGP GET RESPONSE CLA candidate
+
+Base: published v0.49 `outputs/security-key-emulator/emucard/core.py`, SHA-256 `4d2b50bf7a1a616696c66e1da1171f0b394a1c1a41b7e27323a7ba86eaa0f1d1`.
+Candidate: `candidate/emucard/core.py`, SHA-256 `0a6cfc7447c54c834c0b30a0540f5d73c3ff37c571ff1fc6938cb10ca0764873`.
+Minimal source diff: `source.patch`, SHA-256 `7a79fb40c9bc6a20dc800e0331ff04bc76ef8b2be5b57b85c937f1ad6985d497`.
+
+The [OpenPGP Smart Card Application 3.4.1, section 7.2.9](https://www.gnupg.org/ftp/specs/OpenPGP-smart-card-application-3.4.1.pdf) lists GET RESPONSE CLA `00/0C` (plain/secure messaging), P1/P2 `00/00`, empty command data, and an Le field. The emulator implements plaintext OpenPGP APDUs. Its global GET RESPONSE branch previously bypassed the selected application's CLA guard, so unsupported `80 C0 00 00 01` and chained-class `10 C0 00 00 01` each consumed one byte of a pending OpenPGP response. The candidate rejects these class bytes with `6E00` **before** slicing the pending response, scoped to OpenPGP alone. Other applets' shared transport branch is untouched.
+
+The no-Le form is deliberately accepted. The pinned, unmodified YubiKit `ResponseChainingProcessor` sends GET RESPONSE with `le=0`, and `ExtendedApduFormatter` serializes that as a four-byte APDU over the emulator's USB connection. Enforcing the specification's Le encoding broke an actual SDK request (`6700`) in an initial probe; that guard was removed. The candidate preserves the SDK's complete chained response and the four-byte wire form. This is a documented compatibility exception, not a claim that the form conforms to section 7.2.9.
+
+`candidate/tools/verify_openpgp_get_response.py` opens only a private CCID socket or the emulator's direct IFD ABI. A fresh YubiKit `OpenPgpSession` reads application-related data. Raw APDUs then request its first byte (`00 CA 00 6E 01`), submit a malformed GET RESPONSE, and drain the remainder with normal GET RESPONSE. Each run also checks a normal unmodified YubiKit request that exercises response chaining. `results/before-{socket,ifd}.json` show both invalid class bytes returning `61ff`, consuming one byte, and leaving only 313 of the 314 expected bytes. `results/after-{socket,ifd}.json` show `6e00`, zero consumed bytes, and all 314 bytes still available. The application-related object's random bytes vary by test card; each comparison is within its own fresh card.
+
+Additional candidate regressions pass on **both** private socket and direct IFD: OpenPGP GENERATE Le (44 checks per transport), APDU headers (21), and OpenPGP objects/SDK crypto and state tests (119). JSON reports are in `results/`. Tests used the pinned virtual environment but made no writes to published outputs, and did not open host PC/SC, USB, HID, or a physical key.
+
+The exact YubiKey 5C Nano firmware 5.7.4 rejection status, secure-messaging CLA `0C` behavior, and physical timing are unmeasured. This patch is a standards-backed emulator envelope correction with tested SDK compatibility, not a firmware-equivalence assertion.

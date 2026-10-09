@@ -1,0 +1,137 @@
+{
+  "passed": true,
+  "tests": [
+    {
+      "name": "unopened native reader reports no such device",
+      "passed": true
+    },
+    {
+      "name": "single-slot driver rejects a nonzero slot index",
+      "passed": true
+    },
+    {
+      "name": "driver enforces reader-index capacity",
+      "passed": true
+    },
+    {
+      "name": "driver rejects missing CCID service",
+      "passed": true
+    },
+    {
+      "name": "driver rejects a socket accessible to other users",
+      "passed": true
+    },
+    {
+      "name": "native reader opens private CCID transport",
+      "passed": true
+    },
+    {
+      "name": "duplicate reader open preserves existing channel",
+      "passed": true
+    },
+    {
+      "name": "unpowered but present virtual card is detected",
+      "passed": true
+    },
+    {
+      "name": "unpowered card rejects transmit with zero response length",
+      "passed": true
+    },
+    {
+      "name": "IFD power-up supplies valid T=1 ATR without overwriting buffer tail",
+      "passed": true
+    },
+    {
+      "name": "IFD negotiates the ATR's T=1 protocol",
+      "passed": true
+    },
+    {
+      "name": "IFD rejects unsupported protocol and PTS negotiation",
+      "passed": true
+    },
+    {
+      "name": "native IFD transmit carries ISO SELECT response and receive PCI",
+      "passed": true
+    },
+    {
+      "name": "short receive buffer returns bounded error without copying partial response",
+      "passed": true
+    },
+    {
+      "name": "wrong transmit PCI does not execute card command",
+      "passed": true
+    },
+    {
+      "name": "native driver serial matches shared management identity",
+      "passed": true
+    },
+    {
+      "name": "native driver advertises one slot and serialized thread-safe operations",
+      "passed": true
+    },
+    {
+      "name": "unknown capability and read-only attribute errors follow IFD ABI",
+      "passed": true
+    },
+    {
+      "name": "ATR capability respects caller capacity",
+      "passed": true
+    },
+    {
+      "name": "PC/SC feature request advertises no hardware PIN pad",
+      "passed": true
+    },
+    {
+      "name": "unsupported control request yields empty error response",
+      "passed": true
+    },
+    {
+      "name": "parallel status calls preserve CCID sequence integrity",
+      "passed": true
+    },
+    {
+      "name": "invalid power action returns empty ABI error",
+      "passed": true
+    },
+    {
+      "name": "power-down clears ATR while card remains present",
+      "passed": true
+    },
+    {
+      "name": "native close releases channel and rejects double close",
+      "passed": true
+    },
+    {
+      "name": "independent PIV SDK operates through compiled IFD driver",
+      "passed": true
+    },
+    {
+      "name": "IFD warm reset preserves durable PIN changes",
+      "passed": true
+    },
+    {
+      "name": "new PIN remains usable through native driver after reset",
+      "passed": true
+    },
+    {
+      "name": "native reader bundle has loader identity and executable metadata",
+      "passed": true
+    },
+    {
+      "name": "reader bundle does not claim or bind to the physical YubiKey USB interfaces",
+      "passed": true
+    },
+    {
+      "name": "driver channel can reopen after clean release",
+      "passed": true
+    },
+    {
+      "name": "backend disconnect reports reader removal without SIGPIPE",
+      "passed": true
+    }
+  ],
+  "physical_key_accessed": false,
+  "native_ifd_abi_verified": true,
+  "system_pcsc_reader_registered": false,
+  "system_driver_installation_performed": false
+}

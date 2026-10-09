@@ -1,0 +1,193 @@
+{
+  "passed": true,
+  "count": 36,
+  "tests": [
+    {
+      "name": "sha256 count=1 PW=81 independent RFC digest verified",
+      "passed": true
+    },
+    {
+      "name": "sha256 count=1 PW=81 truncated digest rejected",
+      "passed": true
+    },
+    {
+      "name": "sha256 count=1 PW=83 independent RFC digest verified",
+      "passed": true
+    },
+    {
+      "name": "sha256 count=1 PW=83 truncated digest rejected",
+      "passed": true
+    },
+    {
+      "name": "sha256 count=1 stored hashes and retries survive restart",
+      "passed": true
+    },
+    {
+      "name": "sha256 count=13 PW=81 independent RFC digest verified",
+      "passed": true
+    },
+    {
+      "name": "sha256 count=13 PW=81 truncated digest rejected",
+      "passed": true
+    },
+    {
+      "name": "sha256 count=13 PW=83 independent RFC digest verified",
+      "passed": true
+    },
+    {
+      "name": "sha256 count=13 PW=83 truncated digest rejected",
+      "passed": true
+    },
+    {
+      "name": "sha256 count=13 stored hashes and retries survive restart",
+      "passed": true
+    },
+    {
+      "name": "sha256 count=14 PW=81 independent RFC digest verified",
+      "passed": true
+    },
+    {
+      "name": "sha256 count=14 PW=83 independent RFC digest verified",
+      "passed": true
+    },
+    {
+      "name": "sha256 count=14 PW=83 truncated digest rejected",
+      "passed": true
+    },
+    {
+      "name": "sha256 count=14 stored hashes and retries survive restart",
+      "passed": true
+    },
+    {
+      "name": "sha256 count=15 PW=81 independent RFC digest verified",
+      "passed": true
+    },
+    {
+      "name": "sha256 count=15 PW=83 independent RFC digest verified",
+      "passed": true
+    },
+    {
+      "name": "sha256 count=15 PW=83 truncated digest rejected",
+      "passed": true
+    },
+    {
+      "name": "sha256 count=15 stored hashes and retries survive restart",
+      "passed": true
+    },
+    {
+      "name": "sha256 count=16 PW=81 independent RFC digest verified",
+      "passed": true
+    },
+    {
+      "name": "sha256 count=16 PW=83 independent RFC digest verified",
+      "passed": true
+    },
+    {
+      "name": "sha256 count=16 stored hashes and retries survive restart",
+      "passed": true
+    },
+    {
+      "name": "sha256 count=17 PW=81 independent RFC digest verified",
+      "passed": true
+    },
+    {
+      "name": "sha256 count=17 PW=83 independent RFC digest verified",
+      "passed": true
+    },
+    {
+      "name": "sha256 count=17 stored hashes and retries survive restart",
+      "passed": true
+    },
+    {
+      "name": "sha512 count=1 PW=81 independent RFC digest verified",
+      "passed": true
+    },
+    {
+      "name": "sha512 count=1 PW=81 truncated digest rejected",
+      "passed": true
+    },
+    {
+      "name": "sha512 count=1 PW=83 independent RFC digest verified",
+      "passed": true
+    },
+    {
+      "name": "sha512 count=1 PW=83 truncated digest rejected",
+      "passed": true
+    },
+    {
+      "name": "sha512 count=1 stored hashes and retries survive restart",
+      "passed": true
+    },
+    {
+      "name": "sha512 count=15 PW=81 independent RFC digest verified",
+      "passed": true
+    },
+    {
+      "name": "sha512 count=15 PW=83 independent RFC digest verified",
+      "passed": true
+    },
+    {
+      "name": "sha512 count=15 PW=83 truncated digest rejected",
+      "passed": true
+    },
+    {
+      "name": "sha512 count=15 stored hashes and retries survive restart",
+      "passed": true
+    },
+    {
+      "name": "sha512 count=17 PW=81 independent RFC digest verified",
+      "passed": true
+    },
+    {
+      "name": "sha512 count=17 PW=83 independent RFC digest verified",
+      "passed": true
+    },
+    {
+      "name": "sha512 count=17 stored hashes and retries survive restart",
+      "passed": true
+    }
+  ],
+  "cases": [
+    [
+      "sha256",
+      1
+    ],
+    [
+      "sha256",
+      13
+    ],
+    [
+      "sha256",
+      14
+    ],
+    [
+      "sha256",
+      15
+    ],
+    [
+      "sha256",
+      16
+    ],
+    [
+      "sha256",
+      17
+    ],
+    [
+      "sha512",
+      1
+    ],
+    [
+      "sha512",
+      15
+    ],
+    [
+      "sha512",
+      17
+    ]
+  ],
+  "physical_key_accessed": false,
+  "sdk_role": "unmodified yubikit OpenPgpSession APDU transport and KDF parse",
+  "transport": "private CCID socket",
+  "hash_oracle": "independent hashlib implementation of RFC 4880 section 3.7.1.3",
+  "limit": "pinned SDK's own KDF process truncates when count < salt+PIN; raw SDK APDUs use independent conforming digest"
+}

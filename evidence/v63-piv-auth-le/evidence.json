@@ -1,0 +1,206 @@
+{
+  "baseline_core_sha256": "e485006eb471c0f34055b190f40bc5d8b66b57f11924d5b6548b2bfa3da427df",
+  "candidate_core_sha256": "01d693a5ee5e1ab4781a62d6617822b9113d1e66a557dc6d359becc23d384086",
+  "firmware_5_7_4_differential": false,
+  "focused_ab": {
+    "baseline-linux-ifd.json": {
+      "baseline_malformed_signature_verified": true,
+      "core_sha256": "e485006eb471c0f34055b190f40bc5d8b66b57f11924d5b6548b2bfa3da427df",
+      "fixed": false,
+      "malformed_encrypted_state_bytes_unchanged": false,
+      "malformed_persistent_state_unchanged": true,
+      "malformed_sw": "61xx_then_9000",
+      "normal_sdk_after_malformed": "6982",
+      "normal_sdk_key_persists_after_restart": true,
+      "normal_sdk_signature_verified_after_reverify": true,
+      "passed": true,
+      "route": "direct IFD"
+    },
+    "baseline-linux-socket.json": {
+      "baseline_malformed_signature_verified": true,
+      "core_sha256": "e485006eb471c0f34055b190f40bc5d8b66b57f11924d5b6548b2bfa3da427df",
+      "fixed": false,
+      "malformed_encrypted_state_bytes_unchanged": false,
+      "malformed_persistent_state_unchanged": true,
+      "malformed_sw": "61xx_then_9000",
+      "normal_sdk_after_malformed": "6982",
+      "normal_sdk_key_persists_after_restart": true,
+      "normal_sdk_signature_verified_after_reverify": true,
+      "passed": true,
+      "route": "private CCID socket"
+    },
+    "baseline-mac-ifd.json": {
+      "baseline_malformed_signature_verified": true,
+      "core_sha256": "e485006eb471c0f34055b190f40bc5d8b66b57f11924d5b6548b2bfa3da427df",
+      "fixed": false,
+      "malformed_encrypted_state_bytes_unchanged": false,
+      "malformed_persistent_state_unchanged": true,
+      "malformed_sw": "61xx_then_9000",
+      "normal_sdk_after_malformed": "6982",
+      "normal_sdk_key_persists_after_restart": true,
+      "normal_sdk_signature_verified_after_reverify": true,
+      "passed": true,
+      "route": "direct IFD"
+    },
+    "baseline-mac-socket.json": {
+      "baseline_malformed_signature_verified": true,
+      "core_sha256": "e485006eb471c0f34055b190f40bc5d8b66b57f11924d5b6548b2bfa3da427df",
+      "fixed": false,
+      "malformed_encrypted_state_bytes_unchanged": false,
+      "malformed_persistent_state_unchanged": true,
+      "malformed_sw": "61xx_then_9000",
+      "normal_sdk_after_malformed": "6982",
+      "normal_sdk_key_persists_after_restart": true,
+      "normal_sdk_signature_verified_after_reverify": true,
+      "passed": true,
+      "route": "private CCID socket"
+    },
+    "candidate-linux-ifd.json": {
+      "baseline_malformed_signature_verified": false,
+      "core_sha256": "01d693a5ee5e1ab4781a62d6617822b9113d1e66a557dc6d359becc23d384086",
+      "fixed": true,
+      "malformed_encrypted_state_bytes_unchanged": true,
+      "malformed_persistent_state_unchanged": true,
+      "malformed_sw": "6700",
+      "normal_sdk_after_malformed": "9000",
+      "normal_sdk_key_persists_after_restart": true,
+      "normal_sdk_signature_verified_after_reverify": true,
+      "passed": true,
+      "route": "direct IFD"
+    },
+    "candidate-linux-socket.json": {
+      "baseline_malformed_signature_verified": false,
+      "core_sha256": "01d693a5ee5e1ab4781a62d6617822b9113d1e66a557dc6d359becc23d384086",
+      "fixed": true,
+      "malformed_encrypted_state_bytes_unchanged": true,
+      "malformed_persistent_state_unchanged": true,
+      "malformed_sw": "6700",
+      "normal_sdk_after_malformed": "9000",
+      "normal_sdk_key_persists_after_restart": true,
+      "normal_sdk_signature_verified_after_reverify": true,
+      "passed": true,
+      "route": "private CCID socket"
+    },
+    "candidate-mac-ifd.json": {
+      "baseline_malformed_signature_verified": false,
+      "core_sha256": "01d693a5ee5e1ab4781a62d6617822b9113d1e66a557dc6d359becc23d384086",
+      "fixed": true,
+      "malformed_encrypted_state_bytes_unchanged": true,
+      "malformed_persistent_state_unchanged": true,
+      "malformed_sw": "6700",
+      "normal_sdk_after_malformed": "9000",
+      "normal_sdk_key_persists_after_restart": true,
+      "normal_sdk_signature_verified_after_reverify": true,
+      "passed": true,
+      "route": "direct IFD"
+    },
+    "candidate-mac-socket.json": {
+      "baseline_malformed_signature_verified": false,
+      "core_sha256": "01d693a5ee5e1ab4781a62d6617822b9113d1e66a557dc6d359becc23d384086",
+      "fixed": true,
+      "malformed_encrypted_state_bytes_unchanged": true,
+      "malformed_persistent_state_unchanged": true,
+      "malformed_sw": "6700",
+      "normal_sdk_after_malformed": "9000",
+      "normal_sdk_key_persists_after_restart": true,
+      "normal_sdk_signature_verified_after_reverify": true,
+      "passed": true,
+      "route": "private CCID socket"
+    }
+  },
+  "physical_key_or_host_device_access": false,
+  "regression_count": 710,
+  "regressions": {
+    "linux-piv-generate-ifd.json": {
+      "count": 2,
+      "passed": true,
+      "sha256": "4c597d4173a7d03dddae195beb5163086ef1e54a3dff1be20360f2c08ea23e7a"
+    },
+    "linux-piv-generate-socket.json": {
+      "count": 2,
+      "passed": true,
+      "sha256": "d82937c3c2deeb331e64e504f08e10b248bd8fc1ec8f19551100526cd692c7c2"
+    },
+    "linux-piv-management-ifd.json": {
+      "count": 3,
+      "passed": true,
+      "sha256": "1d3a1d8d6ac8286131ba476131be262e2a3ebca346de89f826a52ff109fbbd14"
+    },
+    "linux-piv-management-socket.json": {
+      "count": 3,
+      "passed": true,
+      "sha256": "1c0cd4d6973f6c77cf29ccfadac0f222084660863edeac373786f99635ef4250"
+    },
+    "linux-piv-profile-ifd.json": {
+      "count": 60,
+      "passed": true,
+      "sha256": "7e5b053a890c2d9c2b361b9f6a1733f9f6acde34c285c22196bae3562d772bf7"
+    },
+    "linux-piv-profile-socket.json": {
+      "count": 60,
+      "passed": true,
+      "sha256": "4f71993080236f4fadfc5564c400521039d46d6f02000379488ffba9cdfe1cd6"
+    },
+    "linux-piv-storage-socket.json": {
+      "count": 31,
+      "passed": true,
+      "sha256": "c16352b636ef9bef30940ac1be1e4039c5404f95ea4e31c67160e753b19d30db"
+    },
+    "linux-smartcard-ifd.json": {
+      "count": 97,
+      "passed": true,
+      "sha256": "82155fea2481aeeb11602bc91b6898c7e89df0b39084a7f15edb606ccc6810d1"
+    },
+    "linux-smartcard-socket.json": {
+      "count": 97,
+      "passed": true,
+      "sha256": "5180e7168bf239d59ed9e6199aa5db0a1805aba2c896fe46a319ca8a7a6acec6"
+    },
+    "mac-piv-generate-ifd.json": {
+      "count": 2,
+      "passed": true,
+      "sha256": "4c597d4173a7d03dddae195beb5163086ef1e54a3dff1be20360f2c08ea23e7a"
+    },
+    "mac-piv-generate-socket.json": {
+      "count": 2,
+      "passed": true,
+      "sha256": "d82937c3c2deeb331e64e504f08e10b248bd8fc1ec8f19551100526cd692c7c2"
+    },
+    "mac-piv-management-ifd.json": {
+      "count": 3,
+      "passed": true,
+      "sha256": "1d3a1d8d6ac8286131ba476131be262e2a3ebca346de89f826a52ff109fbbd14"
+    },
+    "mac-piv-management-socket.json": {
+      "count": 3,
+      "passed": true,
+      "sha256": "1c0cd4d6973f6c77cf29ccfadac0f222084660863edeac373786f99635ef4250"
+    },
+    "mac-piv-profile-ifd.json": {
+      "count": 60,
+      "passed": true,
+      "sha256": "7e5b053a890c2d9c2b361b9f6a1733f9f6acde34c285c22196bae3562d772bf7"
+    },
+    "mac-piv-profile-socket.json": {
+      "count": 60,
+      "passed": true,
+      "sha256": "4f71993080236f4fadfc5564c400521039d46d6f02000379488ffba9cdfe1cd6"
+    },
+    "mac-piv-storage-socket.json": {
+      "count": 31,
+      "passed": true,
+      "sha256": "c16352b636ef9bef30940ac1be1e4039c5404f95ea4e31c67160e753b19d30db"
+    },
+    "mac-smartcard-ifd.json": {
+      "count": 97,
+      "passed": true,
+      "sha256": "82155fea2481aeeb11602bc91b6898c7e89df0b39084a7f15edb606ccc6810d1"
+    },
+    "mac-smartcard-socket.json": {
+      "count": 97,
+      "passed": true,
+      "sha256": "5180e7168bf239d59ed9e6199aa5db0a1805aba2c896fe46a319ca8a7a6acec6"
+    }
+  },
+  "source_patch_sha256": "6cf7a1fc0f81f43a480727dd16303d1df8082dff266fb171d0063c1c77a84483"
+}

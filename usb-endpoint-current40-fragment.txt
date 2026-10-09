@@ -1,0 +1,193 @@
+class Endpoint {
+ public:
+  std::uint8_t address;
+  std::size_t packet_size;
+  bool bulk;
+  Endpoint(const std::filesystem::path& path, std::span<const std::uint8_t> descriptor,
+           bool gadgetfs = true)
+      : address(descriptor[2]), packet_size(descriptor[4] | (std::size_t(descriptor[5]) << 8)),
+        bulk((descriptor[3] & 3) == 2), recover_shutdown_(!gadgetfs) {
+    fd_ = ::open(path.c_str(), O_RDWR | O_CLOEXEC);
+    if (fd_ < 0) fail("Cannot open USB endpoint " + path.filename().string());
+    try {
+      if (gadgetfs) {
+        Bytes config{1,0,0,0};
+        config.insert(config.end(), descriptor.begin(), descriptor.end());
+        write_once(fd_, config);
+      }
+      worker_ = std::thread([this] { run(); });
+    } catch (...) { ::close(fd_); fd_ = -1; throw; }
+  }
+  ~Endpoint() { stop(); }
+  Endpoint(const Endpoint&) = delete;
+  Endpoint& operator=(const Endpoint&) = delete;
+  void stop() {
+    if (fd_ < 0) return;
+    stop_.store(true);
+    wake_.notify_all();
+    // Repeated interruption covers the boundary between the stop flag check
+    // and submission of the next blocking kernel request.
+    while (worker_.joinable() && !done_.load()) {
+      (void)pthread_kill(worker_.native_handle(), SIGUSR1);
+      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+    if (worker_.joinable()) worker_.join();
+    ::close(fd_); fd_ = -1;
+  }
+  bool busy() {
+    std::lock_guard lock(mutex_);
+    if (failure_) std::rethrow_exception(failure_);
+    return active_ || !packets_.empty();
+  }
+  void send(Bytes data) {
+    std::lock_guard lock(mutex_);
+    if (packets_.size() >= 256) throw std::runtime_error("USB endpoint queue overflow");
+    packets_.push_back(std::move(data)); wake_.notify_one();
+  }
+  std::vector<Bytes> receive() {
+    std::lock_guard lock(mutex_);
+    if (failure_) std::rethrow_exception(failure_);
+    std::vector<Bytes> result;
+    while (!packets_.empty()) {
+      result.push_back(std::move(packets_.front())); packets_.pop_front();
+    }
+    return result;
+  }
+ private:
+  int fd_{-1};
+  std::atomic<bool> stop_{false}, done_{false};
+  std::mutex mutex_;
+  std::condition_variable wake_;
+  std::deque<Bytes> packets_;
+  std::thread worker_;
+  bool active_{false};
+  const bool recover_shutdown_;
+  std::exception_ptr failure_;
+  ssize_t async_transfer(void* buffer, std::size_t size) {
+    struct Context {
+      aio_context_t value{};
+      ~Context() {
+        // io_destroy cancels outstanding IO and waits for its completion before
+        // the request and data below leave scope. Closing the fd alone would
+        // not give this lifetime guarantee.
+        if (value) while (::syscall(SYS_io_destroy,value) < 0 && errno == EINTR) {}
+      }
+    } context;
+    if (::syscall(SYS_io_setup,1,&context.value) < 0)
+      fail("Cannot create FunctionFS asynchronous request");
+    iocb request{};
+    request.aio_lio_opcode = IOCB_CMD_PWRITE;
+    request.aio_fildes = static_cast<std::uint32_t>(fd_);
+    request.aio_buf = reinterpret_cast<std::uintptr_t>(buffer);
+    request.aio_nbytes = size;
+    iocb* submitted[] = {&request};
+    while (!stop_.load()) {
+      const auto count = ::syscall(SYS_io_submit,context.value,1,submitted);
+      if (count == 1) break;
+      if (count < 0 && errno == EINTR) continue; // No request was submitted.
+      if (count < 0 && errno == ESHUTDOWN) {
+        std::unique_lock lock(mutex_);
+        wake_.wait_for(lock,std::chrono::milliseconds(20),[this] { return stop_.load(); });
+        continue;
+      }
+      if (count == 0) errno = EIO;
+      fail("Cannot submit FunctionFS asynchronous request");
+    }
+    if (stop_.load()) { errno = EINTR; return -1; }
+    if (std::getenv("SKE_TRACE_USB")) {
+      std::ostringstream message;
+      message << "functionfs_async_queued address=" << unsigned(address)
+              << " tid=" << ::syscall(SYS_gettid) << " fd=" << fd_
+              << " context=" << context.value << " request=" << &request
+              << " buffer=" << buffer << " bytes=" << size << '\n';
+      std::cerr << message.str();
+    }
+    while (!stop_.load()) {
+      io_event completed{};
+      const auto count = ::syscall(SYS_io_getevents,context.value,1,1,&completed,nullptr);
+      if (count < 0 && errno == EINTR) continue; // Keep the original kernel IO.
+      if (count < 0) fail("FunctionFS asynchronous completion failed");
+      if (count == 0) continue;
+      if (completed.obj != reinterpret_cast<std::uintptr_t>(&request) || completed.res2)
+        throw std::runtime_error("Invalid FunctionFS asynchronous completion");
+      if (stop_.load()) break;
+      if (completed.res < 0) {
+        // The completion does not report partial progress on an error. Never
+        // replay the whole request after an unknown amount reached the host.
+        errno = static_cast<int>(-completed.res);
+        fail("FunctionFS asynchronous endpoint transfer failed");
+      }
+      return static_cast<ssize_t>(completed.res);
+    }
+    io_event cancelled{};
+    (void)::syscall(SYS_io_cancel,context.value,&request,&cancelled);
+    errno = EINTR;
+    return -1;
+  }
+  ssize_t transfer(void* buffer, std::size_t size, bool input) {
+    if (recover_shutdown_ && input && bulk && size > packet_size)
+      return async_transfer(buffer,size);
+    while (!stop_.load()) {
+      const auto count = input ? ::write(fd_,buffer,size) : ::read(fd_,buffer,size);
+      if (count >= 0) return count;
+      const auto error = errno;
+      if (error == EINTR) continue;
+      // FunctionFS may cancel a request during controller PM/reconfiguration
+      // before ep0 delivers its lifecycle event. Retain this transfer until
+      // the endpoint is ready, or that event stops and discards this worker.
+      if (recover_shutdown_ && error == ESHUTDOWN) {
+        if (std::getenv("SKE_TRACE_USB"))
+          std::cerr << "functionfs_endpoint_shutdown_retry address=" << unsigned(address) << '\n';
+        std::unique_lock lock(mutex_);
+        wake_.wait_for(lock,std::chrono::milliseconds(20),[this] { return stop_.load(); });
+        continue;
+      }
+      errno = error;
+      fail("USB endpoint " + std::to_string(address) + " transfer failed");
+    }
+    return -1;
+  }
+  void run() noexcept {
+    try {
+      while (!stop_.load()) {
+        Bytes data;
+        ssize_t count;
+        if (address & 0x80) {
+          {
+            std::unique_lock lock(mutex_);
+            wake_.wait(lock, [this] { return stop_.load() || !packets_.empty(); });
+            if (stop_.load()) break;
+            data = std::move(packets_.front()); packets_.pop_front(); active_ = true;
+          }
+          count = transfer(data.data(),data.size(),true);
+          if (count >= 0 && static_cast<std::size_t>(count) != data.size())
+            throw std::runtime_error("Short USB endpoint " + std::to_string(address) + " transfer");
+          // Terminate a complete CCID bulk message on a packet boundary.
+          // Interrupt HID reports require no extra zero-length packet.
+          if (count >= 0 && static_cast<std::size_t>(count) == data.size() &&
+              bulk && !data.empty() && data.size() % packet_size == 0 && !stop_.load())
+            count = transfer(nullptr,0,true) < 0 ? -1 : count;
+        } else {
+          data.resize(packet_size);
+          count = transfer(data.data(),data.size(),false);
+          if (count >= 0) data.resize(static_cast<std::size_t>(count));
+        }
+        if (stop_.load()) break;
+        if (count < 0) {
+          if (errno == EINTR) continue;
+          fail("USB endpoint transfer failed");
+        }
+        std::lock_guard lock(mutex_);
+        active_ = false;
+        if (!(address & 0x80) && !data.empty()) {
+          if (packets_.size() >= 256) throw std::runtime_error("USB endpoint queue overflow");
+          packets_.push_back(std::move(data));
+        }
+      }
+    } catch (...) {
+      if (!stop_.load()) { std::lock_guard lock(mutex_); failure_ = std::current_exception(); }
+    }
+    done_.store(true);
+  }
+};
+

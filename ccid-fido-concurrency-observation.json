@@ -1,0 +1,31 @@
+{
+  "version": "0.42.0",
+  "prior_version": "0.31.0",
+  "prior_native_failure_reproduced": true,
+  "trigger": "fresh native python-fido2 Ctap2 GetInfo during actual USB CCID OATH terminal presence wait",
+  "prior_error": "CtapError: CTAP error: 0x7F - OTHER",
+  "prior_passed_checks_before_failure": 81,
+  "prior_failure_artifacts_preserved_outside_package": "work/linux-usb-state-probe/v31-pending-ccid-fido-getinfo-failure",
+  "prior_failure_result_sha256": "5b3e17059906f881182f63e5ccb6db8bae430429c5d371a43ab31a6abf5afede",
+  "prior_failure_console_sha256": "96c87024e23ae62fd9797323850ccc2e6de7bfb64d0b2f95c6c2c301af897f84",
+  "prior_service_sha256": "cefc6ae6b3ea273a3adfccd78aa93586b85e2446474c8a7344dd9b2e5b45af07",
+  "prior_daemon_sha256": "076d734bda4bf0a9a7cb6c2e10031cf36bf7d5f645e78cc600c40cc02201003e",
+  "prior_usb_bridge_sha256": "e577d36dcd06c8c21c49239a128f66c8b2363bb730866b89aef4ee902f18fc38",
+  "fixed_service_sha256": "f68038ad664fcc4756535ffe85fdd1460048cf6bb9ecfba5fbb2a67ab7187687",
+  "fix": "strict read-only capability RPC reads committed USB snapshot without card transaction lock or flush",
+  "actual_native_fix_verified": true,
+  "actual_native_state_checks": 91,
+  "native_fido_getinfo_during_terminal_wait_verified": true,
+  "native_pending_usb_reset_and_new_approval_verified": true,
+  "failed_or_inflight_config_returns_previous_committed_mask_verified": true,
+  "successful_config_commit_publishes_new_mask_verified": true,
+  "evidence": [
+    "linux-usb-state-result.json",
+    "ccid-result.json",
+    "usb-reboot-result.json",
+    "linux-native-result.json"
+  ],
+  "physical_device_access": false,
+  "manufacturer_trust_reproduced": false,
+  "complete_yubikey_equivalence": false
+}

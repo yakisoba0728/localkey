@@ -1,0 +1,14 @@
+--- a/emucard/core.py
++++ b/emucard/core.py
+@@ -1203,8 +1203,9 @@
+             # GET NEXT DATA has no command data (OpenPGP 3.4.1 section 7.2.7).
+             # Validate the APDU before advancing the current certificate.
+             require(not a.data, 0x6700)
+-            self.certificate_slot = {3: 2, 2: 1, 1: 0x81}.get(self.certificate_slot)
+-            require(self.certificate_slot is not None, 0x6A88)
++            next_slot = {3: 2, 2: 1, 1: 0x81}.get(self.certificate_slot)
++            require(next_slot is not None, 0x6A88)
++            self.certificate_slot = next_slot
+             return bytes.fromhex(
+                 d["objects"].get(
+                     str(0xFC)

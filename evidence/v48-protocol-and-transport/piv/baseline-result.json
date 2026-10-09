@@ -1,0 +1,157 @@
+{
+  "passed": false,
+  "count": 14,
+  "checks": [
+    {
+      "name": "verify_p1_success",
+      "actual": {
+        "status": "SW=9000",
+        "persistent_unchanged": true,
+        "pin_authorized": true
+      },
+      "expected": {
+        "status": "SW=6a86",
+        "persistent_unchanged": true,
+        "pin_authorized": false
+      },
+      "matched": false
+    },
+    {
+      "name": "verify_p1_wrong_pin",
+      "actual": {
+        "status": "SW=63c2",
+        "persistent_unchanged": false,
+        "pin_authorized": false
+      },
+      "expected": {
+        "status": "SW=6a86",
+        "persistent_unchanged": true,
+        "pin_authorized": false
+      },
+      "matched": false
+    },
+    {
+      "name": "verify_explicit_le",
+      "actual": {
+        "status": "SW=9000",
+        "persistent_unchanged": true,
+        "pin_authorized": true
+      },
+      "expected": {
+        "status": "SW=6700",
+        "persistent_unchanged": true,
+        "pin_authorized": false
+      },
+      "matched": false
+    },
+    {
+      "name": "change_p1_success",
+      "actual": {
+        "status": "SW=9000",
+        "persistent_unchanged": false,
+        "pin_authorized": false
+      },
+      "expected": {
+        "status": "SW=6a86",
+        "persistent_unchanged": true,
+        "pin_authorized": false
+      },
+      "matched": false
+    },
+    {
+      "name": "change_explicit_le",
+      "actual": {
+        "status": "SW=9000",
+        "persistent_unchanged": false,
+        "pin_authorized": false
+      },
+      "expected": {
+        "status": "SW=6700",
+        "persistent_unchanged": true,
+        "pin_authorized": false
+      },
+      "matched": false
+    },
+    {
+      "name": "reset_retry_p1",
+      "actual": {
+        "status": "SW=9000",
+        "persistent_unchanged": false,
+        "pin_authorized": false
+      },
+      "expected": {
+        "status": "SW=6a86",
+        "persistent_unchanged": true,
+        "pin_authorized": false
+      },
+      "matched": false
+    },
+    {
+      "name": "reset_retry_p2",
+      "actual": {
+        "status": "SW=9000",
+        "persistent_unchanged": false,
+        "pin_authorized": false
+      },
+      "expected": {
+        "status": "SW=6a86",
+        "persistent_unchanged": true,
+        "pin_authorized": false
+      },
+      "matched": false
+    },
+    {
+      "name": "reset_retry_explicit_le",
+      "actual": {
+        "status": "SW=9000",
+        "persistent_unchanged": false,
+        "pin_authorized": false
+      },
+      "expected": {
+        "status": "SW=6700",
+        "persistent_unchanged": true,
+        "pin_authorized": false
+      },
+      "matched": false
+    },
+    {
+      "name": "sdk_verify_pin_normal",
+      "actual": true,
+      "expected": true,
+      "matched": true
+    },
+    {
+      "name": "sdk_change_pin_normal",
+      "actual": "654321",
+      "expected": "654321",
+      "matched": true
+    },
+    {
+      "name": "sdk_change_puk_normal",
+      "actual": "87654321",
+      "expected": "87654321",
+      "matched": true
+    },
+    {
+      "name": "sdk_reset_retry_normal",
+      "actual": "654321",
+      "expected": "654321",
+      "matched": true
+    },
+    {
+      "name": "socket_reset_retry_wrong_p2",
+      "actual": "SW=9000",
+      "expected": "SW=6a86",
+      "matched": false
+    },
+    {
+      "name": "socket_sdk_normal_after_rejection",
+      "actual": true,
+      "expected": true,
+      "matched": true
+    }
+  ],
+  "physical_device_access": false,
+  "firmware_5_7_4_differential_verified": false,
+  "transport": "YubiKit PivSession and SmartCardProtocol over in-memory card and private Unix CCID"
+}

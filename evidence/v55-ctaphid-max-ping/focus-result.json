@@ -1,0 +1,79 @@
+{
+  "passed": true,
+  "boundary": "legal CTAPHID continuation sequence 127 finishes messages of 7551 through 7609 bytes",
+  "baseline_results": {
+    "7550": {
+      "echo": true,
+      "error": null
+    },
+    "7551": {
+      "echo": false,
+      "error": 3
+    },
+    "7609": {
+      "echo": false,
+      "error": 3
+    },
+    "16": {
+      "echo": true,
+      "error": null
+    }
+  },
+  "fixed_results": {
+    "7550": {
+      "echo": true,
+      "error": null
+    },
+    "7551": {
+      "echo": true,
+      "error": null
+    },
+    "7609": {
+      "echo": true,
+      "error": null
+    },
+    "16": {
+      "echo": true,
+      "error": null
+    }
+  },
+  "stage_results": {
+    "7550": {
+      "echo": true,
+      "error": null
+    },
+    "7551": {
+      "echo": true,
+      "error": null
+    },
+    "7609": {
+      "echo": true,
+      "error": null
+    },
+    "16": {
+      "echo": true,
+      "error": null
+    }
+  },
+  "source_sha256": {
+    "baseline_framer": "7fa11c71f2010151262cf6337d4826f044038820a7855878532c6b03f7b3e2dd",
+    "candidate_framer": "e1f8f1c2734d1fef447acf4e270e3e2080b117e1ba029747769332f0fe3dc7b1",
+    "candidate_test": "c60bfe5dfe610974aa976238aadba00730e31bdbf29b9e668375f7bfd1696631",
+    "source_patch": "e25d7de48f897f91bb22c1a118df172480f8e43b7c3f7b79ef0cc541e4340aec"
+  },
+  "binary_sha256": {
+    "published_v54_swpasskeyd": "df152499a5dcd9c3de11bb2c165d9ef006a909c3f64bb0ced1fd5dbf0e71e545",
+    "candidate_swpasskeyd": "1d0f6fb5511cb033088d8826a354a1d04a7be15aa9280c06791dde7b40c51b65",
+    "published_v54_ske_usbd": "0897e3277354494261b50699d4c31546ad4330d704e9ae8ccb0e23426cefbf07",
+    "stage_swpasskeyd": "844810deea97cf267aa05ac3adc402faa3cf78ab7aa07f0b155dbc4c24fc7245"
+  },
+  "raw_console_sha256": {
+    "baseline": "9a517e9b66907cf6efca6266c28a72d5667b1760eaaca6b384c1cc5040d19839",
+    "fixed": "cd637352c5b426330df2f64cc48e1cd3754e3ccfce7a84a7ae1f670381c26a4f",
+    "stage": "3ba099f2806bd9e06639c048b04e9d5c44aaafc2c18aad207183189aadd1e30e"
+  },
+  "guest_network_devices": false,
+  "host_usb_passthrough": false,
+  "physical_device_access": false,
+  "kernel_panic_observed": false
+}

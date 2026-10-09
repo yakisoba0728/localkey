@@ -1,0 +1,11 @@
+{
+  "base_v47_guest_image_sha256": "e5d3bac4e95b917d1fde04e5aaaa204a6ce9b055619dfdf2fb7184a126b038f2",
+  "guest_image_sha256": "6843cfabea4e24f3610aa77dd51e624933ca529e5fa353bd08dc1143303057e8",
+  "published_v47_bridge_sha256": "e63cd9ea49ee5ebcc6cc7b7389b7785e1393d6c39c926fb766ff61068f30c690",
+  "published_v47_linux_source_sha256": "0d3bb88ce930f32acfad7a0a37b768c4470850d0d80eccb8ee717b17f15abdbb",
+  "dummy_hcd_is_high_speed": true,
+  "dummy_hcd_requested_ep_addresses": true,
+  "guest_network_devices": false,
+  "host_usb_passthrough": false,
+  "physical_device_access": false
+}

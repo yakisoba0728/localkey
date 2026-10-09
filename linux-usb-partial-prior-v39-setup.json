@@ -1,0 +1,40 @@
+{
+  "passed": false,
+  "tests": [
+    {
+      "name": "actual private ARM64 kernel USB guest with only loopback",
+      "passed": true
+    }
+  ],
+  "cycles": [],
+  "assertions": [],
+  "scope": "actual same-generation original large CCID write SIGUSR1 after prefix64",
+  "physical_device_access": false,
+  "host_device_passthrough": false,
+  "host_hid_drivers_unbound": false,
+  "native_macos_registration_verified": false,
+  "production_udc_verified": false,
+  "physical_touch_verified": false,
+  "manufacturer_trust_reproduced": false,
+  "card_testing_auto_allow": false,
+  "fido_testing_auto_allow_only_for_owned_fixture": true,
+  "stock_libccid_transport_used_for_this_fixture": false,
+  "stock_piv_oath_sdk_unmodified": true,
+  "opaque_piv_object_is_valid_chuid": false,
+  "production_source_modified_for_this_original_trial": false,
+  "same_generation_continuation_verified": false,
+  "error": "PermissionError: [Errno 13] Permission denied: '/opt/swpasskeyd'",
+  "traceback": "Traceback (most recent call last):\n  File \"/opt/verification/verify-usb-partial-interrupt-prototype.py\", line 75, in main\n    ct = f.start()\n         ^^^^^^^^^\n  File \"/opt/verification/verify_composite.py\", line 100, in start\n    super().start()\n  File \"/opt/verification/verify_ctap.py\", line 63, in start\n    self.process = subprocess.Popen(\n                   ^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/subprocess.py\", line 1026, in __init__\n    self._execute_child(args, executable, preexec_fn, close_fds,\n  File \"/usr/lib/python3.12/subprocess.py\", line 1955, in _execute_child\n    raise child_exception_type(errno_num, err_msg, err_filename)\nPermissionError: [Errno 13] Permission denied: '/opt/swpasskeyd'\n",
+  "daemon.log": "",
+  "card/log.txt": "",
+  "test_count": 1,
+  "emulator_binary_sha256": "63ada4ee4764be2a02405f24babae35953d664abcb228eb4bf8cf5596a2a7ad6",
+  "usb_bridge_binary_sha256": "ac848b6fe5bb22605a132eeaaa9034c8e5d63e7ef1410ffefbc43776bcc2f82e",
+  "card_service_sha256": "f68038ad664fcc4756535ffe85fdd1460048cf6bb9ecfba5fbb2a67ab7187687",
+  "helper_sha256": "f830c78fc57fcfe03390a095613842c757c0c85c9205472ff9bf3a56de016c86",
+  "shared_helper_sha256": "445dab690b654dba21421e1b75047dcf2e07089ba39bb0da62e70ae56e42774a",
+  "long_cutover_helper_sha256": "bb4f678e038615ba96fdaa866b0589e3a063cc0a0e77e53336f6191f7df8ddb8",
+  "runner_exit": 0,
+  "host_gate_error": "AssertionError: ",
+  "prototype_helper_sha256": "f830c78fc57fcfe03390a095613842c757c0c85c9205472ff9bf3a56de016c86"
+}

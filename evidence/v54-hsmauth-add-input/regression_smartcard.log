@@ -1,0 +1,97 @@
+PASS PIV protocol version profile
+PASS PIV generate requires management key
+PASS PIV independent signature RSA1024
+PASS PIV slot metadata RSA1024
+PASS PIV independent signature RSA2048
+PASS PIV slot metadata RSA2048
+PASS PIV independent signature RSA3072
+PASS PIV slot metadata RSA3072
+PASS PIV independent signature RSA4096
+PASS PIV slot metadata RSA4096
+PASS PIV independent signature ECCP256
+PASS PIV slot metadata ECCP256
+PASS PIV independent signature ECCP384
+PASS PIV slot metadata ECCP384
+PASS PIV independent signature ED25519
+PASS PIV slot metadata ED25519
+PASS PIV X25519 shared secret
+PASS PIV slot metadata X25519
+PASS PIV local software attestation certificate chain
+PASS PIV ALWAYS consumes PIN verification
+PASS PIV RSA OAEP decryption
+PASS PIV ECDH ECCP256
+PASS PIV ECDH ECCP384
+PASS PIV imported key cannot claim generated provenance
+PASS PIV imported key provenance and signature
+PASS PIV compressed X.509 certificate round trip
+PASS PIV move key
+PASS PIV delete key
+PASS PIV wrong PIN decreases durable retries
+PASS PIV correct PIN restores retries
+PASS OpenPGP initial PIN status
+PASS OpenPGP key generation requires admin PIN
+PASS OpenPGP independent signature SECP256R1
+PASS OpenPGP SIG requires PIN again SECP256R1
+PASS OpenPGP independent signature SECP384R1
+PASS OpenPGP SIG requires PIN again SECP384R1
+PASS OpenPGP independent signature Ed25519
+PASS OpenPGP SIG requires PIN again Ed25519
+PASS OpenPGP RSA signature
+PASS OpenPGP SIG verification cannot authorize AUT
+PASS OpenPGP Ed25519 authentication
+PASS OpenPGP shared secret SECP256R1
+PASS OpenPGP shared secret X25519
+PASS OpenPGP RSA decryption
+PASS OpenPGP import and signature Ed25519PrivateKey
+PASS OpenPGP import and signature ECPrivateKey
+PASS OpenPGP import and signature RSAPrivateKey
+PASS OpenPGP separate certificate slots
+PASS OpenPGP PIN change
+PASS YubiHSM Auth credential list
+PASS YubiHSM Auth derivation matches independent python-yubihsm
+PASS YubiHSM Auth wrong password retries
+PASS YubiHSM Auth rejects bad card cryptogram
+PASS YubiHSM Auth accepts valid card cryptogram
+PASS YubiHSM Auth management key change
+PASS YubiHSM Auth credential deletion
+PASS YubiHSM Auth imported asymmetric public key
+PASS YubiHSM Auth asymmetric derivation agrees with independent peer
+PASS YubiHSM Auth ephemeral challenge is single use
+PASS YubiHSM Auth rejects asymmetric receipt mismatch
+PASS YubiHSM Auth generates asymmetric key
+PASS OATH HOTP RFC4226 published vectors
+PASS OATH TOTP RFC6238 published vector
+PASS OATH calculate-all uses application A4 command
+PASS OATH rename retains credential
+PASS OATH locked list denied
+PASS OATH access key challenge-response
+PASS OTP empty slot status
+PASS OTP HMAC independent verification 4
+PASS OTP HMAC independent verification 13
+PASS OTP HMAC independent verification 63
+PASS OTP access code protects deletion
+PASS OTP protected slot cannot be swapped
+PASS OTP settings update retains secret
+PASS OTP full length HMAC challenge
+PASS OTP slot swap preserves configuration
+PASS OTP slot deletion status
+PASS OTP HID feature report status matches CCID
+PASS OTP HID frame CRC and independent HMAC signature
+PASS OTP HID configuration frame with skipped zero packets
+PASS OTP HID deletion updates programming sequence
+PASS SCP03 SDK verifies encrypted PIV signature and response MAC
+PASS SCP03 long encrypted APDU round trip
+PASS SCP03 session rejects plaintext downgrade
+PASS SCP03 incorrect static keys rejected by SDK
+PASS SCP03 altered command MAC rejected
+PASS PIV PIN survives encrypted state restart
+PASS OpenPGP private key and PIN survive restart
+PASS YubiHSM Auth credential survives restart
+PASS OATH access key and credentials survive restart
+PASS OTP secret survives encrypted state restart
+PASS state file does not contain plaintext secrets
+PASS state wrapping key mode 0600
+PASS OATH app reset
+PASS YubiHSM Auth app reset
+PASS OpenPGP app reset with blocked-PIN precondition
+PASS PIV app reset with blocked PIN and PUK

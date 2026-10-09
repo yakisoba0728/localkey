@@ -1,0 +1,2253 @@
+{
+  "passed": false,
+  "tests": [
+    {
+      "name": "actual private ARM64 kernel USB guest with only loopback",
+      "passed": true
+    },
+    {
+      "name": "saved CCID3072 envelope and3062 payload model",
+      "passed": true
+    },
+    {
+      "name": "original native resident FIDO key created with PIN UVp2",
+      "passed": true
+    },
+    {
+      "name": "actual native PIN UVp2 original credential signature RP and user initial",
+      "passed": true
+    },
+    {
+      "name": "initial native profile6 byte equal saved public physical configuration",
+      "passed": true
+    },
+    {
+      "name": "fresh owned HOTP counter zero",
+      "passed": true
+    },
+    {
+      "name": "initial actual occupied slot notification",
+      "passed": true
+    },
+    {
+      "name": "actual encoded TLV APDU CCID total boundary 2047-unread",
+      "passed": true
+    },
+    {
+      "name": "unmodified native PIV SDK stores and reads whole original opaque object 2047-unread",
+      "passed": true
+    },
+    {
+      "name": "original large GET preserves card plaintext and HOTP 2047-unread",
+      "passed": true
+    },
+    {
+      "name": "whole original large native reply stays unread and blocked 2047-unread",
+      "passed": true
+    },
+    {
+      "name": "actual committed FIDO-only profile after original large reply 2047-unread",
+      "passed": true
+    },
+    {
+      "name": "old large IN worker absent in newly exposed USB generation 2047-unread",
+      "passed": true
+    },
+    {
+      "name": "large or partial transfer cutover has no credential or counter mutation 2047-unread",
+      "passed": true
+    },
+    {
+      "name": "same three original services alive 2047-unread cutover",
+      "passed": true
+    },
+    {
+      "name": "original partly read or unread CCID handle returns actual ENODEV 2047-unread",
+      "passed": true
+    },
+    {
+      "name": "actual native PIN UVp2 original credential signature RP and user 2047-unread-fido-only",
+      "passed": true
+    },
+    {
+      "name": "native FIDO counter increases 2047-unread-fido-only",
+      "passed": true
+    },
+    {
+      "name": "stock native Management SDK reads exact committed FIDO-only mask 2047-unread",
+      "passed": true
+    },
+    {
+      "name": "restored profile6 public descriptor bytes 2047-unread",
+      "passed": true
+    },
+    {
+      "name": "restored original object and card plaintext retained 2047-unread",
+      "passed": true
+    },
+    {
+      "name": "same three original services alive 2047-unread restored",
+      "passed": true
+    },
+    {
+      "name": "new occupied slot notification after original large transfer 2047-unread",
+      "passed": true
+    },
+    {
+      "name": "fresh native SDK GET returns whole retained object without original tail ZLP or continuation 2047-unread",
+      "passed": true
+    },
+    {
+      "name": "fresh OATH SDK response contains only original owned credential 2047-unread",
+      "passed": true
+    },
+    {
+      "name": "fresh independent HOTP result and one commit after long cutover 2047-unread",
+      "passed": true
+    },
+    {
+      "name": "actual native PIN UVp2 original credential signature RP and user 2047-unread-restored",
+      "passed": true
+    },
+    {
+      "name": "native FIDO counter increases 2047-unread-restored",
+      "passed": true
+    },
+    {
+      "name": "actual encoded TLV APDU CCID total boundary 2047-partial64",
+      "passed": true
+    },
+    {
+      "name": "unmodified native PIV SDK stores and reads whole original opaque object 2047-partial64",
+      "passed": true
+    },
+    {
+      "name": "original large GET preserves card plaintext and HOTP 2047-partial64",
+      "passed": true
+    },
+    {
+      "name": "actual first native maxpacket equals original header sequence and object prefix 2047-partial64",
+      "passed": true
+    },
+    {
+      "name": "original large write remains same thread buffer after first64 read 2047-partial64",
+      "passed": true
+    },
+    {
+      "name": "actual committed FIDO-only profile after original large reply 2047-partial64",
+      "passed": true
+    },
+    {
+      "name": "old large IN worker absent in newly exposed USB generation 2047-partial64",
+      "passed": true
+    },
+    {
+      "name": "large or partial transfer cutover has no credential or counter mutation 2047-partial64",
+      "passed": true
+    },
+    {
+      "name": "same three original services alive 2047-partial64 cutover",
+      "passed": true
+    },
+    {
+      "name": "original partly read or unread CCID handle returns actual ENODEV 2047-partial64",
+      "passed": true
+    },
+    {
+      "name": "actual native PIN UVp2 original credential signature RP and user 2047-partial64-fido-only",
+      "passed": true
+    },
+    {
+      "name": "native FIDO counter increases 2047-partial64-fido-only",
+      "passed": true
+    },
+    {
+      "name": "stock native Management SDK reads exact committed FIDO-only mask 2047-partial64",
+      "passed": true
+    },
+    {
+      "name": "restored profile6 public descriptor bytes 2047-partial64",
+      "passed": true
+    },
+    {
+      "name": "restored original object and card plaintext retained 2047-partial64",
+      "passed": true
+    },
+    {
+      "name": "same three original services alive 2047-partial64 restored",
+      "passed": true
+    },
+    {
+      "name": "new occupied slot notification after original large transfer 2047-partial64",
+      "passed": true
+    },
+    {
+      "name": "fresh native SDK GET returns whole retained object without original tail ZLP or continuation 2047-partial64",
+      "passed": true
+    },
+    {
+      "name": "fresh OATH SDK response contains only original owned credential 2047-partial64",
+      "passed": true
+    },
+    {
+      "name": "fresh independent HOTP result and one commit after long cutover 2047-partial64",
+      "passed": true
+    },
+    {
+      "name": "actual native PIN UVp2 original credential signature RP and user 2047-partial64-restored",
+      "passed": true
+    },
+    {
+      "name": "native FIDO counter increases 2047-partial64-restored",
+      "passed": true
+    },
+    {
+      "name": "actual encoded TLV APDU CCID total boundary 2048-unread",
+      "passed": true
+    },
+    {
+      "name": "unmodified native PIV SDK stores and reads whole original opaque object 2048-unread",
+      "passed": true
+    },
+    {
+      "name": "original large GET preserves card plaintext and HOTP 2048-unread",
+      "passed": true
+    },
+    {
+      "name": "whole original large native reply stays unread and blocked 2048-unread",
+      "passed": true
+    },
+    {
+      "name": "actual committed FIDO-only profile after original large reply 2048-unread",
+      "passed": true
+    },
+    {
+      "name": "old large IN worker absent in newly exposed USB generation 2048-unread",
+      "passed": true
+    },
+    {
+      "name": "large or partial transfer cutover has no credential or counter mutation 2048-unread",
+      "passed": true
+    },
+    {
+      "name": "same three original services alive 2048-unread cutover",
+      "passed": true
+    },
+    {
+      "name": "original partly read or unread CCID handle returns actual ENODEV 2048-unread",
+      "passed": true
+    },
+    {
+      "name": "actual native PIN UVp2 original credential signature RP and user 2048-unread-fido-only",
+      "passed": true
+    },
+    {
+      "name": "native FIDO counter increases 2048-unread-fido-only",
+      "passed": true
+    },
+    {
+      "name": "stock native Management SDK reads exact committed FIDO-only mask 2048-unread",
+      "passed": true
+    },
+    {
+      "name": "restored profile6 public descriptor bytes 2048-unread",
+      "passed": true
+    },
+    {
+      "name": "restored original object and card plaintext retained 2048-unread",
+      "passed": true
+    },
+    {
+      "name": "same three original services alive 2048-unread restored",
+      "passed": true
+    },
+    {
+      "name": "new occupied slot notification after original large transfer 2048-unread",
+      "passed": true
+    },
+    {
+      "name": "fresh native SDK GET returns whole retained object without original tail ZLP or continuation 2048-unread",
+      "passed": true
+    },
+    {
+      "name": "fresh OATH SDK response contains only original owned credential 2048-unread",
+      "passed": true
+    },
+    {
+      "name": "fresh independent HOTP result and one commit after long cutover 2048-unread",
+      "passed": true
+    },
+    {
+      "name": "actual native PIN UVp2 original credential signature RP and user 2048-unread-restored",
+      "passed": true
+    },
+    {
+      "name": "native FIDO counter increases 2048-unread-restored",
+      "passed": true
+    },
+    {
+      "name": "actual encoded TLV APDU CCID total boundary 2048-partial64",
+      "passed": true
+    },
+    {
+      "name": "unmodified native PIV SDK stores and reads whole original opaque object 2048-partial64",
+      "passed": true
+    },
+    {
+      "name": "original large GET preserves card plaintext and HOTP 2048-partial64",
+      "passed": true
+    },
+    {
+      "name": "actual first native maxpacket equals original header sequence and object prefix 2048-partial64",
+      "passed": true
+    },
+    {
+      "name": "original large write remains same thread buffer after first64 read 2048-partial64",
+      "passed": true
+    },
+    {
+      "name": "actual committed FIDO-only profile after original large reply 2048-partial64",
+      "passed": true
+    },
+    {
+      "name": "old large IN worker absent in newly exposed USB generation 2048-partial64",
+      "passed": true
+    },
+    {
+      "name": "large or partial transfer cutover has no credential or counter mutation 2048-partial64",
+      "passed": true
+    },
+    {
+      "name": "same three original services alive 2048-partial64 cutover",
+      "passed": true
+    },
+    {
+      "name": "original partly read or unread CCID handle returns actual ENODEV 2048-partial64",
+      "passed": true
+    },
+    {
+      "name": "actual native PIN UVp2 original credential signature RP and user 2048-partial64-fido-only",
+      "passed": true
+    },
+    {
+      "name": "native FIDO counter increases 2048-partial64-fido-only",
+      "passed": true
+    },
+    {
+      "name": "stock native Management SDK reads exact committed FIDO-only mask 2048-partial64",
+      "passed": true
+    },
+    {
+      "name": "restored profile6 public descriptor bytes 2048-partial64",
+      "passed": true
+    },
+    {
+      "name": "restored original object and card plaintext retained 2048-partial64",
+      "passed": true
+    },
+    {
+      "name": "same three original services alive 2048-partial64 restored",
+      "passed": true
+    },
+    {
+      "name": "new occupied slot notification after original large transfer 2048-partial64",
+      "passed": true
+    },
+    {
+      "name": "fresh native SDK GET returns whole retained object without original tail ZLP or continuation 2048-partial64",
+      "passed": true
+    },
+    {
+      "name": "fresh OATH SDK response contains only original owned credential 2048-partial64",
+      "passed": true
+    },
+    {
+      "name": "fresh independent HOTP result and one commit after long cutover 2048-partial64",
+      "passed": true
+    },
+    {
+      "name": "actual native PIN UVp2 original credential signature RP and user 2048-partial64-restored",
+      "passed": true
+    },
+    {
+      "name": "native FIDO counter increases 2048-partial64-restored",
+      "passed": true
+    },
+    {
+      "name": "actual encoded TLV APDU CCID total boundary 2048-zlp",
+      "passed": true
+    },
+    {
+      "name": "unmodified native PIV SDK stores and reads whole original opaque object 2048-zlp",
+      "passed": true
+    },
+    {
+      "name": "positive control receives original full large maxpacket-multiple response 2048-zlp",
+      "passed": true
+    },
+    {
+      "name": "positive control receives actual following native zero-length packet 2048-zlp",
+      "passed": true
+    },
+    {
+      "name": "original large GET preserves card plaintext and HOTP 2048-zlp",
+      "passed": true
+    },
+    {
+      "name": "entire original large maxpacket-multiple native response read once 2048-zlp",
+      "passed": true
+    },
+    {
+      "name": "same original large response worker completes unread ZLP before configuration 2048-zlp",
+      "passed": true
+    },
+    {
+      "name": "actual committed FIDO-only profile after original large reply 2048-zlp",
+      "passed": true
+    },
+    {
+      "name": "old large IN worker absent in newly exposed USB generation 2048-zlp",
+      "passed": true
+    },
+    {
+      "name": "large or partial transfer cutover has no credential or counter mutation 2048-zlp",
+      "passed": true
+    },
+    {
+      "name": "same three original services alive 2048-zlp cutover",
+      "passed": true
+    },
+    {
+      "name": "original partly read or unread CCID handle returns actual ENODEV 2048-zlp",
+      "passed": true
+    },
+    {
+      "name": "actual native PIN UVp2 original credential signature RP and user 2048-zlp-fido-only",
+      "passed": true
+    },
+    {
+      "name": "native FIDO counter increases 2048-zlp-fido-only",
+      "passed": true
+    },
+    {
+      "name": "stock native Management SDK reads exact committed FIDO-only mask 2048-zlp",
+      "passed": true
+    },
+    {
+      "name": "restored profile6 public descriptor bytes 2048-zlp",
+      "passed": true
+    },
+    {
+      "name": "restored original object and card plaintext retained 2048-zlp",
+      "passed": true
+    },
+    {
+      "name": "same three original services alive 2048-zlp restored",
+      "passed": true
+    },
+    {
+      "name": "new occupied slot notification after original large transfer 2048-zlp",
+      "passed": true
+    },
+    {
+      "name": "fresh native SDK GET returns whole retained object without original tail ZLP or continuation 2048-zlp",
+      "passed": true
+    },
+    {
+      "name": "fresh OATH SDK response contains only original owned credential 2048-zlp",
+      "passed": true
+    },
+    {
+      "name": "fresh independent HOTP result and one commit after long cutover 2048-zlp",
+      "passed": true
+    },
+    {
+      "name": "actual native PIN UVp2 original credential signature RP and user 2048-zlp-restored",
+      "passed": true
+    },
+    {
+      "name": "native FIDO counter increases 2048-zlp-restored",
+      "passed": true
+    },
+    {
+      "name": "actual encoded TLV APDU CCID total boundary 2049-unread",
+      "passed": true
+    },
+    {
+      "name": "unmodified native PIV SDK stores and reads whole original opaque object 2049-unread",
+      "passed": true
+    },
+    {
+      "name": "original large GET preserves card plaintext and HOTP 2049-unread",
+      "passed": true
+    },
+    {
+      "name": "whole original large native reply stays unread and blocked 2049-unread",
+      "passed": true
+    },
+    {
+      "name": "actual committed FIDO-only profile after original large reply 2049-unread",
+      "passed": true
+    },
+    {
+      "name": "old large IN worker absent in newly exposed USB generation 2049-unread",
+      "passed": true
+    },
+    {
+      "name": "large or partial transfer cutover has no credential or counter mutation 2049-unread",
+      "passed": true
+    },
+    {
+      "name": "same three original services alive 2049-unread cutover",
+      "passed": true
+    },
+    {
+      "name": "original partly read or unread CCID handle returns actual ENODEV 2049-unread",
+      "passed": true
+    },
+    {
+      "name": "actual native PIN UVp2 original credential signature RP and user 2049-unread-fido-only",
+      "passed": true
+    },
+    {
+      "name": "native FIDO counter increases 2049-unread-fido-only",
+      "passed": true
+    },
+    {
+      "name": "stock native Management SDK reads exact committed FIDO-only mask 2049-unread",
+      "passed": true
+    },
+    {
+      "name": "restored profile6 public descriptor bytes 2049-unread",
+      "passed": true
+    },
+    {
+      "name": "restored original object and card plaintext retained 2049-unread",
+      "passed": true
+    },
+    {
+      "name": "same three original services alive 2049-unread restored",
+      "passed": true
+    },
+    {
+      "name": "new occupied slot notification after original large transfer 2049-unread",
+      "passed": true
+    },
+    {
+      "name": "fresh native SDK GET returns whole retained object without original tail ZLP or continuation 2049-unread",
+      "passed": true
+    },
+    {
+      "name": "fresh OATH SDK response contains only original owned credential 2049-unread",
+      "passed": true
+    },
+    {
+      "name": "fresh independent HOTP result and one commit after long cutover 2049-unread",
+      "passed": true
+    },
+    {
+      "name": "actual native PIN UVp2 original credential signature RP and user 2049-unread-restored",
+      "passed": true
+    },
+    {
+      "name": "native FIDO counter increases 2049-unread-restored",
+      "passed": true
+    },
+    {
+      "name": "actual encoded TLV APDU CCID total boundary 2049-partial64",
+      "passed": true
+    },
+    {
+      "name": "unmodified native PIV SDK stores and reads whole original opaque object 2049-partial64",
+      "passed": true
+    },
+    {
+      "name": "original large GET preserves card plaintext and HOTP 2049-partial64",
+      "passed": true
+    },
+    {
+      "name": "actual first native maxpacket equals original header sequence and object prefix 2049-partial64",
+      "passed": true
+    },
+    {
+      "name": "original large write remains same thread buffer after first64 read 2049-partial64",
+      "passed": true
+    },
+    {
+      "name": "actual committed FIDO-only profile after original large reply 2049-partial64",
+      "passed": true
+    },
+    {
+      "name": "old large IN worker absent in newly exposed USB generation 2049-partial64",
+      "passed": true
+    },
+    {
+      "name": "large or partial transfer cutover has no credential or counter mutation 2049-partial64",
+      "passed": true
+    },
+    {
+      "name": "same three original services alive 2049-partial64 cutover",
+      "passed": true
+    },
+    {
+      "name": "original partly read or unread CCID handle returns actual ENODEV 2049-partial64",
+      "passed": true
+    },
+    {
+      "name": "actual native PIN UVp2 original credential signature RP and user 2049-partial64-fido-only",
+      "passed": true
+    },
+    {
+      "name": "native FIDO counter increases 2049-partial64-fido-only",
+      "passed": true
+    },
+    {
+      "name": "stock native Management SDK reads exact committed FIDO-only mask 2049-partial64",
+      "passed": true
+    },
+    {
+      "name": "restored profile6 public descriptor bytes 2049-partial64",
+      "passed": true
+    },
+    {
+      "name": "restored original object and card plaintext retained 2049-partial64",
+      "passed": true
+    },
+    {
+      "name": "same three original services alive 2049-partial64 restored",
+      "passed": true
+    }
+  ],
+  "cycles": [
+    {
+      "index": 0,
+      "phase": "2047-unread",
+      "mode": "unread",
+      "total_response_bytes": 2047,
+      "opaque_object_bytes": 2031,
+      "opaque_object_sha256": "c2022f0d9f1824f37815e64d21e6dea389d3b1bd933ec6486c4799865dfcc880",
+      "before_usb": {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "1718267078",
+        "vid": 4176,
+        "pid": 1030,
+        "address": 3,
+        "host_visible_configuration_descriptor_hex": "09027d00020100800f090400000203000000092110010001222200070504034000020705840340000209040100030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+        "classes": [
+          3,
+          11
+        ],
+        "host_visible_endpoint_addresses": [
+          4,
+          132,
+          2,
+          130,
+          131
+        ]
+      },
+      "hotp_counter_before": 0,
+      "stock_sdk_force_short_for_large_provisioning": false,
+      "native_before_request_sdk_history": [
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 2057,
+          "sequence": 9,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            2,
+            0,
+            9,
+            0,
+            0,
+            0
+          ],
+          "bytes": 12
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 22,
+          "sequence": 10,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            2037,
+            0,
+            10,
+            0,
+            0,
+            0
+          ],
+          "bytes": 2047
+        }
+      ],
+      "original_sequence": 11,
+      "original_packet_bytes": 2047,
+      "original_packet_sha256": "7813b8cacfca114442d42e88204115e33e2762aade5c81d68b54545120eb32c5",
+      "original_worker": {
+        "tid": 260,
+        "tgid": 129,
+        "fd": 10,
+        "bytes": 2047,
+        "buffer": "0xc3e8ef610050",
+        "endpoint": "/dev/ffs-ske/ep4",
+        "wchan": "ffs_epfile_io",
+        "syscall": "64 0xa 0xc3e8ef610050 0x7ff 0x0 0x0 0xc3e8ef60da20 0xf67cdddbe5f0 0xf67ce07a1e4c"
+      },
+      "original_write_entry_before_host_read": "        ske-usbd-260     [001] ...1.     9.749377: sys_write(fd: a, buf: c3e8ef610050, count: 7ff)",
+      "original_ccid_response_chain_level": 0,
+      "host_original_data_bytes_read_before_configuration": 0,
+      "durable_plaintext_sha256_at_cutover": "1ae25e6f63c9659b298001b11e5f95487c8a0e65fd97bdb7a4d9a36a36b90262",
+      "native_management_ack_seconds": 0.021745919999998975,
+      "after_fido_only_usb": {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "1718267078",
+        "vid": 4176,
+        "pid": 1026,
+        "address": 4,
+        "host_visible_configuration_descriptor_hex": "09022900010100800f0904000002030000000921100100012222000705040340000207058403400002",
+        "classes": [
+          3
+        ],
+        "host_visible_endpoint_addresses": [
+          4,
+          132
+        ]
+      },
+      "actual_cutover_write_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 110/110   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-260     [001] ...1.     9.749377: sys_write(fd: a, buf: c3e8ef610050, count: 7ff)\n        ske-usbd-258     [001] ...1.     9.807371: sys_write(fd: 8, buf: f67cd8000cb0, count: 40)\n        ske-usbd-258     [001] ...1.     9.807441: sys_write -> 0x40\n        ske-usbd-260     [000] ...1.    11.826560: sys_write -> 0xfffffffffffffffc\n        ske-usbd-129     [000] ...1.    11.843393: sys_write(fd: 7, buf: ffffea0796f0, count: 1)\n        ske-usbd-129     [000] ...1.    11.844358: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    11.953304: sys_write(fd: 6, buf: ffffea0795b0, count: 4)\n        ske-usbd-129     [000] ...1.    11.953366: sys_write -> 0x4\n        ske-usbd-129     [000] ...1.    11.953638: sys_write(fd: 6, buf: ffffea0795b0, count: 5)\n        ske-usbd-129     [000] ...1.    11.953676: sys_write -> 0x5\n        ske-usbd-129     [000] ...1.    11.954075: sys_write(fd: 6, buf: ffffea0795b0, count: 5)\n        ske-usbd-129     [000] ...1.    11.954116: sys_write -> 0x5\n        ske-usbd-129     [000] ...1.    11.954360: sys_write(fd: 6, buf: ffffea0795b0, count: 5)\n        ske-usbd-129     [000] ...1.    11.954407: sys_write -> 0x5\n        ske-usbd-129     [000] ...1.    11.954656: sys_write(fd: 6, buf: ffffea0795b0, count: 2)\n        ske-usbd-129     [000] ...1.    11.954693: sys_write -> 0x2\n        ske-usbd-129     [000] ...1.    11.955020: sys_write(fd: 6, buf: ffffea0795b0, count: 2)\n        ske-usbd-129     [000] ...1.    11.955057: sys_write -> 0x2\n        ske-usbd-129     [000] ...1.    11.955308: sys_write(fd: 6, buf: ffffea0795b0, count: 2)\n        ske-usbd-129     [000] ...1.    11.955343: sys_write -> 0x2\n        ske-usbd-129     [000] ...1.    11.955583: sys_write(fd: 6, buf: ffffea0795b0, count: 3)\n        ske-usbd-129     [000] ...1.    11.955618: sys_write -> 0x3\n        ske-usbd-129     [000] ...1.    11.956125: sys_write(fd: 6, buf: c3e8ef60b3c0, count: 1d)\n        ske-usbd-129     [000] ...1.    11.956164: sys_write -> 0x1d\n        ske-usbd-129     [000] ...1.    11.956553: sys_write(fd: 6, buf: c3e8ef60d010, count: 28)\n        ske-usbd-129     [000] ...1.    11.956589: sys_write -> 0x28\n        ske-usbd-129     [000] ...1.    11.956968: sys_write(fd: 6, buf: ffffea0795b0, count: b)\n        ske-usbd-129     [000] ...1.    11.957005: sys_write -> 0xb\n        ske-usbd-129     [000] ...1.    11.957272: sys_write(fd: 6, buf: ffffea0795b0, count: 4)\n        ske-usbd-129     [000] ...1.    11.957308: sys_write -> 0x4\n        ske-usbd-129     [000] ...1.    11.957557: sys_write(fd: 6, buf: ffffea0795b0, count: 3)\n        ske-usbd-129     [000] ...1.    11.957592: sys_write -> 0x3\n        ske-usbd-129     [000] ...1.    11.957892: sys_write(fd: 6, buf: c3e8ef60d010, count: 30)\n        ske-usbd-129     [000] ...1.    11.958049: sys_write -> 0x30\n        ske-usbd-129     [000] ...1.    11.958103: sys_write(fd: 6, buf: c3e8ef60f210, count: 10)\n        ske-usbd-129     [000] ...1.    11.958218: sys_write -> 0x10\n        ske-usbd-129     [000] ...1.    11.958418: sys_write(fd: 7, buf: ffffea0795b0, count: c)\n        ske-usbd-129     [000] ...1.    11.959004: sys_write -> 0xc\n        ske-usbd-129     [000] ...1.    11.959174: sys_write(fd: 2, buf: c3e8c1a1f0d8, count: 1c)\n        ske-usbd-129     [000] ...1.    11.959236: sys_write -> 0x1c\n        ske-usbd-129     [000] ...1.    11.959275: sys_write(fd: 2, buf: ffffea079c90, count: b)\n        ske-usbd-129     [000] ...1.    11.959317: sys_write -> 0xb\n        ske-usbd-129     [000] ...1.    11.959352: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [000] ...1.    11.959392: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    11.959433: sys_write(fd: 2, buf: c3e8c1a1eed8, count: 23)\n        ske-usbd-129     [000] ...1.    11.959472: sys_write -> 0x23\n        ske-usbd-129     [000] ...1.    11.959509: sys_write(fd: 2, buf: ffffea0796e7, count: 1)\n        ske-usbd-129     [000] ...1.    11.959548: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    11.959581: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [000] ...1.    11.959620: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    12.357973: sys_write(fd: 2, buf: c3e8c1a1f108, count: 20)\n        ske-usbd-129     [001] ...1.    12.358258: sys_write -> 0x20\n        ske-usbd-129     [001] ...1.    12.358334: sys_write(fd: 2, buf: ffffea0795f7, count: 1)\n        ske-usbd-129     [001] ...1.    12.358410: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    12.358461: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [001] ...1.    12.358519: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    12.359630: sys_write(fd: 2, buf: c3e8c1a1f150, count: 16)\n        ske-usbd-129     [001] ...1.    12.359719: sys_write -> 0x16\n        ske-usbd-129     [001] ...1.    12.359781: sys_write(fd: 2, buf: ffffea079626, count: 2)\n        ske-usbd-129     [001] ...1.    12.359961: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    12.360001: sys_write(fd: 2, buf: c3e8c1a1f168, count: 9)\n        ske-usbd-129     [001] ...1.    12.360050: sys_write -> 0x9\n        ske-usbd-129     [001] ...1.    12.360087: sys_write(fd: 2, buf: ffffea079626, count: 2)\n        ske-usbd-129     [001] ...1.    12.360135: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    12.360172: sys_write(fd: 2, buf: c3e8c1a1f178, count: 7)\n        ske-usbd-129     [001] ...1.    12.360227: sys_write -> 0x7\n        ske-usbd-129     [001] ...1.    12.360290: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [001] ...1.    12.360355: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    12.360395: sys_write(fd: 2, buf: c3e8c1a1f180, count: 7)\n        ske-usbd-129     [001] ...1.    12.360441: sys_write -> 0x7\n        ske-usbd-129     [001] ...1.    12.360479: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [001] ...1.    12.360540: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    12.360578: sys_write(fd: 2, buf: c3e8c1a1f188, count: 8)\n        ske-usbd-129     [001] ...1.    12.360623: sys_write -> 0x8\n        ske-usbd-129     [001] ...1.    12.360661: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [001] ...1.    12.360705: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    12.360740: sys_write(fd: 2, buf: c3e8c1a1f198, count: 9)\n        ske-usbd-129     [001] ...1.    12.360784: sys_write -> 0x9\n        ske-usbd-129     [001] ...1.    12.360824: sys_write(fd: 2, buf: ffffea079567, count: 1)\n        ske-usbd-129     [001] ...1.    12.360944: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    12.360984: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [001] ...1.    12.361030: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    12.365212: sys_write(fd: 2, buf: c3e8c1a1f150, count: 16)\n        ske-usbd-129     [000] ...1.    12.365274: sys_write -> 0x16\n        ske-usbd-129     [000] ...1.    12.365315: sys_write(fd: 2, buf: ffffea079625, count: 3)\n        ske-usbd-129     [000] ...1.    12.365362: sys_write -> 0x3\n        ske-usbd-129     [000] ...1.    12.365399: sys_write(fd: 2, buf: c3e8c1a1f168, count: 9)\n        ske-usbd-129     [000] ...1.    12.365444: sys_write -> 0x9\n        ske-usbd-129     [000] ...1.    12.365480: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [000] ...1.    12.365524: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    12.365559: sys_write(fd: 2, buf: c3e8c1a1f178, count: 7)\n        ske-usbd-129     [000] ...1.    12.365602: sys_write -> 0x7\n        ske-usbd-129     [000] ...1.    12.365638: sys_write(fd: 2, buf: ffffea079624, count: 4)\n        ske-usbd-129     [000] ...1.    12.365681: sys_write -> 0x4\n        ske-usbd-129     [000] ...1.    12.365715: sys_write(fd: 2, buf: c3e8c1a1f180, count: 7)\n        ske-usbd-129     [000] ...1.    12.365758: sys_write -> 0x7\n        ske-usbd-129     [000] ...1.    12.365794: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [000] ...1.    12.365841: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    12.365894: sys_write(fd: 2, buf: c3e8c1a1f188, count: 8)\n        ske-usbd-129     [000] ...1.    12.366028: sys_write -> 0x8\n        ske-usbd-129     [000] ...1.    12.366072: sys_write(fd: 2, buf: ffffea079626, count: 2)\n        ske-usbd-129     [000] ...1.    12.366123: sys_write -> 0x2\n        ske-usbd-129     [000] ...1.    12.366160: sys_write(fd: 2, buf: c3e8c1a1f198, count: 9)\n        ske-usbd-129     [000] ...1.    12.366205: sys_write -> 0x9\n        ske-usbd-129     [000] ...1.    12.366243: sys_write(fd: 2, buf: ffffea079567, count: 1)\n        ske-usbd-129     [000] ...1.    12.366287: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    12.366324: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [000] ...1.    12.366367: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    12.366407: sys_write(fd: 6, buf: f67cd0000c70, count: 22)\n        ske-usbd-129     [001] ...1.    12.367028: sys_write -> 0x22\n",
+      "old_handle_errno": 19,
+      "restored_usb": {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "1718267078",
+        "vid": 4176,
+        "pid": 1030,
+        "address": 5,
+        "host_visible_configuration_descriptor_hex": "09027d00020100800f090400000203000000092110010001222200070504034000020705840340000209040100030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+        "classes": [
+          3,
+          11
+        ],
+        "host_visible_endpoint_addresses": [
+          4,
+          132,
+          2,
+          130,
+          131
+        ]
+      },
+      "restored_object_sha256": "c2022f0d9f1824f37815e64d21e6dea389d3b1bd933ec6486c4799865dfcc880",
+      "native_restored_object_sdk_history": [
+        {
+          "direction": "out",
+          "kind": 98,
+          "bytes": 10,
+          "sequence": 1,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            7,
+            0,
+            1,
+            0,
+            0,
+            0
+          ],
+          "bytes": 17
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 20,
+          "sequence": 2,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            21,
+            0,
+            2,
+            0,
+            0,
+            0
+          ],
+          "bytes": 31
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 15,
+          "sequence": 3,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            5,
+            0,
+            3,
+            0,
+            0,
+            0
+          ],
+          "bytes": 15
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 14,
+          "sequence": 4,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            12,
+            0,
+            4,
+            0,
+            0,
+            0
+          ],
+          "bytes": 22
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 22,
+          "sequence": 5,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            2037,
+            0,
+            5,
+            0,
+            0,
+            0
+          ],
+          "bytes": 2047
+        }
+      ],
+      "hotp_counter_after_fresh_sdk": 1,
+      "retained_card_plaintext_verified": true,
+      "original_services_alive": true,
+      "fresh_sdk_no_stale_response_verified": true,
+      "old_worker_absent_in_new_generation_verified": true
+    },
+    {
+      "index": 1,
+      "phase": "2047-partial64",
+      "mode": "partial64",
+      "total_response_bytes": 2047,
+      "opaque_object_bytes": 2031,
+      "opaque_object_sha256": "c2022f0d9f1824f37815e64d21e6dea389d3b1bd933ec6486c4799865dfcc880",
+      "before_usb": {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "1718267078",
+        "vid": 4176,
+        "pid": 1030,
+        "address": 5,
+        "host_visible_configuration_descriptor_hex": "09027d00020100800f090400000203000000092110010001222200070504034000020705840340000209040100030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+        "classes": [
+          3,
+          11
+        ],
+        "host_visible_endpoint_addresses": [
+          4,
+          132,
+          2,
+          130,
+          131
+        ]
+      },
+      "hotp_counter_before": 1,
+      "stock_sdk_force_short_for_large_provisioning": false,
+      "native_before_request_sdk_history": [
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 2057,
+          "sequence": 14,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            2,
+            0,
+            14,
+            0,
+            0,
+            0
+          ],
+          "bytes": 12
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 22,
+          "sequence": 15,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            2037,
+            0,
+            15,
+            0,
+            0,
+            0
+          ],
+          "bytes": 2047
+        }
+      ],
+      "original_sequence": 16,
+      "original_packet_bytes": 2047,
+      "original_packet_sha256": "54e3e20ed90090da621b0fa13cf4dff1bc8861df1efec5157467e53a1807b93a",
+      "original_worker": {
+        "tid": 389,
+        "tgid": 129,
+        "fd": 10,
+        "bytes": 2047,
+        "buffer": "0xc3e8ef610240",
+        "endpoint": "/dev/ffs-ske/ep4",
+        "wchan": "ffs_epfile_io",
+        "syscall": "64 0xa 0xc3e8ef610240 0x7ff 0x0 0x0 0xc3e8ef60df00 0xf67cdedde5f0 0xf67ce07a1e4c"
+      },
+      "original_write_entry_before_host_read": "        ske-usbd-389     [000] ...1.    14.580303: sys_write(fd: a, buf: c3e8ef610240, count: 7ff)",
+      "original_ccid_response_chain_level": 0,
+      "original_prefix_hex": "80f50700000010000000538207efff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f40",
+      "host_original_data_bytes_read_before_configuration": 64,
+      "durable_plaintext_sha256_at_cutover": "2d8f762ca290ed44882f2c9c59b9730f4aac77f05842756463e15ab8c73e505f",
+      "native_management_ack_seconds": 0.023655375999998896,
+      "after_fido_only_usb": {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "1718267078",
+        "vid": 4176,
+        "pid": 1026,
+        "address": 6,
+        "host_visible_configuration_descriptor_hex": "09022900010100800f0904000002030000000921100100012222000705040340000207058403400002",
+        "classes": [
+          3
+        ],
+        "host_visible_endpoint_addresses": [
+          4,
+          132
+        ]
+      },
+      "actual_cutover_write_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 110/110   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-389     [000] ...1.    14.580303: sys_write(fd: a, buf: c3e8ef610240, count: 7ff)\n        ske-usbd-387     [001] ...1.    14.639462: sys_write(fd: 8, buf: f67cd4001040, count: 40)\n        ske-usbd-387     [001] ...1.    14.639517: sys_write -> 0x40\n        ske-usbd-389     [001] ...1.    16.659000: sys_write -> 0xfffffffffffffffc\n        ske-usbd-129     [001] ...1.    16.675643: sys_write(fd: 7, buf: ffffea0796f0, count: 1)\n        ske-usbd-129     [000] ...1.    16.678294: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    16.785610: sys_write(fd: 6, buf: ffffea0795b0, count: 4)\n        ske-usbd-129     [001] ...1.    16.785675: sys_write -> 0x4\n        ske-usbd-129     [001] ...1.    16.786106: sys_write(fd: 6, buf: ffffea0795b0, count: 5)\n        ske-usbd-129     [001] ...1.    16.786149: sys_write -> 0x5\n        ske-usbd-129     [001] ...1.    16.786405: sys_write(fd: 6, buf: ffffea0795b0, count: 5)\n        ske-usbd-129     [001] ...1.    16.786441: sys_write -> 0x5\n        ske-usbd-129     [001] ...1.    16.786694: sys_write(fd: 6, buf: ffffea0795b0, count: 5)\n        ske-usbd-129     [001] ...1.    16.786729: sys_write -> 0x5\n        ske-usbd-129     [001] ...1.    16.787068: sys_write(fd: 6, buf: ffffea0795b0, count: 2)\n        ske-usbd-129     [001] ...1.    16.787115: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    16.787408: sys_write(fd: 6, buf: ffffea0795b0, count: 2)\n        ske-usbd-129     [001] ...1.    16.787446: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    16.787697: sys_write(fd: 6, buf: ffffea0795b0, count: 2)\n        ske-usbd-129     [001] ...1.    16.787746: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    16.788098: sys_write(fd: 6, buf: ffffea0795b0, count: 3)\n        ske-usbd-129     [001] ...1.    16.788135: sys_write -> 0x3\n        ske-usbd-129     [001] ...1.    16.788529: sys_write(fd: 6, buf: c3e8ef60f1e0, count: 1d)\n        ske-usbd-129     [001] ...1.    16.788575: sys_write -> 0x1d\n        ske-usbd-129     [001] ...1.    16.789070: sys_write(fd: 6, buf: c3e8ef60d010, count: 28)\n        ske-usbd-129     [001] ...1.    16.789116: sys_write -> 0x28\n        ske-usbd-129     [001] ...1.    16.789474: sys_write(fd: 6, buf: ffffea0795b0, count: b)\n        ske-usbd-129     [001] ...1.    16.789511: sys_write -> 0xb\n        ske-usbd-129     [001] ...1.    16.789790: sys_write(fd: 6, buf: ffffea0795b0, count: 4)\n        ske-usbd-129     [001] ...1.    16.789826: sys_write -> 0x4\n        ske-usbd-129     [001] ...1.    16.790164: sys_write(fd: 6, buf: ffffea0795b0, count: 3)\n        ske-usbd-129     [001] ...1.    16.790200: sys_write -> 0x3\n        ske-usbd-129     [001] ...1.    16.790440: sys_write(fd: 6, buf: c3e8ef60d010, count: 30)\n        ske-usbd-129     [001] ...1.    16.790590: sys_write -> 0x30\n        ske-usbd-129     [001] ...1.    16.790640: sys_write(fd: 6, buf: c3e8ef60e4d0, count: 10)\n        ske-usbd-129     [001] ...1.    16.790814: sys_write -> 0x10\n        ske-usbd-129     [001] ...1.    16.791001: sys_write(fd: 7, buf: ffffea0795b0, count: c)\n        ske-usbd-129     [001] ...1.    16.791577: sys_write -> 0xc\n        ske-usbd-129     [001] ...1.    16.791853: sys_write(fd: 2, buf: c3e8c1a1f0d8, count: 1c)\n        ske-usbd-129     [001] ...1.    16.791913: sys_write -> 0x1c\n        ske-usbd-129     [001] ...1.    16.791950: sys_write(fd: 2, buf: ffffea079c90, count: b)\n        ske-usbd-129     [001] ...1.    16.791990: sys_write -> 0xb\n        ske-usbd-129     [001] ...1.    16.792024: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [001] ...1.    16.792063: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    16.792114: sys_write(fd: 2, buf: c3e8c1a1eed8, count: 23)\n        ske-usbd-129     [001] ...1.    16.792154: sys_write -> 0x23\n        ske-usbd-129     [001] ...1.    16.792190: sys_write(fd: 2, buf: ffffea0796e7, count: 1)\n        ske-usbd-129     [001] ...1.    16.792229: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    16.792261: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [001] ...1.    16.792300: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    17.189812: sys_write(fd: 2, buf: c3e8c1a1f108, count: 20)\n        ske-usbd-129     [001] ...1.    17.189970: sys_write -> 0x20\n        ske-usbd-129     [001] ...1.    17.190029: sys_write(fd: 2, buf: ffffea0795f7, count: 1)\n        ske-usbd-129     [001] ...1.    17.190087: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    17.190139: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [001] ...1.    17.190195: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    17.191282: sys_write(fd: 2, buf: c3e8c1a1f150, count: 16)\n        ske-usbd-129     [001] ...1.    17.191356: sys_write -> 0x16\n        ske-usbd-129     [001] ...1.    17.191408: sys_write(fd: 2, buf: ffffea079626, count: 2)\n        ske-usbd-129     [001] ...1.    17.191466: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    17.191512: sys_write(fd: 2, buf: c3e8c1a1f168, count: 9)\n        ske-usbd-129     [001] ...1.    17.191568: sys_write -> 0x9\n        ske-usbd-129     [001] ...1.    17.191614: sys_write(fd: 2, buf: ffffea079626, count: 2)\n        ske-usbd-129     [001] ...1.    17.191668: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    17.191712: sys_write(fd: 2, buf: c3e8c1a1f178, count: 7)\n        ske-usbd-129     [001] ...1.    17.191766: sys_write -> 0x7\n        ske-usbd-129     [001] ...1.    17.191812: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [001] ...1.    17.191934: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    17.191979: sys_write(fd: 2, buf: c3e8c1a1f180, count: 7)\n        ske-usbd-129     [001] ...1.    17.192036: sys_write -> 0x7\n        ske-usbd-129     [001] ...1.    17.192081: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [001] ...1.    17.192137: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    17.192181: sys_write(fd: 2, buf: c3e8c1a1f188, count: 8)\n        ske-usbd-129     [001] ...1.    17.192239: sys_write -> 0x8\n        ske-usbd-129     [001] ...1.    17.192284: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [001] ...1.    17.192339: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    17.192382: sys_write(fd: 2, buf: c3e8c1a1f198, count: 9)\n        ske-usbd-129     [001] ...1.    17.192436: sys_write -> 0x9\n        ske-usbd-129     [001] ...1.    17.192483: sys_write(fd: 2, buf: ffffea079567, count: 1)\n        ske-usbd-129     [001] ...1.    17.192537: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    17.192584: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [001] ...1.    17.192638: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    17.195271: sys_write(fd: 2, buf: c3e8c1a1f150, count: 16)\n        ske-usbd-129     [001] ...1.    17.195338: sys_write -> 0x16\n        ske-usbd-129     [001] ...1.    17.195386: sys_write(fd: 2, buf: ffffea079625, count: 3)\n        ske-usbd-129     [001] ...1.    17.195442: sys_write -> 0x3\n        ske-usbd-129     [001] ...1.    17.195486: sys_write(fd: 2, buf: c3e8c1a1f168, count: 9)\n        ske-usbd-129     [001] ...1.    17.195538: sys_write -> 0x9\n        ske-usbd-129     [001] ...1.    17.195579: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [001] ...1.    17.195628: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    17.195668: sys_write(fd: 2, buf: c3e8c1a1f178, count: 7)\n        ske-usbd-129     [001] ...1.    17.195717: sys_write -> 0x7\n        ske-usbd-129     [001] ...1.    17.195757: sys_write(fd: 2, buf: ffffea079624, count: 4)\n        ske-usbd-129     [001] ...1.    17.195807: sys_write -> 0x4\n        ske-usbd-129     [001] ...1.    17.195846: sys_write(fd: 2, buf: c3e8c1a1f180, count: 7)\n        ske-usbd-129     [001] ...1.    17.196009: sys_write -> 0x7\n        ske-usbd-129     [001] ...1.    17.196052: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [001] ...1.    17.196108: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    17.196148: sys_write(fd: 2, buf: c3e8c1a1f188, count: 8)\n        ske-usbd-129     [001] ...1.    17.196199: sys_write -> 0x8\n        ske-usbd-129     [001] ...1.    17.196239: sys_write(fd: 2, buf: ffffea079626, count: 2)\n        ske-usbd-129     [001] ...1.    17.196289: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    17.196328: sys_write(fd: 2, buf: c3e8c1a1f198, count: 9)\n        ske-usbd-129     [001] ...1.    17.196378: sys_write -> 0x9\n        ske-usbd-129     [001] ...1.    17.196419: sys_write(fd: 2, buf: ffffea079567, count: 1)\n        ske-usbd-129     [001] ...1.    17.196469: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    17.196510: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [001] ...1.    17.196559: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    17.196603: sys_write(fd: 6, buf: c3e8ef60e800, count: 22)\n        ske-usbd-129     [001] ...1.    17.198062: sys_write -> 0x22\n",
+      "old_handle_errno": 19,
+      "restored_usb": {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "1718267078",
+        "vid": 4176,
+        "pid": 1030,
+        "address": 7,
+        "host_visible_configuration_descriptor_hex": "09027d00020100800f090400000203000000092110010001222200070504034000020705840340000209040100030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+        "classes": [
+          3,
+          11
+        ],
+        "host_visible_endpoint_addresses": [
+          4,
+          132,
+          2,
+          130,
+          131
+        ]
+      },
+      "restored_object_sha256": "c2022f0d9f1824f37815e64d21e6dea389d3b1bd933ec6486c4799865dfcc880",
+      "native_restored_object_sdk_history": [
+        {
+          "direction": "out",
+          "kind": 98,
+          "bytes": 10,
+          "sequence": 1,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            7,
+            0,
+            1,
+            0,
+            0,
+            0
+          ],
+          "bytes": 17
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 20,
+          "sequence": 2,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            21,
+            0,
+            2,
+            0,
+            0,
+            0
+          ],
+          "bytes": 31
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 15,
+          "sequence": 3,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            5,
+            0,
+            3,
+            0,
+            0,
+            0
+          ],
+          "bytes": 15
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 14,
+          "sequence": 4,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            12,
+            0,
+            4,
+            0,
+            0,
+            0
+          ],
+          "bytes": 22
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 22,
+          "sequence": 5,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            2037,
+            0,
+            5,
+            0,
+            0,
+            0
+          ],
+          "bytes": 2047
+        }
+      ],
+      "hotp_counter_after_fresh_sdk": 2,
+      "retained_card_plaintext_verified": true,
+      "original_services_alive": true,
+      "fresh_sdk_no_stale_response_verified": true,
+      "old_worker_absent_in_new_generation_verified": true
+    },
+    {
+      "index": 2,
+      "phase": "2048-unread",
+      "mode": "unread",
+      "total_response_bytes": 2048,
+      "opaque_object_bytes": 2032,
+      "opaque_object_sha256": "f3705a02802ad58fb7455db27d0230c50156861334b24de6daf8f1d4a1b03e06",
+      "before_usb": {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "1718267078",
+        "vid": 4176,
+        "pid": 1030,
+        "address": 7,
+        "host_visible_configuration_descriptor_hex": "09027d00020100800f090400000203000000092110010001222200070504034000020705840340000209040100030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+        "classes": [
+          3,
+          11
+        ],
+        "host_visible_endpoint_addresses": [
+          4,
+          132,
+          2,
+          130,
+          131
+        ]
+      },
+      "hotp_counter_before": 2,
+      "stock_sdk_force_short_for_large_provisioning": false,
+      "native_before_request_sdk_history": [
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 2058,
+          "sequence": 14,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            2,
+            0,
+            14,
+            0,
+            0,
+            0
+          ],
+          "bytes": 12
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 22,
+          "sequence": 15,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            2038,
+            0,
+            15,
+            0,
+            0,
+            0
+          ],
+          "bytes": 2048
+        }
+      ],
+      "original_sequence": 16,
+      "original_packet_bytes": 2048,
+      "original_packet_sha256": "dbd135b15a9b34e26a62c34a3256beb1eca1afa05007b42874972abdb6a6bf08",
+      "original_worker": {
+        "tid": 550,
+        "tgid": 129,
+        "fd": 10,
+        "bytes": 2048,
+        "buffer": "0xc3e8ef610240",
+        "endpoint": "/dev/ffs-ske/ep4",
+        "wchan": "ffs_epfile_io",
+        "syscall": "64 0xa 0xc3e8ef610240 0x800 0x0 0x0 0xc3e8ef60cbc0 0xf67cdf5ee5f0 0xf67ce07a1e4c"
+      },
+      "original_write_entry_before_host_read": "        ske-usbd-550     [001] ...1.    19.434117: sys_write(fd: a, buf: c3e8ef610240, count: 800)",
+      "original_ccid_response_chain_level": 0,
+      "host_original_data_bytes_read_before_configuration": 0,
+      "durable_plaintext_sha256_at_cutover": "71a4df7b32051b805426b2371eb1bfe252bcfda132ae535b6a5ed2a90f4731cb",
+      "native_management_ack_seconds": 0.03164519999999982,
+      "after_fido_only_usb": {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "1718267078",
+        "vid": 4176,
+        "pid": 1026,
+        "address": 8,
+        "host_visible_configuration_descriptor_hex": "09022900010100800f0904000002030000000921100100012222000705040340000207058403400002",
+        "classes": [
+          3
+        ],
+        "host_visible_endpoint_addresses": [
+          4,
+          132
+        ]
+      },
+      "actual_cutover_write_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 110/110   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-550     [001] ...1.    19.434117: sys_write(fd: a, buf: c3e8ef610240, count: 800)\n        ske-usbd-547     [001] ...1.    19.494773: sys_write(fd: 8, buf: f67cd8000df0, count: 40)\n        ske-usbd-547     [001] ...1.    19.494836: sys_write -> 0x40\n        ske-usbd-550     [001] ...1.    21.503975: sys_write -> 0xfffffffffffffffc\n        ske-usbd-129     [000] ...1.    21.519942: sys_write(fd: 7, buf: ffffea0796f0, count: 1)\n        ske-usbd-129     [000] ...1.    21.521166: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    21.636750: sys_write(fd: 6, buf: ffffea0795b0, count: 4)\n        ske-usbd-129     [000] ...1.    21.636935: sys_write -> 0x4\n        ske-usbd-129     [000] ...1.    21.637317: sys_write(fd: 6, buf: ffffea0795b0, count: 5)\n        ske-usbd-129     [000] ...1.    21.637360: sys_write -> 0x5\n        ske-usbd-129     [000] ...1.    21.637606: sys_write(fd: 6, buf: ffffea0795b0, count: 5)\n        ske-usbd-129     [000] ...1.    21.637643: sys_write -> 0x5\n        ske-usbd-129     [000] ...1.    21.637949: sys_write(fd: 6, buf: ffffea0795b0, count: 5)\n        ske-usbd-129     [000] ...1.    21.637987: sys_write -> 0x5\n        ske-usbd-129     [000] ...1.    21.638243: sys_write(fd: 6, buf: ffffea0795b0, count: 2)\n        ske-usbd-129     [000] ...1.    21.638280: sys_write -> 0x2\n        ske-usbd-129     [000] ...1.    21.638522: sys_write(fd: 6, buf: ffffea0795b0, count: 2)\n        ske-usbd-129     [000] ...1.    21.638557: sys_write -> 0x2\n        ske-usbd-129     [000] ...1.    21.638795: sys_write(fd: 6, buf: ffffea0795b0, count: 2)\n        ske-usbd-129     [000] ...1.    21.638830: sys_write -> 0x2\n        ske-usbd-129     [000] ...1.    21.639113: sys_write(fd: 6, buf: ffffea0795b0, count: 3)\n        ske-usbd-129     [000] ...1.    21.639151: sys_write -> 0x3\n        ske-usbd-129     [000] ...1.    21.639630: sys_write(fd: 6, buf: f67cd0000be0, count: 1d)\n        ske-usbd-129     [000] ...1.    21.639670: sys_write -> 0x1d\n        ske-usbd-129     [000] ...1.    21.640202: sys_write(fd: 6, buf: c3e8ef60d010, count: 28)\n        ske-usbd-129     [000] ...1.    21.640243: sys_write -> 0x28\n        ske-usbd-129     [000] ...1.    21.640550: sys_write(fd: 6, buf: ffffea0795b0, count: b)\n        ske-usbd-129     [000] ...1.    21.640586: sys_write -> 0xb\n        ske-usbd-129     [000] ...1.    21.640978: sys_write(fd: 6, buf: ffffea0795b0, count: 4)\n        ske-usbd-129     [000] ...1.    21.641025: sys_write -> 0x4\n        ske-usbd-129     [000] ...1.    21.641338: sys_write(fd: 6, buf: ffffea0795b0, count: 3)\n        ske-usbd-129     [000] ...1.    21.641377: sys_write -> 0x3\n        ske-usbd-129     [000] ...1.    21.641639: sys_write(fd: 6, buf: c3e8ef60d010, count: 30)\n        ske-usbd-129     [000] .N.1.    21.641865: sys_write -> 0x30\n        ske-usbd-129     [001] ...1.    21.643134: sys_write(fd: 6, buf: c3e8ef60e210, count: 10)\n        ske-usbd-129     [001] ...1.    21.643283: sys_write -> 0x10\n        ske-usbd-129     [001] ...1.    21.643498: sys_write(fd: 7, buf: ffffea0795b0, count: c)\n        ske-usbd-129     [001] ...1.    21.644139: sys_write -> 0xc\n        ske-usbd-129     [001] ...1.    21.644325: sys_write(fd: 2, buf: c3e8c1a1f0d8, count: 1c)\n        ske-usbd-129     [001] ...1.    21.644383: sys_write -> 0x1c\n        ske-usbd-129     [001] ...1.    21.644420: sys_write(fd: 2, buf: ffffea079c90, count: b)\n        ske-usbd-129     [001] ...1.    21.644461: sys_write -> 0xb\n        ske-usbd-129     [001] ...1.    21.644496: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [001] ...1.    21.644536: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    21.644576: sys_write(fd: 2, buf: c3e8c1a1eed8, count: 23)\n        ske-usbd-129     [001] ...1.    21.644616: sys_write -> 0x23\n        ske-usbd-129     [001] ...1.    21.644652: sys_write(fd: 2, buf: ffffea0796e7, count: 1)\n        ske-usbd-129     [001] ...1.    21.644691: sys_write -> 0x1\n        ske-usbd-129     [001] .n.1.    21.644736: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [000] ...1.    21.646067: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    22.029640: sys_write(fd: 2, buf: c3e8c1a1f108, count: 20)\n        ske-usbd-129     [001] ...1.    22.029741: sys_write -> 0x20\n        ske-usbd-129     [001] ...1.    22.029799: sys_write(fd: 2, buf: ffffea0795f7, count: 1)\n        ske-usbd-129     [001] ...1.    22.029855: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    22.030074: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [001] ...1.    22.030155: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    22.032318: sys_write(fd: 2, buf: c3e8c1a1f150, count: 16)\n        ske-usbd-129     [000] ...1.    22.032393: sys_write -> 0x16\n        ske-usbd-129     [000] ...1.    22.032446: sys_write(fd: 2, buf: ffffea079626, count: 2)\n        ske-usbd-129     [000] ...1.    22.032503: sys_write -> 0x2\n        ske-usbd-129     [000] ...1.    22.032549: sys_write(fd: 2, buf: c3e8c1a1f168, count: 9)\n        ske-usbd-129     [000] ...1.    22.032606: sys_write -> 0x9\n        ske-usbd-129     [000] ...1.    22.032651: sys_write(fd: 2, buf: ffffea079626, count: 2)\n        ske-usbd-129     [000] ...1.    22.032790: sys_write -> 0x2\n        ske-usbd-129     [000] ...1.    22.033001: sys_write(fd: 2, buf: c3e8c1a1f178, count: 7)\n        ske-usbd-129     [000] ...1.    22.033056: sys_write -> 0x7\n        ske-usbd-129     [000] ...1.    22.033101: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [000] ...1.    22.033152: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    22.033193: sys_write(fd: 2, buf: c3e8c1a1f180, count: 7)\n        ske-usbd-129     [000] ...1.    22.033243: sys_write -> 0x7\n        ske-usbd-129     [000] ...1.    22.033285: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [000] ...1.    22.033335: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    22.033375: sys_write(fd: 2, buf: c3e8c1a1f188, count: 8)\n        ske-usbd-129     [000] ...1.    22.033425: sys_write -> 0x8\n        ske-usbd-129     [000] ...1.    22.033466: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [000] ...1.    22.033515: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    22.033555: sys_write(fd: 2, buf: c3e8c1a1f198, count: 9)\n        ske-usbd-129     [000] ...1.    22.033604: sys_write -> 0x9\n        ske-usbd-129     [000] ...1.    22.033648: sys_write(fd: 2, buf: ffffea079567, count: 1)\n        ske-usbd-129     [000] ...1.    22.033697: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    22.033741: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [000] ...1.    22.033790: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    22.040187: sys_write(fd: 2, buf: c3e8c1a1f150, count: 16)\n        ske-usbd-129     [001] ...1.    22.040250: sys_write -> 0x16\n        ske-usbd-129     [001] ...1.    22.040293: sys_write(fd: 2, buf: ffffea079625, count: 3)\n        ske-usbd-129     [001] ...1.    22.040340: sys_write -> 0x3\n        ske-usbd-129     [001] ...1.    22.040378: sys_write(fd: 2, buf: c3e8c1a1f168, count: 9)\n        ske-usbd-129     [001] ...1.    22.040424: sys_write -> 0x9\n        ske-usbd-129     [001] ...1.    22.040461: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [001] ...1.    22.040506: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    22.040542: sys_write(fd: 2, buf: c3e8c1a1f178, count: 7)\n        ske-usbd-129     [001] ...1.    22.040587: sys_write -> 0x7\n        ske-usbd-129     [001] ...1.    22.040624: sys_write(fd: 2, buf: ffffea079624, count: 4)\n        ske-usbd-129     [001] ...1.    22.040675: sys_write -> 0x4\n        ske-usbd-129     [001] ...1.    22.040735: sys_write(fd: 2, buf: c3e8c1a1f180, count: 7)\n        ske-usbd-129     [001] ...1.    22.040782: sys_write -> 0x7\n        ske-usbd-129     [001] ...1.    22.040819: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [001] ...1.    22.040916: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    22.040953: sys_write(fd: 2, buf: c3e8c1a1f188, count: 8)\n        ske-usbd-129     [001] ...1.    22.041000: sys_write -> 0x8\n        ske-usbd-129     [001] ...1.    22.041036: sys_write(fd: 2, buf: ffffea079626, count: 2)\n        ske-usbd-129     [001] ...1.    22.041081: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    22.041119: sys_write(fd: 2, buf: c3e8c1a1f198, count: 9)\n        ske-usbd-129     [001] ...1.    22.041163: sys_write -> 0x9\n        ske-usbd-129     [001] ...1.    22.041201: sys_write(fd: 2, buf: ffffea079567, count: 1)\n        ske-usbd-129     [001] ...1.    22.041279: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    22.041317: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [001] ...1.    22.041362: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    22.041402: sys_write(fd: 6, buf: f67cd0000c10, count: 22)\n        ske-usbd-129     [001] ...1.    22.042004: sys_write -> 0x22\n",
+      "old_handle_errno": 19,
+      "restored_usb": {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "1718267078",
+        "vid": 4176,
+        "pid": 1030,
+        "address": 9,
+        "host_visible_configuration_descriptor_hex": "09027d00020100800f090400000203000000092110010001222200070504034000020705840340000209040100030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+        "classes": [
+          3,
+          11
+        ],
+        "host_visible_endpoint_addresses": [
+          4,
+          132,
+          2,
+          130,
+          131
+        ]
+      },
+      "restored_object_sha256": "f3705a02802ad58fb7455db27d0230c50156861334b24de6daf8f1d4a1b03e06",
+      "native_restored_object_sdk_history": [
+        {
+          "direction": "out",
+          "kind": 98,
+          "bytes": 10,
+          "sequence": 1,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            7,
+            0,
+            1,
+            0,
+            0,
+            0
+          ],
+          "bytes": 17
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 20,
+          "sequence": 2,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            21,
+            0,
+            2,
+            0,
+            0,
+            0
+          ],
+          "bytes": 31
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 15,
+          "sequence": 3,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            5,
+            0,
+            3,
+            0,
+            0,
+            0
+          ],
+          "bytes": 15
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 14,
+          "sequence": 4,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            12,
+            0,
+            4,
+            0,
+            0,
+            0
+          ],
+          "bytes": 22
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 22,
+          "sequence": 5,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            2038,
+            0,
+            5,
+            0,
+            0,
+            0
+          ],
+          "bytes": 2048
+        }
+      ],
+      "hotp_counter_after_fresh_sdk": 3,
+      "retained_card_plaintext_verified": true,
+      "original_services_alive": true,
+      "fresh_sdk_no_stale_response_verified": true,
+      "old_worker_absent_in_new_generation_verified": true
+    },
+    {
+      "index": 3,
+      "phase": "2048-partial64",
+      "mode": "partial64",
+      "total_response_bytes": 2048,
+      "opaque_object_bytes": 2032,
+      "opaque_object_sha256": "f3705a02802ad58fb7455db27d0230c50156861334b24de6daf8f1d4a1b03e06",
+      "before_usb": {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "1718267078",
+        "vid": 4176,
+        "pid": 1030,
+        "address": 9,
+        "host_visible_configuration_descriptor_hex": "09027d00020100800f090400000203000000092110010001222200070504034000020705840340000209040100030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+        "classes": [
+          3,
+          11
+        ],
+        "host_visible_endpoint_addresses": [
+          4,
+          132,
+          2,
+          130,
+          131
+        ]
+      },
+      "hotp_counter_before": 3,
+      "stock_sdk_force_short_for_large_provisioning": false,
+      "native_before_request_sdk_history": [
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 2058,
+          "sequence": 14,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            2,
+            0,
+            14,
+            0,
+            0,
+            0
+          ],
+          "bytes": 12
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 22,
+          "sequence": 15,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            2038,
+            0,
+            15,
+            0,
+            0,
+            0
+          ],
+          "bytes": 2048
+        }
+      ],
+      "original_sequence": 16,
+      "original_packet_bytes": 2048,
+      "original_packet_sha256": "dbd135b15a9b34e26a62c34a3256beb1eca1afa05007b42874972abdb6a6bf08",
+      "original_worker": {
+        "tid": 708,
+        "tgid": 129,
+        "fd": 10,
+        "bytes": 2048,
+        "buffer": "0xc3e8ef610430",
+        "endpoint": "/dev/ffs-ske/ep4",
+        "wchan": "ffs_epfile_io",
+        "syscall": "64 0xa 0xc3e8ef610430 0x800 0x0 0x0 0xc3e8ef60d540 0xf67cde5ce5f0 0xf67ce07a1e4c"
+      },
+      "original_write_entry_before_host_read": "        ske-usbd-708     [001] ...1.    24.200306: sys_write(fd: a, buf: c3e8ef610430, count: 800)",
+      "original_ccid_response_chain_level": 0,
+      "original_prefix_hex": "80f60700000010000000538207f000112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f3041",
+      "host_original_data_bytes_read_before_configuration": 64,
+      "durable_plaintext_sha256_at_cutover": "43f137659c21586a50a5074d451afc301c4c4b6349d703338aab7637e8e13fa0",
+      "native_management_ack_seconds": 0.02886908800000043,
+      "after_fido_only_usb": {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "1718267078",
+        "vid": 4176,
+        "pid": 1026,
+        "address": 10,
+        "host_visible_configuration_descriptor_hex": "09022900010100800f0904000002030000000921100100012222000705040340000207058403400002",
+        "classes": [
+          3
+        ],
+        "host_visible_endpoint_addresses": [
+          4,
+          132
+        ]
+      },
+      "actual_cutover_write_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 110/110   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-708     [001] ...1.    24.200306: sys_write(fd: a, buf: c3e8ef610430, count: 800)\n        ske-usbd-706     [001] ...1.    24.268053: sys_write(fd: 8, buf: f67cd40012e0, count: 40)\n        ske-usbd-706     [001] ...1.    24.268106: sys_write -> 0x40\n        ske-usbd-708     [000] ...1.    26.280740: sys_write -> 0xfffffffffffffffc\n        ske-usbd-129     [000] ...1.    26.297950: sys_write(fd: 7, buf: ffffea0796f0, count: 1)\n        ske-usbd-129     [000] ...1.    26.299118: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    26.411145: sys_write(fd: 6, buf: ffffea0795b0, count: 4)\n        ske-usbd-129     [000] ...1.    26.411204: sys_write -> 0x4\n        ske-usbd-129     [000] ...1.    26.411466: sys_write(fd: 6, buf: ffffea0795b0, count: 5)\n        ske-usbd-129     [000] ...1.    26.411503: sys_write -> 0x5\n        ske-usbd-129     [000] ...1.    26.411733: sys_write(fd: 6, buf: ffffea0795b0, count: 5)\n        ske-usbd-129     [000] ...1.    26.411769: sys_write -> 0x5\n        ske-usbd-129     [000] ...1.    26.412168: sys_write(fd: 6, buf: ffffea0795b0, count: 5)\n        ske-usbd-129     [000] ...1.    26.412205: sys_write -> 0x5\n        ske-usbd-129     [000] ...1.    26.412458: sys_write(fd: 6, buf: ffffea0795b0, count: 2)\n        ske-usbd-129     [000] ...1.    26.412496: sys_write -> 0x2\n        ske-usbd-129     [000] ...1.    26.412756: sys_write(fd: 6, buf: ffffea0795b0, count: 2)\n        ske-usbd-129     [000] ...1.    26.412791: sys_write -> 0x2\n        ske-usbd-129     [000] ...1.    26.413191: sys_write(fd: 6, buf: ffffea0795b0, count: 2)\n        ske-usbd-129     [000] ...1.    26.413236: sys_write -> 0x2\n        ske-usbd-129     [000] ...1.    26.413514: sys_write(fd: 6, buf: ffffea0795b0, count: 3)\n        ske-usbd-129     [000] ...1.    26.413553: sys_write -> 0x3\n        ske-usbd-129     [000] ...1.    26.414035: sys_write(fd: 6, buf: f67cd0000be0, count: 1d)\n        ske-usbd-129     [000] ...1.    26.414075: sys_write -> 0x1d\n        ske-usbd-129     [000] ...1.    26.414466: sys_write(fd: 6, buf: c3e8ef60d010, count: 28)\n        ske-usbd-129     [000] ...1.    26.414502: sys_write -> 0x28\n        ske-usbd-129     [000] ...1.    26.414803: sys_write(fd: 6, buf: ffffea0795b0, count: b)\n        ske-usbd-129     [000] ...1.    26.414918: sys_write -> 0xb\n        ske-usbd-129     [000] ...1.    26.415244: sys_write(fd: 6, buf: ffffea0795b0, count: 4)\n        ske-usbd-129     [000] ...1.    26.415288: sys_write -> 0x4\n        ske-usbd-129     [000] ...1.    26.415546: sys_write(fd: 6, buf: ffffea0795b0, count: 3)\n        ske-usbd-129     [000] ...1.    26.415582: sys_write -> 0x3\n        ske-usbd-129     [000] ...1.    26.415875: sys_write(fd: 6, buf: c3e8ef60d010, count: 30)\n        ske-usbd-129     [000] ...1.    26.416023: sys_write -> 0x30\n        ske-usbd-129     [000] ...1.    26.416077: sys_write(fd: 6, buf: c3e8ef60e4f0, count: 10)\n        ske-usbd-129     [000] ...1.    26.416197: sys_write -> 0x10\n        ske-usbd-129     [000] ...1.    26.416395: sys_write(fd: 7, buf: ffffea0795b0, count: c)\n        ske-usbd-129     [000] ...1.    26.416989: sys_write -> 0xc\n        ske-usbd-129     [000] ...1.    26.417153: sys_write(fd: 2, buf: c3e8c1a1f0d8, count: 1c)\n        ske-usbd-129     [000] ...1.    26.417214: sys_write -> 0x1c\n        ske-usbd-129     [000] ...1.    26.417257: sys_write(fd: 2, buf: ffffea079c90, count: b)\n        ske-usbd-129     [000] ...1.    26.417299: sys_write -> 0xb\n        ske-usbd-129     [000] ...1.    26.417334: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [000] ...1.    26.417375: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    26.417417: sys_write(fd: 2, buf: c3e8c1a1eed8, count: 23)\n        ske-usbd-129     [000] ...1.    26.417456: sys_write -> 0x23\n        ske-usbd-129     [000] ...1.    26.417493: sys_write(fd: 2, buf: ffffea0796e7, count: 1)\n        ske-usbd-129     [000] ...1.    26.417533: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    26.417566: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [000] ...1.    26.417605: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    26.806462: sys_write(fd: 2, buf: c3e8c1a1f108, count: 20)\n        ske-usbd-129     [001] ...1.    26.806576: sys_write -> 0x20\n        ske-usbd-129     [001] ...1.    26.806634: sys_write(fd: 2, buf: ffffea0795f7, count: 1)\n        ske-usbd-129     [001] ...1.    26.806690: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    26.806738: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [001] ...1.    26.806791: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    26.809382: sys_write(fd: 2, buf: c3e8c1a1f150, count: 16)\n        ske-usbd-129     [001] ...1.    26.809444: sys_write -> 0x16\n        ske-usbd-129     [001] ...1.    26.809487: sys_write(fd: 2, buf: ffffea079626, count: 2)\n        ske-usbd-129     [001] ...1.    26.809536: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    26.809576: sys_write(fd: 2, buf: c3e8c1a1f168, count: 9)\n        ske-usbd-129     [001] ...1.    26.809626: sys_write -> 0x9\n        ske-usbd-129     [001] ...1.    26.809666: sys_write(fd: 2, buf: ffffea079626, count: 2)\n        ske-usbd-129     [001] ...1.    26.809713: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    26.809752: sys_write(fd: 2, buf: c3e8c1a1f178, count: 7)\n        ske-usbd-129     [001] ...1.    26.809800: sys_write -> 0x7\n        ske-usbd-129     [001] ...1.    26.809901: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [001] ...1.    26.809952: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    26.809991: sys_write(fd: 2, buf: c3e8c1a1f180, count: 7)\n        ske-usbd-129     [001] ...1.    26.810038: sys_write -> 0x7\n        ske-usbd-129     [001] ...1.    26.810077: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [001] ...1.    26.810127: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    26.810165: sys_write(fd: 2, buf: c3e8c1a1f188, count: 8)\n        ske-usbd-129     [001] ...1.    26.810256: sys_write -> 0x8\n        ske-usbd-129     [001] ...1.    26.810295: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [001] ...1.    26.810342: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    26.810380: sys_write(fd: 2, buf: c3e8c1a1f198, count: 9)\n        ske-usbd-129     [001] ...1.    26.810430: sys_write -> 0x9\n        ske-usbd-129     [001] ...1.    26.810473: sys_write(fd: 2, buf: ffffea079567, count: 1)\n        ske-usbd-129     [001] ...1.    26.810520: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    26.810561: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [001] ...1.    26.810608: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    26.814249: sys_write(fd: 2, buf: c3e8c1a1f150, count: 16)\n        ske-usbd-129     [000] ...1.    26.814327: sys_write -> 0x16\n        ske-usbd-129     [000] ...1.    26.814375: sys_write(fd: 2, buf: ffffea079625, count: 3)\n        ske-usbd-129     [000] ...1.    26.814429: sys_write -> 0x3\n        ske-usbd-129     [000] ...1.    26.814471: sys_write(fd: 2, buf: c3e8c1a1f168, count: 9)\n        ske-usbd-129     [000] ...1.    26.814522: sys_write -> 0x9\n        ske-usbd-129     [000] ...1.    26.814564: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [000] ...1.    26.814614: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    26.814655: sys_write(fd: 2, buf: c3e8c1a1f178, count: 7)\n        ske-usbd-129     [000] ...1.    26.814705: sys_write -> 0x7\n        ske-usbd-129     [000] ...1.    26.814746: sys_write(fd: 2, buf: ffffea079624, count: 4)\n        ske-usbd-129     [000] ...1.    26.814795: sys_write -> 0x4\n        ske-usbd-129     [000] ...1.    26.814836: sys_write(fd: 2, buf: c3e8c1a1f180, count: 7)\n        ske-usbd-129     [000] ...1.    26.814936: sys_write -> 0x7\n        ske-usbd-129     [000] ...1.    26.814976: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [000] ...1.    26.815025: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    26.815063: sys_write(fd: 2, buf: c3e8c1a1f188, count: 8)\n        ske-usbd-129     [000] ...1.    26.815112: sys_write -> 0x8\n        ske-usbd-129     [000] ...1.    26.815150: sys_write(fd: 2, buf: ffffea079626, count: 2)\n        ske-usbd-129     [000] ...1.    26.815197: sys_write -> 0x2\n        ske-usbd-129     [000] ...1.    26.815234: sys_write(fd: 2, buf: c3e8c1a1f198, count: 9)\n        ske-usbd-129     [000] ...1.    26.815280: sys_write -> 0x9\n        ske-usbd-129     [000] ...1.    26.815319: sys_write(fd: 2, buf: ffffea079567, count: 1)\n        ske-usbd-129     [000] ...1.    26.815365: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    26.815404: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [000] ...1.    26.815449: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    26.815491: sys_write(fd: 6, buf: c3e8ef60e800, count: 22)\n        ske-usbd-129     [000] ...1.    26.815981: sys_write -> 0x22\n",
+      "old_handle_errno": 19,
+      "restored_usb": {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "1718267078",
+        "vid": 4176,
+        "pid": 1030,
+        "address": 11,
+        "host_visible_configuration_descriptor_hex": "09027d00020100800f090400000203000000092110010001222200070504034000020705840340000209040100030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+        "classes": [
+          3,
+          11
+        ],
+        "host_visible_endpoint_addresses": [
+          4,
+          132,
+          2,
+          130,
+          131
+        ]
+      },
+      "restored_object_sha256": "f3705a02802ad58fb7455db27d0230c50156861334b24de6daf8f1d4a1b03e06",
+      "native_restored_object_sdk_history": [
+        {
+          "direction": "out",
+          "kind": 98,
+          "bytes": 10,
+          "sequence": 1,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            7,
+            0,
+            1,
+            0,
+            0,
+            0
+          ],
+          "bytes": 17
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 20,
+          "sequence": 2,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            21,
+            0,
+            2,
+            0,
+            0,
+            0
+          ],
+          "bytes": 31
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 15,
+          "sequence": 3,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            5,
+            0,
+            3,
+            0,
+            0,
+            0
+          ],
+          "bytes": 15
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 14,
+          "sequence": 4,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            12,
+            0,
+            4,
+            0,
+            0,
+            0
+          ],
+          "bytes": 22
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 22,
+          "sequence": 5,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            2038,
+            0,
+            5,
+            0,
+            0,
+            0
+          ],
+          "bytes": 2048
+        }
+      ],
+      "hotp_counter_after_fresh_sdk": 4,
+      "retained_card_plaintext_verified": true,
+      "original_services_alive": true,
+      "fresh_sdk_no_stale_response_verified": true,
+      "old_worker_absent_in_new_generation_verified": true
+    },
+    {
+      "index": 4,
+      "phase": "2048-zlp",
+      "mode": "zlp",
+      "total_response_bytes": 2048,
+      "opaque_object_bytes": 2032,
+      "opaque_object_sha256": "f3705a02802ad58fb7455db27d0230c50156861334b24de6daf8f1d4a1b03e06",
+      "before_usb": {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "1718267078",
+        "vid": 4176,
+        "pid": 1030,
+        "address": 11,
+        "host_visible_configuration_descriptor_hex": "09027d00020100800f090400000203000000092110010001222200070504034000020705840340000209040100030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+        "classes": [
+          3,
+          11
+        ],
+        "host_visible_endpoint_addresses": [
+          4,
+          132,
+          2,
+          130,
+          131
+        ]
+      },
+      "hotp_counter_before": 4,
+      "stock_sdk_force_short_for_large_provisioning": false,
+      "native_before_request_sdk_history": [
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 2058,
+          "sequence": 14,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            2,
+            0,
+            14,
+            0,
+            0,
+            0
+          ],
+          "bytes": 12
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 22,
+          "sequence": 15,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            2038,
+            0,
+            15,
+            0,
+            0,
+            0
+          ],
+          "bytes": 2048
+        }
+      ],
+      "positive_control_sequence": 16,
+      "positive_control_full_response_and_native_zlp_verified": true,
+      "original_sequence": 17,
+      "original_packet_bytes": 2048,
+      "original_packet_sha256": "c480ff2b418f62e9fe374b2294873fec6ca4970ccf84354dd892130ff52230de",
+      "original_worker": {
+        "tid": 865,
+        "tgid": 129,
+        "fd": 10,
+        "bytes": 2048,
+        "buffer": "0xc3e8ef610620",
+        "endpoint": "/dev/ffs-ske/ep4",
+        "wchan": "ffs_epfile_io",
+        "syscall": "64 0xa 0xc3e8ef610620 0x800 0x0 0x0 0xc3e8ef60c790 0xf67cdfdfe5f0 0xf67ce07a1e4c"
+      },
+      "original_write_entry_before_host_read": "        ske-usbd-865     [001] ...1.    29.040145: sys_write(fd: a, buf: c3e8ef610620, count: 800)",
+      "original_ccid_response_chain_level": 0,
+      "original_data_packet_hex": "80f60700000011000000538207f000112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedf9000",
+      "original_zero_length_representation": "kernel-buffered",
+      "completed_original_zero_write": {
+        "tid": 865,
+        "fd": 10,
+        "bytes": 0,
+        "entry": "        ske-usbd-865     [001] ...1.    29.066954: sys_write(fd: a, buf: 0, count: 0)",
+        "exit": "        ske-usbd-865     [001] ...1.    29.066981: sys_write -> 0x0",
+        "actual_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 4/4   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-865     [001] ...1.    29.040145: sys_write(fd: a, buf: c3e8ef610620, count: 800)\n        ske-usbd-865     [001] ...1.    29.066849: sys_write -> 0x800\n        ske-usbd-865     [001] ...1.    29.066954: sys_write(fd: a, buf: 0, count: 0)\n        ske-usbd-865     [001] ...1.    29.066981: sys_write -> 0x0\n",
+        "kernel_write_completed_before_any_host_ZLP_read": true
+      },
+      "host_original_data_bytes_read_before_configuration": 2048,
+      "durable_plaintext_sha256_at_cutover": "e9d88c95014201612060490fa44410622766ebf1eb0f302191464eaa7b1ab42d",
+      "native_management_ack_seconds": 0.027235823999998132,
+      "after_fido_only_usb": {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "1718267078",
+        "vid": 4176,
+        "pid": 1026,
+        "address": 12,
+        "host_visible_configuration_descriptor_hex": "09022900010100800f0904000002030000000921100100012222000705040340000207058403400002",
+        "classes": [
+          3
+        ],
+        "host_visible_endpoint_addresses": [
+          4,
+          132
+        ]
+      },
+      "actual_cutover_write_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 112/112   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-865     [001] ...1.    29.040145: sys_write(fd: a, buf: c3e8ef610620, count: 800)\n        ske-usbd-865     [001] ...1.    29.066849: sys_write -> 0x800\n        ske-usbd-865     [001] ...1.    29.066954: sys_write(fd: a, buf: 0, count: 0)\n        ske-usbd-865     [001] ...1.    29.066981: sys_write -> 0x0\n        ske-usbd-863     [001] ...1.    29.101065: sys_write(fd: 8, buf: f67cd8000da0, count: 40)\n        ske-usbd-863     [001] ...1.    29.102943: sys_write -> 0x40\n        ske-usbd-129     [000] ...1.    29.237599: sys_write(fd: 7, buf: ffffea0796f0, count: 1)\n        ske-usbd-129     [000] ...1.    29.238801: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    29.348593: sys_write(fd: 6, buf: ffffea0795b0, count: 4)\n        ske-usbd-129     [001] ...1.    29.348659: sys_write -> 0x4\n        ske-usbd-129     [001] ...1.    29.349096: sys_write(fd: 6, buf: ffffea0795b0, count: 5)\n        ske-usbd-129     [001] ...1.    29.349135: sys_write -> 0x5\n        ske-usbd-129     [001] ...1.    29.349380: sys_write(fd: 6, buf: ffffea0795b0, count: 5)\n        ske-usbd-129     [001] ...1.    29.349417: sys_write -> 0x5\n        ske-usbd-129     [001] ...1.    29.349655: sys_write(fd: 6, buf: ffffea0795b0, count: 5)\n        ske-usbd-129     [001] ...1.    29.349691: sys_write -> 0x5\n        ske-usbd-129     [001] ...1.    29.350034: sys_write(fd: 6, buf: ffffea0795b0, count: 2)\n        ske-usbd-129     [001] ...1.    29.350070: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    29.350319: sys_write(fd: 6, buf: ffffea0795b0, count: 2)\n        ske-usbd-129     [001] ...1.    29.350353: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    29.350584: sys_write(fd: 6, buf: ffffea0795b0, count: 2)\n        ske-usbd-129     [001] ...1.    29.350618: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    29.350843: sys_write(fd: 6, buf: ffffea0795b0, count: 3)\n        ske-usbd-129     [001] ...1.    29.350877: sys_write -> 0x3\n        ske-usbd-129     [001] ...1.    29.351351: sys_write(fd: 6, buf: f67cd0000c10, count: 1d)\n        ske-usbd-129     [001] ...1.    29.351396: sys_write -> 0x1d\n        ske-usbd-129     [001] ...1.    29.351775: sys_write(fd: 6, buf: c3e8ef60d010, count: 28)\n        ske-usbd-129     [001] ...1.    29.351811: sys_write -> 0x28\n        ske-usbd-129     [001] ...1.    29.352164: sys_write(fd: 6, buf: ffffea0795b0, count: b)\n        ske-usbd-129     [001] ...1.    29.352198: sys_write -> 0xb\n        ske-usbd-129     [001] ...1.    29.352444: sys_write(fd: 6, buf: ffffea0795b0, count: 4)\n        ske-usbd-129     [001] ...1.    29.352478: sys_write -> 0x4\n        ske-usbd-129     [001] ...1.    29.352709: sys_write(fd: 6, buf: ffffea0795b0, count: 3)\n        ske-usbd-129     [001] ...1.    29.352742: sys_write -> 0x3\n        ske-usbd-129     [001] ...1.    29.353025: sys_write(fd: 6, buf: c3e8ef60d010, count: 30)\n        ske-usbd-129     [001] ...1.    29.353165: sys_write -> 0x30\n        ske-usbd-129     [001] ...1.    29.353213: sys_write(fd: 6, buf: c3e8ef60e4d0, count: 10)\n        ske-usbd-129     [001] ...1.    29.353330: sys_write -> 0x10\n        ske-usbd-129     [001] ...1.    29.353516: sys_write(fd: 7, buf: ffffea0795b0, count: c)\n        ske-usbd-129     [001] ...1.    29.354109: sys_write -> 0xc\n        ske-usbd-129     [001] ...1.    29.354276: sys_write(fd: 2, buf: c3e8c1a1f0d8, count: 1c)\n        ske-usbd-129     [001] ...1.    29.354339: sys_write -> 0x1c\n        ske-usbd-129     [001] ...1.    29.354375: sys_write(fd: 2, buf: ffffea079c90, count: b)\n        ske-usbd-129     [001] ...1.    29.354416: sys_write -> 0xb\n        ske-usbd-129     [001] ...1.    29.354449: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [001] ...1.    29.354491: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    29.354531: sys_write(fd: 2, buf: c3e8c1a1eed8, count: 23)\n        ske-usbd-129     [001] ...1.    29.354569: sys_write -> 0x23\n        ske-usbd-129     [001] ...1.    29.354604: sys_write(fd: 2, buf: ffffea0796e6, count: 2)\n        ske-usbd-129     [001] ...1.    29.354642: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    29.354674: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [001] ...1.    29.354713: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    29.738634: sys_write(fd: 2, buf: c3e8c1a1f108, count: 20)\n        ske-usbd-129     [001] ...1.    29.738743: sys_write -> 0x20\n        ske-usbd-129     [001] ...1.    29.738801: sys_write(fd: 2, buf: ffffea0795f7, count: 1)\n        ske-usbd-129     [001] ...1.    29.738863: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    29.739035: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [001] ...1.    29.739098: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    29.742473: sys_write(fd: 2, buf: c3e8c1a1f150, count: 16)\n        ske-usbd-129     [000] ...1.    29.742545: sys_write -> 0x16\n        ske-usbd-129     [000] ...1.    29.742595: sys_write(fd: 2, buf: ffffea079626, count: 2)\n        ske-usbd-129     [000] ...1.    29.742649: sys_write -> 0x2\n        ske-usbd-129     [000] ...1.    29.742693: sys_write(fd: 2, buf: c3e8c1a1f168, count: 9)\n        ske-usbd-129     [000] ...1.    29.742745: sys_write -> 0x9\n        ske-usbd-129     [000] ...1.    29.742788: sys_write(fd: 2, buf: ffffea079626, count: 2)\n        ske-usbd-129     [000] ...1.    29.742925: sys_write -> 0x2\n        ske-usbd-129     [000] ...1.    29.742968: sys_write(fd: 2, buf: c3e8c1a1f178, count: 7)\n        ske-usbd-129     [000] ...1.    29.743023: sys_write -> 0x7\n        ske-usbd-129     [000] ...1.    29.743066: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [000] ...1.    29.743120: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    29.743161: sys_write(fd: 2, buf: c3e8c1a1f180, count: 7)\n        ske-usbd-129     [000] ...1.    29.743215: sys_write -> 0x7\n        ske-usbd-129     [000] ...1.    29.743257: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [000] ...1.    29.743308: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    29.743349: sys_write(fd: 2, buf: c3e8c1a1f188, count: 8)\n        ske-usbd-129     [000] .N.1.    29.743414: sys_write -> 0x8\n        ske-usbd-129     [000] ...1.    29.743467: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [000] ...1.    29.743520: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    29.743562: sys_write(fd: 2, buf: c3e8c1a1f198, count: 9)\n        ske-usbd-129     [000] ...1.    29.743613: sys_write -> 0x9\n        ske-usbd-129     [000] ...1.    29.743658: sys_write(fd: 2, buf: ffffea079567, count: 1)\n        ske-usbd-129     [000] ...1.    29.743709: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    29.743754: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [000] ...1.    29.743805: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    29.747244: sys_write(fd: 2, buf: c3e8c1a1f150, count: 16)\n        ske-usbd-129     [000] ...1.    29.747313: sys_write -> 0x16\n        ske-usbd-129     [000] ...1.    29.747360: sys_write(fd: 2, buf: ffffea079625, count: 3)\n        ske-usbd-129     [000] ...1.    29.747414: sys_write -> 0x3\n        ske-usbd-129     [000] ...1.    29.747456: sys_write(fd: 2, buf: c3e8c1a1f168, count: 9)\n        ske-usbd-129     [000] ...1.    29.747508: sys_write -> 0x9\n        ske-usbd-129     [000] ...1.    29.747549: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [000] ...1.    29.747600: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    29.747641: sys_write(fd: 2, buf: c3e8c1a1f178, count: 7)\n        ske-usbd-129     [000] ...1.    29.747691: sys_write -> 0x7\n        ske-usbd-129     [000] ...1.    29.747732: sys_write(fd: 2, buf: ffffea079624, count: 4)\n        ske-usbd-129     [000] ...1.    29.747782: sys_write -> 0x4\n        ske-usbd-129     [000] ...1.    29.747823: sys_write(fd: 2, buf: c3e8c1a1f180, count: 7)\n        ske-usbd-129     [000] ...1.    29.747962: sys_write -> 0x7\n        ske-usbd-129     [000] ...1.    29.748026: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [000] ...1.    29.748098: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    29.748141: sys_write(fd: 2, buf: c3e8c1a1f188, count: 8)\n        ske-usbd-129     [000] ...1.    29.748196: sys_write -> 0x8\n        ske-usbd-129     [000] ...1.    29.748238: sys_write(fd: 2, buf: ffffea079626, count: 2)\n        ske-usbd-129     [000] ...1.    29.748290: sys_write -> 0x2\n        ske-usbd-129     [000] ...1.    29.748331: sys_write(fd: 2, buf: c3e8c1a1f198, count: 9)\n        ske-usbd-129     [000] ...1.    29.748382: sys_write -> 0x9\n        ske-usbd-129     [000] ...1.    29.748424: sys_write(fd: 2, buf: ffffea079567, count: 1)\n        ske-usbd-129     [000] ...1.    29.748474: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    29.748516: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [000] ...1.    29.748567: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    29.748612: sys_write(fd: 6, buf: c3e8ef60b3c0, count: 22)\n        ske-usbd-129     [000] ...1.    29.751068: sys_write -> 0x22\n",
+      "old_handle_errno": 19,
+      "restored_usb": {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "1718267078",
+        "vid": 4176,
+        "pid": 1030,
+        "address": 13,
+        "host_visible_configuration_descriptor_hex": "09027d00020100800f090400000203000000092110010001222200070504034000020705840340000209040100030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+        "classes": [
+          3,
+          11
+        ],
+        "host_visible_endpoint_addresses": [
+          4,
+          132,
+          2,
+          130,
+          131
+        ]
+      },
+      "restored_object_sha256": "f3705a02802ad58fb7455db27d0230c50156861334b24de6daf8f1d4a1b03e06",
+      "native_restored_object_sdk_history": [
+        {
+          "direction": "out",
+          "kind": 98,
+          "bytes": 10,
+          "sequence": 1,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            7,
+            0,
+            1,
+            0,
+            0,
+            0
+          ],
+          "bytes": 17
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 20,
+          "sequence": 2,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            21,
+            0,
+            2,
+            0,
+            0,
+            0
+          ],
+          "bytes": 31
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 15,
+          "sequence": 3,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            5,
+            0,
+            3,
+            0,
+            0,
+            0
+          ],
+          "bytes": 15
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 14,
+          "sequence": 4,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            12,
+            0,
+            4,
+            0,
+            0,
+            0
+          ],
+          "bytes": 22
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 22,
+          "sequence": 5,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            2038,
+            0,
+            5,
+            0,
+            0,
+            0
+          ],
+          "bytes": 2048
+        }
+      ],
+      "hotp_counter_after_fresh_sdk": 5,
+      "retained_card_plaintext_verified": true,
+      "original_services_alive": true,
+      "fresh_sdk_no_stale_response_verified": true,
+      "old_worker_absent_in_new_generation_verified": true
+    },
+    {
+      "index": 5,
+      "phase": "2049-unread",
+      "mode": "unread",
+      "total_response_bytes": 2049,
+      "opaque_object_bytes": 2033,
+      "opaque_object_sha256": "8a0985365460affd26044dba9615c2de4e424a1e318be82c1cb2241794203fbe",
+      "before_usb": {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "1718267078",
+        "vid": 4176,
+        "pid": 1030,
+        "address": 13,
+        "host_visible_configuration_descriptor_hex": "09027d00020100800f090400000203000000092110010001222200070504034000020705840340000209040100030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+        "classes": [
+          3,
+          11
+        ],
+        "host_visible_endpoint_addresses": [
+          4,
+          132,
+          2,
+          130,
+          131
+        ]
+      },
+      "hotp_counter_before": 5,
+      "stock_sdk_force_short_for_large_provisioning": false,
+      "native_before_request_sdk_history": [
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 2059,
+          "sequence": 14,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            2,
+            0,
+            14,
+            0,
+            0,
+            0
+          ],
+          "bytes": 12
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 22,
+          "sequence": 15,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            2039,
+            0,
+            15,
+            0,
+            0,
+            0
+          ],
+          "bytes": 2049
+        }
+      ],
+      "original_sequence": 16,
+      "original_packet_bytes": 2049,
+      "original_packet_sha256": "3bf283d41d6829f323b24bf10f63804585dcab7708238cab09831587195d4048",
+      "original_worker": {
+        "tid": 987,
+        "tgid": 129,
+        "fd": 10,
+        "bytes": 2049,
+        "buffer": "0xc3e8ef610a00",
+        "endpoint": "/dev/ffs-ske/ep4",
+        "wchan": "ffs_epfile_io",
+        "syscall": "64 0xa 0xc3e8ef610a00 0x801 0x0 0x0 0xc3e8ef60da20 0xf67cdddbe5f0 0xf67ce07a1e4c"
+      },
+      "original_write_entry_before_host_read": "        ske-usbd-987     [000] ...1.    31.901211: sys_write(fd: a, buf: c3e8ef610a00, count: 801)",
+      "original_ccid_response_chain_level": 0,
+      "host_original_data_bytes_read_before_configuration": 0,
+      "durable_plaintext_sha256_at_cutover": "58677d35ed7ea8e6ee133eae302921adf53bbc5e82d43eba7df4f1a208b9f8d6",
+      "native_management_ack_seconds": 0.025326255999999603,
+      "after_fido_only_usb": {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "1718267078",
+        "vid": 4176,
+        "pid": 1026,
+        "address": 14,
+        "host_visible_configuration_descriptor_hex": "09022900010100800f0904000002030000000921100100012222000705040340000207058403400002",
+        "classes": [
+          3
+        ],
+        "host_visible_endpoint_addresses": [
+          4,
+          132
+        ]
+      },
+      "actual_cutover_write_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 110/110   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-987     [000] ...1.    31.901211: sys_write(fd: a, buf: c3e8ef610a00, count: 801)\n        ske-usbd-985     [001] ...1.    31.959111: sys_write(fd: 8, buf: f67cd4000ff0, count: 40)\n        ske-usbd-985     [001] ...1.    31.959172: sys_write -> 0x40\n        ske-usbd-987     [000] ...1.    33.971606: sys_write -> 0xfffffffffffffffc\n        ske-usbd-129     [000] ...1.    33.988583: sys_write(fd: 7, buf: ffffea0796f0, count: 1)\n        ske-usbd-129     [000] ...1.    33.989860: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    34.097281: sys_write(fd: 6, buf: ffffea0795b0, count: 4)\n        ske-usbd-129     [001] ...1.    34.097342: sys_write -> 0x4\n        ske-usbd-129     [001] ...1.    34.097610: sys_write(fd: 6, buf: ffffea0795b0, count: 5)\n        ske-usbd-129     [001] ...1.    34.097647: sys_write -> 0x5\n        ske-usbd-129     [001] ...1.    34.097971: sys_write(fd: 6, buf: ffffea0795b0, count: 5)\n        ske-usbd-129     [001] ...1.    34.098010: sys_write -> 0x5\n        ske-usbd-129     [001] ...1.    34.098341: sys_write(fd: 6, buf: ffffea0795b0, count: 5)\n        ske-usbd-129     [001] ...1.    34.098379: sys_write -> 0x5\n        ske-usbd-129     [001] ...1.    34.098626: sys_write(fd: 6, buf: ffffea0795b0, count: 2)\n        ske-usbd-129     [001] ...1.    34.098662: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    34.098959: sys_write(fd: 6, buf: ffffea0795b0, count: 2)\n        ske-usbd-129     [001] ...1.    34.098995: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    34.099239: sys_write(fd: 6, buf: ffffea0795b0, count: 2)\n        ske-usbd-129     [001] ...1.    34.099274: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    34.099510: sys_write(fd: 6, buf: ffffea0795b0, count: 3)\n        ske-usbd-129     [001] ...1.    34.099546: sys_write -> 0x3\n        ske-usbd-129     [001] ...1.    34.100004: sys_write(fd: 6, buf: c3e8ef60f250, count: 1d)\n        ske-usbd-129     [001] ...1.    34.100046: sys_write -> 0x1d\n        ske-usbd-129     [001] ...1.    34.100446: sys_write(fd: 6, buf: c3e8ef60d010, count: 28)\n        ske-usbd-129     [001] ...1.    34.100483: sys_write -> 0x28\n        ske-usbd-129     [001] ...1.    34.100791: sys_write(fd: 6, buf: ffffea0795b0, count: b)\n        ske-usbd-129     [001] ...1.    34.100825: sys_write -> 0xb\n        ske-usbd-129     [001] ...1.    34.101243: sys_write(fd: 6, buf: ffffea0795b0, count: 4)\n        ske-usbd-129     [001] ...1.    34.101280: sys_write -> 0x4\n        ske-usbd-129     [001] ...1.    34.101526: sys_write(fd: 6, buf: ffffea0795b0, count: 3)\n        ske-usbd-129     [001] ...1.    34.101560: sys_write -> 0x3\n        ske-usbd-129     [001] ...1.    34.101792: sys_write(fd: 6, buf: c3e8ef60d010, count: 30)\n        ske-usbd-129     [001] ...1.    34.102033: sys_write -> 0x30\n        ske-usbd-129     [001] ...1.    34.102085: sys_write(fd: 6, buf: c3e8ef60e210, count: 10)\n        ske-usbd-129     [001] ...1.    34.102208: sys_write -> 0x10\n        ske-usbd-129     [001] ...1.    34.102413: sys_write(fd: 7, buf: ffffea0795b0, count: c)\n        ske-usbd-129     [001] ...1.    34.103037: sys_write -> 0xc\n        ske-usbd-129     [001] ...1.    34.103202: sys_write(fd: 2, buf: c3e8c1a1f0d8, count: 1c)\n        ske-usbd-129     [001] ...1.    34.103261: sys_write -> 0x1c\n        ske-usbd-129     [001] ...1.    34.103297: sys_write(fd: 2, buf: ffffea079c90, count: b)\n        ske-usbd-129     [001] ...1.    34.103338: sys_write -> 0xb\n        ske-usbd-129     [001] ...1.    34.103376: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [001] ...1.    34.103417: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    34.103457: sys_write(fd: 2, buf: c3e8c1a1eed8, count: 23)\n        ske-usbd-129     [001] ...1.    34.103496: sys_write -> 0x23\n        ske-usbd-129     [001] ...1.    34.103532: sys_write(fd: 2, buf: ffffea0796e6, count: 2)\n        ske-usbd-129     [001] ...1.    34.103571: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    34.103604: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [001] ...1.    34.103642: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    34.504624: sys_write(fd: 2, buf: c3e8c1a1f108, count: 20)\n        ske-usbd-129     [000] ...1.    34.504812: sys_write -> 0x20\n        ske-usbd-129     [000] ...1.    34.504976: sys_write(fd: 2, buf: ffffea0795f7, count: 1)\n        ske-usbd-129     [000] ...1.    34.505061: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    34.505113: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [000] ...1.    34.505161: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    34.509374: sys_write(fd: 2, buf: c3e8c1a1f150, count: 16)\n        ske-usbd-129     [000] ...1.    34.509461: sys_write -> 0x16\n        ske-usbd-129     [000] ...1.    34.509506: sys_write(fd: 2, buf: ffffea079626, count: 2)\n        ske-usbd-129     [000] ...1.    34.509549: sys_write -> 0x2\n        ske-usbd-129     [000] ...1.    34.509632: sys_write(fd: 2, buf: c3e8c1a1f168, count: 9)\n        ske-usbd-129     [000] ...1.    34.509699: sys_write -> 0x9\n        ske-usbd-129     [000] ...1.    34.509734: sys_write(fd: 2, buf: ffffea079626, count: 2)\n        ske-usbd-129     [000] ...1.    34.509774: sys_write -> 0x2\n        ske-usbd-129     [000] ...1.    34.509808: sys_write(fd: 2, buf: c3e8c1a1f178, count: 7)\n        ske-usbd-129     [000] ...1.    34.510024: sys_write -> 0x7\n        ske-usbd-129     [000] ...1.    34.510061: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [000] ...1.    34.510236: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    34.510279: sys_write(fd: 2, buf: c3e8c1a1f180, count: 7)\n        ske-usbd-129     [000] ...1.    34.510330: sys_write -> 0x7\n        ske-usbd-129     [000] ...1.    34.510365: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [000] ...1.    34.510404: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    34.510435: sys_write(fd: 2, buf: c3e8c1a1f188, count: 8)\n        ske-usbd-129     [000] ...1.    34.510474: sys_write -> 0x8\n        ske-usbd-129     [000] ...1.    34.510520: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [000] ...1.    34.510561: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    34.510595: sys_write(fd: 2, buf: c3e8c1a1f198, count: 9)\n        ske-usbd-129     [000] ...1.    34.510632: sys_write -> 0x9\n        ske-usbd-129     [000] ...1.    34.510665: sys_write(fd: 2, buf: ffffea079567, count: 1)\n        ske-usbd-129     [000] ...1.    34.510701: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    34.510736: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [000] ...1.    34.510773: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    34.515273: sys_write(fd: 2, buf: c3e8c1a1f150, count: 16)\n        ske-usbd-129     [000] ...1.    34.515374: sys_write -> 0x16\n        ske-usbd-129     [000] ...1.    34.515414: sys_write(fd: 2, buf: ffffea079625, count: 3)\n        ske-usbd-129     [000] ...1.    34.515454: sys_write -> 0x3\n        ske-usbd-129     [000] ...1.    34.515519: sys_write(fd: 2, buf: c3e8c1a1f168, count: 9)\n        ske-usbd-129     [000] ...1.    34.515557: sys_write -> 0x9\n        ske-usbd-129     [000] ...1.    34.515588: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [000] ...1.    34.515624: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    34.515653: sys_write(fd: 2, buf: c3e8c1a1f178, count: 7)\n        ske-usbd-129     [000] ...1.    34.515688: sys_write -> 0x7\n        ske-usbd-129     [000] ...1.    34.515718: sys_write(fd: 2, buf: ffffea079624, count: 4)\n        ske-usbd-129     [000] ...1.    34.515754: sys_write -> 0x4\n        ske-usbd-129     [000] ...1.    34.515782: sys_write(fd: 2, buf: c3e8c1a1f180, count: 7)\n        ske-usbd-129     [000] ...1.    34.515818: sys_write -> 0x7\n        ske-usbd-129     [000] ...1.    34.515847: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [000] ...1.    34.515987: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    34.516019: sys_write(fd: 2, buf: c3e8c1a1f188, count: 8)\n        ske-usbd-129     [000] ...1.    34.516059: sys_write -> 0x8\n        ske-usbd-129     [000] ...1.    34.516090: sys_write(fd: 2, buf: ffffea079626, count: 2)\n        ske-usbd-129     [000] ...1.    34.516185: sys_write -> 0x2\n        ske-usbd-129     [000] ...1.    34.516222: sys_write(fd: 2, buf: c3e8c1a1f198, count: 9)\n        ske-usbd-129     [000] ...1.    34.516265: sys_write -> 0x9\n        ske-usbd-129     [000] ...1.    34.516299: sys_write(fd: 2, buf: ffffea079567, count: 1)\n        ske-usbd-129     [000] ...1.    34.516336: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    34.516370: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [000] ...1.    34.516406: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    34.516469: sys_write(fd: 6, buf: c3e8ef60f2e0, count: 22)\n        ske-usbd-129     [000] ...1.    34.518234: sys_write -> 0x22\n",
+      "old_handle_errno": 19,
+      "restored_usb": {
+        "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+        "serial": "1718267078",
+        "vid": 4176,
+        "pid": 1030,
+        "address": 15,
+        "host_visible_configuration_descriptor_hex": "09027d00020100800f090400000203000000092110010001222200070504034000020705840340000209040100030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+        "classes": [
+          3,
+          11
+        ],
+        "host_visible_endpoint_addresses": [
+          4,
+          132,
+          2,
+          130,
+          131
+        ]
+      },
+      "restored_object_sha256": "8a0985365460affd26044dba9615c2de4e424a1e318be82c1cb2241794203fbe",
+      "native_restored_object_sdk_history": [
+        {
+          "direction": "out",
+          "kind": 98,
+          "bytes": 10,
+          "sequence": 1,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            7,
+            0,
+            1,
+            0,
+            0,
+            0
+          ],
+          "bytes": 17
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 20,
+          "sequence": 2,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            21,
+            0,
+            2,
+            0,
+            0,
+            0
+          ],
+          "bytes": 31
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 15,
+          "sequence": 3,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            5,
+            0,
+            3,
+            0,
+            0,
+            0
+          ],
+          "bytes": 15
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 14,
+          "sequence": 4,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            12,
+            0,
+            4,
+            0,
+            0,
+            0
+          ],
+          "bytes": 22
+        },
+        {
+          "direction": "out",
+          "kind": 111,
+          "bytes": 22,
+          "sequence": 5,
+          "level": 0
+        },
+        {
+          "direction": "in",
+          "header": [
+            128,
+            2039,
+            0,
+            5,
+            0,
+            0,
+            0
+          ],
+          "bytes": 2049
+        }
+      ],
+      "hotp_counter_after_fresh_sdk": 6,
+      "retained_card_plaintext_verified": true,
+      "original_services_alive": true,
+      "fresh_sdk_no_stale_response_verified": true,
+      "old_worker_absent_in_new_generation_verified": true
+    }
+  ],
+  "assertions": [
+    {
+      "phase": "initial",
+      "counter": 2,
+      "signature_verified": true,
+      "pin_uv_protocol": 2,
+      "credential_sha256": "34a3f7a45c1b0778703482a63a46dd088222e5fecce0731f49359e0294b83739",
+      "challenge_sha256": "57b282adac3adad563ba8b641a7000007e45ab82e63fd5779c87f02a047e6b9d",
+      "rp_user_uv_verified": true
+    },
+    {
+      "phase": "2047-unread-fido-only",
+      "counter": 3,
+      "signature_verified": true,
+      "pin_uv_protocol": 2,
+      "credential_sha256": "34a3f7a45c1b0778703482a63a46dd088222e5fecce0731f49359e0294b83739",
+      "challenge_sha256": "9d9769aaf7dc8d266fa7d71610d5256f4dcb284f46cd15325cba069b6a80a293",
+      "rp_user_uv_verified": true
+    },
+    {
+      "phase": "2047-unread-restored",
+      "counter": 4,
+      "signature_verified": true,
+      "pin_uv_protocol": 2,
+      "credential_sha256": "34a3f7a45c1b0778703482a63a46dd088222e5fecce0731f49359e0294b83739",
+      "challenge_sha256": "825acf2fa41aabd03a5813de2443bae7ed3624949ea3b897a1b46388b785b9e4",
+      "rp_user_uv_verified": true
+    },
+    {
+      "phase": "2047-partial64-fido-only",
+      "counter": 5,
+      "signature_verified": true,
+      "pin_uv_protocol": 2,
+      "credential_sha256": "34a3f7a45c1b0778703482a63a46dd088222e5fecce0731f49359e0294b83739",
+      "challenge_sha256": "30f8a06cd81d01ccc859a7a00504bfab9b66ae13d54f2bada89e82646a4112f5",
+      "rp_user_uv_verified": true
+    },
+    {
+      "phase": "2047-partial64-restored",
+      "counter": 6,
+      "signature_verified": true,
+      "pin_uv_protocol": 2,
+      "credential_sha256": "34a3f7a45c1b0778703482a63a46dd088222e5fecce0731f49359e0294b83739",
+      "challenge_sha256": "74fcd1edba2ea1691813ff12ba7bac573056b7bf41035ea09531fb8e7c5410cf",
+      "rp_user_uv_verified": true
+    },
+    {
+      "phase": "2048-unread-fido-only",
+      "counter": 7,
+      "signature_verified": true,
+      "pin_uv_protocol": 2,
+      "credential_sha256": "34a3f7a45c1b0778703482a63a46dd088222e5fecce0731f49359e0294b83739",
+      "challenge_sha256": "2a7fdca02d90565cac083cab8479d08d4b2f586857f9ac6af7c1a6e39164a96a",
+      "rp_user_uv_verified": true
+    },
+    {
+      "phase": "2048-unread-restored",
+      "counter": 8,
+      "signature_verified": true,
+      "pin_uv_protocol": 2,
+      "credential_sha256": "34a3f7a45c1b0778703482a63a46dd088222e5fecce0731f49359e0294b83739",
+      "challenge_sha256": "3a01f05dee8a0dd4ed6a31db065936e8a495bb64dfcbaf2b91c6d406ce2e2052",
+      "rp_user_uv_verified": true
+    },
+    {
+      "phase": "2048-partial64-fido-only",
+      "counter": 9,
+      "signature_verified": true,
+      "pin_uv_protocol": 2,
+      "credential_sha256": "34a3f7a45c1b0778703482a63a46dd088222e5fecce0731f49359e0294b83739",
+      "challenge_sha256": "7adef9cf2ad9adc9eb14f296640d269de609b9995bf6a93334c3da80bed52a81",
+      "rp_user_uv_verified": true
+    },
+    {
+      "phase": "2048-partial64-restored",
+      "counter": 10,
+      "signature_verified": true,
+      "pin_uv_protocol": 2,
+      "credential_sha256": "34a3f7a45c1b0778703482a63a46dd088222e5fecce0731f49359e0294b83739",
+      "challenge_sha256": "84ef807b42fbad2748645f4fe022807f5d4adb374028b08903de64f14b37ed63",
+      "rp_user_uv_verified": true
+    },
+    {
+      "phase": "2048-zlp-fido-only",
+      "counter": 11,
+      "signature_verified": true,
+      "pin_uv_protocol": 2,
+      "credential_sha256": "34a3f7a45c1b0778703482a63a46dd088222e5fecce0731f49359e0294b83739",
+      "challenge_sha256": "1b8e073219c97532cc163e5c0ba89841741537dde71899dd66d460578297fb8b",
+      "rp_user_uv_verified": true
+    },
+    {
+      "phase": "2048-zlp-restored",
+      "counter": 12,
+      "signature_verified": true,
+      "pin_uv_protocol": 2,
+      "credential_sha256": "34a3f7a45c1b0778703482a63a46dd088222e5fecce0731f49359e0294b83739",
+      "challenge_sha256": "859b1f2e522fecbd3b2b45ab34175269f3ba9fa4054ee95f0c6e196665028946",
+      "rp_user_uv_verified": true
+    },
+    {
+      "phase": "2049-unread-fido-only",
+      "counter": 13,
+      "signature_verified": true,
+      "pin_uv_protocol": 2,
+      "credential_sha256": "34a3f7a45c1b0778703482a63a46dd088222e5fecce0731f49359e0294b83739",
+      "challenge_sha256": "da8a4b6eab73003f3f1c5ec1e0e9e06a18e076bf6378bf3d4f076a9395569c3e",
+      "rp_user_uv_verified": true
+    },
+    {
+      "phase": "2049-unread-restored",
+      "counter": 14,
+      "signature_verified": true,
+      "pin_uv_protocol": 2,
+      "credential_sha256": "34a3f7a45c1b0778703482a63a46dd088222e5fecce0731f49359e0294b83739",
+      "challenge_sha256": "a9e4f0978832d9b56047b1ff43a58c083391fdc543ebca280f34c943adf49bf0",
+      "rp_user_uv_verified": true
+    },
+    {
+      "phase": "2049-partial64-fido-only",
+      "counter": 15,
+      "signature_verified": true,
+      "pin_uv_protocol": 2,
+      "credential_sha256": "34a3f7a45c1b0778703482a63a46dd088222e5fecce0731f49359e0294b83739",
+      "challenge_sha256": "594878b16a8af6c4f05c7eae9995454fd0519d895c90cd972cdebffc0ebadec9",
+      "rp_user_uv_verified": true
+    }
+  ],
+  "scope": "actual own large/partial CCID profile6 -> native FIDO Management profile2 -> profile6",
+  "physical_device_access": false,
+  "host_device_passthrough": false,
+  "host_hid_drivers_unbound": false,
+  "native_macos_registration_verified": false,
+  "manufacturer_trust_reproduced": false,
+  "production_udc_verified": false,
+  "physical_touch_verified": false,
+  "physical_firmware_reboot_timing_verified": false,
+  "card_testing_auto_allow": false,
+  "fido_testing_auto_allow_only_for_owned_fixture": true,
+  "stock_libccid_transport_used_for_this_fixture": false,
+  "stock_piv_oath_sdk_unmodified": true,
+  "owned_ccid_driver_handles_command_and_response_chaining": true,
+  "opaque_piv_object_is_valid_chuid": false,
+  "unread_reply_reboot_grace_is_private_model_not_physical_timing": true,
+  "service_pids": [
+    129,
+    114,
+    111
+  ],
+  "controller": {
+    "base_source_url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/drivers/usb/gadget/udc/dummy_hcd.c",
+    "base_source_sha256": "6892efeaca7d13e0f8ba172fac6b9607f9ac5c60de1a5f1812a57eb7998fd993",
+    "source_license": "GPL",
+    "optional_parameter": "requested_ep_addresses",
+    "default_enabled": false,
+    "files": {
+      "dummy_hcd.c": "7ebdac59d1bee99d6acb4e811171c10d32618d3915d8b0ccdad43fe9d7a72918",
+      "dummy_hcd-addresses.patch": "16df2045ea6229954b57441894cf009a9fbf40b5ed0ec5e7e5c31685729fafcc",
+      "dummy_hcd.ko": "5e8481736a6dccd4788ff3fb07f06b8704dcf4a0a02a95888c310a3f594eb86a"
+    },
+    "requested_ep_addresses_enabled": true
+  },
+  "original_identity": {
+    "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+    "serial": "1718267078",
+    "vid": 4176,
+    "pid": 1031,
+    "address": 2,
+    "host_visible_configuration_descriptor_hex": "09029600030100800f090400000103010100092110010001224a000705810308000a090401000203000000092110010001222200070504034000020705840340000209040200030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+    "classes": [
+      3,
+      3,
+      11
+    ],
+    "host_visible_endpoint_addresses": [
+      129,
+      4,
+      132,
+      2,
+      130,
+      131
+    ]
+  },
+  "profile6_identity": {
+    "path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1",
+    "serial": "1718267078",
+    "vid": 4176,
+    "pid": 1030,
+    "address": 3,
+    "host_visible_configuration_descriptor_hex": "09027d00020100800f090400000203000000092110010001222200070504034000020705840340000209040100030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+    "classes": [
+      3,
+      11
+    ],
+    "host_visible_endpoint_addresses": [
+      4,
+      132,
+      2,
+      130,
+      131
+    ]
+  },
+  "error": "AssertionError: ",
+  "traceback": "Traceback (most recent call last):\n  File \"/opt/verification/verify-usb-long-cutover-prototype.py\", line 298, in main\n    d = device()\n        ^^^^^^^^\n  File \"/opt/verification/verify-usb-long-cutover-prototype.py\", line 138, in device\n    assert len(matches) == 1 and matches[0].serial_number == f.serial\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "last_actual_trace": "    delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-1146    [001] ...1.    36.922324: sys_write(fd: a, buf: c3e8ef610a00, count: 801)\n        ske-usbd-1144    [001] ...1.    36.986064: sys_write(fd: 8, buf: f67cd8000e40, count: 40)\n        ske-usbd-1144    [001] ...1.    36.986135: sys_write -> 0x40\n        ske-usbd-1146    [000] ...1.    38.999535: sys_write -> 0xfffffffffffffffc\n        ske-usbd-129     [001] ...1.    39.016414: sys_write(fd: 7, buf: ffffea0796f0, count: 1)\n        ske-usbd-129     [001] ...1.    39.017750: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    39.127553: sys_write(fd: 6, buf: ffffea0795b0, count: 4)\n        ske-usbd-129     [001] ...1.    39.127614: sys_write -> 0x4\n        ske-usbd-129     [001] ...1.    39.128124: sys_write(fd: 6, buf: ffffea0795b0, count: 5)\n        ske-usbd-129     [001] ...1.    39.128171: sys_write -> 0x5\n        ske-usbd-129     [001] ...1.    39.128457: sys_write(fd: 6, buf: ffffea0795b0, count: 5)\n        ske-usbd-129     [001] ...1.    39.128494: sys_write -> 0x5\n        ske-usbd-129     [001] ...1.    39.128736: sys_write(fd: 6, buf: ffffea0795b0, count: 5)\n        ske-usbd-129     [001] ...1.    39.128771: sys_write -> 0x5\n        ske-usbd-129     [001] ...1.    39.129134: sys_write(fd: 6, buf: ffffea0795b0, count: 2)\n        ske-usbd-129     [001] ...1.    39.129174: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    39.129436: sys_write(fd: 6, buf: ffffea0795b0, count: 2)\n        ske-usbd-129     [001] ...1.    39.129471: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    39.129704: sys_write(fd: 6, buf: ffffea0795b0, count: 2)\n        ske-usbd-129     [001] ...1.    39.129738: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    39.130030: sys_write(fd: 6, buf: ffffea0795b0, count: 3)\n        ske-usbd-129     [001] ...1.    39.130065: sys_write -> 0x3\n        ske-usbd-129     [001] ...1.    39.130494: sys_write(fd: 6, buf: f67cd0000be0, count: 1d)\n        ske-usbd-129     [001] ...1.    39.130534: sys_write -> 0x1d\n        ske-usbd-129     [001] ...1.    39.131017: sys_write(fd: 6, buf: c3e8ef60d010, count: 28)\n        ske-usbd-129     [001] ...1.    39.131060: sys_write -> 0x28\n        ske-usbd-129     [001] ...1.    39.131410: sys_write(fd: 6, buf: ffffea0795b0, count: b)\n        ske-usbd-129     [001] ...1.    39.131447: sys_write -> 0xb\n        ske-usbd-129     [001] ...1.    39.131712: sys_write(fd: 6, buf: ffffea0795b0, count: 4)\n        ske-usbd-129     [001] ...1.    39.131748: sys_write -> 0x4\n        ske-usbd-129     [001] ...1.    39.132104: sys_write(fd: 6, buf: ffffea0795b0, count: 3)\n        ske-usbd-129     [001] ...1.    39.132141: sys_write -> 0x3\n        ske-usbd-129     [001] ...1.    39.132370: sys_write(fd: 6, buf: c3e8ef60d010, count: 30)\n        ske-usbd-129     [001] ...1.    39.132519: sys_write -> 0x30\n        ske-usbd-129     [001] ...1.    39.132578: sys_write(fd: 6, buf: c3e8ef60f750, count: 10)\n        ske-usbd-129     [001] ...1.    39.132902: sys_write -> 0x10\n        ske-usbd-129     [001] ...1.    39.133111: sys_write(fd: 7, buf: ffffea0795b0, count: c)\n        ske-usbd-129     [001] ...1.    39.133615: sys_write -> 0xc\n        ske-usbd-129     [001] ...1.    39.133784: sys_write(fd: 2, buf: c3e8c1a1f0d8, count: 1c)\n        ske-usbd-129     [001] ...1.    39.133930: sys_write -> 0x1c\n        ske-usbd-129     [001] ...1.    39.133968: sys_write(fd: 2, buf: ffffea079c90, count: b)\n        ske-usbd-129     [001] ...1.    39.134012: sys_write -> 0xb\n        ske-usbd-129     [001] ...1.    39.134046: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [001] ...1.    39.134087: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    39.134135: sys_write(fd: 2, buf: c3e8c1a1eed8, count: 23)\n        ske-usbd-129     [001] ...1.    39.134176: sys_write -> 0x23\n        ske-usbd-129     [001] ...1.    39.134212: sys_write(fd: 2, buf: ffffea0796e6, count: 2)\n        ske-usbd-129     [001] ...1.    39.134250: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    39.134283: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [001] ...1.    39.134321: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    39.533452: sys_write(fd: 2, buf: c3e8c1a1f108, count: 20)\n        ske-usbd-129     [001] ...1.    39.533618: sys_write -> 0x20\n        ske-usbd-129     [001] ...1.    39.533718: sys_write(fd: 2, buf: ffffea0795f7, count: 1)\n        ske-usbd-129     [001] ...1.    39.533814: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    39.534276: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [001] ...1.    39.534380: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    39.535425: sys_write(fd: 2, buf: c3e8c1a1f150, count: 16)\n        ske-usbd-129     [001] ...1.    39.535501: sys_write -> 0x16\n        ske-usbd-129     [001] ...1.    39.535546: sys_write(fd: 2, buf: ffffea079626, count: 2)\n        ske-usbd-129     [001] ...1.    39.535593: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    39.535631: sys_write(fd: 2, buf: c3e8c1a1f168, count: 9)\n        ske-usbd-129     [001] ...1.    39.535676: sys_write -> 0x9\n        ske-usbd-129     [001] ...1.    39.535712: sys_write(fd: 2, buf: ffffea079626, count: 2)\n        ske-usbd-129     [001] ...1.    39.535756: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    39.535791: sys_write(fd: 2, buf: c3e8c1a1f178, count: 7)\n        ske-usbd-129     [001] ...1.    39.535834: sys_write -> 0x7\n        ske-usbd-129     [001] ...1.    39.536030: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [001] ...1.    39.536093: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    39.536131: sys_write(fd: 2, buf: c3e8c1a1f180, count: 7)\n        ske-usbd-129     [001] ...1.    39.536180: sys_write -> 0x7\n        ske-usbd-129     [001] ...1.    39.536216: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [001] ...1.    39.536261: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    39.536296: sys_write(fd: 2, buf: c3e8c1a1f188, count: 8)\n        ske-usbd-129     [001] ...1.    39.536340: sys_write -> 0x8\n        ske-usbd-129     [001] ...1.    39.536376: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [001] ...1.    39.536419: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    39.536454: sys_write(fd: 2, buf: c3e8c1a1f198, count: 9)\n        ske-usbd-129     [001] ...1.    39.536497: sys_write -> 0x9\n        ske-usbd-129     [001] ...1.    39.536540: sys_write(fd: 2, buf: ffffea079567, count: 1)\n        ske-usbd-129     [001] ...1.    39.536586: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    39.536629: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [001] ...1.    39.536673: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    39.540256: sys_write(fd: 2, buf: c3e8c1a1f150, count: 16)\n        ske-usbd-129     [001] ...1.    39.540309: sys_write -> 0x16\n        ske-usbd-129     [001] ...1.    39.540347: sys_write(fd: 2, buf: ffffea079625, count: 3)\n        ske-usbd-129     [001] ...1.    39.540391: sys_write -> 0x3\n        ske-usbd-129     [001] ...1.    39.540427: sys_write(fd: 2, buf: c3e8c1a1f168, count: 9)\n        ske-usbd-129     [001] ...1.    39.540471: sys_write -> 0x9\n        ske-usbd-129     [001] ...1.    39.540506: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [001] ...1.    39.540549: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    39.540584: sys_write(fd: 2, buf: c3e8c1a1f178, count: 7)\n        ske-usbd-129     [001] ...1.    39.540627: sys_write -> 0x7\n        ske-usbd-129     [001] ...1.    39.540662: sys_write(fd: 2, buf: ffffea079624, count: 4)\n        ske-usbd-129     [001] ...1.    39.540705: sys_write -> 0x4\n        ske-usbd-129     [001] ...1.    39.540740: sys_write(fd: 2, buf: c3e8c1a1f180, count: 7)\n        ske-usbd-129     [001] ...1.    39.540783: sys_write -> 0x7\n        ske-usbd-129     [001] ...1.    39.540819: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [001] ...1.    39.540862: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    39.541080: sys_write(fd: 2, buf: c3e8c1a1f188, count: 8)\n        ske-usbd-129     [001] ...1.    39.541145: sys_write -> 0x8\n        ske-usbd-129     [001] ...1.    39.541185: sys_write(fd: 2, buf: ffffea079626, count: 2)\n        ske-usbd-129     [001] ...1.    39.541236: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    39.541272: sys_write(fd: 2, buf: c3e8c1a1f198, count: 9)\n        ske-usbd-129     [001] ...1.    39.541317: sys_write -> 0x9\n        ske-usbd-129     [001] ...1.    39.541355: sys_write(fd: 2, buf: ffffea079567, count: 1)\n        ske-usbd-129     [001] ...1.    39.541399: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    39.541436: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [001] ...1.    39.541479: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    39.541520: sys_write(fd: 6, buf: f67cd0000e40, count: 22)\n        ske-usbd-129     [001] ...1.    39.543169: sys_write -> 0x22\n        ske-usbd-129     [000] ...1.    40.273279: sys_write(fd: 7, buf: ffffea0796f0, count: 1)\n        ske-usbd-129     [001] ...1.    40.275146: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    40.386711: sys_write(fd: 5, buf: ffffea0795b0, count: 4)\n        ske-usbd-129     [001] ...1.    40.386783: sys_write -> 0x4\n        ske-usbd-129     [001] ...1.    40.387298: sys_write(fd: 5, buf: ffffea0795b0, count: 5)\n        ske-usbd-129     [001] ...1.    40.387340: sys_write -> 0x5\n        ske-usbd-129     [001] ...1.    40.387620: sys_write(fd: 5, buf: ffffea0795b0, count: 5)\n        ske-usbd-129     [001] ...1.    40.387659: sys_write -> 0x5\n        ske-usbd-129     [001] ...1.    40.387995: sys_write(fd: 5, buf: ffffea0795b0, count: 5)\n        ske-usbd-129     [001] ...1.    40.388034: sys_write -> 0x5\n        ske-usbd-129     [001] ...1.    40.388305: sys_write(fd: 5, buf: ffffea0795b0, count: 2)\n        ske-usbd-129     [001] ...1.    40.388344: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    40.388599: sys_write(fd: 5, buf: ffffea0795b0, count: 2)\n        ske-usbd-129     [001] ...1.    40.388635: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    40.388932: sys_write(fd: 5, buf: ffffea0795b0, count: 2)\n        ske-usbd-129     [001] ...1.    40.388974: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    40.389229: sys_write(fd: 5, buf: ffffea0795b0, count: 3)\n        ske-usbd-129     [001] ...1.    40.389264: sys_write -> 0x3\n        ske-usbd-129     [001] ...1.    40.389692: sys_write(fd: 5, buf: f67cd0000be0, count: 1d)\n        ske-usbd-129     [001] ...1.    40.389737: sys_write -> 0x1d\n        ske-usbd-129     [001] ...1.    40.390271: sys_write(fd: 5, buf: c3e8ef60d010, count: 2d)\n        ske-usbd-129     [001] ...1.    40.390310: sys_write -> 0x2d\n        ske-usbd-129     [001] ...1.    40.390708: sys_write(fd: 5, buf: ffffea0795b0, count: b)\n        ske-usbd-129     [001] ...1.    40.390753: sys_write -> 0xb\n        ske-usbd-129     [001] ...1.    40.391180: sys_write(fd: 5, buf: ffffea0795b0, count: 4)\n        ske-usbd-129     [001] ...1.    40.391221: sys_write -> 0x4\n        ske-usbd-129     [001] ...1.    40.391514: sys_write(fd: 5, buf: ffffea0795b0, count: 3)\n        ske-usbd-129     [001] ...1.    40.391552: sys_write -> 0x3\n        ske-usbd-129     [001] ...1.    40.391802: sys_write(fd: 5, buf: c3e8ef60e590, count: 84)\n        ske-usbd-129     [001] ...1.    40.392093: sys_write -> 0x84\n        ske-usbd-129     [001] ...1.    40.392172: sys_write(fd: 5, buf: c3e8ef60d600, count: 10)\n        ske-usbd-129     [001] ...1.    40.392333: sys_write -> 0x10\n        ske-usbd-129     [001] ...1.    40.392548: sys_write(fd: 7, buf: ffffea0795b0, count: c)\n        ske-usbd-129     [001] ...1.    40.393246: sys_write -> 0xc\n        ske-usbd-129     [001] ...1.    40.393465: sys_write(fd: 2, buf: c3e8c1a1f0d8, count: 1c)\n        ske-usbd-129     [001] ...1.    40.393533: sys_write -> 0x1c\n        ske-usbd-129     [001] ...1.    40.393571: sys_write(fd: 2, buf: ffffea079c90, count: b)\n        ske-usbd-129     [001] ...1.    40.393616: sys_write -> 0xb\n        ske-usbd-129     [001] ...1.    40.393653: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [001] ...1.    40.393696: sys_write -> 0x1\n        ske-usbd-129     [001] ...1.    40.393740: sys_write(fd: 2, buf: c3e8c1a1eed8, count: 23)\n        ske-usbd-129     [001] ...1.    40.394835: sys_write -> 0x23\n        ske-usbd-129     [001] ...1.    40.395013: sys_write(fd: 2, buf: ffffea0796e6, count: 2)\n        ske-usbd-129     [001] ...1.    40.395063: sys_write -> 0x2\n        ske-usbd-129     [001] ...1.    40.395101: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [001] ...1.    40.395144: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    40.793005: sys_write(fd: 2, buf: c3e8c1a1f108, count: 20)\n        ske-usbd-129     [000] ...1.    40.793110: sys_write -> 0x20\n        ske-usbd-129     [000] ...1.    40.793169: sys_write(fd: 2, buf: ffffea0795f7, count: 1)\n        ske-usbd-129     [000] ...1.    40.793228: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    40.793277: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [000] ...1.    40.793334: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    40.794015: sys_write(fd: 2, buf: c3e8c1a1f150, count: 16)\n        ske-usbd-129     [000] ...1.    40.794075: sys_write -> 0x16\n        ske-usbd-129     [000] ...1.    40.794123: sys_write(fd: 2, buf: ffffea079626, count: 2)\n        ske-usbd-129     [000] ...1.    40.794176: sys_write -> 0x2\n        ske-usbd-129     [000] ...1.    40.794217: sys_write(fd: 2, buf: c3e8c1a1f168, count: 9)\n        ske-usbd-129     [000] ...1.    40.794268: sys_write -> 0x9\n        ske-usbd-129     [000] ...1.    40.794309: sys_write(fd: 2, buf: ffffea079626, count: 2)\n        ske-usbd-129     [000] ...1.    40.794360: sys_write -> 0x2\n        ske-usbd-129     [000] ...1.    40.794400: sys_write(fd: 2, buf: c3e8c1a1f178, count: 7)\n        ske-usbd-129     [000] ...1.    40.794450: sys_write -> 0x7\n        ske-usbd-129     [000] ...1.    40.794492: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [000] ...1.    40.794542: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    40.794582: sys_write(fd: 2, buf: c3e8c1a1f180, count: 7)\n        ske-usbd-129     [000] ...1.    40.794632: sys_write -> 0x7\n        ske-usbd-129     [000] ...1.    40.794673: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [000] ...1.    40.794723: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    40.794764: sys_write(fd: 2, buf: c3e8c1a1f188, count: 8)\n        ske-usbd-129     [000] ...1.    40.794814: sys_write -> 0x8\n        ske-usbd-129     [000] ...1.    40.794980: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [000] ...1.    40.795037: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    40.795080: sys_write(fd: 2, buf: c3e8c1a1f198, count: 9)\n        ske-usbd-129     [000] ...1.    40.795133: sys_write -> 0x9\n        ske-usbd-129     [000] ...1.    40.795188: sys_write(fd: 2, buf: ffffea079567, count: 1)\n        ske-usbd-129     [000] ...1.    40.795241: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    40.795285: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [000] ...1.    40.795338: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    40.798253: sys_write(fd: 2, buf: c3e8c1a1f150, count: 16)\n        ske-usbd-129     [000] ...1.    40.798321: sys_write -> 0x16\n        ske-usbd-129     [000] ...1.    40.798368: sys_write(fd: 2, buf: ffffea079625, count: 3)\n        ske-usbd-129     [000] ...1.    40.798422: sys_write -> 0x3\n        ske-usbd-129     [000] ...1.    40.798464: sys_write(fd: 2, buf: c3e8c1a1f168, count: 9)\n        ske-usbd-129     [000] ...1.    40.798516: sys_write -> 0x9\n        ske-usbd-129     [000] ...1.    40.798557: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [000] ...1.    40.798608: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    40.798649: sys_write(fd: 2, buf: c3e8c1a1f178, count: 7)\n        ske-usbd-129     [000] ...1.    40.798699: sys_write -> 0x7\n        ske-usbd-129     [000] ...1.    40.798740: sys_write(fd: 2, buf: ffffea079624, count: 4)\n        ske-usbd-129     [000] ...1.    40.798791: sys_write -> 0x4\n        ske-usbd-129     [000] ...1.    40.798831: sys_write(fd: 2, buf: c3e8c1a1f180, count: 7)\n        ske-usbd-129     [000] ...1.    40.798938: sys_write -> 0x7\n        ske-usbd-129     [000] ...1.    40.798981: sys_write(fd: 2, buf: ffffea079627, count: 1)\n        ske-usbd-129     [000] ...1.    40.799034: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    40.799074: sys_write(fd: 2, buf: c3e8c1a1f188, count: 8)\n        ske-usbd-129     [000] ...1.    40.799128: sys_write -> 0x8\n        ske-usbd-129     [000] ...1.    40.799169: sys_write(fd: 2, buf: ffffea079626, count: 2)\n        ske-usbd-129     [000] ...1.    40.799219: sys_write -> 0x2\n        ske-usbd-129     [000] ...1.    40.799258: sys_write(fd: 2, buf: c3e8c1a1f198, count: 9)\n        ske-usbd-129     [000] ...1.    40.799308: sys_write -> 0x9\n        ske-usbd-129     [000] ...1.    40.799350: sys_write(fd: 2, buf: ffffea079567, count: 1)\n        ske-usbd-129     [000] ...1.    40.799400: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    40.799442: sys_write(fd: 2, buf: f67ce08714c3, count: 1)\n        ske-usbd-129     [000] ...1.    40.799492: sys_write -> 0x1\n        ske-usbd-129     [000] ...1.    40.799536: sys_write(fd: 5, buf: c3e8ef60b3c0, count: 22)\n        ske-usbd-129     [000] ...1.    40.799983: sys_write -> 0x22\n",
+  "usb.log": "functionfs_bound controller=dummy_udc.0\nfunctionfs_configured endpoints=6\nfunctionfs_setup type=33 request=10 value=0 index=0 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=0 length=74 stalled=0\nfunctionfs_setup type=33 request=9 value=512 index=0 length=1 stalled=0\nfunctionfs_setup type=33 request=10 value=0 index=1 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=1 length=34 stalled=0\nfunctionfs_bound controller=dummy_udc.0\nfunctionfs_reenumerated generation=1\nfunctionfs_configured endpoints=5\nfunctionfs_setup type=33 request=10 value=0 index=0 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=0 length=34 stalled=0\nfunctionfs_bound controller=dummy_udc.0\nfunctionfs_reenumerated generation=2\nfunctionfs_configured endpoints=2\nfunctionfs_setup type=33 request=10 value=0 index=0 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=0 length=34 stalled=0\nfunctionfs_bound controller=dummy_udc.0\nfunctionfs_reenumerated generation=3\nfunctionfs_configured endpoints=5\nfunctionfs_setup type=33 request=10 value=0 index=0 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=0 length=34 stalled=0\nfunctionfs_bound controller=dummy_udc.0\nfunctionfs_reenumerated generation=4\nfunctionfs_configured endpoints=2\nfunctionfs_setup type=33 request=10 value=0 index=0 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=0 length=34 stalled=0\nfunctionfs_bound controller=dummy_udc.0\nfunctionfs_reenumerated generation=5\nfunctionfs_configured endpoints=5\nfunctionfs_setup type=33 request=10 value=0 index=0 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=0 length=34 stalled=0\nfunctionfs_bound controller=dummy_udc.0\nfunctionfs_reenumerated generation=6\nfunctionfs_configured endpoints=2\nfunctionfs_setup type=33 request=10 value=0 index=0 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=0 length=34 stalled=0\nfunctionfs_bound controller=dummy_udc.0\nfunctionfs_reenumerated generation=7\nfunctionfs_configured endpoints=5\nfunctionfs_setup type=33 request=10 value=0 index=0 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=0 length=34 stalled=0\nfunctionfs_bound controller=dummy_udc.0\nfunctionfs_reenumerated generation=8\nfunctionfs_configured endpoints=2\nfunctionfs_setup type=33 request=10 value=0 index=0 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=0 length=34 stalled=0\nfunctionfs_bound controller=dummy_udc.0\nfunctionfs_reenumerated generation=9\nfunctionfs_configured endpoints=5\nfunctionfs_setup type=33 request=10 value=0 index=0 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=0 length=34 stalled=0\nfunctionfs_bound controller=dummy_udc.0\nfunctionfs_reenumerated generation=10\nfunctionfs_configured endpoints=2\nfunctionfs_setup type=33 request=10 value=0 index=0 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=0 length=34 stalled=0\nfunctionfs_bound controller=dummy_udc.0\nfunctionfs_reenumerated generation=11\nfunctionfs_configured endpoints=5\nfunctionfs_setup type=33 request=10 value=0 index=0 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=0 length=34 stalled=0\nfunctionfs_bound controller=dummy_udc.0\nfunctionfs_reenumerated generation=12\nfunctionfs_configured endpoints=2\nfunctionfs_setup type=33 request=10 value=0 index=0 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=0 length=34 stalled=0\nfunctionfs_bound controller=dummy_udc.0\nfunctionfs_reenumerated generation=13\nfunctionfs_configured endpoints=5\nfunctionfs_setup type=33 request=10 value=0 index=0 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=0 length=34 stalled=0\nfunctionfs_bound controller=dummy_udc.0\nfunctionfs_reenumerated generation=14\nfunctionfs_configured endpoints=2\nfunctionfs_setup type=33 request=10 value=0 index=0 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=0 length=34 stalled=0\nfunctionfs_bound controller=dummy_udc.0\nfunctionfs_reenumerated generation=15\nfunctionfs_configured endpoints=5\nfunctionfs_setup type=33 request=10 value=0 index=0 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=0 length=34 stalled=0\n",
+  "daemon.log": "{\"ts\":\"1970-01-01T00:00:06.712Z\",\"lvl\":\"warn\",\"event\":\"presence_auto_allow\",\"warning\":\"SWPASSKEY_TESTING: every request is approved\"}\n{\"ts\":\"1970-01-01T00:00:06.729Z\",\"lvl\":\"warn\",\"event\":\"hid_socket_transport\",\"path\":\"/guest-state/own-long-cutover-xa8zh965/h.sock\",\"note\":\"development transport, not a HID device\"}\n",
+  "card/log.txt": "",
+  "test_count": 154,
+  "emulator_binary_sha256": "cb583e2c7ed9f50587445c94ddab8fb595672dc93863514243c89c793a4b9397",
+  "usb_bridge_binary_sha256": "ac848b6fe5bb22605a132eeaaa9034c8e5d63e7ef1410ffefbc43776bcc2f82e",
+  "card_service_sha256": "f68038ad664fcc4756535ffe85fdd1460048cf6bb9ecfba5fbb2a67ab7187687",
+  "helper_sha256": "6c3e6fa89dfdd1ee15fb50cc38ec29b85db96c38c581adb4262822ad6b324929",
+  "shared_helper_sha256": "445dab690b654dba21421e1b75047dcf2e07089ba39bb0da62e70ae56e42774a",
+  "runner_exit": 0,
+  "host_gate_error": "AssertionError: ",
+  "prototype_helper_sha256": "6c3e6fa89dfdd1ee15fb50cc38ec29b85db96c38c581adb4262822ad6b324929"
+}

@@ -1,0 +1,13 @@
+{
+  "mode": "fixed",
+  "published_bridge_sha256": "0897e3277354494261b50699d4c31546ad4330d704e9ae8ccb0e23426cefbf07",
+  "bridge_sha256": "9983f84541bc0b1ee20e8c9b8bde3cde8002f1c13f41e035aea1040daffaed7b",
+  "published_daemon_sha256": "844810deea97cf267aa05ac3adc402faa3cf78ab7aa07f0b155dbc4c24fc7245",
+  "probe_sha256": "33562feb2d57743f7fa712b2849ee98886b4639b3de893ced8c256e920234209",
+  "base_guest_sha256": "e998a49c4a6db71be6a62c29cec581dbc94c5563eaef22bbcce0243dd18fec89",
+  "guest_image_sha256": "c44faa11aa9a22ead1de086383a65b921a16583ec435fc974416fe1367132445",
+  "kernel_sha256": "6001f54164a5201cd5a80e0a09bb05c43fa6e910a0abfe0f5a4e8d7d781cc737",
+  "guest_network_devices": false,
+  "host_usb_passthrough": false,
+  "physical_device_access": false
+}

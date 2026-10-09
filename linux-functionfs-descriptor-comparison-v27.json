@@ -1,0 +1,45 @@
+{
+  "version": "0.27.0",
+  "configuration_byte_equivalence": false,
+  "comparison_passed": true,
+  "reference_device_reopened": false,
+  "physical_credentials_or_settings_changed": false,
+  "native_profile_pid": 1030,
+  "reference_configuration_hex": "09027d00020100800f090400000203000000092110010001222200070504034000020705840340000209040100030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020",
+  "native_functionfs_configuration_hex": "09027d00020100800f090400000203000000092110010001222200070502034000020705810340000209040100030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070507024000000705860240000007058503080020",
+  "differences": [
+    {
+      "offset": 29,
+      "reference_byte": 4,
+      "native_functionfs_byte": 2
+    },
+    {
+      "offset": 36,
+      "reference_byte": 132,
+      "native_functionfs_byte": 129
+    },
+    {
+      "offset": 106,
+      "reference_byte": 2,
+      "native_functionfs_byte": 7
+    },
+    {
+      "offset": 113,
+      "reference_byte": 130,
+      "native_functionfs_byte": 134
+    },
+    {
+      "offset": 120,
+      "reference_byte": 131,
+      "native_functionfs_byte": 133
+    }
+  ],
+  "cause": "FunctionFS/kernel UDC endpoint autoconfiguration remaps endpoint numbers; the protocol model uses logical addresses. All other configuration bytes match in the measured FIDO+CCID profile.",
+  "wire_model_matches_reference": true,
+  "complete_yubikey_equivalence": false,
+  "evidence": [
+    "usb-reference-observation.json",
+    "ccid-chaining-result.json",
+    "linux-usb-reboot-result.json"
+  ]
+}

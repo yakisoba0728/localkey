@@ -1,0 +1,13 @@
+--- published-v48/linux.cpp
++++ default-fullspeed/linux.cpp
+@@ -389,6 +389,10 @@
+     attribute("strings/0x409/serialnumber",string(3));
+     attribute("configs/c.1/bmAttributes",std::to_string(config[7]));
+     attribute("configs/c.1/MaxPower",std::to_string(unsigned(config[8])*2));
++    // The modeled key is a 12 Mbps full-speed USB device. A high-speed-capable
++    // UDC otherwise negotiates high speed, but this FunctionFS table has only
++    // full-speed descriptors and the host cannot read a configuration.
++    attribute("max_speed","full-speed");
+     ep0_ = ::open((directory_ / "ep0").c_str(), O_RDWR | O_CLOEXEC);
+     if (ep0_ < 0) fail("Cannot open FunctionFS ep0");
+     std::uint32_t count = 0;

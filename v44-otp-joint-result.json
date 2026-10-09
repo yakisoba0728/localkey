@@ -1,0 +1,104 @@
+{
+  "passed": true,
+  "count": 12,
+  "checks": [
+    {
+      "name": "sdk_programmed_sequence",
+      "actual": 1,
+      "expected": 1,
+      "matched": true
+    },
+    {
+      "name": "short_apdu_before_hid_abort",
+      "actual": {
+        "sw": "0x9000",
+        "digest": "fa0715ccdfd0255d2974cf628b5dc6879468f5a7"
+      },
+      "expected": {
+        "sw": "0x9000",
+        "digest": "fa0715ccdfd0255d2974cf628b5dc6879468f5a7"
+      },
+      "matched": true
+    },
+    {
+      "name": "full_lt64_marker",
+      "actual": {
+        "sw": "0x9000",
+        "digest": "1e5fd6a5cbc98bd4c1fe20d5e5fb2ed1df330c93"
+      },
+      "expected": {
+        "sw": "0x9000",
+        "digest": "1e5fd6a5cbc98bd4c1fe20d5e5fb2ed1df330c93"
+      },
+      "matched": true
+    },
+    {
+      "name": "abort_8f_orphan_final",
+      "actual": 1,
+      "expected": 1,
+      "matched": true
+    },
+    {
+      "name": "short_apdu_after_hid_abort",
+      "actual": {
+        "sw": "0x9000",
+        "digest": "fa0715ccdfd0255d2974cf628b5dc6879468f5a7"
+      },
+      "expected": {
+        "sw": "0x9000",
+        "digest": "fa0715ccdfd0255d2974cf628b5dc6879468f5a7"
+      },
+      "matched": true
+    },
+    {
+      "name": "fresh_frame_after_abort",
+      "actual": 2,
+      "expected": 2,
+      "matched": true
+    },
+    {
+      "name": "duplicate_final_before_restart",
+      "actual": 2,
+      "expected": 2,
+      "matched": true
+    },
+    {
+      "name": "sequence_persisted_across_restart",
+      "actual": 2,
+      "expected": 2,
+      "matched": true
+    },
+    {
+      "name": "short_apdu_after_restart",
+      "actual": {
+        "sw": "0x9000",
+        "digest": "fa0715ccdfd0255d2974cf628b5dc6879468f5a7"
+      },
+      "expected": {
+        "sw": "0x9000",
+        "digest": "fa0715ccdfd0255d2974cf628b5dc6879468f5a7"
+      },
+      "matched": true
+    },
+    {
+      "name": "abort_ff_orphan_final_after_restart",
+      "actual": 2,
+      "expected": 2,
+      "matched": true
+    },
+    {
+      "name": "fresh_frame_after_restart",
+      "actual": 3,
+      "expected": 3,
+      "matched": true
+    },
+    {
+      "name": "duplicate_final_after_restart",
+      "actual": 3,
+      "expected": 3,
+      "matched": true
+    }
+  ],
+  "physical_device_access": false,
+  "firmware_5_7_4_differential_verified": false
+}

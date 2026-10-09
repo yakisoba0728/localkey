@@ -1,0 +1,13 @@
+--- a/emucard/core.py
++++ b/emucard/core.py
+@@ -820,6 +820,10 @@
+             self.verified.discard(("piv", dest))
+             return
+         if ins == 0x87:
++            # PIV GENERAL AUTHENTICATE has no Le. A malformed response limit
++            # must not start a management-key handshake or consume PIN_ALWAYS
++            # authorization through a private-key operation.
++            require(a.le is None, 0x6700)
+             values = tlvs(Tlv.unpack(0x7C, a.data))
+             if a.p2 == 0x9B:
+                 require(a.p1 == d["mgmt_type"], 0x6A86)

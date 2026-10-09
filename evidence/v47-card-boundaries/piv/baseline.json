@@ -1,0 +1,67 @@
+{
+  "passed": true,
+  "mode": "baseline",
+  "checks": 12,
+  "cases": {
+    "generate_short_le_one": {
+      "status": "6145",
+      "response_bytes": 1,
+      "state_changed": true
+    },
+    "generate_short_le_256": {
+      "status": "9000",
+      "response_bytes": 70,
+      "state_changed": true
+    },
+    "generate_extended_le_257": {
+      "status": "9000",
+      "response_bytes": 70,
+      "state_changed": true
+    },
+    "generate_documented_no_le": {
+      "status": "9000",
+      "response_bytes": 70,
+      "state_changed": true
+    },
+    "import_short_le_one": {
+      "status": "9000",
+      "response_bytes": 0,
+      "state_changed": true
+    },
+    "import_short_le_256": {
+      "status": "9000",
+      "response_bytes": 0,
+      "state_changed": true
+    },
+    "import_extended_le_257": {
+      "status": "9000",
+      "response_bytes": 0,
+      "state_changed": true
+    },
+    "import_documented_no_le": {
+      "status": "9000",
+      "response_bytes": 0,
+      "state_changed": true
+    },
+    "put_data_short_le_one": {
+      "status": "9000",
+      "response_bytes": 0,
+      "state_changed": true
+    },
+    "put_data_short_le_256": {
+      "status": "9000",
+      "response_bytes": 0,
+      "state_changed": true
+    },
+    "put_data_extended_le_257": {
+      "status": "9000",
+      "response_bytes": 0,
+      "state_changed": true
+    },
+    "put_data_documented_no_le": {
+      "status": "9000",
+      "response_bytes": 0,
+      "state_changed": true
+    }
+  }
+}

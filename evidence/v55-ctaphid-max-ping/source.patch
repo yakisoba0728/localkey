@@ -1,0 +1,51 @@
+--- a/src/ctap/hid_framer.cpp
++++ b/src/ctap/hid_framer.cpp
+@@ -82,15 +82,16 @@
+   assembly_->buf.insert(assembly_->buf.end(), report.begin() + 5,
+                         report.begin() + 5 + static_cast<std::ptrdiff_t>(take));
+   assembly_->next_seq = static_cast<std::uint8_t>(assembly_->next_seq + 1);
+-  if (assembly_->next_seq > 127) {
+-    assembly_.reset();
+-    return std::unexpected(HidErr::InvalidLen);
+-  }
+   if (assembly_->buf.size() >= assembly_->bcnt) {
+     assembly_->buf.resize(assembly_->bcnt);
+     Message m{assembly_->cid, assembly_->cmd, std::move(assembly_->buf)};
+     assembly_.reset();
+     return m;
++  }
++  // Sequence 127 is legal when it completes the maximum 7609-byte message.
++  if (assembly_->next_seq > 127) {
++    assembly_.reset();
++    return std::unexpected(HidErr::InvalidLen);
+   }
+   return std::optional<Message>{};
+ }
+--- a/tests/hid_framer_test.cpp
++++ b/tests/hid_framer_test.cpp
+@@ -60,6 +60,25 @@
+   REQUIRE(b.has_value());
+   REQUIRE(b->has_value());
+   REQUIRE((*b)->payload == payload);
++}
++
++TEST_CASE("final legal sequence 127 completes a CTAPHID message", "[hid]") {
++  for (const std::size_t size : {std::size_t{7550}, std::size_t{7551}, swpk::ctap::kMaxMessage}) {
++    HidFramer f;
++    std::vector<std::uint8_t> payload(size);
++    for (std::size_t i = 0; i < size; ++i) payload[i] = static_cast<std::uint8_t>(i);
++    const auto frames = f.frame(Message{0x01020304, swpk::ctap::kCmdPing, payload});
++    REQUIRE(frames.size() == (size == 7550 ? 128 : 129));
++    for (std::size_t i = 0; i + 1 < frames.size(); ++i) {
++      const auto partial = f.ingest(frames[i]);
++      REQUIRE(partial.has_value());
++      REQUIRE_FALSE(partial->has_value());
++    }
++    const auto done = f.ingest(frames.back());
++    REQUIRE(done.has_value());
++    REQUIRE(done->has_value());
++    REQUIRE((*done)->payload == payload);
++  }
+ }
+ 
+ TEST_CASE("SEQ gap is InvalidSeq", "[hid]") {

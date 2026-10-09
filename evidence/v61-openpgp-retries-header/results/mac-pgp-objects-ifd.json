@@ -1,0 +1,494 @@
+{
+  "passed": true,
+  "tests": [
+    {
+      "name": "extended capability bytes exactly match saved public firmware-5.7.4 reference",
+      "passed": true
+    },
+    {
+      "name": "fresh application template tag placement and lengths match measured reference schema",
+      "passed": true
+    },
+    {
+      "name": "direct public object 5f52 bytes exactly match saved reference",
+      "passed": true
+    },
+    {
+      "name": "direct public object 7f66 bytes exactly match saved reference",
+      "passed": true
+    },
+    {
+      "name": "direct public object 7f74 bytes exactly match saved reference",
+      "passed": true
+    },
+    {
+      "name": "nested public capability fields match captured reference bytes",
+      "passed": true
+    },
+    {
+      "name": "fresh algorithm attributes c1 match observed RSA2048 profile",
+      "passed": true
+    },
+    {
+      "name": "fresh algorithm attributes c2 match observed RSA2048 profile",
+      "passed": true
+    },
+    {
+      "name": "fresh algorithm attributes c3 match observed RSA2048 profile",
+      "passed": true
+    },
+    {
+      "name": "fresh algorithm attributes da match observed RSA2048 profile",
+      "passed": true
+    },
+    {
+      "name": "key information includes all three empty user keys and own generated attestation key",
+      "passed": true
+    },
+    {
+      "name": "independent SDK decodes measured 3070/2048/255 capability ceilings",
+      "passed": true
+    },
+    {
+      "name": "SDK observes button flag and firmware-specific discretionary extended-length placement",
+      "passed": true
+    },
+    {
+      "name": "own attestation issuer uses observed RSA2048 profile without factory trust",
+      "passed": true
+    },
+    {
+      "name": "direct C0 query matches measured reference 6B00 response; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SDK GET CHALLENGE returns complete requested 1-byte response",
+      "passed": true
+    },
+    {
+      "name": "SDK GET CHALLENGE returns complete requested 256-byte response",
+      "passed": true
+    },
+    {
+      "name": "SDK GET CHALLENGE returns complete requested 2048-byte response",
+      "passed": true
+    },
+    {
+      "name": "SDK GET CHALLENGE returns complete requested 3070-byte response",
+      "passed": true
+    },
+    {
+      "name": "GET CHALLENGE rejects beyond declared maximum; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "GET CHALLENGE requires Le; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "GET CHALLENGE rejects malformed header; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "private object 101 write requires its specific verified PIN; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "private object 102 write requires its specific verified PIN; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "private object 103 write requires its specific verified PIN; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "private object 104 write requires its specific verified PIN; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "signature-only PIN 81 cannot authorize object 101 writes; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "signature-only PIN 81 cannot authorize object 103 writes; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "PW1 reference 82 authorizes complete 255-byte object 101",
+      "passed": true
+    },
+    {
+      "name": "object 101 rejects 256-byte replacement; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "PW1 reference 82 authorizes complete 255-byte object 103",
+      "passed": true
+    },
+    {
+      "name": "object 103 rejects 256-byte replacement; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "user PIN 82 cannot authorize administrator object 102; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "user PIN 82 cannot authorize administrator object 104; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "administrator authorizes complete 255-byte object 102",
+      "passed": true
+    },
+    {
+      "name": "object 102 rejects 256-byte replacement; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "administrator authorizes complete 255-byte object 104",
+      "passed": true
+    },
+    {
+      "name": "object 104 rejects 256-byte replacement; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "public private-use object 101 persists and is readable without PIN",
+      "passed": true
+    },
+    {
+      "name": "public private-use object 102 persists and is readable without PIN",
+      "passed": true
+    },
+    {
+      "name": "protected private-use object 103 remains PIN protected after restart; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "protected private-use object 104 remains PIN protected after restart; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "private-use object 103 read accepts PIN 82",
+      "passed": true
+    },
+    {
+      "name": "user PIN never unlocks administrator-only object 104 read; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "administrator private-use object survives restart",
+      "passed": true
+    },
+    {
+      "name": "data object 5b accepts its 39-byte ceiling",
+      "passed": true
+    },
+    {
+      "name": "object 5b rejects value one byte over declared ceiling; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "empty PUT clears variable object 5b",
+      "passed": true
+    },
+    {
+      "name": "data object 5e accepts its 255-byte ceiling",
+      "passed": true
+    },
+    {
+      "name": "object 5e rejects value one byte over declared ceiling; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "empty PUT clears variable object 5e",
+      "passed": true
+    },
+    {
+      "name": "data object 5f50 accepts its 255-byte ceiling",
+      "passed": true
+    },
+    {
+      "name": "object 5f50 rejects value one byte over declared ceiling; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "empty PUT clears variable object 5f50",
+      "passed": true
+    },
+    {
+      "name": "cardholder template reflects bounded name, language pairs and ASCII sex value",
+      "passed": true
+    },
+    {
+      "name": "language preference rejects unpaired 1-byte value; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "language preference rejects unpaired 3-byte value; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "language preference rejects over eight bytes; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "sex data rejects noncanonical empty value; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "sex data rejects noncanonical 3031 value; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "sex data rejects noncanonical 33 value; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "sex data rejects noncanonical 01 value; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "fingerprint c7 stores exact 20-byte value",
+      "passed": true
+    },
+    {
+      "name": "fingerprint c8 stores exact 20-byte value",
+      "passed": true
+    },
+    {
+      "name": "fingerprint c9 stores exact 20-byte value",
+      "passed": true
+    },
+    {
+      "name": "fingerprint db stores exact 20-byte value",
+      "passed": true
+    },
+    {
+      "name": "fingerprint ca stores exact 20-byte value",
+      "passed": true
+    },
+    {
+      "name": "fingerprint cb stores exact 20-byte value",
+      "passed": true
+    },
+    {
+      "name": "fingerprint cc stores exact 20-byte value",
+      "passed": true
+    },
+    {
+      "name": "fingerprint dc stores exact 20-byte value",
+      "passed": true
+    },
+    {
+      "name": "fingerprint rejects 19-byte value; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "fingerprint rejects 21-byte value; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "generation time ce stores exact four-byte value",
+      "passed": true
+    },
+    {
+      "name": "generation time cf stores exact four-byte value",
+      "passed": true
+    },
+    {
+      "name": "generation time d0 stores exact four-byte value",
+      "passed": true
+    },
+    {
+      "name": "generation time dd stores exact four-byte value",
+      "passed": true
+    },
+    {
+      "name": "generation time rejects 3-byte value; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "generation time rejects 5-byte value; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "UIF write cannot change button feature identifier; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "special object c1 enforces 255-byte outer ceiling before parsing; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "special object f9 enforces 255-byte outer ceiling before parsing; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "read-only or unsupported object 4f refuses silent PUT success; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "read-only or unsupported object 5f52 refuses silent PUT success; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "read-only or unsupported object 6e refuses silent PUT success; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "read-only or unsupported object 7f66 refuses silent PUT success; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "read-only or unsupported object 7f74 refuses silent PUT success; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "read-only or unsupported object c0 refuses silent PUT success; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "read-only or unsupported object 7a refuses silent PUT success; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "read-only or unsupported object 93 refuses silent PUT success; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "read-only or unsupported object de refuses silent PUT success; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "read-only or unsupported object fa refuses silent PUT success; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "read-only or unsupported object d1 refuses silent PUT success; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "read-only or unsupported object d2 refuses silent PUT success; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "read-only or unsupported object d5 refuses silent PUT success; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "read-only or unsupported object 1234 refuses silent PUT success; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "Resetting Code is write-only even for verified administrator; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "certificate occurrence 0 accepts opaque 2048-byte value",
+      "passed": true
+    },
+    {
+      "name": "certificate occurrence 0 rejects 2049-byte replacement; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "certificate occurrence 0 clears with empty PUT",
+      "passed": true
+    },
+    {
+      "name": "certificate occurrence 1 accepts opaque 2048-byte value",
+      "passed": true
+    },
+    {
+      "name": "certificate occurrence 1 rejects 2049-byte replacement; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "certificate occurrence 1 clears with empty PUT",
+      "passed": true
+    },
+    {
+      "name": "certificate occurrence 2 accepts opaque 2048-byte value",
+      "passed": true
+    },
+    {
+      "name": "certificate occurrence 2 rejects 2049-byte replacement; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "certificate occurrence 2 clears with empty PUT",
+      "passed": true
+    },
+    {
+      "name": "certificate occurrence 3 accepts opaque 2048-byte value",
+      "passed": true
+    },
+    {
+      "name": "certificate occurrence 3 rejects 2049-byte replacement; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "certificate occurrence 3 clears with empty PUT",
+      "passed": true
+    },
+    {
+      "name": "deliberately cleared own attestation certificate is not regenerated on restart",
+      "passed": true
+    },
+    {
+      "name": "bounded fields and fixed metadata persist through restart",
+      "passed": true
+    },
+    {
+      "name": "user can clear protected variable object 101",
+      "passed": true
+    },
+    {
+      "name": "user can clear protected variable object 103",
+      "passed": true
+    },
+    {
+      "name": "legacy oversized values remain readable without truncation or deletion",
+      "passed": true
+    },
+    {
+      "name": "existing ECC own attestation issuer is preserved instead of replaced by new RSA default",
+      "passed": true
+    },
+    {
+      "name": "legacy unsupported write cannot expose write-only key material; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "legacy user private key preserved and independently verifies a fresh SDK signature",
+      "passed": true
+    },
+    {
+      "name": "legacy own issuer private key independently verifies retained user-key attestation",
+      "passed": true
+    },
+    {
+      "name": "new oversized replacement remains rejected without damaging legacy URL; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "legacy oversized objects can recover through bounded replacement and deletion",
+      "passed": true
+    }
+  ],
+  "scope": "fresh software cards; independent SDK/crypto over direct IFD ABI",
+  "reference": "openpgp-reference-observation.json; only captured public metadata compared",
+  "physical_device_access_in_this_verifier": false,
+  "manufacturer_trust_reproduced": false,
+  "reference_storage_write_pin_or_challenge_boundaries_measured": false,
+  "sdk_notes": [
+    "pinned yubikit.openpgp.DO.LANGUAGE is EF2D; correct ISO 5F2D uses raw SDK APDU path"
+  ],
+  "unverified": [
+    "exact firmware storage/rejection/header/SCP allocation boundaries",
+    "reference data-content parsing tolerance and constructed/aggregate PUT behavior",
+    "actual modified-emulator OS enumeration, crypto and touch timing on reference"
+  ]
+}

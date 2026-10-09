@@ -1,0 +1,271 @@
+{
+  "passed": true,
+  "tests": [
+    {
+      "name": "first prefix wrong signature in intact DER; exact encrypted state unchanged",
+      "passed": true
+    },
+    {
+      "name": "failed prefix preserves active SCP03: wrong signature in intact DER",
+      "passed": true
+    },
+    {
+      "name": "first prefix non-CA as intermediate; exact encrypted state unchanged",
+      "passed": true
+    },
+    {
+      "name": "failed prefix preserves active SCP03: non-CA as intermediate",
+      "passed": true
+    },
+    {
+      "name": "first prefix intermediate lacking keyCertSign; exact encrypted state unchanged",
+      "passed": true
+    },
+    {
+      "name": "failed prefix preserves active SCP03: intermediate lacking keyCertSign",
+      "passed": true
+    },
+    {
+      "name": "first prefix wrong critical prefix role; exact encrypted state unchanged",
+      "passed": true
+    },
+    {
+      "name": "failed prefix preserves active SCP03: wrong critical prefix role",
+      "passed": true
+    },
+    {
+      "name": "first prefix expired prefix date model; exact encrypted state unchanged",
+      "passed": true
+    },
+    {
+      "name": "failed prefix preserves active SCP03: expired prefix date model",
+      "passed": true
+    },
+    {
+      "name": "first prefix unsupported role qualifier; exact encrypted state unchanged",
+      "passed": true
+    },
+    {
+      "name": "failed prefix preserves active SCP03: unsupported role qualifier",
+      "passed": true
+    },
+    {
+      "name": "first prefix wrong issuer identifier; exact encrypted state unchanged",
+      "passed": true
+    },
+    {
+      "name": "failed prefix preserves active SCP03: wrong issuer identifier",
+      "passed": true
+    },
+    {
+      "name": "first prefix unknown critical constraint; exact encrypted state unchanged",
+      "passed": true
+    },
+    {
+      "name": "failed prefix preserves active SCP03: unknown critical constraint",
+      "passed": true
+    },
+    {
+      "name": "first prefix unsupported P384 prefix curve; exact encrypted state unchanged",
+      "passed": true
+    },
+    {
+      "name": "failed prefix preserves active SCP03: unsupported P384 prefix curve",
+      "passed": true
+    },
+    {
+      "name": "first prefix unsupported RSA prefix key; exact encrypted state unchanged",
+      "passed": true
+    },
+    {
+      "name": "failed prefix preserves active SCP03: unsupported RSA prefix key",
+      "passed": true
+    },
+    {
+      "name": "malformed PSO continuation=False consumes only initial CA retry",
+      "passed": true
+    },
+    {
+      "name": "malformed PSO continuation=False preserves active channel",
+      "passed": true
+    },
+    {
+      "name": "malformed PSO continuation=False clears OCE; absent OCE denies MUT and only durable retry changes",
+      "passed": true
+    },
+    {
+      "name": "malformed PSO continuation=True consumes only initial CA retry",
+      "passed": true
+    },
+    {
+      "name": "malformed PSO continuation=True preserves active channel",
+      "passed": true
+    },
+    {
+      "name": "malformed PSO continuation=True clears OCE; absent OCE denies MUT and only durable retry changes",
+      "passed": true
+    },
+    {
+      "name": "second-prefix wrong signature; exact encrypted state unchanged",
+      "passed": true
+    },
+    {
+      "name": "second-prefix wrong signature preserves active outer wrapper",
+      "passed": true
+    },
+    {
+      "name": "second-prefix wrong signature clears rejected chain; absent OCE denies MUT and only durable retry changes",
+      "passed": true
+    },
+    {
+      "name": "second-prefix wrong issuer AKI; exact encrypted state unchanged",
+      "passed": true
+    },
+    {
+      "name": "second-prefix wrong issuer AKI preserves active outer wrapper",
+      "passed": true
+    },
+    {
+      "name": "second-prefix wrong issuer AKI clears rejected chain; absent OCE denies MUT and only durable retry changes",
+      "passed": true
+    },
+    {
+      "name": "second-prefix non-CA; exact encrypted state unchanged",
+      "passed": true
+    },
+    {
+      "name": "second-prefix non-CA preserves active outer wrapper",
+      "passed": true
+    },
+    {
+      "name": "second-prefix non-CA clears rejected chain; absent OCE denies MUT and only durable retry changes",
+      "passed": true
+    },
+    {
+      "name": "path-length limit enforced when excess CA arrives; exact encrypted state unchanged",
+      "passed": true
+    },
+    {
+      "name": "path-length error does not authorize c; absent OCE denies MUT and only durable retry changes",
+      "passed": true
+    },
+    {
+      "name": "11 valid prefix preserves current wrapper",
+      "passed": true
+    },
+    {
+      "name": "11 partial chain cannot grant ECKA authorization; absent OCE denies MUT and only durable retry changes",
+      "passed": true
+    },
+    {
+      "name": "15 valid prefix preserves current wrapper",
+      "passed": true
+    },
+    {
+      "name": "15 partial chain cannot grant ECKA authorization; absent OCE denies MUT and only durable retry changes",
+      "passed": true
+    },
+    {
+      "name": "11 chain3 SDK validates receipt/KDF/encrypted MAC response",
+      "passed": true
+    },
+    {
+      "name": "15 chain3 SDK validates receipt/KDF/encrypted MAC response",
+      "passed": true
+    },
+    {
+      "name": "11 chain2 SDK validates receipt/KDF/encrypted MAC response",
+      "passed": true
+    },
+    {
+      "name": "15 chain2 SDK validates receipt/KDF/encrypted MAC response",
+      "passed": true
+    },
+    {
+      "name": "11 chain1 SDK validates receipt/KDF/encrypted MAC response",
+      "passed": true
+    },
+    {
+      "name": "15 chain1 SDK validates receipt/KDF/encrypted MAC response",
+      "passed": true
+    },
+    {
+      "name": "11 continuation ignores changed CA references while first anchor remains binding",
+      "passed": true
+    },
+    {
+      "name": "15 continuation ignores changed CA references while first anchor remains binding",
+      "passed": true
+    },
+    {
+      "name": "wrong initial anchor cannot fall back; exact encrypted state unchanged",
+      "passed": true
+    },
+    {
+      "name": "11 wildcard keeps alternative CA eligible through final allowlist check",
+      "passed": true
+    },
+    {
+      "name": "15 wildcard keeps alternative CA eligible through final allowlist check",
+      "passed": true
+    },
+    {
+      "name": "explicit CA cannot switch to alternative allowlist; exact encrypted state unchanged",
+      "passed": true
+    },
+    {
+      "name": "existing policy-free certificate profile remains supported incrementally",
+      "passed": true
+    },
+    {
+      "name": "PSO validation/cache/ref changes preserve every independent application",
+      "passed": true
+    },
+    {
+      "name": "PSO validation never replaces CA or own SD key/certificate material",
+      "passed": true
+    },
+    {
+      "name": "protected valid PSO preserves PIV verified PIN and independently verified signature",
+      "passed": true
+    },
+    {
+      "name": "protected invalid continuation denied before final leaf; exact encrypted state unchanged",
+      "passed": true
+    },
+    {
+      "name": "failed protected PSO preserves PIV verified PIN and old secure messaging",
+      "passed": true
+    },
+    {
+      "name": "protected complete PSO also preserves PIV application PIN scope",
+      "passed": true
+    },
+    {
+      "name": "actual MUT handoff clears prior PIV PIN scope without changing state",
+      "passed": true
+    }
+  ],
+  "transport": "private CCID socket",
+  "physical_device_access": false,
+  "manufacturer_trust_reproduced": false,
+  "system_pcsc_reader_registered": false,
+  "source": {
+    "url": "https://globalplatform.org/wp-content/uploads/2023/08/GPC_2.3_F_SCP11_v1.3.0.13_PublicRvw.pdf",
+    "version": "1.3.0.13 public review",
+    "sections": [
+      "7.5.1",
+      "7.5.2",
+      "7.6.1"
+    ]
+  },
+  "existing_error_status_model": "6982; firmware rejection status and GP table6600 not reconciled",
+  "allowlist_model": "vendor each presented certificate; physical scope/status pending",
+  "sdk_phase_control": "explicit PSO omitted to probe uploaded or absent OCE; MUT uses current protected transport; unchanged SDK receipt/KDF/secure messaging",
+  "unverified": [
+    "physical incremental verification/status and final GP1.4",
+    "physical every-certificate allowlist scope and rejection timing/status",
+    "SD SubjectID and exact dates/qualifiers/budgets",
+    "Yubico applicability of GP new-content transactions and OS interoperability"
+  ]
+}

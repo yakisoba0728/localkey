@@ -1,0 +1,61 @@
+{
+  "baseline_core_sha256": "9342cf1bd73fa0435a08e10d4d6ca172287a15dd0f70cbedc1d062d09ea8d8df",
+  "candidate_core_sha256": "e3894ba8b896611fcc67453783157db04e7875a344dcfa61f889b993a78d1f39",
+  "patch_sha256": "a02a0c4a39ec57905e0d069aaec29e1800501512fac1d484d54482fd5ef6bf7f",
+  "environments": {
+    "mac": {
+      "socket": {
+        "before_sw": "6985",
+        "after_sw": "9000",
+        "sdk_before": "6985 error",
+        "sdk_after": "9000 success",
+        "operational_state_preserved": true,
+        "pristine_attestation_state_preserved": true,
+        "sdk_terminate_activate_reset_passed": true,
+        "smartcard_checks": 97,
+        "pgp_objects_checks": 119,
+        "pgp_headers_checks": 21
+      },
+      "ifd": {
+        "before_sw": "6985",
+        "after_sw": "9000",
+        "sdk_before": "6985 error",
+        "sdk_after": "9000 success",
+        "operational_state_preserved": true,
+        "pristine_attestation_state_preserved": true,
+        "sdk_terminate_activate_reset_passed": true,
+        "smartcard_checks": 97,
+        "pgp_objects_checks": 119,
+        "pgp_headers_checks": 21
+      },
+      "pgp_extensions_socket_checks": 28
+    },
+    "linux": {
+      "socket": {
+        "before_sw": "6985",
+        "after_sw": "9000",
+        "sdk_before": "6985 error",
+        "sdk_after": "9000 success",
+        "operational_state_preserved": true,
+        "pristine_attestation_state_preserved": true,
+        "sdk_terminate_activate_reset_passed": true,
+        "smartcard_checks": 97,
+        "pgp_objects_checks": 119,
+        "pgp_headers_checks": 21
+      },
+      "ifd": {
+        "before_sw": "6985",
+        "after_sw": "9000",
+        "sdk_before": "6985 error",
+        "sdk_after": "9000 success",
+        "operational_state_preserved": true,
+        "pristine_attestation_state_preserved": true,
+        "sdk_terminate_activate_reset_passed": true,
+        "smartcard_checks": 97,
+        "pgp_objects_checks": 119,
+        "pgp_headers_checks": 21
+      },
+      "pgp_extensions_socket_checks": 28
+    }
+  }
+}

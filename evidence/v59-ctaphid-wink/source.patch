@@ -1,0 +1,12 @@
+--- a/source/src/ctap/hid_device.cpp
++++ b/source/src/ctap/hid_device.cpp
+@@ -217,6 +217,9 @@
+       return out;
+     }
+     case kCmdWink: {
++      if (!msg.payload.empty()) {
++        return fail(cid, HidErr::InvalidLen);
++      }
+       Message w{cid, kCmdWink, {}};
+       out.reply = framer_.frame(w);
+       return out;

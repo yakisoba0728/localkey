@@ -1,0 +1,29 @@
+{
+  "passed": true,
+  "scope": "One no-NIC ARM64 QEMU/dummy_hcd USB boot with frozen v48 staging card, new isolated Linux CTAP daemon, published v47 USB bridge, unmodified stock libccid/pcscd/SDK",
+  "reports_in_order": [
+    "otp_hid_pcsc_extra",
+    "stock_libccid_large",
+    "valid_x509_boundary"
+  ],
+  "otp_hid_pcsc_checks": 28,
+  "stock_libccid_large_checks": 122,
+  "valid_x509_boundary_checks": 8,
+  "stock_card_ready_attempts": 1,
+  "oversized_valid_x509_status": "6A80",
+  "candidate_linux_daemon_sha256": "fc0258674f0c42ccc087686589b90b34f6720af42db96b10451f1ed29555ef2d",
+  "published_v47_bridge_sha256": "e63cd9ea49ee5ebcc6cc7b7389b7785e1393d6c39c926fb766ff61068f30c690",
+  "frozen_v48_core_sha256": "0e7595b17ea9709fab195fcfbbf43653a8d1af455cbe75d6f0181661424c7f1a",
+  "guest_image_sha256": "b775654015f44e5493ea0df18d3b12cbf87190e890c198acb47a17faf2be98f4",
+  "kernel_sha256": "6001f54164a5201cd5a80e0a09bb05c43fa6e910a0abfe0f5a4e8d7d781cc737",
+  "inputs_sha256": "bf269ed5e4de2de1649540fe5497e6e8e8ce6c3d3805ba6935861bfa72a92f29",
+  "raw_console_sha256": "1adcf2b1a4fae7be91e5b1dd9dcef7a5b03c7c21b5a23d9437fb14053e42720a",
+  "kernel_panic": false,
+  "guest_network_devices": false,
+  "host_usb_passthrough": false,
+  "physical_device_access": false,
+  "limitations": [
+    "This native smoke validates general CTAP/USB continuity; the new empty RP-ID allowlist semantics are covered by the targeted Linux unit test, not by this guest flow.",
+    "Private QEMU/dummy_hcd cannot prove external host OS or production UDC behavior."
+  ]
+}

@@ -1,0 +1,23 @@
+{"ts":"2026-10-09T17:37:38.854Z","lvl":"warn","event":"hid_socket_transport","path":"/tmp/swpk-resync-56445-31152327911416.sock","note":"development transport, not a HID device"}
+Filters: [loop] [resync] [socket]
+Randomness seeded to: 918462244
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+swpasskey_tests is a Catch2 v3.8.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+allocated INIT flushes a late worker reply over a private Unix socket
+-------------------------------------------------------------------------------
+/Users/yakisoba0728/Documents/Codex/2026-10-07/new-chat/work/v58-usb-candidate/baseline-source/tests/keepalive_loop_test.cpp:270
+...............................................................................
+
+/Users/yakisoba0728/Documents/Codex/2026-10-07/new-chat/work/v58-usb-candidate/baseline-source/tests/keepalive_loop_test.cpp:354: FAILED:
+  REQUIRE_FALSE( rig.read_report(500).has_value() )
+with expansion:
+  !true
+
+===============================================================================
+test cases: 1 | 1 failed
+assertions: 7 | 6 passed | 1 failed
+

@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "version": "0.40.0",
+  "method": "bounded stdlib gzip/newc read from exact actually executed guest image; no executable loading",
+  "guest_initramfs_sha256": "c9e84c14a802676b3e4547e7d4db63404481e874301b1abed113f6adf2653a12",
+  "image_bytes": 576538009,
+  "cpio_entry": "opt/ske-venv/lib/python3.12/site-packages/fido2/hid/__init__.py",
+  "source_bytes": 9424,
+  "source_sha256": "55ea60139170f82a119c7f36802d3ff3ec3bb7cd034a3f4f8a30475961635b39",
+  "source_file": "linux-guest-current40-fido2-hid-source.py.txt",
+  "pinned_official_sdk_version": "2.2.1",
+  "byte_equal_pinned_official_sdk_source": true
+}

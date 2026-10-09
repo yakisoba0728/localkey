@@ -1,0 +1,26 @@
+{"ts":"2026-10-09T15:55:05.372Z","lvl":"info","event":"make_credential","rp":"example.com","key_backend":"software"}
+{"ts":"2026-10-09T15:55:05.373Z","lvl":"info","event":"ctap","cmd":"makeCredential","cmd_byte":"0x01","status":"0","ms":"1"}
+{"ts":"2026-10-09T15:55:05.373Z","lvl":"info","event":"get_assertion","rp":"example.com","up":"0","creds":"1"}
+{"ts":"2026-10-09T15:55:05.373Z","lvl":"info","event":"ctap","cmd":"getAssertion","cmd_byte":"0x02","status":"0","ms":"0"}
+Filters: "hmac-secret rejects up=false without a prompt or signature"
+Randomness seeded to: 4093129602
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+swpasskey_tests is a Catch2 v3.8.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+hmac-secret rejects up=false without a prompt or signature
+-------------------------------------------------------------------------------
+/Users/yakisoba0728/Documents/Codex/2026-10-07/new-chat/work/v53-ctap-hmac-upfalse-candidate/source/tests/get_assertion_test.cpp:91
+...............................................................................
+
+/Users/yakisoba0728/Documents/Codex/2026-10-07/new-chat/work/v53-ctap-hmac-upfalse-candidate/source/tests/get_assertion_test.cpp:99: FAILED:
+  REQUIRE( rig.call(get_assert_request(o)).error() == Status::UnsupportedOption )
+with expansion:
+  '`' == '+'
+
+===============================================================================
+test cases: 1 | 1 failed
+assertions: 1 | 1 failed
+

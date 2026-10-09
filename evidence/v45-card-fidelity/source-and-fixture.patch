@@ -1,0 +1,289 @@
+--- a/emucard/core.py
++++ b/emucard/core.py
+@@ -212,6 +212,9 @@
+     """
+ 
+     def __init__(self, path: Path | None = None):
++        # Volatile device-power state is shared by logical transport sessions.
++        # A new EncryptedState on process restart starts a new OTP power session.
++        self.otp_sessions = {}
+         self.path = Path(path) if path else None
+         if self.path:
+             self.path.parent.mkdir(parents=True, exist_ok=True)
+@@ -345,8 +348,9 @@
+         self.oath_challenge = None
+         self.certificate_slot = 3
+         self.hsm_ephemeral = {}
+-        self.otp_sessions = {}
++        self.otp_sessions = self.state.otp_sessions
+         self.otp_update_pending = None
++        self.reset_otp_power_after_commit = False
+         self.secure_channel = None
+         self.close_wrapping_channel = False
+         self.reset_oce_cache()
+@@ -373,10 +377,15 @@
+         self.oath_challenge = None
+         self.certificate_slot = 3
+         self.hsm_ephemeral.clear()
+-        self.otp_sessions.clear()
+         self.otp_update_pending = None
++        self.reset_otp_power_after_commit = False
+         self.secure_channel = None
+         self.reset_oce_cache()
++
++    def reset_power_session(self):
++        """Reset volatile OTP counters on an explicit emulated power cycle."""
++        self.reset_session()
++        self.otp_sessions.clear()
+ 
+     def transmit(self, value):
+         self.close_wrapping_channel = False
+@@ -470,6 +479,8 @@
+ 
+     def _transmit_plain(self, value):
+         previous = copy.deepcopy(self.state.data)
++        previous_otp_sessions = copy.deepcopy(self.otp_sessions)
++        previous_otp_reset = self.reset_otp_power_after_commit
+         apdu = None
+         try:
+             apdu = Apdu.decode(value)
+@@ -607,12 +618,18 @@
+                     self.commit(durable=True)
+                 except (OSError, CardError) as cancelled:
+                     self.state.data = previous
++                    self.otp_sessions.clear()
++                    self.otp_sessions.update(previous_otp_sessions)
++                    self.reset_otp_power_after_commit = previous_otp_reset
+                     self.reset_session()
+                     return b"", cancelled.sw if isinstance(
+                         cancelled, CardError
+                     ) else 0x6581
+             else:
+                 self.state.data = previous
++                self.otp_sessions.clear()
++                self.otp_sessions.update(previous_otp_sessions)
++                self.reset_otp_power_after_commit = previous_otp_reset
+             self.chained = b""
+             self.chain_header = None
+             if (
+@@ -627,6 +644,9 @@
+             return b"", e.sw
+         except (ValueError, KeyError, IndexError, TypeError):
+             self.state.data = previous
++            self.otp_sessions.clear()
++            self.otp_sessions.update(previous_otp_sessions)
++            self.reset_otp_power_after_commit = previous_otp_reset
+             self.chained = b""
+             self.chain_header = None
+             if apdu is not None and apdu.cla == 0x80 and apdu.ins == 0x2A:
+@@ -634,9 +654,19 @@
+             return b"", 0x6A80
+         except OSError:
+             self.state.data = previous
++            self.otp_sessions.clear()
++            self.otp_sessions.update(previous_otp_sessions)
++            self.reset_otp_power_after_commit = previous_otp_reset
+             self.reset_session()
+             self.close_wrapping_channel = True
+             return b"", 0x6581
++
++    def _flush_committed_state(self):
++        self.state.flush()
++        if self.reset_otp_power_after_commit:
++            # A rejected/failed management write must not reset counters.
++            self.otp_sessions.clear()
++            self.reset_otp_power_after_commit = False
+ 
+     def commit(self, durable=False):
+         # ABORT and persistence share one completion boundary. An operation
+@@ -645,7 +675,7 @@
+             # A PIN/key comparison already performed still consumes its retry.
+             # ABORT must not let clients erase failed authentication attempts.
+             require(durable or not self.cancelled(), 0x6400)
+-            self.state.flush()
++            self._flush_committed_state()
+             self.did_commit()
+ 
+     def verify(self, area, name, value, min_length=0):
+@@ -1102,6 +1132,7 @@
+             return
+         if ins == 0x2C:
+             require(a.p2 == 0x81, 0x6A86)
++            require(a.le is None, 0x6700)
+             if a.p1 == 2:
+                 require(("openpgp", 0x83) in self.verified)
+                 new = a.data
+@@ -1157,6 +1188,7 @@
+             require(
+                 ("openpgp", 0x82 if oid in (0x101, 0x103) else 0x83) in self.verified
+             )
++            require(a.le is None, 0x6700)
+             validate_write(oid, a.data)
+             if oid == 0x7F21:
+                 d["objects"][
+@@ -1201,6 +1233,8 @@
+             return
+         if ins == 0x47:
+             require(a.p2 == 0, 0x6A86)
++            if a.p1 == 0x80:
++                require(a.le in (None, 256, 65536), 0x6700)
+             slot, rest = template(a.data)
+             require(not rest, 0x6A80)
+             if a.p1 == 0x80:
+@@ -1229,6 +1263,8 @@
+                 else 0
+             )
+             require(slot != 0, 0x6A86)
++            if slot in (1, 3):
++                require(a.le in (None, 256, 65536), 0x6700)
+             require(("openpgp", 0x81 if slot == 1 else 0x82) in self.verified)
+             require(str(slot) in d["keys"], 0x6A88)
+             uif = bytes.fromhex(d["objects"].get(str(0xD5 + slot), "0020"))[0]
+@@ -1275,6 +1311,7 @@
+         if ins == 0xDB:
+             require(("openpgp", 0x83) in self.verified)
+             require((a.p1, a.p2) == (0x3F, 0xFF), 0x6A86)
++            require(a.le is None, 0x6700)
+             template = Tlv.unpack(0x4D, a.data)
+             from .pgp_extensions import template as parse_template
+ 
+@@ -1775,6 +1812,10 @@
+                         continue
+                 elif row["touch"]:
+                     require(self.touch("OATH " + bytes.fromhex(name).decode()), 0x6985)
++                if row["type"] == 0x10:
++                    # A persisted next-counter sentinel may exceed the 8-byte
++                    # HOTP moving-factor range after the last valid code.
++                    require(0 <= row["counter"] < 1 << 64, 0x6581)
+                 challenge = (
+                     row["counter"].to_bytes(8, "big")
+                     if row["type"] == 0x10
+@@ -1812,7 +1853,10 @@
+             config = bytes.fromhex(row["config"])
+             n = int(slot)
+             flags |= 1 << (n - 1)
+-            if config[46] & 0x40 and config[47] & 0x20 and config[47] & 8:
++            # Keyboard OTP slots are touch-triggered. Preserve the existing
++            # challenge-response button-trigger status behavior.
++            challenge_response = bool(config[46] & 0x40 and config[47] & 0x20)
++            if not challenge_response or config[47] & 8:
+                 flags |= 1 << (n + 1)
+             if config[45] & 0x80:
+                 flags |= 0x10
+@@ -1847,7 +1891,15 @@
+ 
+     def otp_keypress(self, slot):
+         """Produce software button output; an OS keyboard transport is separate."""
+-        return self._otp_keypress(slot)
++        previous = copy.deepcopy(self.state.data)
++        previous_otp_sessions = copy.deepcopy(self.otp_sessions)
++        try:
++            return self._otp_keypress(slot)
++        except (CardError, OSError):
++            self.state.data = previous
++            self.otp_sessions.clear()
++            self.otp_sessions.update(previous_otp_sessions)
++            raise
+ 
+     def _otp_keypress(self, slot, update=False):
+         d = self.state.data["otp"]
+@@ -1920,6 +1972,7 @@
+         from .keyboard import events
+ 
+         previous = copy.deepcopy(self.state.data)
++        previous_otp_sessions = copy.deepcopy(self.otp_sessions)
+         try:
+             output = self.otp_keypress(slot)
+             return events(
+@@ -1929,6 +1982,8 @@
+             )
+         except (CardError, OSError):
+             self.state.data = previous
++            self.otp_sessions.clear()
++            self.otp_sessions.update(previous_otp_sessions)
+             self.state.flush()
+             raise
+ 
+@@ -1951,6 +2006,7 @@
+             if not bytes.fromhex(row["config"])[45] & 0x40
+         }
+         previous = copy.deepcopy(self.state.data)
++        previous_otp_sessions = copy.deepcopy(self.otp_sessions)
+         try:
+             if 8000 <= duration_ms <= 15000:
+                 self.otp_update_pending = None
+@@ -1991,6 +2047,8 @@
+             )
+         except (CardError, OSError):
+             self.state.data = previous
++            self.otp_sessions.clear()
++            self.otp_sessions.update(previous_otp_sessions)
+             self.state.flush()
+             raise
+ 
+--- a/emucard/management.py
++++ b/emucard/management.py
+@@ -84,6 +84,7 @@
+         # Never expose this counter as manufacturer device information.
+         d["reboot_generation"] = (d.get("reboot_generation", 0) + 1) % (1 << 64)
+         card.reset_session()
++        card.reset_otp_power_after_commit = True
+     # OTP clients observe the programming sequence on successful writes.
+     card.state.data["otp"]["sequence"] = (card.state.data["otp"]["sequence"] + 1) % 256
+ 
+--- a/emucard/service.py
++++ b/emucard/service.py
+@@ -222,6 +222,8 @@
+                         if n != 9 + size or any(packet[4:9]):
+                             raise ValueError("invalid configuration RPC frame")
+                         previous = copy.deepcopy(card.state.data)
++                        previous_otp_sessions = copy.deepcopy(card.otp_sessions)
++                        previous_otp_reset = card.reset_otp_power_after_commit
+                         try:
+                             command, payload = packet[1], packet[9:]
+                             if command == 0 and not payload:
+@@ -235,10 +237,16 @@
+                                 result = b""
+                             else:
+                                 raise CardError(0x6A86)
+-                            card.state.flush()
++                            # This RPC has no CCID ABORT transaction. Keep its
++                            # existing flush boundary without marking a CCID
++                            # command committed, while applying OTP power reset.
++                            card._flush_committed_state()
+                             response = b"\x90\0" + result
+                         except (CardError, OSError) as e:
+                             card.state.data = previous
++                            card.otp_sessions.clear()
++                            card.otp_sessions.update(previous_otp_sessions)
++                            card.reset_otp_power_after_commit = previous_otp_reset
+                             response = struct.pack(
+                                 ">H", e.sw if isinstance(e, CardError) else 0x6581
+                             )
+--- a/tools/verify_buttons.py
++++ b/tools/verify_buttons.py
+@@ -73,7 +73,7 @@
+         "OTP session rollover advances persistent usage counter",
+     )
+     row["use_counter"] = 0x7FFF
+-    card.reset_session()
++    card.reset_power_session()
+     raw = modhex_decode(card.otp_keypress(1)["text"])
+     ctx = Cipher(algorithms.AES(secret), modes.ECB()).decryptor()
+     plain = ctx.update(raw) + ctx.finalize()
+@@ -246,13 +246,13 @@
+         and plain[1][11] == plain[0][11] + 1,
+         "software button OTP session counter increases",
+     )
+-    card.reset_session()
++    card.reset_power_session()
+     data = modhex_decode(card.otp_keypress(2)["text"])
+     ctx = Cipher(algorithms.AES(secret), modes.ECB()).decryptor()
+     p = ctx.update(data[len(fixed) :]) + ctx.finalize()
+     check(
+         int.from_bytes(p[6:8], "little") > int.from_bytes(plain[1][6:8], "little"),
+-        "software button OTP use counter survives session reset",
++        "software button OTP use counter advances after power reset",
+     )
+     scan_codes = bytes([4, 5, 6, 0x1E])
+     session = YubiOtpSession(EmulatorConnection(card))

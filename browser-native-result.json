@@ -1,0 +1,25 @@
+{
+  "result": "PASS",
+  "mode": "native",
+  "origin": "http://localhost:55182",
+  "browser": "154.0.8037.98",
+  "verification": "navigator.credentials plus Yubico Fido2Server",
+  "cdp_virtual_authenticator_used": false,
+  "events": [
+    {
+      "operation": "registration",
+      "result": "PASS",
+      "credential_id": "6711b1b5036629715b804d73cf9739a3644919bc0b37f7d180c04155249dd8e1",
+      "aaguid": "00000000-0000-0000-0000-000000000000"
+    },
+    {
+      "operation": "authentication",
+      "result": "PASS",
+      "signature_verified": true,
+      "user_presence": true,
+      "counter": 2
+    }
+  ],
+  "native_emulator_store_credential_match": true,
+  "native_key_backend": "software"
+}

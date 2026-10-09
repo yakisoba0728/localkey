@@ -1,0 +1,39 @@
+{
+  "passed": true,
+  "expect": "fixed",
+  "observations": [
+    {
+      "request": "uint1",
+      "status": 2,
+      "remaining_before": 100,
+      "remaining_after": 100
+    },
+    {
+      "request": "uint2",
+      "status": 2,
+      "remaining_before": 100,
+      "remaining_after": 100
+    },
+    {
+      "request": "uint0",
+      "status": 2,
+      "remaining_before": 100,
+      "remaining_after": 100
+    },
+    {
+      "request": "uint3",
+      "status": 2,
+      "remaining_before": 100,
+      "remaining_after": 100
+    },
+    {
+      "request": "bool_true",
+      "status": 17,
+      "remaining_before": 100,
+      "remaining_after": 100
+    }
+  ],
+  "official_spec": "https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#makecred-enterpriseattestation",
+  "transport": "unmodified python-fido2 over private Unix CTAPHID",
+  "physical_device_access": false
+}

@@ -1,0 +1,6 @@
+[1/6] Scanning /src/src/usb/linux.cpp for CXX dependencies
+[2/6] Generating CXX dyndep file CMakeFiles/ske-usbd.dir/CXX.dd
+[3/6] Building CXX object CMakeFiles/ske-usbd.dir/src/pcsc/reader.cpp.o
+[4/6] Building CXX object CMakeFiles/ske-usbd.dir/src/usb/composite.cpp.o
+[5/6] Building CXX object CMakeFiles/ske-usbd.dir/src/usb/linux.cpp.o
+[6/6] Linking CXX executable ske-usbd

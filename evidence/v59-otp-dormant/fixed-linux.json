@@ -1,0 +1,44 @@
+{
+  "variant": "fixed",
+  "platform": "linux",
+  "source_sha256": "bd2c706c2d4c25b835c0568e2f8b603ba754df1fe542f8f2719f1a878fcbc7d2",
+  "unmodified_yubikit": true,
+  "private_unix_ccid": true,
+  "physical_or_host_device_access": false,
+  "firmware_5_7_4_differential": false,
+  "checks": [
+    {
+      "initial_dormant": false,
+      "initial_allow_update": true,
+      "requested_dormant": true,
+      "initial_hmac": "accepted",
+      "update": "accepted",
+      "sequence_before": 1,
+      "sequence_after": 2,
+      "final_hmac": "rejected:6985",
+      "passed": true
+    },
+    {
+      "initial_dormant": true,
+      "initial_allow_update": false,
+      "requested_dormant": false,
+      "initial_hmac": "rejected:6985",
+      "update": "accepted",
+      "sequence_before": 1,
+      "sequence_after": 2,
+      "final_hmac": "accepted",
+      "passed": true
+    },
+    {
+      "initial_dormant": false,
+      "initial_allow_update": false,
+      "requested_dormant": true,
+      "initial_hmac": "accepted",
+      "update": "rejected:6985",
+      "sequence_before": 1,
+      "sequence_after": 1,
+      "final_hmac": "accepted",
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "passed": true,
+  "checks": [
+    {
+      "name": "OATH access key set in current SDK session",
+      "passed": true
+    },
+    {
+      "name": "OATH SELECT requires authentication",
+      "passed": true
+    },
+    {
+      "name": "OATH authenticates with challenge response",
+      "passed": true
+    },
+    {
+      "name": "HSM Auth selection succeeds",
+      "passed": true
+    },
+    {
+      "name": "OATH loses authentication after app deselection",
+      "passed": true
+    },
+    {
+      "name": "OATH can authenticate again",
+      "passed": true
+    },
+    {
+      "name": "HSM Auth credential created",
+      "passed": true
+    },
+    {
+      "name": "HSM Auth wrong password decrements retries",
+      "passed": true
+    },
+    {
+      "name": "HSM Auth retries persist across SELECT",
+      "passed": true
+    },
+    {
+      "name": "Unknown AID rejected",
+      "passed": true
+    },
+    {
+      "name": "HSM Auth retry count survives invalid SELECT",
+      "passed": true
+    }
+  ],
+  "transport": "private Unix CCID socket",
+  "host_pcsc_hid_keyboard_access": false,
+  "physical_device_access": false,
+  "firmware_differential_verified": false
+}

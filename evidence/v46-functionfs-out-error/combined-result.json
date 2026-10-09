@@ -1,0 +1,75 @@
+{
+  "passed": true,
+  "scope": "One private no-NIC ARM64 QEMU/dummy_hcd boot with frozen v0.45 card source and v0.46 Linux AIO bridge",
+  "reports_in_order": [
+    "native_extra",
+    "stock_libccid",
+    "x509_boundary",
+    "fault_EPIPE",
+    "fault_ESHUTDOWN",
+    "fault_ECONNRESET"
+  ],
+  "native_extra_checks": 28,
+  "stock_libccid_checks": 122,
+  "stock_card_ready_attempts": 1,
+  "valid_x509_boundary_checks": 8,
+  "oversized_valid_x509_status": "6A80",
+  "fault_matrix": {
+    "EPIPE": {
+      "synthetic_completed_res": -32,
+      "submitted_to_kernel": false,
+      "out_retry_count": 1,
+      "retry_endpoint_address": 4,
+      "native_extra_checks": 28,
+      "passed": true
+    },
+    "ESHUTDOWN": {
+      "synthetic_completed_res": -108,
+      "submitted_to_kernel": false,
+      "out_retry_count": 1,
+      "retry_endpoint_address": 4,
+      "native_extra_checks": 28,
+      "passed": true
+    },
+    "ECONNRESET": {
+      "synthetic_completed_res": -104,
+      "submitted_to_kernel": false,
+      "out_retry_count": 1,
+      "retry_endpoint_address": 4,
+      "native_extra_checks": 28,
+      "passed": true
+    }
+  },
+  "bridge_sha256": "e63cd9ea49ee5ebcc6cc7b7389b7785e1393d6c39c926fb766ff61068f30c690",
+  "frozen_v45_card_file_sha256": {
+    "__init__.py": "b3ac50ebe9c426cf689415f135b9049ac19e67de6808ad213dd7ad21b0bdbf67",
+    "client.py": "2b3b9b250a8c58e5a69b7265d770da364a902c6443edbad26e13da4794df9628",
+    "core.py": "b72a424c36befae4cb0323d6bc1833201d48aec1d935f9e729a8db954e3ba386",
+    "domain.py": "87a192dd4f76d6d1562abd94d8cef4ea0bd932ddb4e35991c61baffc4c0ea6a1",
+    "ifd.py": "cf173daf50ace2bd3718438a92769d40e3f8c470e364f68aeba06dd3dff83ecf",
+    "keyboard.py": "d058cc356978b0477f49cef11673f734a46465e58ebe0edb3910de5098ff1ece",
+    "management.py": "92e5929cabf930d7bfc2391037144dba5ec6a1e7424951a428f4f19398128c64",
+    "otp_hid.py": "c7a5f9c73cdb1c506b99343785436b25cf85f772602f8a1727aa0b71e9756136",
+    "pgp_algorithms.py": "445333c3f9cf9643eb2f6a446b456ae8519dab8a7758ebfe0e74f2755eedc0a5",
+    "pgp_extensions.py": "234e049d977bde85c5e608327be8f74d5311e525add058b94ea688177d969bd1",
+    "pgp_objects.py": "1a8b4a15812b2d0eb748813c3999ebfd4d298536bef1c78787153d8dc3c0d2c3",
+    "piv_objects.py": "6503c64561e904929d1aff05d127b9e1369f8a1961540f965ee00708c7b41664",
+    "profile.py": "319745d0f753de27edb2997f18f98809268fe8ecf84d20fb5acd3a6300cfe2ed",
+    "secure_channel.py": "40cd0713d623722b418d3d67ca20025eb33d4da15583df8058545c25e5b82073",
+    "service.py": "b08b9b27cd0757df8e4a2b1162a289e80696de91dda01e981026cbdb6a7130f2"
+  },
+  "fault_shim_sha256": "f8430980129c889acbb04f1b52255a44fae02a71b7c4e4134d881f41f1ef6b22",
+  "conditional_fixture_helper_sha256": "dc902e1f7ec918cd1ae0708911f0a26aca3edd312fba23768e01da4187b706f9",
+  "guest_image_sha256": "4e35f09171a8a7aaca575e4e589e8680a1c00a892641e856b8aad11c7952773c",
+  "guest_inputs_sha256": "90e0f9014e59b829b5cc64fc347b7a42cd33f0d34c2ebc4c3aec1da38017a2f4",
+  "raw_console_sha256": "05337618d0c909177d0bd0bef101277ce144a028532ab01b954a2c143a0d0ff3",
+  "source_patch_sha256": "d6b55c1eea4f40f1964e9aa04d3291b5de0f7008918efbbdb243e7f0ad01bd37",
+  "kernel_panic": false,
+  "guest_network_devices": false,
+  "host_usb_passthrough": false,
+  "physical_device_access": false,
+  "limitations": [
+    "The fault shim fabricates completions without submitting those requests to the kernel.",
+    "Finite QEMU runs do not prove rare kernel panic elimination or production UDC behavior."
+  ]
+}

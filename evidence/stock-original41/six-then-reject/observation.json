@@ -1,0 +1,23 @@
+{
+  "classification": "six_native_stock_large_cases_passed_then_oversized_piv_put_6700_rejection",
+  "accepted_sizes": [
+    2047,
+    2048,
+    2049,
+    3071,
+    3072,
+    3073
+  ],
+  "native_case_test_count": 64,
+  "actual_error": "ApduError: APDU error: SW=0x6700 (WRONG_LENGTH)",
+  "active_cycle_total": 4095,
+  "source_bug_proven": false,
+  "source_limit_model": 3072,
+  "physical_limit_boundary_verified": false,
+  "original_fido_assertions": 7,
+  "original_piv_signatures": 6,
+  "qemu_runner_exit": 0,
+  "guest_exit": 1,
+  "helper_sha256": "8fbf365d21840f44ba1833911cf2ea315dc4215d269a39d3331feb7fda213729",
+  "console_sha256": "ab4e1760c1665ca8f03e652614df0cd6b99da64e204c6c5193c9ce5e5d35e928"
+}

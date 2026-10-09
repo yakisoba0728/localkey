@@ -1,0 +1,13 @@
+--- a/emucard/domain.py
++++ b/emucard/domain.py
+@@ -306,6 +306,10 @@
+     require(card.selected is not None, 0x6999)
+     if apdu.ins == 0x50:
+         require(apdu.p2 == 0 and len(apdu.data) == 8, 0x6A86)
++        # SCP03 INITIALIZE UPDATE specifies Le=00. The public SDK omits Le
++        # for this data-bearing APDU; reject other response limits before an
++        # authentication attempt is reserved or the current session is reset.
++        require(apdu.le in (None, 256, 65536), 0x6700)
+         card.reset_for_channel()
+         ref, row = get_row(card, 1, apdu.p1)
+         attempt(card, ref, row)

@@ -1,0 +1,52 @@
+{
+  "passed": true,
+  "count": 24,
+  "expect": "guarded",
+  "transport": "direct IFD ABI",
+  "core_sha256": "4d2b50bf7a1a616696c66e1da1171f0b394a1c1a41b7e27323a7ba86eaa0f1d1",
+  "observations": {
+    "extra_data_sw": 26368,
+    "extra_data_wire": "0006dead000003710178",
+    "extra_data_decoded_data": "710178",
+    "extra_data_decoded_le": null,
+    "extra_data_state_unchanged": true,
+    "extra_data_labels": [
+      "survivor"
+    ],
+    "extra_data_restart_labels": [
+      "survivor"
+    ],
+    "explicit_le1_sw": 26368,
+    "explicit_le1_wire": "0006dead000001",
+    "explicit_le1_decoded_data": "",
+    "explicit_le1_decoded_le": 1,
+    "explicit_le1_state_unchanged": true,
+    "explicit_le1_labels": [
+      "survivor"
+    ],
+    "explicit_le1_restart_labels": [
+      "survivor"
+    ],
+    "extended_le256_sw": 26368,
+    "extended_le256_wire": "0006dead000100",
+    "extended_le256_decoded_data": "",
+    "extended_le256_decoded_le": 256,
+    "extended_le256_state_unchanged": true,
+    "extended_le256_labels": [
+      "survivor"
+    ],
+    "extended_le256_restart_labels": [
+      "survivor"
+    ],
+    "normal_sdk_sw": 36864,
+    "normal_sdk_wire": "0006dead",
+    "normal_sdk_restart_labels": [],
+    "short_zero_sw": 36864,
+    "short_zero_wire": "0006dead00",
+    "short_zero_restart_labels": []
+  },
+  "mismatches": {},
+  "physical_key_accessed": false,
+  "source": "Yubico YubiHSM Auth Reset application command APDU",
+  "note": "6700 is the software model's status; physical firmware 5.7.4 tolerance unmeasured"
+}

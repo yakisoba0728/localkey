@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "classification": "safe_wire_fixture_commit_precondition_corrected_after_actual_original_CMD_ABORTED_packet",
+  "protocol_behavior_source_changed": false,
+  "native_usb_transport_helper_changed": false,
+  "source_changed_file": "tools/verify_usb_bridge.py",
+  "original_helper_sha256": "7bf8ba30cffa46dacd97cb057cb4860b5b57494775ccc4cf0c6575ab4aca0d82",
+  "current_helper_sha256": "6e043a8532f24a2338a483a72e332fe97e8b289fbd76d2e029b29e9629e8e289",
+  "logging_observer_preserves_original_protocol_commands": true,
+  "original_observed_failure_packet_hex": "8100000000000c40ff00",
+  "original_observed_success_packet_hex": "8100000000000c000000",
+  "candidate_repetitions": 24,
+  "candidate_checks_per_repetition": 68,
+  "candidate_prefix_bytes": 1,
+  "candidate_retained_tail_bytes": 9,
+  "physical_or_native_macos_registration_verified": false,
+  "candidate_source_and_binaries_unchanged": true
+}

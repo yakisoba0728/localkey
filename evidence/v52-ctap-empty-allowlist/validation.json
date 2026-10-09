@@ -1,0 +1,57 @@
+{
+  "passed": true,
+  "source_file_sha256": {
+    "src/ctap/get_assertion.cpp": {
+      "baseline": "c112429ae28852453227ec89be804ae12b91569f1e78a80d8ee1470bf454334b",
+      "candidate": "01644d37750f4e75432e7885e8c9c60826add7cb411e770c6537df969cde3fc7"
+    },
+    "tests/get_assertion_test.cpp": {
+      "baseline": "023b1d5d3ff15dfc2fa40ffbb5a36f0692a9f946e1d5aa140554fe7f09f3f04a",
+      "candidate": "41bab89d554912be9e1ac93ad209d269d15283bc6f2d923aaaa7883842e0f77c"
+    }
+  },
+  "source_patch_sha256": "5e3eca109637220df479c293de4e909e0571689c78d916f98c517b9f4bb08f03",
+  "binary_sha256": {
+    "swpasskeyd": "884e5c39f8df107497d16fee2a9978c876110da7be2b4f69f37eec4b6b2ba78e",
+    "swpasskeyctl": "1cf2caa06309259c72b52dc49bfcd8cf0cdd63e31437ea2851b5ae7a24fd309f",
+    "swpasskey_tests": "51b435c734e6a23c9f003bfa15fe6443d967d58badcf81a347b28efd21682433"
+  },
+  "baseline_focused_assertions_passed": 4,
+  "baseline_focused_assertions_failed": 1,
+  "candidate_focused_assertions": 9,
+  "candidate_full_cpp_cases": 121,
+  "candidate_full_cpp_assertions": 11631,
+  "sdk_baseline": {
+    "passed": true,
+    "expect": "baseline",
+    "first_count": 2,
+    "empty_status": 0,
+    "empty_count": 3,
+    "nonmatch_status": 46,
+    "explicit_count": 4,
+    "final_count": 5,
+    "remaining_before": 99,
+    "remaining_after": 99,
+    "transport": "unmodified python-fido2 over private Unix CTAPHID",
+    "physical_device_access": false,
+    "spec": "https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#ga-allowlist"
+  },
+  "sdk_candidate": {
+    "passed": true,
+    "expect": "fixed",
+    "first_count": 2,
+    "empty_status": 46,
+    "empty_count": null,
+    "nonmatch_status": 46,
+    "explicit_count": 3,
+    "final_count": 4,
+    "remaining_before": 99,
+    "remaining_after": 99,
+    "transport": "unmodified python-fido2 over private Unix CTAPHID",
+    "physical_device_access": false,
+    "spec": "https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#ga-allowlist"
+  },
+  "physical_firmware_tested": false,
+  "host_usb_access": false,
+  "official_spec": "https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetAssertion"
+}

@@ -1,0 +1,10 @@
+{
+  "begin": 0,
+  "bad_offset_without_auth": 4,
+  "finish_after_bad_offset": 0,
+  "stored_after_finish": "8076be8b528d0075f7aae98d6fa57a6d3c",
+  "begin_again": 0,
+  "unauthenticated_restart": 54,
+  "resume_after_unauthenticated_restart": 4,
+  "stored_at_end": "8076be8b528d0075f7aae98d6fa57a6d3c"
+}

@@ -1,0 +1,23 @@
+{
+  "passed": true,
+  "variant": "fixed",
+  "root": "/work/fixed",
+  "platform": "linux",
+  "route": "socket",
+  "unmodified_yubikit": true,
+  "private_ccid_or_direct_ifd": true,
+  "physical_or_host_device_access": false,
+  "network_devices": false,
+  "core_sha256": "07e1db63a33a6b5ce70cf102bd761a808ffc2c01bf76f8756fa8c7c579b09084",
+  "credential_count": 24,
+  "expected_list_length": 504,
+  "first_sw": "61ff",
+  "malformed_cla_sw": "6e00",
+  "malformed_cla_consumed_bytes": 0,
+  "valid_remainder_matches_expected": true,
+  "continuation_statuses": [
+    "61f7",
+    "9000"
+  ],
+  "state_sha256": "a94f6b21a6c4823a41eb900efc8a2cee053bd91de81099dc12768509476cb99d"
+}

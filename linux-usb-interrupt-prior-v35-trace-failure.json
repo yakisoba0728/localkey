@@ -1,0 +1,100 @@
+{
+  "passed": false,
+  "tests": [
+    {
+      "name": "private native interrupt guest marker",
+      "passed": true
+    },
+    {
+      "name": "actual ARM64 kernel and only loopback for interruption probe",
+      "passed": true
+    },
+    {
+      "name": "fresh owned resident ES256 PIN/UV credential for interruption fixture",
+      "passed": true
+    },
+    {
+      "name": "native SDK UV signature and user binding initial",
+      "passed": true
+    },
+    {
+      "name": "native OTP SDK independently verifies retained key initial",
+      "passed": true
+    },
+    {
+      "name": "fresh owned native OATH HOTP counter zero",
+      "passed": true
+    },
+    {
+      "name": "actual kernel exposes write-exit and signal-delivery trace events",
+      "passed": true
+    },
+    {
+      "name": "actual unread CCID response blocks native endpoint write 0",
+      "passed": true
+    },
+    {
+      "name": "native HOTP commits once before unread response 0",
+      "passed": true
+    },
+    {
+      "name": "same actual queued CCID buffer before targeted signal 0/0",
+      "passed": true
+    },
+    {
+      "name": "kernel accepts SIGUSR1 only for owned endpoint thread 0/0",
+      "passed": true
+    }
+  ],
+  "signals": [],
+  "cycles": [],
+  "assertions": [
+    {
+      "phase": "initial",
+      "signature_verified": true,
+      "user_verified": true,
+      "user_handle_verified": true,
+      "rp_id_hash_verified": true,
+      "counter": 2,
+      "pin_uv_protocol": 2,
+      "challenge_sha256": "6169e379391ec7f29f271df5d7e7562c5df43a0aef0ae912a5b1740d60550b4b",
+      "credential_sha256": "7d4a034373454b6d94d38eed426e50ddd7e635461551bdf1b08e8d970e5fdbd6"
+    }
+  ],
+  "scope": "actual same-generation queued FunctionFS CCID IN interruption in isolated ARM64 guest",
+  "physical_device_access": false,
+  "host_device_passthrough": false,
+  "manufacturer_trust_reproduced": false,
+  "native_macos_registration_verified": false,
+  "production_hardware_udcs_verified": false,
+  "physical_touch_verified": false,
+  "card_testing_auto_allow": false,
+  "fido_presence_auto_approved_only_for_owned_fixture": true,
+  "observed_version": "swpasskeyd 0.35.0",
+  "emulator_binary_sha256": "6f1c6b1096d59f3f54a101a4e1d6e3d1cfb9385cb4c353ea197cb44c7a0742c2",
+  "usb_bridge_binary_sha256": "cd7a86b0f189addd88eca8475ddda46192a0e970ef6c450265a27b356b286959",
+  "write_exit_format": "name: sys_exit_write\nID: 671\nformat:\n\tfield:unsigned short common_type;\toffset:0;\tsize:2;\tsigned:0;\n\tfield:unsigned char common_flags;\toffset:2;\tsize:1;\tsigned:0;\n\tfield:unsigned char common_preempt_count;\toffset:3;\tsize:1;\tsigned:0;\n\tfield:int common_pid;\toffset:4;\tsize:4;\tsigned:1;\n\n\tfield:int __syscall_nr;\toffset:8;\tsize:4;\tsigned:1;\n\tfield:long ret;\toffset:16;\tsize:8;\tsigned:1;\n\nprint fmt: \"0x%lx\", REC->ret\n",
+  "signal_delivery_format": "name: signal_deliver\nID: 135\nformat:\n\tfield:unsigned short common_type;\toffset:0;\tsize:2;\tsigned:0;\n\tfield:unsigned char common_flags;\toffset:2;\tsize:1;\tsigned:0;\n\tfield:unsigned char common_preempt_count;\toffset:3;\tsize:1;\tsigned:0;\n\tfield:int common_pid;\toffset:4;\tsize:4;\tsigned:1;\n\n\tfield:int sig;\toffset:8;\tsize:4;\tsigned:1;\n\tfield:int errno;\toffset:12;\tsize:4;\tsigned:1;\n\tfield:int code;\toffset:16;\tsize:4;\tsigned:1;\n\tfield:unsigned long sa_handler;\toffset:24;\tsize:8;\tsigned:0;\n\tfield:unsigned long sa_flags;\toffset:32;\tsize:8;\tsigned:0;\n\nprint fmt: \"sig=%d errno=%d code=%d sa_handler=%lx sa_flags=%lx\", REC->sig, REC->errno, REC->code, REC->sa_handler, REC->sa_flags\n",
+  "mode": "full",
+  "counter_at_queued_response": 1,
+  "selected_worker": {
+    "tid": 3513,
+    "tgid": 3494,
+    "fd": 11,
+    "bytes": 19,
+    "buffer": "0xb54dd6493950",
+    "syscall": "64 0xb 0xb54dd6493950 0x13 0x0 0x0 0xb54dd6491a20 0xfe8e9a01e5f0 0xfe8e9ca01e4c",
+    "wchan": "ffs_epfile_io"
+  },
+  "last_actual_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 1/1   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n           <...>-3513    [000] ...1.   175.844381: sys_write -> 0xfffffffffffffffc\n",
+  "error": "AssertionError: actual kernel signal delivery and write EINTR observed 0/0",
+  "traceback": "Traceback (most recent call last):\n  File \"/opt/verification/verify-usb-interrupt.py\", line 150, in main\n    check('signal_deliver:' in actual and 'sig=10' in actual,\n  File \"/opt/verification/verify-usb-interrupt.py\", line 37, in check\n    assert value,name\n           ^^^^^\nAssertionError: actual kernel signal delivery and write EINTR observed 0/0\n",
+  "failure_process_status": {
+    "bridge": null,
+    "fido": null,
+    "card": null
+  },
+  "card_log": "",
+  "bridge_log": "functionfs_bound controller=dummy_udc.0\nfunctionfs_configured endpoints=6\nfunctionfs_setup type=33 request=10 value=0 index=0 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=0 length=74 stalled=0\nfunctionfs_setup type=33 request=9 value=512 index=0 length=1 stalled=0\nfunctionfs_setup type=33 request=10 value=0 index=1 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=1 length=34 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\n",
+  "test_count": 11
+}

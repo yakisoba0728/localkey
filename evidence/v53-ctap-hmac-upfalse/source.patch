@@ -1,0 +1,82 @@
+--- a/src/ctap/get_assertion.cpp
++++ b/src/ctap/get_assertion.cpp
+@@ -230,6 +230,11 @@
+   });
+   if (creds.empty()) {
+     return fail(Status::NoCredentials);
++  }
++  // CTAP 2.1 hmac-secret requires user consent. A pre-flight up=false
++  // request must fail rather than return a signature without the extension.
++  if (!up && q->ext.hmac_secret_present) {
++    return fail(Status::UnsupportedOption);
+   }
+ 
+   // Most recently used first; ties by creation time (newest first).
+--- a/tests/get_assertion_test.cpp
++++ b/tests/get_assertion_test.cpp
+@@ -86,6 +86,27 @@
+   REQUIRE(verify_es256(pub, msg, a.sig));
+   REQUIRE(rig.presence.calls == calls);
+   REQUIRE(rig.store->find_by_id(id)->sign_count == 1);
++}
++
++TEST_CASE("hmac-secret rejects up=false without a prompt or signature", "[ga][hmac]") {
++  Rig rig;
++  auto id = rig.register_cred();
++  const int calls = rig.presence.calls;
++  const auto before = rig.store->find_by_id(id)->sign_count;
++  GetAssertOpts o;
++  o.up = false;
++  o.hmac_secret_ext = bytes({0xA0});  // extension presence is enough for this option check
++  REQUIRE(rig.call(get_assert_request(o)).error() == Status::UnsupportedOption);
++  REQUIRE(rig.presence.calls == calls);
++  REQUIRE(rig.store->find_by_id(id)->sign_count == before);
++
++  o.rp_id = "missing.example";
++  REQUIRE(rig.call(get_assert_request(o)).error() == Status::NoCredentials);
++  o.rp_id = "example.com";
++  o.hmac_secret_ext.reset();
++  REQUIRE(rig.call(get_assert_request(o)).has_value());
++  REQUIRE(rig.presence.calls == calls);
++  REQUIRE(rig.store->find_by_id(id)->sign_count == before);
+ }
+ 
+ TEST_CASE("getAssertion no credentials / wrong rp / allowList miss", "[ga]") {
+--- a/tests/hmac_secret_test.cpp
++++ b/tests/hmac_secret_test.cpp
+@@ -144,7 +144,7 @@
+   REQUIRE(c.outputs(*rig.call(get_assert_request(g))).size() == 32);
+ }
+ 
+-TEST_CASE("hmac-secret: no output without user presence (up=false)", "[hmac]") {
++TEST_CASE("hmac-secret: rejects pre-flight up=false", "[hmac]") {
+   Rig rig;
+   auto id = make_with_hmac(rig);
+   HmacClient c(rig);
+@@ -153,17 +153,17 @@
+   g.allow = std::vector<std::vector<std::uint8_t>>{id};
+   g.up = false;
+   g.hmac_secret_ext = c.ext(s1);
+-  auto r = rig.call(get_assert_request(g));
+-  REQUIRE(r.has_value());
+-  auto ad = parse_auth_data(as_bstr(split_int_map(*r)[2]));
+-  REQUIRE((ad.flags & 0x01) == 0);  // UP
+-  REQUIRE((ad.flags & 0x80) == 0);  // ED: no extension output at all
+-  // Discoverable (no allowList) pre-flight is refused the same way.
++  const auto calls = rig.presence.calls;
++  const auto count = rig.store->find_by_id(id)->sign_count;
++  REQUIRE(rig.call(get_assert_request(g)).error() == Status::UnsupportedOption);
++  REQUIRE(rig.presence.calls == calls);
++  REQUIRE(rig.store->find_by_id(id)->sign_count == count);
++  // Discoverable (no allowList) pre-flight is rejected as well.
+   g.allow.reset();
+   g.hmac_secret_ext = c.ext(s1);
+-  r = rig.call(get_assert_request(g));
+-  REQUIRE(r.has_value());
+-  REQUIRE((parse_auth_data(as_bstr(split_int_map(*r)[2])).flags & 0x80) == 0);
++  REQUIRE(rig.call(get_assert_request(g)).error() == Status::UnsupportedOption);
++  REQUIRE(rig.presence.calls == calls);
++  REQUIRE(rig.store->find_by_id(id)->sign_count == count);
+ }
+ 
+ TEST_CASE("hmac-secret: UV selects the other credRandom", "[hmac]") {

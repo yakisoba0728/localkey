@@ -1,0 +1,1698 @@
+[    0.000000] Booting Linux on physical CPU 0x0000000000 [0x410fd083]
+[    0.000000] Linux version 6.8.0-146-generic (buildd@bos03-arm64-107) (aarch64-linux-gnu-gcc-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #146-Ubuntu SMP PREEMPT_DYNAMIC Thu Sep  3 16:20:48 UTC 2026 (Ubuntu 6.8.0-146.146-generic 6.8.12)
+[    0.000000] KASLR enabled
+[    0.000000] random: crng init done
+[    0.000000] Machine model: linux,dummy-virt
+[    0.000000] efi: UEFI not found.
+[    0.000000] NUMA: No NUMA configuration found
+[    0.000000] NUMA: Faking a node at [mem 0x0000000040000000-0x000000013fffffff]
+[    0.000000] NUMA: NODE_DATA [mem 0x13f7ee5c0-0x13f7f3fff]
+[    0.000000] Zone ranges:
+[    0.000000]   DMA      [mem 0x0000000040000000-0x00000000ffffffff]
+[    0.000000]   DMA32    empty
+[    0.000000]   Normal   [mem 0x0000000100000000-0x000000013fffffff]
+[    0.000000]   Device   empty
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000040000000-0x000000013fffffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000040000000-0x000000013fffffff]
+[    0.000000] cma: Reserved 32 MiB at 0x00000000fe000000 on node -1
+[    0.000000] psci: probing for conduit method from DT.
+[    0.000000] psci: PSCIv1.1 detected in firmware.
+[    0.000000] psci: Using standard PSCI v0.2 function IDs
+[    0.000000] psci: Trusted OS migration not required
+[    0.000000] psci: SMC Calling Convention v1.0
+[    0.000000] percpu: Embedded 54 pages/cpu s95528 r8192 d117464 u221184
+[    0.000000] Detected PIPT I-cache on CPU0
+[    0.000000] CPU features: detected: Spectre-v2
+[    0.000000] CPU features: detected: Spectre-v3a
+[    0.000000] CPU features: detected: Spectre-v4
+[    0.000000] CPU features: detected: Spectre-BHB
+[    0.000000] CPU features: kernel page table isolation forced ON by KASLR
+[    0.000000] CPU features: detected: Kernel page table isolation (KPTI)
+[    0.000000] CPU features: detected: ARM erratum 1742098
+[    0.000000] CPU features: detected: ARM errata 1165522, 1319367, or 1530923
+[    0.000000] alternatives: applying boot alternatives
+[    0.000000] Kernel command line: console=ttyAMA0 rdinit=/init panic=1
+[    0.000000] Dentry cache hash table entries: 524288 (order: 10, 4194304 bytes, linear)
+[    0.000000] Inode-cache hash table entries: 262144 (order: 9, 2097152 bytes, linear)
+[    0.000000] Fallback order for Node 0: 0 
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 1032192
+[    0.000000] Policy zone: Normal
+[    0.000000] mem auto-init: stack:all(zero), heap alloc:on, heap free:off
+[    0.000000] software IO TLB: area num 2.
+[    0.000000] software IO TLB: mapped [mem 0x00000000fa000000-0x00000000fe000000] (64MB)
+[    0.000000] Memory: 3390056K/4194304K available (23552K kernel code, 5212K rwdata, 16460K rodata, 12288K init, 1234K bss, 771480K reserved, 32768K cma-reserved)
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=2, Nodes=1
+[    0.000000] ftrace: allocating 63089 entries in 247 pages
+[    0.000000] ftrace: allocated 247 pages with 7 groups
+[    0.000000] Dynamic Preempt: voluntary
+[    0.000000] rcu: Preemptible hierarchical RCU implementation.
+[    0.000000] rcu: 	RCU restricting CPUs from NR_CPUS=512 to nr_cpu_ids=2.
+[    0.000000] 	Trampoline variant of Tasks RCU enabled.
+[    0.000000] 	Rude variant of Tasks RCU enabled.
+[    0.000000] 	Tracing variant of Tasks RCU enabled.
+[    0.000000] rcu: RCU calculated value of scheduler-enlistment delay is 100 jiffies.
+[    0.000000] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=2
+[    0.000000] RCU Tasks: Setting shift to 1 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=2.
+[    0.000000] RCU Tasks Rude: Setting shift to 1 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=2.
+[    0.000000] RCU Tasks Trace: Setting shift to 1 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=2.
+[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000] Root IRQ handler: gic_handle_irq
+[    0.000000] GICv2m: range[mem 0x08020000-0x08020fff], SPI[80:143]
+[    0.000000] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.000000] arch_timer: cp15 timer(s) running at 62.50MHz (virt).
+[    0.000000] clocksource: arch_sys_counter: mask: 0x1ffffffffffffff max_cycles: 0x1cd42e208c, max_idle_ns: 881590405314 ns
+[    0.000044] sched_clock: 57 bits at 63MHz, resolution 16ns, wraps every 4398046511096ns
+[    0.004953] Console: colour dummy device 80x25
+[    0.006315] Calibrating delay loop (skipped), value calculated using timer frequency.. 125.00 BogoMIPS (lpj=62500)
+[    0.006433] pid_max: default: 32768 minimum: 301
+[    0.008169] LSM: initializing lsm=lockdown,capability,landlock,yama,apparmor,integrity
+[    0.008628] landlock: Up and running.
+[    0.008640] Yama: becoming mindful.
+[    0.010180] AppArmor: AppArmor initialized
+[    0.012029] Mount-cache hash table entries: 8192 (order: 4, 65536 bytes, linear)
+[    0.012068] Mountpoint-cache hash table entries: 8192 (order: 4, 65536 bytes, linear)
+[    0.042882] cacheinfo: Unable to detect cache hierarchy for CPU 0
+[    0.052946] rcu: Hierarchical SRCU implementation.
+[    0.053000] rcu: 	Max phase no-delay instances is 400.
+[    0.057931] EFI services will not be available.
+[    0.060165] smp: Bringing up secondary CPUs ...
+[    0.062810] Detected PIPT I-cache on CPU1
+[    0.063505] CPU1: Booted secondary processor 0x0000000001 [0x410fd083]
+[    0.065814] smp: Brought up 1 node, 2 CPUs
+[    0.065837] SMP: Total of 2 processors activated.
+[    0.065854] CPU: All CPU(s) started at EL1
+[    0.066032] CPU features: detected: 32-bit EL0 Support
+[    0.066045] CPU features: detected: 32-bit EL1 Support
+[    0.066095] CPU features: detected: CRC32 instructions
+[    0.074532] alternatives: applying system-wide alternatives
+[    0.079094] CPU features: emulated: Privileged Access Never (PAN) using TTBR0_EL1 switching
+[    0.113479] devtmpfs: initialized
+[    0.129714] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1911260446275000 ns
+[    0.130086] futex hash table entries: 512 (order: 3, 32768 bytes, linear)
+[    0.133952] pinctrl core: initialized pinctrl subsystem
+[    0.140544] DMI not present or invalid.
+[    0.147565] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    0.157238] DMA: preallocated 512 KiB GFP_KERNEL pool for atomic allocations
+[    0.157858] DMA: preallocated 512 KiB GFP_KERNEL|GFP_DMA pool for atomic allocations
+[    0.158379] DMA: preallocated 512 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations
+[    0.158590] audit: initializing netlink subsys (disabled)
+[    0.159818] audit: type=2000 audit(0.118:1): state=initialized audit_enabled=0 res=1
+[    0.163984] thermal_sys: Registered thermal governor 'fair_share'
+[    0.164021] thermal_sys: Registered thermal governor 'bang_bang'
+[    0.164037] thermal_sys: Registered thermal governor 'step_wise'
+[    0.164041] thermal_sys: Registered thermal governor 'user_space'
+[    0.164045] thermal_sys: Registered thermal governor 'power_allocator'
+[    0.164256] cpuidle: using governor ladder
+[    0.164332] cpuidle: using governor menu
+[    0.165116] hw-breakpoint: found 6 breakpoint and 4 watchpoint registers.
+[    0.165552] ASID allocator initialised with 32768 entries
+[    0.167964] Serial: AMBA PL011 UART driver
+[    0.201081] 9000000.pl011: ttyAMA0 at MMIO 0x9000000 (irq = 13, base_baud = 0) is a PL011 rev1
+[    0.201925] printk: legacy console [ttyAMA0] enabled
+[    0.217892] Modules: 2G module region forced by RANDOMIZE_MODULE_REGION_FULL
+[    0.218027] Modules: 0 pages in range for non-PLT usage
+[    0.218046] Modules: 509536 pages in range for PLT usage
+[    0.223204] HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
+[    0.223356] HugeTLB: 0 KiB vmemmap can be freed for a 1.00 GiB page
+[    0.223429] HugeTLB: registered 32.0 MiB page size, pre-allocated 0 pages
+[    0.223485] HugeTLB: 0 KiB vmemmap can be freed for a 32.0 MiB page
+[    0.223557] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    0.223620] HugeTLB: 0 KiB vmemmap can be freed for a 2.00 MiB page
+[    0.223960] HugeTLB: registered 64.0 KiB page size, pre-allocated 0 pages
+[    0.224074] HugeTLB: 0 KiB vmemmap can be freed for a 64.0 KiB page
+[    0.233635] ACPI: Interpreter disabled.
+[    0.235487] iommu: Default domain type: Translated
+[    0.235574] iommu: DMA domain TLB invalidation policy: strict mode
+[    0.241098] SCSI subsystem initialized
+[    0.242662] usbcore: registered new interface driver usbfs
+[    0.242840] usbcore: registered new interface driver hub
+[    0.242965] usbcore: registered new device driver usb
+[    0.243477] pps_core: LinuxPPS API ver. 1 registered
+[    0.243541] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[    0.243704] PTP clock support registered
+[    0.244553] EDAC MC: Ver: 3.0.0
+[    0.245719] scmi_core: SCMI protocol bus registered
+[    0.253042] NetLabel: Initializing
+[    0.253126] NetLabel:  domain hash size = 128
+[    0.253182] NetLabel:  protocols = UNLABELED CIPSOv4 CALIPSO
+[    0.254219] NetLabel:  unlabeled traffic allowed by default
+[    0.255299] mctp: management component transport protocol core
+[    0.255389] NET: Registered PF_MCTP protocol family
+[    0.256307] vgaarb: loaded
+[    0.258070] clocksource: Switched to clocksource arch_sys_counter
+[    0.261740] VFS: Disk quotas dquot_6.6.0
+[    0.261894] VFS: Dquot-cache hash table entries: 512 (order 0, 4096 bytes)
+[    0.265044] AppArmor: AppArmor Filesystem Enabled
+[    0.265459] pnp: PnP ACPI: disabled
+[    0.282344] NET: Registered PF_INET protocol family
+[    0.283403] IP idents hash table entries: 65536 (order: 7, 524288 bytes, linear)
+[    0.359995] tcp_listen_portaddr_hash hash table entries: 2048 (order: 3, 32768 bytes, linear)
+[    0.360515] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    0.360829] TCP established hash table entries: 32768 (order: 6, 262144 bytes, linear)
+[    0.361727] TCP bind hash table entries: 32768 (order: 8, 1048576 bytes, linear)
+[    0.362354] TCP: Hash tables configured (established 32768 bind 32768)
+[    0.363822] MPTCP token hash table entries: 4096 (order: 5, 98304 bytes, linear)
+[    0.364214] UDP hash table entries: 2048 (order: 4, 65536 bytes, linear)
+[    0.364465] UDP-Lite hash table entries: 2048 (order: 4, 65536 bytes, linear)
+[    0.365610] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    0.365931] NET: Registered PF_XDP protocol family
+[    0.366128] PCI: CLS 0 bytes, default 64
+[    0.367325] kvm [1]: HYP mode not available
+[    0.370034] Trying to unpack rootfs image as initramfs...
+[    0.370778] Initialise system trusted keyrings
+[    0.371971] Key type blacklist registered
+[    0.372759] workingset: timestamp_bits=40 max_order=20 bucket_order=0
+[    0.373147] zbud: loaded
+[    0.375532] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[    0.378788] fuse: init (API version 7.39)
+[    0.381726] integrity: Platform Keyring initialized
+[    0.382019] integrity: Machine keyring initialized
+[    0.421894] Key type asymmetric registered
+[    0.422062] Asymmetric key parser 'x509' registered
+[    0.422436] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 242)
+[    0.423410] io scheduler mq-deadline registered
+[    0.432380] pl061_gpio 9030000.pl061: PL061 GPIO chip registered
+[    0.433715] shpchp: Standard Hot Plug PCI Controller Driver version: 0.4
+[    0.435650] pci-host-generic 4010000000.pcie: host bridge /pcie@10000000 ranges:
+[    0.436136] pci-host-generic 4010000000.pcie:       IO 0x003eff0000..0x003effffff -> 0x0000000000
+[    0.436513] pci-host-generic 4010000000.pcie:      MEM 0x0010000000..0x003efeffff -> 0x0010000000
+[    0.436635] pci-host-generic 4010000000.pcie:      MEM 0x8000000000..0xffffffffff -> 0x8000000000
+[    0.437065] pci-host-generic 4010000000.pcie: Memory resource size exceeds max for 32 bits
+[    0.437463] pci-host-generic 4010000000.pcie: ECAM at [mem 0x4010000000-0x401fffffff] for [bus 00-ff]
+[    0.438436] pci-host-generic 4010000000.pcie: PCI host bridge to bus 0000:00
+[    0.438626] pci_bus 0000:00: root bus resource [bus 00-ff]
+[    0.438725] pci_bus 0000:00: root bus resource [io  0x0000-0xffff]
+[    0.438795] pci_bus 0000:00: root bus resource [mem 0x10000000-0x3efeffff]
+[    0.439060] pci_bus 0000:00: root bus resource [mem 0x8000000000-0xffffffffff]
+[    0.440209] pci 0000:00:00.0: [1b36:0008] type 00 class 0x060000 conventional PCI endpoint
+[    0.464704] Serial: 8250/16550 driver, 32 ports, IRQ sharing enabled
+[    0.478901] msm_serial: driver initialized
+[    0.479127] SuperH (H)SCI(F) driver initialized
+[    0.494576] loop: module loaded
+[    0.499196] tun: Universal TUN/TAP device driver, 1.6
+[    0.500310] PPP generic driver version 2.4.2
+[    0.502108] mousedev: PS/2 mouse device common for all mice
+[    0.503046] i2c_dev: i2c /dev entries driver
+[    0.504909] device-mapper: core: CONFIG_IMA_DISABLE_HTABLE is disabled. Duplicate IMA measurements will not be recorded in the IMA log.
+[    0.505228] device-mapper: uevent: version 1.0.3
+[    0.505734] device-mapper: ioctl: 4.48.0-ioctl (2023-03-01) initialised: dm-devel@redhat.com
+[    0.507720] ledtrig-cpu: registered to indicate activity on CPUs
+[    0.512292] hw perfevents: enabled with armv8_pmuv3 PMU driver, 7 counters available
+[    0.512905] watchdog: Delayed init of the lockup detector failed: -19
+[    0.513005] watchdog: Hard watchdog permanently disabled
+[    0.513884] drop_monitor: Initializing network drop monitor service
+[    0.514755] NET: Registered PF_INET6 protocol family
+[   14.775657] Freeing initrd memory: 564760K
+[   15.029863] Segment Routing with IPv6
+[   15.030480] In-situ OAM (IOAM) with IPv6
+[   15.031224] NET: Registered PF_PACKET protocol family
+[   15.031928] Key type dns_resolver registered
+[   15.045154] registered taskstats version 1
+[   15.048131] Loading compiled-in X.509 certificates
+[   15.055340] Loaded X.509 cert 'Build time autogenerated kernel key: f077b620820550864c99dea090c9f187de8a452a'
+[   15.056587] Loaded X.509 cert 'Canonical Ltd. Live Patch Signing 2025 Kmod: d541cef61dc7e793b7eb7e899970a2eef0b5dc8c'
+[   15.057600] Loaded X.509 cert 'Canonical Ltd. Live Patch Signing: 14df34d1a87cf37625abec039ef2bf521249b969'
+[   15.058650] Loaded X.509 cert 'Canonical Ltd. Kernel Module Signing 2025 Kmod: 4627603d2357a2a3f81006370894c221175893e9'
+[   15.059771] Loaded X.509 cert 'Canonical Ltd. Kernel Module Signing: 88f752e560a1e0737e31163a466ad7b70a850c19'
+[   15.059987] blacklist: Loading compiled-in revocation X.509 certificates
+[   15.060778] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing: 61482aa2830d0ab2ad5af10b7250da9033ddcef0'
+[   15.061035] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2017): 242ade75ac4a15e50d50c84b0d45ff3eae707a03'
+[   15.061236] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (ESM 2018): 365188c1d374d6b07c3c8f240f8ef722433d6a8b'
+[   15.061437] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2019): c0746fd6c5da3ae827864651ad66ae47fe24b3e8'
+[   15.061594] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2021 v1): a8d54bbb3825cfb94fa13c9f8a594a195c107b8d'
+[   15.061750] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2021 v2): 4cf046892d6fd3c9a5b03f98d845f90851dc6a8c'
+[   15.061930] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2021 v3): 100437bb6de6e469b581e61cd66bce3ef4ed53af'
+[   15.062202] Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (Ubuntu Core 2019): c1d57b8f6b743f23ee41f4f7ee292f06eecadfb9'
+[   15.085580] Key type .fscrypt registered
+[   15.085676] Key type fscrypt-provisioning registered
+[   15.552543] Key type encrypted registered
+[   15.552912] AppArmor: AppArmor sha256 policy hashing enabled
+[   15.553957] ima: No TPM chip found, activating TPM-bypass!
+[   15.554322] Loading compiled-in module X.509 certificates
+[   15.555829] Loaded X.509 cert 'Build time autogenerated kernel key: f077b620820550864c99dea090c9f187de8a452a'
+[   15.556227] ima: Allocated hash algorithm: sha256
+[   15.558113] ima: No architecture policies found
+[   15.558903] evm: Initialising EVM extended attributes:
+[   15.559158] evm: security.selinux
+[   15.559222] evm: security.SMACK64
+[   15.559256] evm: security.SMACK64EXEC
+[   15.559298] evm: security.SMACK64TRANSMUTE
+[   15.559382] evm: security.SMACK64MMAP
+[   15.559428] evm: security.apparmor
+[   15.559465] evm: security.ima
+[   15.559496] evm: security.capability
+[   15.559561] evm: HMAC attrs: 0x1
+[   15.613372] clk: Disabling unused clocks
+[   15.680021] Freeing unused kernel memory: 12288K
+[   15.740477] Checked W+X mappings: passed, no W+X pages found
+[   15.740982] Run /init as init process
+SKE_SYNC_BASELINE_START
+Linux (none) 6.8.0-146-generic #146-Ubuntu SMP PREEMPT_DYNAMIC Thu Sep  3 16:20:48 UTC 2026 aarch64 GNU/Linux
+[   15.955595] hid: raw HID events driver (C) Jiri Kosina
+Starting systemd-udevd version 255.4-1ubuntu8.17
+[   16.145637] dummy_hcd: loading out-of-tree module taints kernel.
+[   16.145864] dummy_hcd: module verification failed: signature and/or required key missing - tainting kernel
+[   16.150038] dummy_hcd dummy_hcd.0: USB Host+Gadget Emulator, driver 02 May 2005
+[   16.151132] dummy_hcd dummy_hcd.0: Dummy host controller
+[   16.151409] dummy_hcd dummy_hcd.0: new USB bus registered, assigned bus number 1
+[   16.154781] usb usb1: New USB device found, idVendor=1d6b, idProduct=0002, bcdDevice= 6.08
+[   16.154942] usb usb1: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[   16.155076] usb usb1: Product: Dummy host controller
+[   16.155330] usb usb1: Manufacturer: Linux 6.8.0-146-generic dummy_hcd
+[   16.155429] usb usb1: SerialNumber: dummy_hcd.0
+[   16.161496] hub 1-0:1.0: USB hub found
+[   16.162300] hub 1-0:1.0: 1 port detected
+[   16.251481] gadgetfs: USB Gadget filesystem, version 24 Aug 2004
+[   16.321136] usbcore: registered new interface driver usbhid
+[   16.321448] usbhid: USB HID core driver
+[   16.516752] file system registered
+[   21.344783] read descriptors
+[   21.345646] read strings
+[   21.574530] usb 1-1: new full-speed USB device number 2 using dummy_hcd
+[   21.727415] usb 1-1: New USB device found, idVendor=1050, idProduct=0407, bcdDevice= 5.74
+[   21.727583] usb 1-1: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[   21.727665] usb 1-1: Product: Yubico YubiKey compatible software OTP FIDO CCID
+[   21.727763] usb 1-1: Manufacturer: Local software authenticator
+[   21.727825] usb 1-1: SerialNumber: 2866223391
+[   21.769462] input: Local software authenticator Yubico YubiKey compatible software OTP FIDO CCID as /devices/platform/dummy_hcd.0/usb1/1-1/1-1:1.0/0003:1050:0407.0001/input/input0
+[   21.824215] hid-generic 0003:1050:0407.0001: input,hidraw0: USB HID v1.10 Keyboard [Local software authenticator Yubico YubiKey compatible software OTP FIDO CCID] on usb-dummy_hcd.0-1/input0
+[   21.845348] hid-generic 0003:1050:0407.0002: hiddev0,hidraw1: USB HID v1.10 Device [Local software authenticator Yubico YubiKey compatible software OTP FIDO CCID] on usb-dummy_hcd.0-1/input1
+PASS stock PCSC SDK classifies independent software ATR as USB
+PASS stock ykman combines USB interfaces into one own device
+PASS stock ykman default smartcard reader discovery
+PASS stock ykman enumerates native USB OTP keyboard interface
+PASS stock USB OTP SDK reads feature version
+PASS fresh USB OTP keeps serial API disabled until configuration
+INFO:yubikit.yubiotp:Configuration written
+PASS USB OTP and CCID serials identify the same own device
+PASS stock USB HID feature HMAC independently verified
+INFO:yubikit.yubiotp:Configuration written
+[   33.574942] hrtimer: interrupt took 3036304 ns
+PASS 128 consecutive full-length USB OTP requests independently verify without SDK retries
+INFO:yubikit.yubiotp:Configuration written
+PASS USB CCID and USB HID share programmed OTP state
+INFO:yubikit.yubiotp:Configuration written
+PASS actual USB keyboard Shift+A, b, 1, Enter events
+PASS USB keyboard releases every key and modifier
+PASS OTP uses real guest USB controller and hidraw
+SKE_USB_OTP_DIAGNOSTIC functionfs_bound controller=dummy_udc.0
+functionfs_configured endpoints=6
+
+SKE_USB_OTP_CARD_DIAGNOSTIC 
+SKE_USB_PCSC_LOG 00000000 debuglog.c:394:DebugLogSetLevel() debug level=debug
+00001239 pcscdaemon.c:346:main() using new config directory: /guest-state/usb-otp-dkuxei3a/empty-readers
+00003292 configfile.l:293:DBGetReaderListDir() Parsing conf directory: /guest-state/usb-otp-dkuxei3a/empty-readers
+00001239 configfile.l:329:DBGetReaderListDir() Skipping non regular file: .
+00000100 configfile.l:329:DBGetReaderListDir() Skipping non regular file: ..
+00000422 pcscdaemon.c:671:main() pcsc-lite 2.0.3 daemon ready.
+00001291 pcscdaemon.c:754:main() Using drivers directory: /usr/lib/pcsc/drivers
+00070234 hotplug_libudev.c:298:get_driver() Looking for a driver for VID: 0x1D6B, PID: 0x0002, path: /dev/bus/usb/001/001
+00004533 hotplug_libudev.c:298:get_driver() Looking for a driver for VID: 0x1D6B, PID: 0x0002, path: /dev/bus/usb/001/001
+00004456 hotplug_libudev.c:298:get_driver() Looking for a driver for VID: 0x1050, PID: 0x0407, path: /dev/bus/usb/001/002
+00000232 hotplug_libudev.c:419:HPAddDevice() Adding USB device: Yubico YubiKey OTP+FIDO+CCID
+00001553 readerfactory.c:1094:RFInitializeReader() Attempting startup of Yubico YubiKey OTP+FIDO+CCID (2866223391) 00 00 using /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so
+00004730 readerfactory.c:968:RFBindFunctions() Loading IFD Handler 3.0
+00000420 ifdhandler.c:2088:init_driver() Driver version: 1.5.5
+00004066 ifdhandler.c:2110:init_driver() LogLevel: 0x0003
+00000146 ifdhandler.c:2121:init_driver() DriverOptions: 0x0000
+00001155 ifdhandler.c:111:CreateChannelByNameOrChannel() Lun: 0, device: usb:1050/0407:libudev:0:/dev/bus/usb/001/002
+00000933 ccid_usb.c:331:OpenUSBByName() Using: /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Info.plist
+00002803 ccid_usb.c:349:OpenUSBByName() ifdManufacturerString: Ludovic Rousseau (ludovic.rousseau@free.fr)
+00000221 ccid_usb.c:350:OpenUSBByName() ifdProductString: Generic CCID driver
+00000085 ccid_usb.c:351:OpenUSBByName() Copyright: This driver is protected by terms of the GNU Lesser General Public License version 2.1, or (at your option) any later version.
+00053148 ccid_usb.c:724:OpenUSBByName() Found interface 2 but expecting 0
+00000129 ccid_usb.c:726:OpenUSBByName() Wrong interface for USB device 1/2. Checking next one.
+00001902 ccid_usb.c:208:close_libusb_if_needed() libusb_exit
+00002062 ccid_usb.c:892:OpenUSBByName() Device not found?
+00000112 ifdhandler.c:156:CreateChannelByNameOrChannel() failed
+00000123 readerfactory.c:1135:RFInitializeReader() Open Port 0x200000 Failed (usb:1050/0407:libudev:0:/dev/bus/usb/001/002)
+00000214 readerfactory.c:374:RFAddReader() Yubico YubiKey OTP+FIDO+CCID (2866223391) init failed.
+00000129 readerfactory.c:624:RFRemoveReader() UnrefReader() count was: 1
+00000098 readerfactory.c:1148:RFUnInitializeReader() Attempting shutdown of Yubico YubiKey OTP+FIDO+CCID (2866223391) 00 00.
+00000079 readerfactory.c:1005:RFUnloadReader() Unloading reader driver.
+00006632 hotplug_libudev.c:298:get_driver() Looking for a driver for VID: 0x1050, PID: 0x0407, path: /dev/bus/usb/001/002
+00000128 hotplug_libudev.c:419:HPAddDevice() Adding USB device: Yubico YubiKey OTP+FIDO+CCID
+00001555 readerfactory.c:1094:RFInitializeReader() Attempting startup of Yubico YubiKey OTP+FIDO+CCID (2866223391) 00 00 using /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so
+00002845 readerfactory.c:968:RFBindFunctions() Loading IFD Handler 3.0
+00000187 ifdhandler.c:2088:init_driver() Driver version: 1.5.5
+00002906 ifdhandler.c:2110:init_driver() LogLevel: 0x0003
+00000125 ifdhandler.c:2121:init_driver() DriverOptions: 0x0000
+00001147 ifdhandler.c:111:CreateChannelByNameOrChannel() Lun: 0, device: usb:1050/0407:libudev:1:/dev/bus/usb/001/002
+00000124 ccid_usb.c:331:OpenUSBByName() Using: /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Info.plist
+00003107 ccid_usb.c:349:OpenUSBByName() ifdManufacturerString: Ludovic Rousseau (ludovic.rousseau@free.fr)
+00000155 ccid_usb.c:350:OpenUSBByName() ifdProductString: Generic CCID driver
+00000063 ccid_usb.c:351:OpenUSBByName() Copyright: This driver is protected by terms of the GNU Lesser General Public License version 2.1, or (at your option) any later version.
+00045741 ccid_usb.c:724:OpenUSBByName() Found interface 2 but expecting 1
+00000127 ccid_usb.c:726:OpenUSBByName() Wrong interface for USB device 1/2. Checking next one.
+00002542 ccid_usb.c:208:close_libusb_if_needed() libusb_exit
+00001390 ccid_usb.c:892:OpenUSBByName() Device not found?
+00000182 ifdhandler.c:156:CreateChannelByNameOrChannel() failed
+00000072 readerfactory.c:1135:RFInitializeReader() Open Port 0x200000 Failed (usb:1050/0407:libudev:1:/dev/bus/usb/001/002)
+00000070 readerfactory.c:374:RFAddReader() Yubico YubiKey OTP+FIDO+CCID (2866223391) init failed.
+00000072 readerfactory.c:624:RFRemoveReader() UnrefReader() count was: 1
+00000110 readerfactory.c:1148:RFUnInitializeReader() Attempting shutdown of Yubico YubiKey OTP+FIDO+CCID (2866223391) 00 00.
+00000068 readerfactory.c:1005:RFUnloadReader() Unloading reader driver.
+00005822 hotplug_libudev.c:298:get_driver() Looking for a driver for VID: 0x1050, PID: 0x0407, path: /dev/bus/usb/001/002
+00000101 hotplug_libudev.c:419:HPAddDevice() Adding USB device: Yubico YubiKey OTP+FIDO+CCID
+00001076 readerfactory.c:1094:RFInitializeReader() Attempting startup of Yubico YubiKey OTP+FIDO+CCID (2866223391) 00 00 using /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so
+00002483 readerfactory.c:968:RFBindFunctions() Loading IFD Handler 3.0
+00000154 ifdhandler.c:2088:init_driver() Driver version: 1.5.5
+00003156 ifdhandler.c:2110:init_driver() LogLevel: 0x0003
+00000133 ifdhandler.c:2121:init_driver() DriverOptions: 0x0000
+00000918 ifdhandler.c:111:CreateChannelByNameOrChannel() Lun: 0, device: usb:1050/0407:libudev:2:/dev/bus/usb/001/002
+00000101 ccid_usb.c:331:OpenUSBByName() Using: /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Info.plist
+00002900 ccid_usb.c:349:OpenUSBByName() ifdManufacturerString: Ludovic Rousseau (ludovic.rousseau@free.fr)
+00000076 ccid_usb.c:350:OpenUSBByName() ifdProductString: Generic CCID driver
+00000061 ccid_usb.c:351:OpenUSBByName() Copyright: This driver is protected by terms of the GNU Lesser General Public License version 2.1, or (at your option) any later version.
+00044701 ccid_usb.c:747:OpenUSBByName() Found Vendor/Product: 1050/0407 (Yubico YubiKey OTP+FIDO+CCID)
+00000121 ccid_usb.c:749:OpenUSBByName() Using USB bus/device: 1/2
+00000156 ccid_usb.c:814:OpenUSBByName() bNumDataRatesSupported is 0
+00028024 ifdhandler.c:389:IFDHGetCapabilities() tag: 0xFB3, usb:1050/0407:libudev:2:/dev/bus/usb/001/002 (lun: 0)
+00000177 readerfactory.c:394:RFAddReader() Using the reader polling thread
+00009056 ifdhandler.c:389:IFDHGetCapabilities() tag: 0xFAE, usb:1050/0407:libudev:2:/dev/bus/usb/001/002 (lun: 0)
+00000186 ifdhandler.c:473:IFDHGetCapabilities() Reader supports 1 slot(s)
+00000767 readerfactory.c:1437:RFWaitForReaderInit() Waiting init for reader: Yubico YubiKey OTP+FIDO+CCID (2866223391) 00 00
+00010418 readerfactory.c:1437:RFWaitForReaderInit() Waiting init for reader: Yubico YubiKey OTP+FIDO+CCID (2866223391) 00 00
+00010336 readerfactory.c:1437:RFWaitForReaderInit() Waiting init for reader: Yubico YubiKey OTP+FIDO+CCID (2866223391) 00 00
+00000848 ifdhandler.c:1232:IFDHPowerICC() action: PowerUp, usb:1050/0407:libudev:2:/dev/bus/usb/001/002 (lun: 0)
+00008205 eventhandler.c:289:EHStatusHandlerThread() powerState: POWER_STATE_POWERED
+00000181 Card ATR: 3B F0 11 00 00 01 E0 
+00001517 winscard_msg_srv.c:256:ProcessEventsServer() Common channel packet arrival
+00000283 winscard_msg_srv.c:267:ProcessEventsServer() ProcessCommonChannelRequest detects: 12
+00000070 pcscdaemon.c:132:SVCServiceRunLoop() A new context thread creation is requested: 12
+00001439 winscard_svc.c:360:ContextThread() Authorized PC/SC client
+00000133 winscard_svc.c:363:ContextThread() Thread is started: dwClientID=12, threadContext @0xc6aa00a3a900
+00000221 winscard_svc.c:381:ContextThread() Received command: CMD_VERSION from client 12
+00000170 winscard_svc.c:393:ContextThread() Client is protocol version 4:4
+00000117 winscard_svc.c:416:ContextThread() CMD_VERSION for client 12, rv=SCARD_S_SUCCESS
+00001539 winscard_svc.c:381:ContextThread() Received command: ESTABLISH_CONTEXT from client 12
+00000364 winscard.c:210:SCardEstablishContext() Establishing Context: 0x1CC0507B
+00000075 winscard_svc.c:485:ContextThread() ESTABLISH_CONTEXT for client 12, rv=SCARD_S_SUCCESS
+00002076 winscard_svc.c:381:ContextThread() Received command: CMD_GET_READERS_STATE from client 12
+00000953 winscard_svc.c:381:ContextThread() Received command: RELEASE_CONTEXT from client 12
+00000174 winscard.c:224:SCardReleaseContext() Releasing Context: 0x1CC0507B
+00000193 winscard_svc.c:500:ContextThread() RELEASE_CONTEXT for client 12, rv=SCARD_S_SUCCESS
+00001053 winscard_svc.c:374:ContextThread() Client die: 12
+00000602 winscard_svc.c:1096:MSGCleanupClient() Thread is stopping: dwClientID=12, threadContext @0xc6aa00a3a900
+00000081 winscard_svc.c:1104:MSGCleanupClient() Freeing SCONTEXT @0xc6aa00a3a900
+00000488 winscard_msg_srv.c:256:ProcessEventsServer() Common channel packet arrival
+00000231 winscard_msg_srv.c:267:ProcessEventsServer() ProcessCommonChannelRequest detects: 13
+00000060 pcscdaemon.c:132:SVCServiceRunLoop() A new context thread creation is requested: 13
+00002822 winscard_svc.c:360:ContextThread() Authorized PC/SC client
+00000111 winscard_svc.c:363:ContextThread() Thread is started: dwClientID=13, threadContext @0xc6aa009e15e0
+00000185 winscard_svc.c:381:ContextThread() Received command: CMD_VERSION from client 13
+00000269 winscard_svc.c:393:ContextThread() Client is protocol version 4:4
+00000071 winscard_svc.c:416:ContextThread() CMD_VERSION for client 13, rv=SCARD_S_SUCCESS
+00000624 winscard_svc.c:381:ContextThread() Received command: ESTABLISH_CONTEXT from client 13
+00000562 winscard.c:210:SCardEstablishContext() Establishing Context: 0x2D0E8B86
+00000069 winscard_svc.c:485:ContextThread() ESTABLISH_CONTEXT for client 13, rv=SCARD_S_SUCCESS
+00001201 winscard_svc.c:381:ContextThread() Received command: CONNECT from client 13
+00000428 winscard_svc.c:526:ContextThread() Authorized client for 'Yubico YubiKey OTP+FIDO+CCID (2866223391) 00 00'
+00000252 winscard.c:253:SCardConnect() Attempting Connect to Yubico YubiKey OTP+FIDO+CCID (2866223391) 00 00 using protocol: 3
+00000104 readerfactory.c:835:RFReaderInfo() RefReader() count was: 1
+00000105 winscard.c:347:SCardConnect() powerState: POWER_STATE_IN_USE
+00000196 prothandler.c:108:PHSetProtocol() Attempting PTS to T=1
+00000104 ifdhandler.c:729:IFDHSetProtocolParameters() protocol T=1, usb:1050/0407:libudev:2:/dev/bus/usb/001/002 (lun: 0)
+00000702 winscard.c:428:SCardConnect() Active Protocol: T=1
+00000193 winscard.c:454:SCardConnect() hCard Identity: 3462bbd
+00000165 winscard.c:516:SCardConnect() UnrefReader() count was: 2
+00000292 winscard_svc.c:546:ContextThread() CONNECT for client 13, rv=SCARD_S_SUCCESS
+00001333 winscard_svc.c:381:ContextThread() Received command: CMD_GET_READERS_STATE from client 13
+00000760 winscard_svc.c:381:ContextThread() Received command: STATUS from client 13
+00000262 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000127 winscard.c:1302:SCardStatus() UnrefReader() count was: 2
+00000081 winscard_svc.c:667:ContextThread() STATUS for client 13, rv=SCARD_S_SUCCESS
+00001111 winscard_svc.c:381:ContextThread() Received command: CMD_GET_READERS_STATE from client 13
+00000721 winscard_svc.c:381:ContextThread() Received command: STATUS from client 13
+00000163 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000064 winscard.c:1302:SCardStatus() UnrefReader() count was: 2
+00000060 winscard_svc.c:667:ContextThread() STATUS for client 13, rv=SCARD_S_SUCCESS
+00004619 winscard_svc.c:381:ContextThread() Received command: DISCONNECT from client 13
+00000638 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000224 winscard.c:883:SCardDisconnect() Active Contexts: 1
+00000077 winscard.c:884:SCardDisconnect() dwDisposition: 2
+00007450 ifdhandler.c:1232:IFDHPowerICC() action: PowerDown, usb:1050/0407:libudev:2:/dev/bus/usb/001/002 (lun: 0)
+00009922 winscard.c:906:SCardDisconnect() powerState: POWER_STATE_UNPOWERED
+00000176 ifdhandler.c:389:IFDHGetCapabilities() tag: 0xFB2, usb:1050/0407:libudev:2:/dev/bus/usb/001/002 (lun: 0)
+00000174 winscard.c:1032:SCardDisconnect() Stopping polling thread
+00000213 ifdhandler.c:354:IFDHStopPolling() usb:1050/0407:libudev:2:/dev/bus/usb/001/002 (lun: 0)
+00001217 winscard.c:1045:SCardDisconnect() UnrefReader() count was: 2
+00000124 winscard_svc.c:583:ContextThread() DISCONNECT for client 13, rv=SCARD_S_SUCCESS
+00001271 winscard_svc.c:381:ContextThread() Received command: RELEASE_CONTEXT from client 13
+00000158 winscard.c:224:SCardReleaseContext() Releasing Context: 0x2D0E8B86
+00000159 winscard_svc.c:500:ContextThread() RELEASE_CONTEXT for client 13, rv=SCARD_S_SUCCESS
+00000541 winscard_svc.c:374:ContextThread() Client die: 13
+00000214 winscard_svc.c:1096:MSGCleanupClient() Thread is stopping: dwClientID=13, threadContext @0xc6aa009e15e0
+00000066 winscard_svc.c:1104:MSGCleanupClient() Freeing SCONTEXT @0xc6aa009e15e0
+00000880 winscard_msg_srv.c:256:ProcessEventsServer() Common channel packet arrival
+00000315 winscard_msg_srv.c:267:ProcessEventsServer() ProcessCommonChannelRequest detects: 12
+00000084 pcscdaemon.c:132:SVCServiceRunLoop() A new context thread creation is requested: 12
+00000624 winscard_svc.c:360:ContextThread() Authorized PC/SC client
+00000067 winscard_svc.c:363:ContextThread() Thread is started: dwClientID=12, threadContext @0xc6aa00a3a900
+00000296 winscard_svc.c:381:ContextThread() Received command: CMD_VERSION from client 12
+00000166 winscard_svc.c:393:ContextThread() Client is protocol version 4:4
+00000057 winscard_svc.c:416:ContextThread() CMD_VERSION for client 12, rv=SCARD_S_SUCCESS
+00000546 winscard_svc.c:381:ContextThread() Received command: ESTABLISH_CONTEXT from client 12
+00000293 winscard.c:210:SCardEstablishContext() Establishing Context: 0x495BCE25
+00000068 winscard_svc.c:485:ContextThread() ESTABLISH_CONTEXT for client 12, rv=SCARD_S_SUCCESS
+00000745 winscard_svc.c:381:ContextThread() Received command: CMD_GET_READERS_STATE from client 12
+00000583 winscard_svc.c:381:ContextThread() Received command: RELEASE_CONTEXT from client 12
+00000141 winscard.c:224:SCardReleaseContext() Releasing Context: 0x495BCE25
+00000058 winscard_svc.c:500:ContextThread() RELEASE_CONTEXT for client 12, rv=SCARD_S_SUCCESS
+00000565 winscard_svc.c:374:ContextThread() Client die: 12
+00000156 winscard_svc.c:1096:MSGCleanupClient() Thread is stopping: dwClientID=12, threadContext @0xc6aa00a3a900
+00000065 winscard_svc.c:1104:MSGCleanupClient() Freeing SCONTEXT @0xc6aa00a3a900
+00001489 winscard_msg_srv.c:256:ProcessEventsServer() Common channel packet arrival
+00000164 winscard_msg_srv.c:267:ProcessEventsServer() ProcessCommonChannelRequest detects: 12
+00000058 pcscdaemon.c:132:SVCServiceRunLoop() A new context thread creation is requested: 12
+00000532 winscard_svc.c:360:ContextThread() Authorized PC/SC client
+00000070 winscard_svc.c:363:ContextThread() Thread is started: dwClientID=12, threadContext @0xc6aa009e15e0
+00000227 winscard_svc.c:381:ContextThread() Received command: CMD_VERSION from client 12
+00000149 winscard_svc.c:393:ContextThread() Client is protocol version 4:4
+00000058 winscard_svc.c:416:ContextThread() CMD_VERSION for client 12, rv=SCARD_S_SUCCESS
+00000571 winscard_svc.c:381:ContextThread() Received command: ESTABLISH_CONTEXT from client 12
+00000294 winscard.c:210:SCardEstablishContext() Establishing Context: 0x7E167012
+00000067 winscard_svc.c:485:ContextThread() ESTABLISH_CONTEXT for client 12, rv=SCARD_S_SUCCESS
+00001070 winscard_svc.c:381:ContextThread() Received command: CONNECT from client 12
+00000164 winscard_svc.c:526:ContextThread() Authorized client for 'Yubico YubiKey OTP+FIDO+CCID (2866223391) 00 00'
+00000063 winscard.c:253:SCardConnect() Attempting Connect to Yubico YubiKey OTP+FIDO+CCID (2866223391) 00 00 using protocol: 3
+00000059 readerfactory.c:835:RFReaderInfo() RefReader() count was: 1
+00006839 ifdhandler.c:1232:IFDHPowerICC() action: PowerUp, usb:1050/0407:libudev:2:/dev/bus/usb/001/002 (lun: 0)
+00005824 winscard.c:327:SCardConnect() power up complete.
+00000098 Card ATR: 3B F0 11 00 00 01 E0 
+00000060 winscard.c:347:SCardConnect() powerState: POWER_STATE_IN_USE
+00000143 prothandler.c:108:PHSetProtocol() Attempting PTS to T=1
+00000067 ifdhandler.c:729:IFDHSetProtocolParameters() protocol T=1, usb:1050/0407:libudev:2:/dev/bus/usb/001/002 (lun: 0)
+00000135 winscard.c:428:SCardConnect() Active Protocol: T=1
+00000098 winscard.c:454:SCardConnect() hCard Identity: 3ae70e8a
+00000149 winscard.c:516:SCardConnect() UnrefReader() count was: 2
+00000071 winscard_svc.c:546:ContextThread() CONNECT for client 12, rv=SCARD_S_SUCCESS
+00001112 winscard_svc.c:381:ContextThread() Received command: DISCONNECT from client 12
+00000161 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000060 winscard.c:883:SCardDisconnect() Active Contexts: 1
+00000056 winscard.c:884:SCardDisconnect() dwDisposition: 0
+00000074 winscard.c:1019:SCardDisconnect() powerState: POWER_STATE_GRACE_PERIOD
+00000062 ifdhandler.c:389:IFDHGetCapabilities() tag: 0xFB2, usb:1050/0407:libudev:2:/dev/bus/usb/001/002 (lun: 0)
+00000057 winscard.c:1032:SCardDisconnect() Stopping polling thread
+00000057 ifdhandler.c:354:IFDHStopPolling() usb:1050/0407:libudev:2:/dev/bus/usb/001/002 (lun: 0)
+00000061 winscard.c:1045:SCardDisconnect() UnrefReader() count was: 2
+00000066 winscard_svc.c:583:ContextThread() DISCONNECT for client 12, rv=SCARD_S_SUCCESS
+00000766 winscard_svc.c:381:ContextThread() Received command: CONNECT from client 12
+00000166 winscard_svc.c:526:ContextThread() Authorized client for 'Yubico YubiKey OTP+FIDO+CCID (2866223391) 00 00'
+00000205 winscard.c:253:SCardConnect() Attempting Connect to Yubico YubiKey OTP+FIDO+CCID (2866223391) 00 00 using protocol: 2
+00000077 readerfactory.c:835:RFReaderInfo() RefReader() count was: 1
+00000059 winscard.c:347:SCardConnect() powerState: POWER_STATE_IN_USE
+00000079 winscard.c:428:SCardConnect() Active Protocol: T=1
+00000097 winscard.c:454:SCardConnect() hCard Identity: 1c3dfb02
+00000100 winscard.c:516:SCardConnect() UnrefReader() count was: 2
+00000066 winscard_svc.c:546:ContextThread() CONNECT for client 12, rv=SCARD_S_SUCCESS
+00000837 winscard_svc.c:381:ContextThread() Received command: CMD_GET_READERS_STATE from client 12
+00000675 winscard_svc.c:381:ContextThread() Received command: STATUS from client 12
+00000155 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000067 winscard.c:1302:SCardStatus() UnrefReader() count was: 2
+00000091 winscard_svc.c:667:ContextThread() STATUS for client 12, rv=SCARD_S_SUCCESS
+00002287 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 12
+00000434 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000119 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000123 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/002 (lun: 0)
+00013456 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000128 winscard_svc.c:719:ContextThread() TRANSMIT for client 12, rv=SCARD_S_SUCCESS
+00002467 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 12
+00000310 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000069 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000069 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/002 (lun: 0)
+00015611 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000110 winscard_svc.c:719:ContextThread() TRANSMIT for client 12, rv=SCARD_S_SUCCESS
+00001992 winscard_svc.c:381:ContextThread() Received command: DISCONNECT from client 12
+00000186 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000109 winscard.c:883:SCardDisconnect() Active Contexts: -1
+00000058 winscard.c:884:SCardDisconnect() dwDisposition: 2
+00005388 ifdhandler.c:1232:IFDHPowerICC() action: PowerDown, usb:1050/0407:libudev:2:/dev/bus/usb/001/002 (lun: 0)
+00006211 winscard.c:906:SCardDisconnect() powerState: POWER_STATE_UNPOWERED
+00000132 ifdhandler.c:389:IFDHGetCapabilities() tag: 0xFB2, usb:1050/0407:libudev:2:/dev/bus/usb/001/002 (lun: 0)
+00000060 winscard.c:1032:SCardDisconnect() Stopping polling thread
+00000057 ifdhandler.c:354:IFDHStopPolling() usb:1050/0407:libudev:2:/dev/bus/usb/001/002 (lun: 0)
+00000152 winscard.c:1045:SCardDisconnect() UnrefReader() count was: 2
+00000138 winscard_svc.c:583:ContextThread() DISCONNECT for client 12, rv=SCARD_S_SUCCESS
+00000784 winscard_svc.c:381:ContextThread() Received command: RELEASE_CONTEXT from client 12
+00000214 winscard.c:224:SCardReleaseContext() Releasing Context: 0x7E167012
+00000066 winscard_svc.c:500:ContextThread() RELEASE_CONTEXT for client 12, rv=SCARD_S_SUCCESS
+00000921 winscard_svc.c:374:ContextThread() Client die: 12
+00000212 winscard_svc.c:1096:MSGCleanupClient() Thread is stopping: dwClientID=12, threadContext @0xc6aa009e15e0
+00000074 winscard_svc.c:1104:MSGCleanupClient() Freeing SCONTEXT @0xc6aa009e15e0
+00026677 winscard_msg_srv.c:256:ProcessEventsServer() Common channel packet arrival
+00000243 winscard_msg_srv.c:267:ProcessEventsServer() ProcessCommonChannelRequest detects: 12
+00000067 pcscdaemon.c:132:SVCServiceRunLoop() A new context thread creation is requested: 12
+00000773 winscard_svc.c:360:ContextThread() Authorized PC/SC client
+00000071 winscard_svc.c:363:ContextThread() Thread is started: dwClientID=12, threadContext @0xc6aa00a3a900
+00000172 winscard_svc.c:381:ContextThread() Received command: CMD_VERSION from client 12
+00000144 winscard_svc.c:393:ContextThread() Client is protocol version 4:4
+00000059 winscard_svc.c:416:ContextThread() CMD_VERSION for client 12, rv=SCARD_S_SUCCESS
+00000785 winscard_svc.c:381:ContextThread() Received command: ESTABLISH_CONTEXT from client 12
+00000203 winscard.c:210:SCardEstablishContext() Establishing Context: 0x7AF7A029
+00000059 winscard_svc.c:485:ContextThread() ESTABLISH_CONTEXT for client 12, rv=SCARD_S_SUCCESS
+00000761 winscard_svc.c:381:ContextThread() Received command: CMD_GET_READERS_STATE from client 12
+00000640 winscard_svc.c:381:ContextThread() Received command: RELEASE_CONTEXT from client 12
+00000271 winscard.c:224:SCardReleaseContext() Releasing Context: 0x7AF7A029
+00000077 winscard_svc.c:500:ContextThread() RELEASE_CONTEXT for client 12, rv=SCARD_S_SUCCESS
+00000620 winscard_svc.c:374:ContextThread() Client die: 12
+00000173 winscard_svc.c:1096:MSGCleanupClient() Thread is stopping: dwClientID=12, threadContext @0xc6aa00a3a900
+00000063 winscard_svc.c:1104:MSGCleanupClient() Freeing SCONTEXT @0xc6aa00a3a900
+00001215 winscard_msg_srv.c:256:ProcessEventsServer() Common channel packet arrival
+00000180 winscard_msg_srv.c:267:ProcessEventsServer() ProcessCommonChannelRequest detects: 12
+00000061 pcscdaemon.c:132:SVCServiceRunLoop() A new context thread creation is requested: 12
+00000647 winscard_svc.c:360:ContextThread() Authorized PC/SC client
+00000077 winscard_svc.c:363:ContextThread() Thread is started: dwClientID=12, threadContext @0xc6aa009e15e0
+00000169 winscard_svc.c:381:ContextThread() Received command: CMD_VERSION from client 12
+00000174 winscard_svc.c:393:ContextThread() Client is protocol version 4:4
+00000060 winscard_svc.c:416:ContextThread() CMD_VERSION for client 12, rv=SCARD_S_SUCCESS
+00000641 winscard_svc.c:381:ContextThread() Received command: ESTABLISH_CONTEXT from client 12
+00000410 winscard.c:210:SCardEstablishContext() Establishing Context: 0x52860CB
+00000064 winscard_svc.c:485:ContextThread() ESTABLISH_CONTEXT for client 12, rv=SCARD_S_SUCCESS
+00000735 winscard_svc.c:381:ContextThread() Received command: CMD_GET_READERS_STATE from client 12
+00000744 winscard_svc.c:381:ContextThread() Received command: RELEASE_CONTEXT from client 12
+00000436 winscard.c:224:SCardReleaseContext() Releasing Context: 0x52860CB
+00000079 winscard_svc.c:500:ContextThread() RELEASE_CONTEXT for client 12, rv=SCARD_S_SUCCESS
+00001173 winscard_msg_srv.c:256:ProcessEventsServer() Common channel packet arrival
+00000156 winscard_msg_srv.c:267:ProcessEventsServer() ProcessCommonChannelRequest detects: 13
+00000058 pcscdaemon.c:132:SVCServiceRunLoop() A new context thread creation is requested: 13
+00000044 winscard_svc.c:374:ContextThread() Client die: 12
+00000223 winscard_svc.c:1096:MSGCleanupClient() Thread is stopping: dwClientID=12, threadContext @0xc6aa009e15e0
+00000138 winscard_svc.c:1104:MSGCleanupClient() Freeing SCONTEXT @0xc6aa009e15e0
+00000208 winscard_svc.c:360:ContextThread() Authorized PC/SC client
+00000197 winscard_svc.c:363:ContextThread() Thread is started: dwClientID=13, threadContext @0xc6aa00a3a900
+00000169 winscard_svc.c:381:ContextThread() Received command: CMD_VERSION from client 13
+00000146 winscard_svc.c:393:ContextThread() Client is protocol version 4:4
+00000059 winscard_svc.c:416:ContextThread() CMD_VERSION for client 13, rv=SCARD_S_SUCCESS
+00000764 winscard_svc.c:381:ContextThread() Received command: ESTABLISH_CONTEXT from client 13
+00000190 winscard.c:210:SCardEstablishContext() Establishing Context: 0x4D5EE916
+00000060 winscard_svc.c:485:ContextThread() ESTABLISH_CONTEXT for client 13, rv=SCARD_S_SUCCESS
+00000888 winscard_svc.c:381:ContextThread() Received command: CONNECT from client 13
+00000153 winscard_svc.c:526:ContextThread() Authorized client for 'Yubico YubiKey OTP+FIDO+CCID (2866223391) 00 00'
+00000059 winscard.c:253:SCardConnect() Attempting Connect to Yubico YubiKey OTP+FIDO+CCID (2866223391) 00 00 using protocol: 3
+00000060 readerfactory.c:835:RFReaderInfo() RefReader() count was: 1
+00007871 ifdhandler.c:1232:IFDHPowerICC() action: PowerUp, usb:1050/0407:libudev:2:/dev/bus/usb/001/002 (lun: 0)
+00005887 winscard.c:327:SCardConnect() power up complete.
+00000092 Card ATR: 3B F0 11 00 00 01 E0 
+00000058 winscard.c:347:SCardConnect() powerState: POWER_STATE_IN_USE
+00000060 prothandler.c:108:PHSetProtocol() Attempting PTS to T=1
+00000058 ifdhandler.c:729:IFDHSetProtocolParameters() protocol T=1, usb:1050/0407:libudev:2:/dev/bus/usb/001/002 (lun: 0)
+00000150 winscard.c:428:SCardConnect() Active Protocol: T=1
+00000096 winscard.c:454:SCardConnect() hCard Identity: 35d2145b
+00000067 winscard.c:516:SCardConnect() UnrefReader() count was: 2
+00000069 winscard_svc.c:546:ContextThread() CONNECT for client 13, rv=SCARD_S_SUCCESS
+00000753 winscard_svc.c:381:ContextThread() Received command: CMD_GET_READERS_STATE from client 13
+00000694 winscard_svc.c:381:ContextThread() Received command: STATUS from client 13
+00000166 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000068 winscard.c:1302:SCardStatus() UnrefReader() count was: 2
+00000059 winscard_svc.c:667:ContextThread() STATUS for client 13, rv=SCARD_S_SUCCESS
+34774486 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000612 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000131 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000119 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/002 (lun: 0)
+00047286 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000270 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00006589 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000447 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000098 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000098 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/002 (lun: 0)
+00023524 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000235 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00377138 winscard_svc.c:381:ContextThread() Received command: DISCONNECT from client 13
+00000578 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000098 winscard.c:883:SCardDisconnect() Active Contexts: 1
+00000112 winscard.c:884:SCardDisconnect() dwDisposition: 2
+00011863 ifdhandler.c:1232:IFDHPowerICC() action: PowerDown, usb:1050/0407:libudev:2:/dev/bus/usb/001/002 (lun: 0)
+00016828 winscard.c:906:SCardDisconnect() powerState: POWER_STATE_UNPOWERED
+00000161 ifdhandler.c:389:IFDHGetCapabilities() tag: 0xFB2, usb:1050/0407:libudev:2:/dev/bus/usb/001/002 (lun: 0)
+00000072 winscard.c:1032:SCardDisconnect() Stopping polling thread
+00000065 ifdhandler.c:354:IFDHStopPolling() usb:1050/0407:libudev:2:/dev/bus/usb/001/002 (lun: 0)
+00001037 winscard.c:1045:SCardDisconnect() UnrefReader() count was: 2
+00000254 winscard_svc.c:583:ContextThread() DISCONNECT for client 13, rv=SCARD_S_SUCCESS
+00001955 winscard_svc.c:381:ContextThread() Received command: RELEASE_CONTEXT from client 13
+00000577 winscard.c:224:SCardReleaseContext() Releasing Context: 0x4D5EE916
+00000095 winscard_svc.c:500:ContextThread() RELEASE_CONTEXT for client 13, rv=SCARD_S_SUCCESS
+00002535 winscard_svc.c:374:ContextThread() Client die: 13
+00000631 winscard_svc.c:1096:MSGCleanupClient() Thread is stopping: dwClientID=13, threadContext @0xc6aa00a3a900
+00000133 winscard_svc.c:1104:MSGCleanupClient() Freeing SCONTEXT @0xc6aa00a3a900
+00002716 pcscdaemon.c:192:signal_thread() Received signal: 15
+00000127 pcscdaemon.c:212:signal_thread() Direct suicide
+00000105 pcscdaemon.c:809:at_exit() cleaning /run/pcscd
+
+[   58.232838] usb 1-1: USB disconnect, device number 2
+PASS USB composite teardown removes HID and evdev devices
+[   62.164007] read descriptors
+[   62.164520] read strings
+[   62.391262] usb 1-1: new full-speed USB device number 3 using dummy_hcd
+[   62.666142] usb 1-1: New USB device found, idVendor=1050, idProduct=0407, bcdDevice= 5.74
+[   62.666319] usb 1-1: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[   62.666381] usb 1-1: Product: Yubico YubiKey compatible software OTP FIDO CCID
+[   62.666441] usb 1-1: Manufacturer: Local software authenticator
+[   62.666489] usb 1-1: SerialNumber: 188559874
+[   62.817902] input: Local software authenticator Yubico YubiKey compatible software OTP FIDO CCID as /devices/platform/dummy_hcd.0/usb1/1-1/1-1:1.0/0003:1050:0407.0003/input/input1
+[   62.873547] hid-generic 0003:1050:0407.0003: input,hidraw0: USB HID v1.10 Keyboard [Local software authenticator Yubico YubiKey compatible software OTP FIDO CCID] on usb-dummy_hcd.0-1/input0
+[   62.892130] hid-generic 0003:1050:0407.0004: hiddev0,hidraw1: USB HID v1.10 Device [Local software authenticator Yubico YubiKey compatible software OTP FIDO CCID] on usb-dummy_hcd.0-1/input1
+PASS real pcscd enumerates exactly the own software reader
+PASS stock PCSC connection negotiates T=1
+PASS stock management SDK over real PCSC resource manager
+PASS stock PIV SDK over native Linux IFD
+PASS native PCSC rejects unauthenticated key generation
+INFO:yubikit.piv:Private key generated in slot 9A (AUTHENTICATION) of type ECCP256
+PASS native PCSC PIV signature independently verifies
+INFO:yubikit.piv:Data written to object slot 0x5fff05
+PASS native PCSC long APDU command/response round trip
+INFO:yubikit.oath:Credential imported
+PASS stock OATH SDK over native PCSC
+PASS stock OpenPGP SDK over native PCSC
+INFO:yubikit.core.smartcard:SCP initialized
+PASS native PCSC SCP03 encrypted signature and SDK response MAC
+INFO:yubikit.piv:Data written to object slot 0x5fff05
+PASS native PCSC encrypted long command/response chaining
+PASS native PCSC encrypted session rejects plaintext downgrade
+SKE_USB_PCSC_LOG 00000000 debuglog.c:394:DebugLogSetLevel() debug level=debug
+00003694 pcscdaemon.c:346:main() using new config directory: /guest-state/pcsc-pcbjnybd/empty-readers
+00013881 configfile.l:293:DBGetReaderListDir() Parsing conf directory: /guest-state/pcsc-pcbjnybd/empty-readers
+00000619 configfile.l:329:DBGetReaderListDir() Skipping non regular file: .
+00000552 configfile.l:329:DBGetReaderListDir() Skipping non regular file: ..
+00001043 pcscdaemon.c:671:main() pcsc-lite 2.0.3 daemon ready.
+00003157 pcscdaemon.c:754:main() Using drivers directory: /usr/lib/pcsc/drivers
+00142598 hotplug_libudev.c:298:get_driver() Looking for a driver for VID: 0x1D6B, PID: 0x0002, path: /dev/bus/usb/001/001
+00008351 hotplug_libudev.c:298:get_driver() Looking for a driver for VID: 0x1D6B, PID: 0x0002, path: /dev/bus/usb/001/001
+00009585 hotplug_libudev.c:298:get_driver() Looking for a driver for VID: 0x1050, PID: 0x0407, path: /dev/bus/usb/001/003
+00000249 hotplug_libudev.c:419:HPAddDevice() Adding USB device: Yubico YubiKey OTP+FIDO+CCID
+00006765 readerfactory.c:1094:RFInitializeReader() Attempting startup of Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00 using /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so
+00013672 readerfactory.c:968:RFBindFunctions() Loading IFD Handler 3.0
+00000818 ifdhandler.c:2088:init_driver() Driver version: 1.5.5
+00007171 ifdhandler.c:2110:init_driver() LogLevel: 0x0003
+00000192 ifdhandler.c:2121:init_driver() DriverOptions: 0x0000
+00002459 ifdhandler.c:111:CreateChannelByNameOrChannel() Lun: 0, device: usb:1050/0407:libudev:0:/dev/bus/usb/001/003
+00001267 ccid_usb.c:331:OpenUSBByName() Using: /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Info.plist
+00005429 ccid_usb.c:349:OpenUSBByName() ifdManufacturerString: Ludovic Rousseau (ludovic.rousseau@free.fr)
+00000140 ccid_usb.c:350:OpenUSBByName() ifdProductString: Generic CCID driver
+00000086 ccid_usb.c:351:OpenUSBByName() Copyright: This driver is protected by terms of the GNU Lesser General Public License version 2.1, or (at your option) any later version.
+00099744 ccid_usb.c:724:OpenUSBByName() Found interface 2 but expecting 0
+00000252 ccid_usb.c:726:OpenUSBByName() Wrong interface for USB device 1/3. Checking next one.
+00003956 ccid_usb.c:208:close_libusb_if_needed() libusb_exit
+00008303 ccid_usb.c:892:OpenUSBByName() Device not found?
+00000923 ifdhandler.c:156:CreateChannelByNameOrChannel() failed
+00000545 readerfactory.c:1135:RFInitializeReader() Open Port 0x200000 Failed (usb:1050/0407:libudev:0:/dev/bus/usb/001/003)
+00000264 readerfactory.c:374:RFAddReader() Yubico YubiKey OTP+FIDO+CCID (188559874) init failed.
+00000307 readerfactory.c:624:RFRemoveReader() UnrefReader() count was: 1
+00000597 readerfactory.c:1148:RFUnInitializeReader() Attempting shutdown of Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00.
+00000224 readerfactory.c:1005:RFUnloadReader() Unloading reader driver.
+00013790 hotplug_libudev.c:298:get_driver() Looking for a driver for VID: 0x1050, PID: 0x0407, path: /dev/bus/usb/001/003
+00000146 hotplug_libudev.c:419:HPAddDevice() Adding USB device: Yubico YubiKey OTP+FIDO+CCID
+00001885 readerfactory.c:1094:RFInitializeReader() Attempting startup of Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00 using /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so
+00004551 readerfactory.c:968:RFBindFunctions() Loading IFD Handler 3.0
+00000392 ifdhandler.c:2088:init_driver() Driver version: 1.5.5
+00005349 ifdhandler.c:2110:init_driver() LogLevel: 0x0003
+00000498 ifdhandler.c:2121:init_driver() DriverOptions: 0x0000
+00001444 ifdhandler.c:111:CreateChannelByNameOrChannel() Lun: 0, device: usb:1050/0407:libudev:1:/dev/bus/usb/001/003
+00000554 ccid_usb.c:331:OpenUSBByName() Using: /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Info.plist
+00004253 ccid_usb.c:349:OpenUSBByName() ifdManufacturerString: Ludovic Rousseau (ludovic.rousseau@free.fr)
+00000205 ccid_usb.c:350:OpenUSBByName() ifdProductString: Generic CCID driver
+00000127 ccid_usb.c:351:OpenUSBByName() Copyright: This driver is protected by terms of the GNU Lesser General Public License version 2.1, or (at your option) any later version.
+00084827 ccid_usb.c:724:OpenUSBByName() Found interface 2 but expecting 1
+00000148 ccid_usb.c:726:OpenUSBByName() Wrong interface for USB device 1/3. Checking next one.
+00002465 ccid_usb.c:208:close_libusb_if_needed() libusb_exit
+00004019 ccid_usb.c:892:OpenUSBByName() Device not found?
+00000257 ifdhandler.c:156:CreateChannelByNameOrChannel() failed
+00000162 readerfactory.c:1135:RFInitializeReader() Open Port 0x200000 Failed (usb:1050/0407:libudev:1:/dev/bus/usb/001/003)
+00000101 readerfactory.c:374:RFAddReader() Yubico YubiKey OTP+FIDO+CCID (188559874) init failed.
+00001728 readerfactory.c:624:RFRemoveReader() UnrefReader() count was: 1
+00000212 readerfactory.c:1148:RFUnInitializeReader() Attempting shutdown of Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00.
+00001648 readerfactory.c:1005:RFUnloadReader() Unloading reader driver.
+00010343 hotplug_libudev.c:298:get_driver() Looking for a driver for VID: 0x1050, PID: 0x0407, path: /dev/bus/usb/001/003
+00000383 hotplug_libudev.c:419:HPAddDevice() Adding USB device: Yubico YubiKey OTP+FIDO+CCID
+00002782 readerfactory.c:1094:RFInitializeReader() Attempting startup of Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00 using /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so
+00005162 readerfactory.c:968:RFBindFunctions() Loading IFD Handler 3.0
+00000375 ifdhandler.c:2088:init_driver() Driver version: 1.5.5
+00005817 ifdhandler.c:2110:init_driver() LogLevel: 0x0003
+00000269 ifdhandler.c:2121:init_driver() DriverOptions: 0x0000
+00001223 ifdhandler.c:111:CreateChannelByNameOrChannel() Lun: 0, device: usb:1050/0407:libudev:2:/dev/bus/usb/001/003
+00000289 ccid_usb.c:331:OpenUSBByName() Using: /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Info.plist
+00004047 ccid_usb.c:349:OpenUSBByName() ifdManufacturerString: Ludovic Rousseau (ludovic.rousseau@free.fr)
+00000147 ccid_usb.c:350:OpenUSBByName() ifdProductString: Generic CCID driver
+00000073 ccid_usb.c:351:OpenUSBByName() Copyright: This driver is protected by terms of the GNU Lesser General Public License version 2.1, or (at your option) any later version.
+00084771 ccid_usb.c:747:OpenUSBByName() Found Vendor/Product: 1050/0407 (Yubico YubiKey OTP+FIDO+CCID)
+00000237 ccid_usb.c:749:OpenUSBByName() Using USB bus/device: 1/3
+00000183 ccid_usb.c:814:OpenUSBByName() bNumDataRatesSupported is 0
+00047739 ifdhandler.c:389:IFDHGetCapabilities() tag: 0xFB3, usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00000244 readerfactory.c:394:RFAddReader() Using the reader polling thread
+00017753 ifdhandler.c:389:IFDHGetCapabilities() tag: 0xFAE, usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00000159 ifdhandler.c:473:IFDHGetCapabilities() Reader supports 1 slot(s)
+00002918 readerfactory.c:1437:RFWaitForReaderInit() Waiting init for reader: Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00
+00012002 readerfactory.c:1437:RFWaitForReaderInit() Waiting init for reader: Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00
+00011056 readerfactory.c:1437:RFWaitForReaderInit() Waiting init for reader: Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00
+00009852 ifdhandler.c:1232:IFDHPowerICC() action: PowerUp, usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00001172 readerfactory.c:1437:RFWaitForReaderInit() Waiting init for reader: Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00
+00010773 eventhandler.c:289:EHStatusHandlerThread() powerState: POWER_STATE_POWERED
+00000404 Card ATR: 3B F0 11 00 00 01 E0 
+00000984 winscard_msg_srv.c:256:ProcessEventsServer() Common channel packet arrival
+00000575 winscard_msg_srv.c:267:ProcessEventsServer() ProcessCommonChannelRequest detects: 12
+00000102 pcscdaemon.c:132:SVCServiceRunLoop() A new context thread creation is requested: 12
+00004194 winscard_svc.c:360:ContextThread() Authorized PC/SC client
+00000190 winscard_svc.c:363:ContextThread() Thread is started: dwClientID=12, threadContext @0xc03c02fe5900
+00001747 winscard_svc.c:381:ContextThread() Received command: CMD_VERSION from client 12
+00000247 winscard_svc.c:393:ContextThread() Client is protocol version 4:4
+00000225 winscard_svc.c:416:ContextThread() CMD_VERSION for client 12, rv=SCARD_S_SUCCESS
+00001741 winscard_svc.c:381:ContextThread() Received command: ESTABLISH_CONTEXT from client 12
+00000927 winscard.c:210:SCardEstablishContext() Establishing Context: 0x40A93FD1
+00000207 winscard_svc.c:485:ContextThread() ESTABLISH_CONTEXT for client 12, rv=SCARD_S_SUCCESS
+00001653 winscard_svc.c:381:ContextThread() Received command: CMD_GET_READERS_STATE from client 12
+00000806 winscard_svc.c:381:ContextThread() Received command: RELEASE_CONTEXT from client 12
+00000469 winscard.c:224:SCardReleaseContext() Releasing Context: 0x40A93FD1
+00000133 winscard_svc.c:500:ContextThread() RELEASE_CONTEXT for client 12, rv=SCARD_S_SUCCESS
+00001927 winscard_svc.c:374:ContextThread() Client die: 12
+00001872 winscard_svc.c:1096:MSGCleanupClient() Thread is stopping: dwClientID=12, threadContext @0xc03c02fe5900
+00000114 winscard_svc.c:1104:MSGCleanupClient() Freeing SCONTEXT @0xc03c02fe5900
+00003733 winscard_msg_srv.c:256:ProcessEventsServer() Common channel packet arrival
+00000327 winscard_msg_srv.c:267:ProcessEventsServer() ProcessCommonChannelRequest detects: 13
+00000080 pcscdaemon.c:132:SVCServiceRunLoop() A new context thread creation is requested: 13
+00007830 winscard_svc.c:360:ContextThread() Authorized PC/SC client
+00003022 winscard_svc.c:363:ContextThread() Thread is started: dwClientID=13, threadContext @0xc03c02f8c5e0
+00000398 winscard_svc.c:381:ContextThread() Received command: CMD_VERSION from client 13
+00000281 winscard_svc.c:393:ContextThread() Client is protocol version 4:4
+00000075 winscard_svc.c:416:ContextThread() CMD_VERSION for client 13, rv=SCARD_S_SUCCESS
+00003099 winscard_svc.c:381:ContextThread() Received command: ESTABLISH_CONTEXT from client 13
+00000402 winscard.c:210:SCardEstablishContext() Establishing Context: 0x160BB398
+00000083 winscard_svc.c:485:ContextThread() ESTABLISH_CONTEXT for client 13, rv=SCARD_S_SUCCESS
+00001621 winscard_svc.c:381:ContextThread() Received command: CONNECT from client 13
+00000418 winscard_svc.c:526:ContextThread() Authorized client for 'Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00'
+00000120 winscard.c:253:SCardConnect() Attempting Connect to Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00 using protocol: 3
+00000088 readerfactory.c:835:RFReaderInfo() RefReader() count was: 1
+00000217 winscard.c:347:SCardConnect() powerState: POWER_STATE_IN_USE
+00000938 prothandler.c:108:PHSetProtocol() Attempting PTS to T=1
+00000155 ifdhandler.c:729:IFDHSetProtocolParameters() protocol T=1, usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00000911 winscard.c:428:SCardConnect() Active Protocol: T=1
+00000204 winscard.c:454:SCardConnect() hCard Identity: 24161831
+00000572 winscard.c:516:SCardConnect() UnrefReader() count was: 2
+00000691 winscard_svc.c:546:ContextThread() CONNECT for client 13, rv=SCARD_S_SUCCESS
+00002680 winscard_svc.c:381:ContextThread() Received command: CMD_GET_READERS_STATE from client 13
+00000997 winscard_svc.c:381:ContextThread() Received command: STATUS from client 13
+00000797 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000156 winscard.c:1302:SCardStatus() UnrefReader() count was: 2
+00000159 winscard_svc.c:667:ContextThread() STATUS for client 13, rv=SCARD_S_SUCCESS
+00002496 winscard_svc.c:381:ContextThread() Received command: CMD_GET_READERS_STATE from client 13
+00000850 winscard_svc.c:381:ContextThread() Received command: STATUS from client 13
+00000459 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000075 winscard.c:1302:SCardStatus() UnrefReader() count was: 2
+00000066 winscard_svc.c:667:ContextThread() STATUS for client 13, rv=SCARD_S_SUCCESS
+00004560 winscard_msg_srv.c:256:ProcessEventsServer() Common channel packet arrival
+00000344 winscard_msg_srv.c:267:ProcessEventsServer() ProcessCommonChannelRequest detects: 12
+00000077 pcscdaemon.c:132:SVCServiceRunLoop() A new context thread creation is requested: 12
+00001170 winscard_svc.c:360:ContextThread() Authorized PC/SC client
+00000083 winscard_svc.c:363:ContextThread() Thread is started: dwClientID=12, threadContext @0xc03c02fe5900
+00000383 winscard_svc.c:381:ContextThread() Received command: CMD_VERSION from client 12
+00000168 winscard_svc.c:393:ContextThread() Client is protocol version 4:4
+00000064 winscard_svc.c:416:ContextThread() CMD_VERSION for client 12, rv=SCARD_S_SUCCESS
+00000876 winscard_svc.c:381:ContextThread() Received command: ESTABLISH_CONTEXT from client 12
+00000226 winscard.c:210:SCardEstablishContext() Establishing Context: 0x49D79732
+00000066 winscard_svc.c:485:ContextThread() ESTABLISH_CONTEXT for client 12, rv=SCARD_S_SUCCESS
+00001610 winscard_svc.c:381:ContextThread() Received command: CMD_GET_READERS_STATE from client 12
+00001177 winscard_svc.c:381:ContextThread() Received command: RELEASE_CONTEXT from client 12
+00000563 winscard.c:224:SCardReleaseContext() Releasing Context: 0x49D79732
+00000156 winscard_svc.c:500:ContextThread() RELEASE_CONTEXT for client 12, rv=SCARD_S_SUCCESS
+00004312 winscard_svc.c:374:ContextThread() Client die: 12
+00000992 winscard_svc.c:1096:MSGCleanupClient() Thread is stopping: dwClientID=12, threadContext @0xc03c02fe5900
+00000099 winscard_svc.c:1104:MSGCleanupClient() Freeing SCONTEXT @0xc03c02fe5900
+00001345 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000796 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000163 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000401 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00039349 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000314 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00003396 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000325 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000081 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000169 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00027332 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000145 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00005296 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000778 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000200 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000405 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00033990 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000150 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00002910 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000449 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000105 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000067 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00022007 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000316 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00002635 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000622 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000096 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000070 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00039222 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000149 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00006821 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000878 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000186 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000189 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00014106 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000223 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00007940 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000531 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000641 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000204 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00061054 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000158 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00059188 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000806 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000097 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000257 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00021995 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000134 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00004382 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00001874 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000125 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000067 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00048471 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000188 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00016326 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000439 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000086 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000068 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00032616 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000186 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00009611 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000472 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000139 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000086 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00039518 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000333 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00018794 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000543 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000108 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000073 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00102381 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000420 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00014213 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000352 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000081 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000068 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00046136 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000241 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00006555 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00001124 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000123 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000070 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00041687 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000154 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00007006 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000355 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000445 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000186 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00025130 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000273 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00006787 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00002677 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000139 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000072 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00068873 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000220 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00009792 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00001248 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000124 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000105 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00024695 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000407 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00005357 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00001046 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000102 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000068 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00305829 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000704 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00004540 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000948 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000224 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000368 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00066352 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000153 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00009888 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00001835 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000110 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000105 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00017486 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000160 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00002830 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000767 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000213 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000096 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00058040 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000371 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00005614 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000635 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000108 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000337 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00016696 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000136 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00007695 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000791 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000103 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000074 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00033456 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000173 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00011907 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00001733 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000119 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000159 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00031574 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000259 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00005962 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000538 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000303 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000304 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00051404 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000187 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00007328 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000729 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000367 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000104 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00026824 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000139 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00004134 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000344 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000090 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000357 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00041227 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000147 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00011827 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00001762 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000323 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000391 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00090526 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000184 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00028034 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00001029 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000145 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000306 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00098563 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000296 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00006802 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00001009 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000230 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000086 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00034842 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000252 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00008857 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000643 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000114 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000595 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00013827 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000150 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00004790 winscard_svc.c:381:ContextThread() Received command: CMD_GET_READERS_STATE from client 13
+00001656 winscard_svc.c:381:ContextThread() Received command: STATUS from client 13
+00000790 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000494 winscard.c:1302:SCardStatus() UnrefReader() count was: 2
+00000174 winscard_svc.c:667:ContextThread() STATUS for client 13, rv=SCARD_S_SUCCESS
+00002127 winscard_svc.c:381:ContextThread() Received command: DISCONNECT from client 13
+00001028 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000251 winscard.c:883:SCardDisconnect() Active Contexts: 1
+00000149 winscard.c:884:SCardDisconnect() dwDisposition: 2
+00022575 ifdhandler.c:1232:IFDHPowerICC() action: PowerDown, usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00013672 winscard.c:906:SCardDisconnect() powerState: POWER_STATE_UNPOWERED
+00000461 ifdhandler.c:389:IFDHGetCapabilities() tag: 0xFB2, usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00001009 winscard.c:1032:SCardDisconnect() Stopping polling thread
+00000751 ifdhandler.c:354:IFDHStopPolling() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00004274 winscard.c:1045:SCardDisconnect() UnrefReader() count was: 2
+00000590 winscard_svc.c:583:ContextThread() DISCONNECT for client 13, rv=SCARD_S_SUCCESS
+00003937 winscard_svc.c:381:ContextThread() Received command: RELEASE_CONTEXT from client 13
+00001252 winscard.c:224:SCardReleaseContext() Releasing Context: 0x160BB398
+00000513 winscard_svc.c:500:ContextThread() RELEASE_CONTEXT for client 13, rv=SCARD_S_SUCCESS
+00002701 winscard_svc.c:374:ContextThread() Client die: 13
+00000837 winscard_svc.c:1096:MSGCleanupClient() Thread is stopping: dwClientID=13, threadContext @0xc03c02f8c5e0
+00000234 winscard_svc.c:1104:MSGCleanupClient() Freeing SCONTEXT @0xc03c02f8c5e0
+00003993 pcscdaemon.c:192:signal_thread() Received signal: 15
+00000539 pcscdaemon.c:212:signal_thread() Direct suicide
+00000107 pcscdaemon.c:809:at_exit() cleaning /run/pcscd
+
+[   66.606827] usb 1-1: USB disconnect, device number 3
+[   70.394320] read descriptors
+[   70.394674] read strings
+[   70.665619] usb 1-1: new full-speed USB device number 4 using dummy_hcd
+[   70.826545] usb 1-1: New USB device found, idVendor=1050, idProduct=0407, bcdDevice= 5.74
+[   70.826812] usb 1-1: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[   70.827000] usb 1-1: Product: Yubico YubiKey compatible software OTP FIDO CCID
+[   70.827555] usb 1-1: Manufacturer: Local software authenticator
+[   70.827760] usb 1-1: SerialNumber: 188559874
+[   70.881987] input: Local software authenticator Yubico YubiKey compatible software OTP FIDO CCID as /devices/platform/dummy_hcd.0/usb1/1-1/1-1:1.0/0003:1050:0407.0005/input/input2
+[   70.939957] hid-generic 0003:1050:0407.0005: input,hidraw0: USB HID v1.10 Keyboard [Local software authenticator Yubico YubiKey compatible software OTP FIDO CCID] on usb-dummy_hcd.0-1/input0
+[   71.005055] hid-generic 0003:1050:0407.0006: hiddev0,hidraw1: USB HID v1.10 Device [Local software authenticator Yubico YubiKey compatible software OTP FIDO CCID] on usb-dummy_hcd.0-1/input1
+PASS PCSC resource manager and card restart preserve own identity
+PASS PCSC restart preserves encrypted own credential and signature
+SKE_USB_PCSC_LOG 00000000 debuglog.c:394:DebugLogSetLevel() debug level=debug
+00003694 pcscdaemon.c:346:main() using new config directory: /guest-state/pcsc-pcbjnybd/empty-readers
+00013881 configfile.l:293:DBGetReaderListDir() Parsing conf directory: /guest-state/pcsc-pcbjnybd/empty-readers
+00000619 configfile.l:329:DBGetReaderListDir() Skipping non regular file: .
+00000552 configfile.l:329:DBGetReaderListDir() Skipping non regular file: ..
+00001043 pcscdaemon.c:671:main() pcsc-lite 2.0.3 daemon ready.
+00003157 pcscdaemon.c:754:main() Using drivers directory: /usr/lib/pcsc/drivers
+00142598 hotplug_libudev.c:298:get_driver() Looking for a driver for VID: 0x1D6B, PID: 0x0002, path: /dev/bus/usb/001/001
+00008351 hotplug_libudev.c:298:get_driver() Looking for a driver for VID: 0x1D6B, PID: 0x0002, path: /dev/bus/usb/001/001
+00009585 hotplug_libudev.c:298:get_driver() Looking for a driver for VID: 0x1050, PID: 0x0407, path: /dev/bus/usb/001/003
+00000249 hotplug_libudev.c:419:HPAddDevice() Adding USB device: Yubico YubiKey OTP+FIDO+CCID
+00006765 readerfactory.c:1094:RFInitializeReader() Attempting startup of Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00 using /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so
+00013672 readerfactory.c:968:RFBindFunctions() Loading IFD Handler 3.0
+00000818 ifdhandler.c:2088:init_driver() Driver version: 1.5.5
+00007171 ifdhandler.c:2110:init_driver() LogLevel: 0x0003
+00000192 ifdhandler.c:2121:init_driver() DriverOptions: 0x0000
+00002459 ifdhandler.c:111:CreateChannelByNameOrChannel() Lun: 0, device: usb:1050/0407:libudev:0:/dev/bus/usb/001/003
+00001267 ccid_usb.c:331:OpenUSBByName() Using: /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Info.plist
+00005429 ccid_usb.c:349:OpenUSBByName() ifdManufacturerString: Ludovic Rousseau (ludovic.rousseau@free.fr)
+00000140 ccid_usb.c:350:OpenUSBByName() ifdProductString: Generic CCID driver
+00000086 ccid_usb.c:351:OpenUSBByName() Copyright: This driver is protected by terms of the GNU Lesser General Public License version 2.1, or (at your option) any later version.
+00099744 ccid_usb.c:724:OpenUSBByName() Found interface 2 but expecting 0
+00000252 ccid_usb.c:726:OpenUSBByName() Wrong interface for USB device 1/3. Checking next one.
+00003956 ccid_usb.c:208:close_libusb_if_needed() libusb_exit
+00008303 ccid_usb.c:892:OpenUSBByName() Device not found?
+00000923 ifdhandler.c:156:CreateChannelByNameOrChannel() failed
+00000545 readerfactory.c:1135:RFInitializeReader() Open Port 0x200000 Failed (usb:1050/0407:libudev:0:/dev/bus/usb/001/003)
+00000264 readerfactory.c:374:RFAddReader() Yubico YubiKey OTP+FIDO+CCID (188559874) init failed.
+00000307 readerfactory.c:624:RFRemoveReader() UnrefReader() count was: 1
+00000597 readerfactory.c:1148:RFUnInitializeReader() Attempting shutdown of Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00.
+00000224 readerfactory.c:1005:RFUnloadReader() Unloading reader driver.
+00013790 hotplug_libudev.c:298:get_driver() Looking for a driver for VID: 0x1050, PID: 0x0407, path: /dev/bus/usb/001/003
+00000146 hotplug_libudev.c:419:HPAddDevice() Adding USB device: Yubico YubiKey OTP+FIDO+CCID
+00001885 readerfactory.c:1094:RFInitializeReader() Attempting startup of Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00 using /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so
+00004551 readerfactory.c:968:RFBindFunctions() Loading IFD Handler 3.0
+00000392 ifdhandler.c:2088:init_driver() Driver version: 1.5.5
+00005349 ifdhandler.c:2110:init_driver() LogLevel: 0x0003
+00000498 ifdhandler.c:2121:init_driver() DriverOptions: 0x0000
+00001444 ifdhandler.c:111:CreateChannelByNameOrChannel() Lun: 0, device: usb:1050/0407:libudev:1:/dev/bus/usb/001/003
+00000554 ccid_usb.c:331:OpenUSBByName() Using: /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Info.plist
+00004253 ccid_usb.c:349:OpenUSBByName() ifdManufacturerString: Ludovic Rousseau (ludovic.rousseau@free.fr)
+00000205 ccid_usb.c:350:OpenUSBByName() ifdProductString: Generic CCID driver
+00000127 ccid_usb.c:351:OpenUSBByName() Copyright: This driver is protected by terms of the GNU Lesser General Public License version 2.1, or (at your option) any later version.
+00084827 ccid_usb.c:724:OpenUSBByName() Found interface 2 but expecting 1
+00000148 ccid_usb.c:726:OpenUSBByName() Wrong interface for USB device 1/3. Checking next one.
+00002465 ccid_usb.c:208:close_libusb_if_needed() libusb_exit
+00004019 ccid_usb.c:892:OpenUSBByName() Device not found?
+00000257 ifdhandler.c:156:CreateChannelByNameOrChannel() failed
+00000162 readerfactory.c:1135:RFInitializeReader() Open Port 0x200000 Failed (usb:1050/0407:libudev:1:/dev/bus/usb/001/003)
+00000101 readerfactory.c:374:RFAddReader() Yubico YubiKey OTP+FIDO+CCID (188559874) init failed.
+00001728 readerfactory.c:624:RFRemoveReader() UnrefReader() count was: 1
+00000212 readerfactory.c:1148:RFUnInitializeReader() Attempting shutdown of Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00.
+00001648 readerfactory.c:1005:RFUnloadReader() Unloading reader driver.
+00010343 hotplug_libudev.c:298:get_driver() Looking for a driver for VID: 0x1050, PID: 0x0407, path: /dev/bus/usb/001/003
+00000383 hotplug_libudev.c:419:HPAddDevice() Adding USB device: Yubico YubiKey OTP+FIDO+CCID
+00002782 readerfactory.c:1094:RFInitializeReader() Attempting startup of Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00 using /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so
+00005162 readerfactory.c:968:RFBindFunctions() Loading IFD Handler 3.0
+00000375 ifdhandler.c:2088:init_driver() Driver version: 1.5.5
+00005817 ifdhandler.c:2110:init_driver() LogLevel: 0x0003
+00000269 ifdhandler.c:2121:init_driver() DriverOptions: 0x0000
+00001223 ifdhandler.c:111:CreateChannelByNameOrChannel() Lun: 0, device: usb:1050/0407:libudev:2:/dev/bus/usb/001/003
+00000289 ccid_usb.c:331:OpenUSBByName() Using: /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Info.plist
+00004047 ccid_usb.c:349:OpenUSBByName() ifdManufacturerString: Ludovic Rousseau (ludovic.rousseau@free.fr)
+00000147 ccid_usb.c:350:OpenUSBByName() ifdProductString: Generic CCID driver
+00000073 ccid_usb.c:351:OpenUSBByName() Copyright: This driver is protected by terms of the GNU Lesser General Public License version 2.1, or (at your option) any later version.
+00084771 ccid_usb.c:747:OpenUSBByName() Found Vendor/Product: 1050/0407 (Yubico YubiKey OTP+FIDO+CCID)
+00000237 ccid_usb.c:749:OpenUSBByName() Using USB bus/device: 1/3
+00000183 ccid_usb.c:814:OpenUSBByName() bNumDataRatesSupported is 0
+00047739 ifdhandler.c:389:IFDHGetCapabilities() tag: 0xFB3, usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00000244 readerfactory.c:394:RFAddReader() Using the reader polling thread
+00017753 ifdhandler.c:389:IFDHGetCapabilities() tag: 0xFAE, usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00000159 ifdhandler.c:473:IFDHGetCapabilities() Reader supports 1 slot(s)
+00002918 readerfactory.c:1437:RFWaitForReaderInit() Waiting init for reader: Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00
+00012002 readerfactory.c:1437:RFWaitForReaderInit() Waiting init for reader: Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00
+00011056 readerfactory.c:1437:RFWaitForReaderInit() Waiting init for reader: Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00
+00009852 ifdhandler.c:1232:IFDHPowerICC() action: PowerUp, usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00001172 readerfactory.c:1437:RFWaitForReaderInit() Waiting init for reader: Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00
+00010773 eventhandler.c:289:EHStatusHandlerThread() powerState: POWER_STATE_POWERED
+00000404 Card ATR: 3B F0 11 00 00 01 E0 
+00000984 winscard_msg_srv.c:256:ProcessEventsServer() Common channel packet arrival
+00000575 winscard_msg_srv.c:267:ProcessEventsServer() ProcessCommonChannelRequest detects: 12
+00000102 pcscdaemon.c:132:SVCServiceRunLoop() A new context thread creation is requested: 12
+00004194 winscard_svc.c:360:ContextThread() Authorized PC/SC client
+00000190 winscard_svc.c:363:ContextThread() Thread is started: dwClientID=12, threadContext @0xc03c02fe5900
+00001747 winscard_svc.c:381:ContextThread() Received command: CMD_VERSION from client 12
+00000247 winscard_svc.c:393:ContextThread() Client is protocol version 4:4
+00000225 winscard_svc.c:416:ContextThread() CMD_VERSION for client 12, rv=SCARD_S_SUCCESS
+00001741 winscard_svc.c:381:ContextThread() Received command: ESTABLISH_CONTEXT from client 12
+00000927 winscard.c:210:SCardEstablishContext() Establishing Context: 0x40A93FD1
+00000207 winscard_svc.c:485:ContextThread() ESTABLISH_CONTEXT for client 12, rv=SCARD_S_SUCCESS
+00001653 winscard_svc.c:381:ContextThread() Received command: CMD_GET_READERS_STATE from client 12
+00000806 winscard_svc.c:381:ContextThread() Received command: RELEASE_CONTEXT from client 12
+00000469 winscard.c:224:SCardReleaseContext() Releasing Context: 0x40A93FD1
+00000133 winscard_svc.c:500:ContextThread() RELEASE_CONTEXT for client 12, rv=SCARD_S_SUCCESS
+00001927 winscard_svc.c:374:ContextThread() Client die: 12
+00001872 winscard_svc.c:1096:MSGCleanupClient() Thread is stopping: dwClientID=12, threadContext @0xc03c02fe5900
+00000114 winscard_svc.c:1104:MSGCleanupClient() Freeing SCONTEXT @0xc03c02fe5900
+00003733 winscard_msg_srv.c:256:ProcessEventsServer() Common channel packet arrival
+00000327 winscard_msg_srv.c:267:ProcessEventsServer() ProcessCommonChannelRequest detects: 13
+00000080 pcscdaemon.c:132:SVCServiceRunLoop() A new context thread creation is requested: 13
+00007830 winscard_svc.c:360:ContextThread() Authorized PC/SC client
+00003022 winscard_svc.c:363:ContextThread() Thread is started: dwClientID=13, threadContext @0xc03c02f8c5e0
+00000398 winscard_svc.c:381:ContextThread() Received command: CMD_VERSION from client 13
+00000281 winscard_svc.c:393:ContextThread() Client is protocol version 4:4
+00000075 winscard_svc.c:416:ContextThread() CMD_VERSION for client 13, rv=SCARD_S_SUCCESS
+00003099 winscard_svc.c:381:ContextThread() Received command: ESTABLISH_CONTEXT from client 13
+00000402 winscard.c:210:SCardEstablishContext() Establishing Context: 0x160BB398
+00000083 winscard_svc.c:485:ContextThread() ESTABLISH_CONTEXT for client 13, rv=SCARD_S_SUCCESS
+00001621 winscard_svc.c:381:ContextThread() Received command: CONNECT from client 13
+00000418 winscard_svc.c:526:ContextThread() Authorized client for 'Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00'
+00000120 winscard.c:253:SCardConnect() Attempting Connect to Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00 using protocol: 3
+00000088 readerfactory.c:835:RFReaderInfo() RefReader() count was: 1
+00000217 winscard.c:347:SCardConnect() powerState: POWER_STATE_IN_USE
+00000938 prothandler.c:108:PHSetProtocol() Attempting PTS to T=1
+00000155 ifdhandler.c:729:IFDHSetProtocolParameters() protocol T=1, usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00000911 winscard.c:428:SCardConnect() Active Protocol: T=1
+00000204 winscard.c:454:SCardConnect() hCard Identity: 24161831
+00000572 winscard.c:516:SCardConnect() UnrefReader() count was: 2
+00000691 winscard_svc.c:546:ContextThread() CONNECT for client 13, rv=SCARD_S_SUCCESS
+00002680 winscard_svc.c:381:ContextThread() Received command: CMD_GET_READERS_STATE from client 13
+00000997 winscard_svc.c:381:ContextThread() Received command: STATUS from client 13
+00000797 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000156 winscard.c:1302:SCardStatus() UnrefReader() count was: 2
+00000159 winscard_svc.c:667:ContextThread() STATUS for client 13, rv=SCARD_S_SUCCESS
+00002496 winscard_svc.c:381:ContextThread() Received command: CMD_GET_READERS_STATE from client 13
+00000850 winscard_svc.c:381:ContextThread() Received command: STATUS from client 13
+00000459 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000075 winscard.c:1302:SCardStatus() UnrefReader() count was: 2
+00000066 winscard_svc.c:667:ContextThread() STATUS for client 13, rv=SCARD_S_SUCCESS
+00004560 winscard_msg_srv.c:256:ProcessEventsServer() Common channel packet arrival
+00000344 winscard_msg_srv.c:267:ProcessEventsServer() ProcessCommonChannelRequest detects: 12
+00000077 pcscdaemon.c:132:SVCServiceRunLoop() A new context thread creation is requested: 12
+00001170 winscard_svc.c:360:ContextThread() Authorized PC/SC client
+00000083 winscard_svc.c:363:ContextThread() Thread is started: dwClientID=12, threadContext @0xc03c02fe5900
+00000383 winscard_svc.c:381:ContextThread() Received command: CMD_VERSION from client 12
+00000168 winscard_svc.c:393:ContextThread() Client is protocol version 4:4
+00000064 winscard_svc.c:416:ContextThread() CMD_VERSION for client 12, rv=SCARD_S_SUCCESS
+00000876 winscard_svc.c:381:ContextThread() Received command: ESTABLISH_CONTEXT from client 12
+00000226 winscard.c:210:SCardEstablishContext() Establishing Context: 0x49D79732
+00000066 winscard_svc.c:485:ContextThread() ESTABLISH_CONTEXT for client 12, rv=SCARD_S_SUCCESS
+00001610 winscard_svc.c:381:ContextThread() Received command: CMD_GET_READERS_STATE from client 12
+00001177 winscard_svc.c:381:ContextThread() Received command: RELEASE_CONTEXT from client 12
+00000563 winscard.c:224:SCardReleaseContext() Releasing Context: 0x49D79732
+00000156 winscard_svc.c:500:ContextThread() RELEASE_CONTEXT for client 12, rv=SCARD_S_SUCCESS
+00004312 winscard_svc.c:374:ContextThread() Client die: 12
+00000992 winscard_svc.c:1096:MSGCleanupClient() Thread is stopping: dwClientID=12, threadContext @0xc03c02fe5900
+00000099 winscard_svc.c:1104:MSGCleanupClient() Freeing SCONTEXT @0xc03c02fe5900
+00001345 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000796 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000163 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000401 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00039349 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000314 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00003396 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000325 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000081 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000169 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00027332 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000145 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00005296 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000778 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000200 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000405 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00033990 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000150 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00002910 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000449 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000105 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000067 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00022007 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000316 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00002635 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000622 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000096 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000070 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00039222 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000149 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00006821 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000878 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000186 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000189 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00014106 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000223 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00007940 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000531 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000641 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000204 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00061054 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000158 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00059188 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000806 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000097 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000257 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00021995 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000134 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00004382 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00001874 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000125 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000067 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00048471 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000188 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00016326 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000439 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000086 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000068 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00032616 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000186 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00009611 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000472 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000139 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000086 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00039518 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000333 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00018794 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000543 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000108 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000073 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00102381 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000420 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00014213 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000352 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000081 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000068 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00046136 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000241 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00006555 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00001124 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000123 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000070 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00041687 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000154 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00007006 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000355 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000445 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000186 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00025130 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000273 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00006787 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00002677 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000139 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000072 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00068873 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000220 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00009792 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00001248 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000124 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000105 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00024695 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000407 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00005357 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00001046 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000102 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000068 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00305829 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000704 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00004540 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000948 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000224 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000368 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00066352 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000153 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00009888 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00001835 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000110 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000105 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00017486 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000160 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00002830 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000767 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000213 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000096 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00058040 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000371 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00005614 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000635 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000108 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000337 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00016696 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000136 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00007695 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000791 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000103 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000074 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00033456 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000173 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00011907 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00001733 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000119 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000159 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00031574 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000259 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00005962 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000538 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000303 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000304 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00051404 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000187 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00007328 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000729 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000367 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000104 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00026824 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000139 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00004134 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000344 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000090 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000357 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00041227 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000147 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00011827 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00001762 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000323 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000391 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00090526 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000184 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00028034 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00001029 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000145 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000306 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00098563 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000296 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00006802 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00001009 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000230 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000086 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00034842 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000252 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00008857 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 13
+00000643 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000114 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000595 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00013827 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000150 winscard_svc.c:719:ContextThread() TRANSMIT for client 13, rv=SCARD_S_SUCCESS
+00004790 winscard_svc.c:381:ContextThread() Received command: CMD_GET_READERS_STATE from client 13
+00001656 winscard_svc.c:381:ContextThread() Received command: STATUS from client 13
+00000790 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000494 winscard.c:1302:SCardStatus() UnrefReader() count was: 2
+00000174 winscard_svc.c:667:ContextThread() STATUS for client 13, rv=SCARD_S_SUCCESS
+00002127 winscard_svc.c:381:ContextThread() Received command: DISCONNECT from client 13
+00001028 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000251 winscard.c:883:SCardDisconnect() Active Contexts: 1
+00000149 winscard.c:884:SCardDisconnect() dwDisposition: 2
+00022575 ifdhandler.c:1232:IFDHPowerICC() action: PowerDown, usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00013672 winscard.c:906:SCardDisconnect() powerState: POWER_STATE_UNPOWERED
+00000461 ifdhandler.c:389:IFDHGetCapabilities() tag: 0xFB2, usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00001009 winscard.c:1032:SCardDisconnect() Stopping polling thread
+00000751 ifdhandler.c:354:IFDHStopPolling() usb:1050/0407:libudev:2:/dev/bus/usb/001/003 (lun: 0)
+00004274 winscard.c:1045:SCardDisconnect() UnrefReader() count was: 2
+00000590 winscard_svc.c:583:ContextThread() DISCONNECT for client 13, rv=SCARD_S_SUCCESS
+00003937 winscard_svc.c:381:ContextThread() Received command: RELEASE_CONTEXT from client 13
+00001252 winscard.c:224:SCardReleaseContext() Releasing Context: 0x160BB398
+00000513 winscard_svc.c:500:ContextThread() RELEASE_CONTEXT for client 13, rv=SCARD_S_SUCCESS
+00002701 winscard_svc.c:374:ContextThread() Client die: 13
+00000837 winscard_svc.c:1096:MSGCleanupClient() Thread is stopping: dwClientID=13, threadContext @0xc03c02f8c5e0
+00000234 winscard_svc.c:1104:MSGCleanupClient() Freeing SCONTEXT @0xc03c02f8c5e0
+00003993 pcscdaemon.c:192:signal_thread() Received signal: 15
+00000539 pcscdaemon.c:212:signal_thread() Direct suicide
+00000107 pcscdaemon.c:809:at_exit() cleaning /run/pcscd
+00000000 debuglog.c:394:DebugLogSetLevel() debug level=debug
+00002225 pcscdaemon.c:346:main() using new config directory: /guest-state/pcsc-pcbjnybd/empty-readers
+00011219 configfile.l:293:DBGetReaderListDir() Parsing conf directory: /guest-state/pcsc-pcbjnybd/empty-readers
+00001448 configfile.l:329:DBGetReaderListDir() Skipping non regular file: .
+00000133 configfile.l:329:DBGetReaderListDir() Skipping non regular file: ..
+00000512 pcscdaemon.c:671:main() pcsc-lite 2.0.3 daemon ready.
+00002186 pcscdaemon.c:754:main() Using drivers directory: /usr/lib/pcsc/drivers
+00205987 hotplug_libudev.c:298:get_driver() Looking for a driver for VID: 0x1D6B, PID: 0x0002, path: /dev/bus/usb/001/001
+00021166 hotplug_libudev.c:298:get_driver() Looking for a driver for VID: 0x1D6B, PID: 0x0002, path: /dev/bus/usb/001/001
+00019231 hotplug_libudev.c:298:get_driver() Looking for a driver for VID: 0x1050, PID: 0x0407, path: /dev/bus/usb/001/004
+00001637 hotplug_libudev.c:419:HPAddDevice() Adding USB device: Yubico YubiKey OTP+FIDO+CCID
+00008894 readerfactory.c:1094:RFInitializeReader() Attempting startup of Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00 using /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so
+00027635 readerfactory.c:968:RFBindFunctions() Loading IFD Handler 3.0
+00001494 ifdhandler.c:2088:init_driver() Driver version: 1.5.5
+00011592 ifdhandler.c:2110:init_driver() LogLevel: 0x0003
+00000497 ifdhandler.c:2121:init_driver() DriverOptions: 0x0000
+00001664 ifdhandler.c:111:CreateChannelByNameOrChannel() Lun: 0, device: usb:1050/0407:libudev:0:/dev/bus/usb/001/004
+00001283 ccid_usb.c:331:OpenUSBByName() Using: /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Info.plist
+00006258 ccid_usb.c:349:OpenUSBByName() ifdManufacturerString: Ludovic Rousseau (ludovic.rousseau@free.fr)
+00000526 ccid_usb.c:350:OpenUSBByName() ifdProductString: Generic CCID driver
+00000147 ccid_usb.c:351:OpenUSBByName() Copyright: This driver is protected by terms of the GNU Lesser General Public License version 2.1, or (at your option) any later version.
+00149420 ccid_usb.c:724:OpenUSBByName() Found interface 2 but expecting 0
+00000162 ccid_usb.c:726:OpenUSBByName() Wrong interface for USB device 1/4. Checking next one.
+00004317 ccid_usb.c:208:close_libusb_if_needed() libusb_exit
+00007205 ccid_usb.c:892:OpenUSBByName() Device not found?
+00000439 ifdhandler.c:156:CreateChannelByNameOrChannel() failed
+00000708 readerfactory.c:1135:RFInitializeReader() Open Port 0x200000 Failed (usb:1050/0407:libudev:0:/dev/bus/usb/001/004)
+00000244 readerfactory.c:374:RFAddReader() Yubico YubiKey OTP+FIDO+CCID (188559874) init failed.
+00000664 readerfactory.c:624:RFRemoveReader() UnrefReader() count was: 1
+00000167 readerfactory.c:1148:RFUnInitializeReader() Attempting shutdown of Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00.
+00000141 readerfactory.c:1005:RFUnloadReader() Unloading reader driver.
+00018646 hotplug_libudev.c:298:get_driver() Looking for a driver for VID: 0x1050, PID: 0x0407, path: /dev/bus/usb/001/004
+00000308 hotplug_libudev.c:419:HPAddDevice() Adding USB device: Yubico YubiKey OTP+FIDO+CCID
+00002624 readerfactory.c:1094:RFInitializeReader() Attempting startup of Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00 using /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so
+00006710 readerfactory.c:968:RFBindFunctions() Loading IFD Handler 3.0
+00000233 ifdhandler.c:2088:init_driver() Driver version: 1.5.5
+00006163 ifdhandler.c:2110:init_driver() LogLevel: 0x0003
+00000153 ifdhandler.c:2121:init_driver() DriverOptions: 0x0000
+00001895 ifdhandler.c:111:CreateChannelByNameOrChannel() Lun: 0, device: usb:1050/0407:libudev:1:/dev/bus/usb/001/004
+00000244 ccid_usb.c:331:OpenUSBByName() Using: /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Info.plist
+00005496 ccid_usb.c:349:OpenUSBByName() ifdManufacturerString: Ludovic Rousseau (ludovic.rousseau@free.fr)
+00000140 ccid_usb.c:350:OpenUSBByName() ifdProductString: Generic CCID driver
+00000072 ccid_usb.c:351:OpenUSBByName() Copyright: This driver is protected by terms of the GNU Lesser General Public License version 2.1, or (at your option) any later version.
+00087035 ccid_usb.c:724:OpenUSBByName() Found interface 2 but expecting 1
+00000137 ccid_usb.c:726:OpenUSBByName() Wrong interface for USB device 1/4. Checking next one.
+00005361 ccid_usb.c:208:close_libusb_if_needed() libusb_exit
+00003927 ccid_usb.c:892:OpenUSBByName() Device not found?
+00000422 ifdhandler.c:156:CreateChannelByNameOrChannel() failed
+00000117 readerfactory.c:1135:RFInitializeReader() Open Port 0x200000 Failed (usb:1050/0407:libudev:1:/dev/bus/usb/001/004)
+00000065 readerfactory.c:374:RFAddReader() Yubico YubiKey OTP+FIDO+CCID (188559874) init failed.
+00000076 readerfactory.c:624:RFRemoveReader() UnrefReader() count was: 1
+00000065 readerfactory.c:1148:RFUnInitializeReader() Attempting shutdown of Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00.
+00000066 readerfactory.c:1005:RFUnloadReader() Unloading reader driver.
+00012979 hotplug_libudev.c:298:get_driver() Looking for a driver for VID: 0x1050, PID: 0x0407, path: /dev/bus/usb/001/004
+00000145 hotplug_libudev.c:419:HPAddDevice() Adding USB device: Yubico YubiKey OTP+FIDO+CCID
+00003829 readerfactory.c:1094:RFInitializeReader() Attempting startup of Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00 using /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so
+00006932 readerfactory.c:968:RFBindFunctions() Loading IFD Handler 3.0
+00000237 ifdhandler.c:2088:init_driver() Driver version: 1.5.5
+00004018 ifdhandler.c:2110:init_driver() LogLevel: 0x0003
+00000291 ifdhandler.c:2121:init_driver() DriverOptions: 0x0000
+00002305 ifdhandler.c:111:CreateChannelByNameOrChannel() Lun: 0, device: usb:1050/0407:libudev:2:/dev/bus/usb/001/004
+00000175 ccid_usb.c:331:OpenUSBByName() Using: /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Info.plist
+00006089 ccid_usb.c:349:OpenUSBByName() ifdManufacturerString: Ludovic Rousseau (ludovic.rousseau@free.fr)
+00000122 ccid_usb.c:350:OpenUSBByName() ifdProductString: Generic CCID driver
+00000077 ccid_usb.c:351:OpenUSBByName() Copyright: This driver is protected by terms of the GNU Lesser General Public License version 2.1, or (at your option) any later version.
+00087534 ccid_usb.c:747:OpenUSBByName() Found Vendor/Product: 1050/0407 (Yubico YubiKey OTP+FIDO+CCID)
+00000171 ccid_usb.c:749:OpenUSBByName() Using USB bus/device: 1/4
+00000314 ccid_usb.c:814:OpenUSBByName() bNumDataRatesSupported is 0
+00058216 ifdhandler.c:389:IFDHGetCapabilities() tag: 0xFB3, usb:1050/0407:libudev:2:/dev/bus/usb/001/004 (lun: 0)
+00000202 readerfactory.c:394:RFAddReader() Using the reader polling thread
+00012392 ifdhandler.c:389:IFDHGetCapabilities() tag: 0xFAE, usb:1050/0407:libudev:2:/dev/bus/usb/001/004 (lun: 0)
+00000285 ifdhandler.c:473:IFDHGetCapabilities() Reader supports 1 slot(s)
+00002320 readerfactory.c:1437:RFWaitForReaderInit() Waiting init for reader: Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00
+00011696 readerfactory.c:1437:RFWaitForReaderInit() Waiting init for reader: Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00
+00013610 readerfactory.c:1437:RFWaitForReaderInit() Waiting init for reader: Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00
+00010765 readerfactory.c:1437:RFWaitForReaderInit() Waiting init for reader: Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00
+00000744 ifdhandler.c:1232:IFDHPowerICC() action: PowerUp, usb:1050/0407:libudev:2:/dev/bus/usb/001/004 (lun: 0)
+00010259 readerfactory.c:1437:RFWaitForReaderInit() Waiting init for reader: Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00
+00007280 eventhandler.c:289:EHStatusHandlerThread() powerState: POWER_STATE_POWERED
+00000427 Card ATR: 3B F0 11 00 00 01 E0 
+00003223 winscard_msg_srv.c:256:ProcessEventsServer() Common channel packet arrival
+00000325 winscard_msg_srv.c:267:ProcessEventsServer() ProcessCommonChannelRequest detects: 12
+00000082 pcscdaemon.c:132:SVCServiceRunLoop() A new context thread creation is requested: 12
+00001782 winscard_svc.c:360:ContextThread() Authorized PC/SC client
+00000160 winscard_svc.c:363:ContextThread() Thread is started: dwClientID=12, threadContext @0xb803ebe87900
+00000704 winscard_svc.c:381:ContextThread() Received command: CMD_VERSION from client 12
+00002068 winscard_svc.c:393:ContextThread() Client is protocol version 4:4
+00000666 winscard_svc.c:416:ContextThread() CMD_VERSION for client 12, rv=SCARD_S_SUCCESS
+00002669 winscard_svc.c:381:ContextThread() Received command: ESTABLISH_CONTEXT from client 12
+00000569 winscard.c:210:SCardEstablishContext() Establishing Context: 0x6C7E3475
+00000126 winscard_svc.c:485:ContextThread() ESTABLISH_CONTEXT for client 12, rv=SCARD_S_SUCCESS
+00001306 winscard_svc.c:381:ContextThread() Received command: CMD_GET_READERS_STATE from client 12
+00001071 winscard_svc.c:381:ContextThread() Received command: RELEASE_CONTEXT from client 12
+00002893 winscard.c:224:SCardReleaseContext() Releasing Context: 0x6C7E3475
+00001626 winscard_svc.c:500:ContextThread() RELEASE_CONTEXT for client 12, rv=SCARD_S_SUCCESS
+00001388 winscard_svc.c:374:ContextThread() Client die: 12
+00002539 winscard_msg_srv.c:256:ProcessEventsServer() Common channel packet arrival
+00000269 winscard_msg_srv.c:267:ProcessEventsServer() ProcessCommonChannelRequest detects: 12
+00000109 pcscdaemon.c:132:SVCServiceRunLoop() A new context thread creation is requested: 12
+00002774 winscard_svc.c:1096:MSGCleanupClient() Thread is stopping: dwClientID=12, threadContext @0xb803ebe87900
+00000124 winscard_svc.c:360:ContextThread() Authorized PC/SC client
+00000030 winscard_svc.c:1104:MSGCleanupClient() Freeing SCONTEXT @0xb803ebe87900
+00003787 winscard_svc.c:363:ContextThread() Thread is started: dwClientID=12, threadContext @0xb803ebe2e5e0
+00000241 winscard_svc.c:381:ContextThread() Received command: CMD_VERSION from client 12
+00000202 winscard_svc.c:393:ContextThread() Client is protocol version 4:4
+00000406 winscard_svc.c:416:ContextThread() CMD_VERSION for client 12, rv=SCARD_S_SUCCESS
+00003906 winscard_svc.c:381:ContextThread() Received command: ESTABLISH_CONTEXT from client 12
+00000595 winscard.c:210:SCardEstablishContext() Establishing Context: 0x1CADFEFB
+00000100 winscard_svc.c:485:ContextThread() ESTABLISH_CONTEXT for client 12, rv=SCARD_S_SUCCESS
+00002882 winscard_svc.c:381:ContextThread() Received command: CONNECT from client 12
+00000603 winscard_svc.c:526:ContextThread() Authorized client for 'Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00'
+00000165 winscard.c:253:SCardConnect() Attempting Connect to Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00 using protocol: 3
+00000098 readerfactory.c:835:RFReaderInfo() RefReader() count was: 1
+00000262 winscard.c:347:SCardConnect() powerState: POWER_STATE_IN_USE
+00002430 prothandler.c:108:PHSetProtocol() Attempting PTS to T=1
+00000225 ifdhandler.c:729:IFDHSetProtocolParameters() protocol T=1, usb:1050/0407:libudev:2:/dev/bus/usb/001/004 (lun: 0)
+00002215 winscard.c:428:SCardConnect() Active Protocol: T=1
+00000588 winscard.c:454:SCardConnect() hCard Identity: 6cc2b037
+00000212 winscard.c:516:SCardConnect() UnrefReader() count was: 2
+00000172 winscard_svc.c:546:ContextThread() CONNECT for client 12, rv=SCARD_S_SUCCESS
+00002693 winscard_svc.c:381:ContextThread() Received command: CMD_GET_READERS_STATE from client 12
+00002915 winscard_svc.c:381:ContextThread() Received command: STATUS from client 12
+00000401 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000453 winscard.c:1302:SCardStatus() UnrefReader() count was: 2
+00000207 winscard_svc.c:667:ContextThread() STATUS for client 12, rv=SCARD_S_SUCCESS
+00001811 winscard_svc.c:381:ContextThread() Received command: CMD_GET_READERS_STATE from client 12
+00001583 winscard_svc.c:381:ContextThread() Received command: STATUS from client 12
+00000601 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000121 winscard.c:1302:SCardStatus() UnrefReader() count was: 2
+00000068 winscard_svc.c:667:ContextThread() STATUS for client 12, rv=SCARD_S_SUCCESS
+00006916 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 12
+00000883 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000246 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000445 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/004 (lun: 0)
+00064209 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000157 winscard_svc.c:719:ContextThread() TRANSMIT for client 12, rv=SCARD_S_SUCCESS
+00003451 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 12
+00000505 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000089 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000070 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/004 (lun: 0)
+00030156 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000127 winscard_svc.c:719:ContextThread() TRANSMIT for client 12, rv=SCARD_S_SUCCESS
+00004990 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 12
+00000669 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000096 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000068 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/004 (lun: 0)
+00031475 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000148 winscard_svc.c:719:ContextThread() TRANSMIT for client 12, rv=SCARD_S_SUCCESS
+00002002 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 12
+00001014 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000149 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000076 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/004 (lun: 0)
+00034211 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000484 winscard_svc.c:719:ContextThread() TRANSMIT for client 12, rv=SCARD_S_SUCCESS
+00004841 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 12
+00001233 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000128 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000070 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/004 (lun: 0)
+00043462 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000145 winscard_svc.c:719:ContextThread() TRANSMIT for client 12, rv=SCARD_S_SUCCESS
+00003339 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 12
+00000356 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000299 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000086 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/004 (lun: 0)
+00019026 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000141 winscard_svc.c:719:ContextThread() TRANSMIT for client 12, rv=SCARD_S_SUCCESS
+00005181 winscard_svc.c:381:ContextThread() Received command: TRANSMIT from client 12
+00000761 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000129 winscard.c:1597:SCardTransmit() Send Protocol: T=1
+00000071 ifdhandler.c:1384:IFDHTransmitToICC() usb:1050/0407:libudev:2:/dev/bus/usb/001/004 (lun: 0)
+00270128 winscard.c:1650:SCardTransmit() UnrefReader() count was: 2
+00000138 winscard_svc.c:719:ContextThread() TRANSMIT for client 12, rv=SCARD_S_SUCCESS
+00006899 winscard_svc.c:381:ContextThread() Received command: DISCONNECT from client 12
+00000877 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1
+00000213 winscard.c:883:SCardDisconnect() Active Contexts: 1
+00000081 winscard.c:884:SCardDisconnect() dwDisposition: 2
+00017392 ifdhandler.c:1232:IFDHPowerICC() action: PowerDown, usb:1050/0407:libudev:2:/dev/bus/usb/001/004 (lun: 0)
+00024229 winscard.c:906:SCardDisconnect() powerState: POWER_STATE_UNPOWERED
+00000725 ifdhandler.c:389:IFDHGetCapabilities() tag: 0xFB2, usb:1050/0407:libudev:2:/dev/bus/usb/001/004 (lun: 0)
+00000254 winscard.c:1032:SCardDisconnect() Stopping polling thread
+00000209 ifdhandler.c:354:IFDHStopPolling() usb:1050/0407:libudev:2:/dev/bus/usb/001/004 (lun: 0)
+00002059 winscard.c:1045:SCardDisconnect() UnrefReader() count was: 2
+00000578 winscard_svc.c:583:ContextThread() DISCONNECT for client 12, rv=SCARD_S_SUCCESS
+00003419 winscard_svc.c:381:ContextThread() Received command: RELEASE_CONTEXT from client 12
+00000484 winscard.c:224:SCardReleaseContext() Releasing Context: 0x1CADFEFB
+00000110 winscard_svc.c:500:ContextThread() RELEASE_CONTEXT for client 12, rv=SCARD_S_SUCCESS
+00000860 winscard_svc.c:374:ContextThread() Client die: 12
+00000213 winscard_svc.c:1096:MSGCleanupClient() Thread is stopping: dwClientID=12, threadContext @0xb803ebe2e5e0
+00000070 winscard_svc.c:1104:MSGCleanupClient() Freeing SCONTEXT @0xb803ebe2e5e0
+00003923 pcscdaemon.c:192:signal_thread() Received signal: 15
+00000165 pcscdaemon.c:212:signal_thread() Direct suicide
+00000092 pcscdaemon.c:809:at_exit() cleaning /run/pcscd
+
+[   73.523752] usb 1-1: USB disconnect, device number 4
+SKE_USB_EXTRA_BEGIN
+{"passed": true, "userspace_usb_transport": "FunctionFS", "control_transfer_diagnostic_tracing": false, "sdk_retry_or_explicit_transport_delay_added": false, "tests": [{"name": "stock PCSC SDK classifies independent software ATR as USB", "passed": true}, {"name": "stock ykman combines USB interfaces into one own device", "passed": true}, {"name": "stock ykman default smartcard reader discovery", "passed": true}, {"name": "stock ykman enumerates native USB OTP keyboard interface", "passed": true}, {"name": "stock USB OTP SDK reads feature version", "passed": true}, {"name": "fresh USB OTP keeps serial API disabled until configuration", "passed": true}, {"name": "USB OTP and CCID serials identify the same own device", "passed": true}, {"name": "stock USB HID feature HMAC independently verified", "passed": true}, {"name": "128 consecutive full-length USB OTP requests independently verify without SDK retries", "passed": true}, {"name": "USB CCID and USB HID share programmed OTP state", "passed": true}, {"name": "actual USB keyboard Shift+A, b, 1, Enter events", "passed": true}, {"name": "USB keyboard releases every key and modifier", "passed": true}, {"name": "OTP uses real guest USB controller and hidraw", "passed": true}, {"name": "USB composite teardown removes HID and evdev devices", "passed": true}, {"name": "real pcscd enumerates exactly the own software reader", "passed": true}, {"name": "stock PCSC connection negotiates T=1", "passed": true}, {"name": "stock management SDK over real PCSC resource manager", "passed": true}, {"name": "stock PIV SDK over native USB CCID", "passed": true}, {"name": "USB PCSC rejects unauthenticated key generation", "passed": true}, {"name": "USB PCSC PIV signature independently verifies", "passed": true}, {"name": "USB PCSC long APDU command/response round trip", "passed": true}, {"name": "stock OATH SDK over USB PCSC", "passed": true}, {"name": "stock OpenPGP SDK over USB PCSC", "passed": true}, {"name": "USB PCSC SCP03 encrypted signature and SDK response MAC", "passed": true}, {"name": "USB PCSC encrypted long command/response chaining", "passed": true}, {"name": "USB PCSC encrypted session rejects plaintext downgrade", "passed": true}, {"name": "PCSC resource manager and card restart preserve own identity", "passed": true}, {"name": "PCSC restart preserves encrypted own credential and signature", "passed": true}], "physical_device_access": false, "host_usb_passthrough": false, "manufacturer_trust_reproduced": false, "native_linux_usb_otp_sdk_verified": true, "native_linux_usb_keyboard_verified": true, "native_linux_usb_ccid_pcsc_verified": true, "consecutive_full_length_otp_hmac_requests": 128, "full_length_hmac_slot_uses_fixed_64_byte_mode": true, "observed_usb_keyboard_events": [[42, 1], [30, 1], [42, 0], [30, 0], [48, 1], [48, 0], [2, 1], [2, 0], [28, 1], [28, 0]], "usb_otp": {"kernel_path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1/1-1:1.0/0003:1050:0407.0001", "sdk_connection": "HidrawConnection", "key_events": [[42, 1], [30, 1], [42, 0], [30, 0], [48, 1], [48, 0], [2, 1], [2, 0], [28, 1], [28, 0]], "host_keyboard_affected": false, "identity_and_keys": "fresh own software state"}, "native_pcsc": {"reader_name": "Yubico YubiKey OTP+FIDO+CCID (188559874) 00 00", "sdk_connection": "ScardSmartCardConnection", "atr": "3bf011000001e0", "sdk_atr_transport_classification": "USB", "physical_usb_bus_device": false, "reader_provider": "actual USB bus -> stock libccid -> actual pcscd -> stock PCSC SDK", "kernel_usb_bus_device": true}, "native_linux_pcsc_resource_manager_verified": true, "test_count": 28}
+SKE_USB_EXTRA_END
+SKE_SYNC_EXTRA_EXIT=0
+PASS actual own noNIC ARM64 distro guest before any device action
+PASS stock driver Info.plist only documented CRITICAL INFO COMM log mask changed
+[   84.685986] read descriptors
+[   84.687095] read strings
+[   84.914391] usb 1-1: new full-speed USB device number 5 using dummy_hcd
+[   85.066707] usb 1-1: New USB device found, idVendor=1050, idProduct=0407, bcdDevice= 5.74
+[   85.067268] usb 1-1: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[   85.067459] usb 1-1: Product: Yubico YubiKey compatible software OTP FIDO CCID
+[   85.067653] usb 1-1: Manufacturer: Local software authenticator
+[   85.067807] usb 1-1: SerialNumber: 732885179
+[   85.157669] input: Local software authenticator Yubico YubiKey compatible software OTP FIDO CCID as /devices/platform/dummy_hcd.0/usb1/1-1/1-1:1.0/0003:1050:0407.0007/input/input3
+[   85.216314] hid-generic 0003:1050:0407.0007: input,hidraw0: USB HID v1.10 Keyboard [Local software authenticator Yubico YubiKey compatible software OTP FIDO CCID] on usb-dummy_hcd.0-1/input0
+[   85.237081] hid-generic 0003:1050:0407.0008: hiddev0,hidraw1: USB HID v1.10 Device [Local software authenticator Yubico YubiKey compatible software OTP FIDO CCID] on usb-dummy_hcd.0-1/input1
+PASS actual unchanged stock runtime bytes /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so
+PASS actual unchanged stock runtime bytes /usr/sbin/pcscd
+PASS actual unchanged stock runtime bytes /opt/ske-venv/lib/python3.12/site-packages/ykman/pcsc/__init__.py
+PASS actual unchanged stock runtime bytes /opt/ske-venv/lib/python3.12/site-packages/yubikit/core/smartcard/__init__.py
+PASS actual unchanged stock runtime bytes /opt/ske-venv/lib/python3.12/site-packages/yubikit/piv.py
+PASS actual unchanged stock runtime bytes /opt/ske-venv/lib/python3.12/site-packages/yubikit/oath.py
+PASS actual unchanged stock runtime bytes /opt/ske-venv/lib/python3.12/site-packages/fido2/hid/linux.py
+PASS actual stock SDK versions match image build
+PASS original native resident FIDO key created with PIN UVp2
+PASS actual native PIN UVp2 original credential signature RP and user initial
+[   89.762789] usb 1-1: USB disconnect, device number 5
+[   89.933408] read descriptors
+[   89.933628] read strings
+[   90.158432] usb 1-1: new full-speed USB device number 6 using dummy_hcd
+[   90.310407] usb 1-1: New USB device found, idVendor=1050, idProduct=0406, bcdDevice= 5.74
+[   90.310576] usb 1-1: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[   90.310670] usb 1-1: Product: Yubico YubiKey compatible software FIDO CCID
+[   90.310796] usb 1-1: Manufacturer: Local software authenticator
+[   90.310877] usb 1-1: SerialNumber: 732885179
+[   90.341667] hid-generic 0003:1050:0406.0009: hiddev0,hidraw0: USB HID v1.10 Device [Local software authenticator Yubico YubiKey compatible software FIDO CCID] on usb-dummy_hcd.0-1/input0
+PASS stock reader profile6 exact preserved reference configuration bytes
+[   90.709009] usb 1-1: USB disconnect, device number 6
+SKE_STOCK_LIBCCID_LARGE_BEGIN
+{"passed": false, "tests": [{"name": "actual own noNIC ARM64 distro guest before any device action", "passed": true}, {"name": "stock driver Info.plist only documented CRITICAL INFO COMM log mask changed", "passed": true}, {"name": "actual unchanged stock runtime bytes /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so", "passed": true}, {"name": "actual unchanged stock runtime bytes /usr/sbin/pcscd", "passed": true}, {"name": "actual unchanged stock runtime bytes /opt/ske-venv/lib/python3.12/site-packages/ykman/pcsc/__init__.py", "passed": true}, {"name": "actual unchanged stock runtime bytes /opt/ske-venv/lib/python3.12/site-packages/yubikit/core/smartcard/__init__.py", "passed": true}, {"name": "actual unchanged stock runtime bytes /opt/ske-venv/lib/python3.12/site-packages/yubikit/piv.py", "passed": true}, {"name": "actual unchanged stock runtime bytes /opt/ske-venv/lib/python3.12/site-packages/yubikit/oath.py", "passed": true}, {"name": "actual unchanged stock runtime bytes /opt/ske-venv/lib/python3.12/site-packages/fido2/hid/linux.py", "passed": true}, {"name": "actual stock SDK versions match image build", "passed": true}, {"name": "original native resident FIDO key created with PIN UVp2", "passed": true}, {"name": "actual native PIN UVp2 original credential signature RP and user initial", "passed": true}, {"name": "stock reader profile6 exact preserved reference configuration bytes", "passed": true}], "cycles": [], "assertions": [{"phase": "initial", "counter": 2, "signature_verified": true, "pin_uv_protocol": 2, "credential_sha256": "b0fc6a184917889829b40857f5aff37589c6d250195c10ff25113acb998f3757", "challenge_sha256": "57b282adac3adad563ba8b641a7000007e45ab82e63fd5779c87f02a047e6b9d", "rp_user_uv_verified": true, "credential_id_hex": "d7e3f26932aa59e7921f29dada80b711e51c71b86ac67c88863fcc15d532ef8f", "user_id_hex": "6f776e2d7573622d73746174652d75736572", "auth_data_hex": "49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000002", "signature_hex": "304402202e9cdc8d9739b61f93121340083a51fea50bb0e7637dcf5e72291f28e03f5e4c022078d16ef96ff45417b1107b7fefba267a8ee06acfa78b59dc7f353506cdd5be2e", "cose_public_key_cbor_hex": "a50102032620012158205eda25ace2447c7e015f7120c531efcf9cca30d481e57b1e392e9191af682c4a225820cc60b9a47e1788ceb91a272a3221c0e61e6f1711d9e79b6db0f0b35a09a335a5"}], "piv_signatures": [], "scope": "actual current-release profile6 USB -> unmodified stock libccid -> private pcscd -> stock PCSC/Yubico SDK large GET and raw connection extended PUT/oversize rejection", "physical_device_access": false, "host_device_passthrough": false, "host_hid_drivers_unbound": false, "native_macos_registration_verified": false, "production_udc_verified": false, "physical_touch_verified": false, "manufacturer_trust_reproduced": false, "card_testing_auto_allow": false, "fido_testing_auto_allow_only_for_owned_fixture": true, "own_native_ccid_driver_used": false, "sdk_or_stock_driver_binary_patched": false, "current_release_transport_verification": true, "source_transport_changed_for_this_test": false, "opaque_piv_object_is_valid_chuid": false, "physical_piv_buffer_exact_header_boundary_verified": false, "stock_sdk_formatter_used_for_raw_extended_put": false, "full_platform_sleep_verified": false, "stock_piv_oath_sdk_unmodified": true, "driver_binary_sha256_before": "cb9d84458db4c3baba2e41cf3f22e26d20714aae17148f8106d5445af1175653", "driver_info_plist_logging_only": {"before_sha256": "395456874013f736fcd30eed243a4cdbb32e0ca482cf14cb7f193b5303c62e67", "after_sha256": "130376b6afa08e236d69196e539dd33853f7d77361b2fdc235cf1c76a505fbc3", "before_value": "0x0003", "after_value": "0x0007", "all_other_parsed_fields_unchanged": true}, "service_pids": [964, 949, 946, 1003], "controller": {"base_source_url": "https://raw.githubusercontent.com/torvalds/linux/v6.8/drivers/usb/gadget/udc/dummy_hcd.c", "base_source_sha256": "6892efeaca7d13e0f8ba172fac6b9607f9ac5c60de1a5f1812a57eb7998fd993", "source_license": "GPL", "optional_parameter": "requested_ep_addresses", "default_enabled": false, "files": {"dummy_hcd.c": "7ebdac59d1bee99d6acb4e811171c10d32618d3915d8b0ccdad43fe9d7a72918", "dummy_hcd-addresses.patch": "16df2045ea6229954b57441894cf009a9fbf40b5ed0ec5e7e5c31685729fafcc", "dummy_hcd.ko": "5e8481736a6dccd4788ff3fb07f06b8704dcf4a0a02a95888c310a3f594eb86a"}, "requested_ep_addresses_enabled": true}, "stock_sdk_versions": {"fido2": "2.2.1", "yubikey-manager": "5.9.2", "pyscard": "2.3.1"}, "stock_driver_provenance": {"packages": {"libccid": "1.5.5-1", "pcscd": "2.0.3-1build1", "libpcsclite1": "2.0.3-1build1"}, "sdk_versions": {"fido2": "2.2.1", "yubikey-manager": "5.9.2", "pyscard": "2.3.1"}, "files": {"/usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so": "cb9d84458db4c3baba2e41cf3f22e26d20714aae17148f8106d5445af1175653", "/usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Info.plist": "395456874013f736fcd30eed243a4cdbb32e0ca482cf14cb7f193b5303c62e67", "/usr/sbin/pcscd": "d1cebaa3e387b0599cee59c56b6fe3a1cec219becd03d5cce2e8584df1e9ed32", "/opt/ske-venv/lib/python3.12/site-packages/ykman/pcsc/__init__.py": "7df388a53eb3a1784f498c3e854a3cc272bef59233b3e0feaaeb72de6ad1199c", "/opt/ske-venv/lib/python3.12/site-packages/yubikit/core/smartcard/__init__.py": "595be784aa2ede30488263cbc63686e94365a68d598b96fb350c71c1b5d694bd", "/opt/ske-venv/lib/python3.12/site-packages/yubikit/piv.py": "f1055e88dca0c8b0ff107a3f1724cd9e03447a95565ecbfde7517f8114ba47fd", "/opt/ske-venv/lib/python3.12/site-packages/yubikit/oath.py": "245d1b72971b1ef40686150cd257a978ae3c1de2118b6c8d3c8f3df92f8fb929", "/opt/ske-venv/lib/python3.12/site-packages/fido2/hid/linux.py": "b23b109a229a2622503f232c61e3288462c00cc01c0416dd5338c6ff69fbf823"}}, "initial_reader_name": "Yubico YubiKey OTP+FIDO+CCID (732885179) 00 00", "original_identity": {"path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1", "serial": "732885179", "vid": 4176, "pid": 1031, "address": 5, "host_visible_configuration_descriptor_hex": "09029600030100800f090400000103010100092110010001224a000705810308000a090401000203000000092110010001222200070504034000020705840340000209040200030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020", "classes": [3, 3, 11], "host_visible_endpoint_addresses": [129, 4, 132, 2, 130, 131]}, "profile6_identity": {"path": "/sys/devices/platform/dummy_hcd.0/usb1/1-1", "serial": "732885179", "vid": 4176, "pid": 1030, "address": 6, "host_visible_configuration_descriptor_hex": "09027d00020100800f090400000203000000092110010001222200070504034000020705840340000209040100030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020", "classes": [3, 11], "host_visible_endpoint_addresses": [4, 132, 2, 130, 131]}, "error": "NoCardException: Unable to connect: No smart card inserted. (0x8010000C)", "traceback": "Traceback (most recent call last):\n  File \"/opt/verification/verify-stock-libccid-large.py\", line 139, in main\n    connection=f.connect_own();report['reader_name']=f.reader_name\n               ^^^^^^^^^^^^^^^\n  File \"/opt/verification/verify-stock-libccid-large.py\", line 65, in connect_own\n    self.connection=ScardSmartCardConnection(reader.createConnection())\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/ske-venv/lib/python3.12/site-packages/ykman/pcsc/__init__.py\", line 79, in __init__\n    connection.connect()\n  File \"/opt/ske-venv/lib/python3.12/site-packages/smartcard/CardConnectionDecorator.py\", line 52, in connect\n    self.component.connect(protocol, mode, disposition)\n  File \"/opt/ske-venv/lib/python3.12/site-packages/smartcard/pcsc/PCSCCardConnection.py\", line 167, in connect\n    raise NoCardException(\"Unable to connect\", hresult=hresult)\nsmartcard.Exceptions.NoCardException: Unable to connect: No smart card inserted. (0x8010000C)\n", "pcscd.log": "00000000 debuglog.c:394:DebugLogSetLevel() debug level=debug\n00001436 debuglog.c:415:DebugLogSetCategory() Debug options: APDU\n00000243 pcscdaemon.c:346:main() using new config directory: /guest-state/own-stock-large-8ig8db0p/empty-readers\n00005839 configfile.l:293:DBGetReaderListDir() Parsing conf directory: /guest-state/own-stock-large-8ig8db0p/empty-readers\n00000940 configfile.l:329:DBGetReaderListDir() Skipping non regular file: .\n00000103 configfile.l:329:DBGetReaderListDir() Skipping non regular file: ..\n00000920 pcscdaemon.c:671:main() pcsc-lite 2.0.3 daemon ready.\n00001978 pcscdaemon.c:754:main() Using drivers directory: /usr/lib/pcsc/drivers\n00166150 hotplug_libudev.c:298:get_driver() Looking for a driver for VID: 0x1D6B, PID: 0x0002, path: /dev/bus/usb/001/001\n00013916 hotplug_libudev.c:298:get_driver() Looking for a driver for VID: 0x1D6B, PID: 0x0002, path: /dev/bus/usb/001/001\n00012156 hotplug_libudev.c:298:get_driver() Looking for a driver for VID: 0x1050, PID: 0x0407, path: /dev/bus/usb/001/005\n00001479 hotplug_libudev.c:419:HPAddDevice() Adding USB device: Yubico YubiKey OTP+FIDO+CCID\n00003856 readerfactory.c:1094:RFInitializeReader() Attempting startup of Yubico YubiKey OTP+FIDO+CCID (732885179) 00 00 using /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so\n00014547 readerfactory.c:968:RFBindFunctions() Loading IFD Handler 3.0\n00000615 ifdhandler.c:2088:init_driver() Driver version: 1.5.5\n00013333 ifdhandler.c:2110:init_driver() LogLevel: 0x0007\n00000876 ifdhandler.c:2121:init_driver() DriverOptions: 0x0000\n00002942 ifdhandler.c:111:CreateChannelByNameOrChannel() Lun: 0, device: usb:1050/0407:libudev:0:/dev/bus/usb/001/005\n00000507 ccid_usb.c:261:OpenUSBByName() Reader index: 0, Device: usb:1050/0407:libudev:0:/dev/bus/usb/001/005\n00001889 ccid_usb.c:293:OpenUSBByName() interface_number: 0\n00000129 ccid_usb.c:294:OpenUSBByName() usb bus/device: 1/5\n00000102 ccid_usb.c:331:OpenUSBByName() Using: /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Info.plist\n00005426 ccid_usb.c:349:OpenUSBByName() ifdManufacturerString: Ludovic Rousseau (ludovic.rousseau@free.fr)\n00000169 ccid_usb.c:350:OpenUSBByName() ifdProductString: Generic CCID driver\n00000196 ccid_usb.c:351:OpenUSBByName() Copyright: This driver is protected by terms of the GNU Lesser General Public License version 2.1, or (at your option) any later version.\n00176652 ccid_usb.c:435:OpenUSBByName() Try device: 1/5\n00000225 ccid_usb.c:445:OpenUSBByName() vid/pid : 1050/0407\n00000415 ccid_usb.c:561:OpenUSBByName() Checking device: 1/5\n00000215 ccid_usb.c:632:OpenUSBByName() Trying to open USB bus/device: 1/5\n00003886 ccid_usb.c:724:OpenUSBByName() Found interface 2 but expecting 0\n00000451 ccid_usb.c:726:OpenUSBByName() Wrong interface for USB device 1/5. Checking next one.\n00004365 ccid_usb.c:208:close_libusb_if_needed() libusb_exit\n00004548 ccid_usb.c:892:OpenUSBByName() Device not found?\n00000192 ifdhandler.c:156:CreateChannelByNameOrChannel() failed\n00000516 readerfactory.c:1135:RFInitializeReader() Open Port 0x200000 Failed (usb:1050/0407:libudev:0:/dev/bus/usb/001/005)\n00001651 readerfactory.c:374:RFAddReader() Yubico YubiKey OTP+FIDO+CCID (732885179) init failed.\n00000177 readerfactory.c:624:RFRemoveReader() UnrefReader() count was: 1\n00000129 readerfactory.c:1148:RFUnInitializeReader() Attempting shutdown of Yubico YubiKey OTP+FIDO+CCID (732885179) 00 00.\n00000090 readerfactory.c:1005:RFUnloadReader() Unloading reader driver.\n00014393 hotplug_libudev.c:298:get_driver() Looking for a driver for VID: 0x1050, PID: 0x0407, path: /dev/bus/usb/001/005\n00000264 hotplug_libudev.c:419:HPAddDevice() Adding USB device: Yubico YubiKey OTP+FIDO+CCID\n00001806 readerfactory.c:1094:RFInitializeReader() Attempting startup of Yubico YubiKey OTP+FIDO+CCID (732885179) 00 00 using /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so\n00006274 readerfactory.c:968:RFBindFunctions() Loading IFD Handler 3.0\n00000270 ifdhandler.c:2088:init_driver() Driver version: 1.5.5\n00007319 ifdhandler.c:2110:init_driver() LogLevel: 0x0007\n00000477 ifdhandler.c:2121:init_driver() DriverOptions: 0x0000\n00001382 ifdhandler.c:111:CreateChannelByNameOrChannel() Lun: 0, device: usb:1050/0407:libudev:1:/dev/bus/usb/001/005\n00000121 ccid_usb.c:261:OpenUSBByName() Reader index: 0, Device: usb:1050/0407:libudev:1:/dev/bus/usb/001/005\n00000116 ccid_usb.c:293:OpenUSBByName() interface_number: 1\n00000343 ccid_usb.c:294:OpenUSBByName() usb bus/device: 1/5\n00000150 ccid_usb.c:331:OpenUSBByName() Using: /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Info.plist\n00007404 ccid_usb.c:349:OpenUSBByName() ifdManufacturerString: Ludovic Rousseau (ludovic.rousseau@free.fr)\n00000440 ccid_usb.c:350:OpenUSBByName() ifdProductString: Generic CCID driver\n00000116 ccid_usb.c:351:OpenUSBByName() Copyright: This driver is protected by terms of the GNU Lesser General Public License version 2.1, or (at your option) any later version.\n00092343 ccid_usb.c:435:OpenUSBByName() Try device: 1/5\n00000203 ccid_usb.c:445:OpenUSBByName() vid/pid : 1050/0407\n00000236 ccid_usb.c:561:OpenUSBByName() Checking device: 1/5\n00000103 ccid_usb.c:632:OpenUSBByName() Trying to open USB bus/device: 1/5\n00002527 ccid_usb.c:724:OpenUSBByName() Found interface 2 but expecting 1\n00000120 ccid_usb.c:726:OpenUSBByName() Wrong interface for USB device 1/5. Checking next one.\n00004817 ccid_usb.c:208:close_libusb_if_needed() libusb_exit\n00004840 ccid_usb.c:892:OpenUSBByName() Device not found?\n00000153 ifdhandler.c:156:CreateChannelByNameOrChannel() failed\n00000082 readerfactory.c:1135:RFInitializeReader() Open Port 0x200000 Failed (usb:1050/0407:libudev:1:/dev/bus/usb/001/005)\n00000073 readerfactory.c:374:RFAddReader() Yubico YubiKey OTP+FIDO+CCID (732885179) init failed.\n00000092 readerfactory.c:624:RFRemoveReader() UnrefReader() count was: 1\n00002514 readerfactory.c:1148:RFUnInitializeReader() Attempting shutdown of Yubico YubiKey OTP+FIDO+CCID (732885179) 00 00.\n00000222 readerfactory.c:1005:RFUnloadReader() Unloading reader driver.\n00013818 hotplug_libudev.c:298:get_driver() Looking for a driver for VID: 0x1050, PID: 0x0407, path: /dev/bus/usb/001/005\n00000155 hotplug_libudev.c:419:HPAddDevice() Adding USB device: Yubico YubiKey OTP+FIDO+CCID\n00001930 readerfactory.c:1094:RFInitializeReader() Attempting startup of Yubico YubiKey OTP+FIDO+CCID (732885179) 00 00 using /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so\n00004190 readerfactory.c:968:RFBindFunctions() Loading IFD Handler 3.0\n00000421 ifdhandler.c:2088:init_driver() Driver version: 1.5.5\n00005629 ifdhandler.c:2110:init_driver() LogLevel: 0x0007\n00000136 ifdhandler.c:2121:init_driver() DriverOptions: 0x0000\n00000989 ifdhandler.c:111:CreateChannelByNameOrChannel() Lun: 0, device: usb:1050/0407:libudev:2:/dev/bus/usb/001/005\n00000685 ccid_usb.c:261:OpenUSBByName() Reader index: 0, Device: usb:1050/0407:libudev:2:/dev/bus/usb/001/005\n00000161 ccid_usb.c:293:OpenUSBByName() interface_number: 2\n00000091 ccid_usb.c:294:OpenUSBByName() usb bus/device: 1/5\n00000409 ccid_usb.c:331:OpenUSBByName() Using: /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Info.plist\n00004948 ccid_usb.c:349:OpenUSBByName() ifdManufacturerString: Ludovic Rousseau (ludovic.rousseau@free.fr)\n00000217 ccid_usb.c:350:OpenUSBByName() ifdProductString: Generic CCID driver\n00000158 ccid_usb.c:351:OpenUSBByName() Copyright: This driver is protected by terms of the GNU Lesser General Public License version 2.1, or (at your option) any later version.\n00105466 ccid_usb.c:435:OpenUSBByName() Try device: 1/5\n00000169 ccid_usb.c:445:OpenUSBByName() vid/pid : 1050/0407\n00000094 ccid_usb.c:561:OpenUSBByName() Checking device: 1/5\n00000067 ccid_usb.c:632:OpenUSBByName() Trying to open USB bus/device: 1/5\n00002091 ccid_usb.c:747:OpenUSBByName() Found Vendor/Product: 1050/0407 (Yubico YubiKey OTP+FIDO+CCID)\n00000179 ccid_usb.c:749:OpenUSBByName() Using USB bus/device: 1/5\n00000499 ccid_usb.c:814:OpenUSBByName() bNumDataRatesSupported is 0\n00015067 NotifySlotChange: 50 03 \n00000302 -> 000000 65 00 00 00 00 00 00 00 00 00 \n00022234 <- 000000 81 00 00 00 00 00 00 01 00 03 \n00000499 -> 000000 65 00 00 00 00 00 01 00 00 00 \n00019347 <- 000000 81 00 00 00 00 00 01 01 00 03 \n00000695 ifdhandler.c:389:IFDHGetCapabilities() tag: 0xFB3, usb:1050/0407:libudev:2:/dev/bus/usb/001/005 (lun: 0)\n00000423 readerfactory.c:394:RFAddReader() Using the reader polling thread\n00061737 ifdhandler.c:389:IFDHGetCapabilities() tag: 0xFAE, usb:1050/0407:libudev:2:/dev/bus/usb/001/005 (lun: 0)\n00000201 ifdhandler.c:473:IFDHGetCapabilities() Reader supports 1 slot(s)\n00001645 ifdhandler.c:1232:IFDHPowerICC() action: PowerUp, usb:1050/0407:libudev:2:/dev/bus/usb/001/005 (lun: 0)\n00000223 -> 000000 62 00 00 00 00 00 05 00 00 00 \n00001264 readerfactory.c:1437:RFWaitForReaderInit() Waiting init for reader: Yubico YubiKey OTP+FIDO+CCID (732885179) 00 00\n00011366 readerfactory.c:1437:RFWaitForReaderInit() Waiting init for reader: Yubico YubiKey OTP+FIDO+CCID (732885179) 00 00\n00001420 <- 000000 80 07 00 00 00 00 05 00 00 00 3B F0 11 00 00 01 E0 \n00000828 eventhandler.c:289:EHStatusHandlerThread() powerState: POWER_STATE_POWERED\n00000101 Card ATR: 3B F0 11 00 00 01 E0 \n00009208 winscard_msg_srv.c:256:ProcessEventsServer() Common channel packet arrival\n00000637 winscard_msg_srv.c:267:ProcessEventsServer() ProcessCommonChannelRequest detects: 12\n00000188 pcscdaemon.c:132:SVCServiceRunLoop() A new context thread creation is requested: 12\n00005144 winscard_svc.c:360:ContextThread() Authorized PC/SC client\n00001864 winscard_svc.c:363:ContextThread() Thread is started: dwClientID=12, threadContext @0xb4fafa3c2900\n00000459 winscard_svc.c:381:ContextThread() Received command: CMD_VERSION from client 12\n00000792 winscard_svc.c:393:ContextThread() Client is protocol version 4:4\n00000408 winscard_svc.c:416:ContextThread() CMD_VERSION for client 12, rv=SCARD_S_SUCCESS\n00001359 winscard_svc.c:381:ContextThread() Received command: ESTABLISH_CONTEXT from client 12\n00000509 winscard.c:210:SCardEstablishContext() Establishing Context: 0x1B9669B4\n00000101 winscard_svc.c:485:ContextThread() ESTABLISH_CONTEXT for client 12, rv=SCARD_S_SUCCESS\n00001837 winscard_svc.c:381:ContextThread() Received command: CMD_GET_READERS_STATE from client 12\n00002912 winscard_svc.c:381:ContextThread() Received command: RELEASE_CONTEXT from client 12\n00000256 winscard.c:224:SCardReleaseContext() Releasing Context: 0x1B9669B4\n00000119 winscard_svc.c:500:ContextThread() RELEASE_CONTEXT for client 12, rv=SCARD_S_SUCCESS\n00001592 winscard_svc.c:374:ContextThread() Client die: 12\n00001502 winscard_svc.c:1096:MSGCleanupClient() Thread is stopping: dwClientID=12, threadContext @0xb4fafa3c2900\n00000134 winscard_svc.c:1104:MSGCleanupClient() Freeing SCONTEXT @0xb4fafa3c2900\n00003104 winscard_msg_srv.c:256:ProcessEventsServer() Common channel packet arrival\n00000200 winscard_msg_srv.c:267:ProcessEventsServer() ProcessCommonChannelRequest detects: 13\n00000073 pcscdaemon.c:132:SVCServiceRunLoop() A new context thread creation is requested: 13\n00004484 winscard_svc.c:360:ContextThread() Authorized PC/SC client\n00000160 winscard_svc.c:363:ContextThread() Thread is started: dwClientID=13, threadContext @0xb4fafa3695e0\n00000190 winscard_svc.c:381:ContextThread() Received command: CMD_VERSION from client 13\n00000163 winscard_svc.c:393:ContextThread() Client is protocol version 4:4\n00000406 winscard_svc.c:416:ContextThread() CMD_VERSION for client 13, rv=SCARD_S_SUCCESS\n00004132 winscard_svc.c:381:ContextThread() Received command: ESTABLISH_CONTEXT from client 13\n00000268 winscard.c:210:SCardEstablishContext() Establishing Context: 0x75F0EE5D\n00000068 winscard_svc.c:485:ContextThread() ESTABLISH_CONTEXT for client 13, rv=SCARD_S_SUCCESS\n00002855 winscard_svc.c:381:ContextThread() Received command: CONNECT from client 13\n00000583 winscard_svc.c:526:ContextThread() Authorized client for 'Yubico YubiKey OTP+FIDO+CCID (732885179) 00 00'\n00000423 winscard.c:253:SCardConnect() Attempting Connect to Yubico YubiKey OTP+FIDO+CCID (732885179) 00 00 using protocol: 3\n00000236 readerfactory.c:835:RFReaderInfo() RefReader() count was: 1\n00000501 winscard.c:347:SCardConnect() powerState: POWER_STATE_IN_USE\n00000491 prothandler.c:108:PHSetProtocol() Attempting PTS to T=1\n00000519 ifdhandler.c:729:IFDHSetProtocolParameters() protocol T=1, usb:1050/0407:libudev:2:/dev/bus/usb/001/005 (lun: 0)\n00002068 ifdhandler.c:1064:IFDHSetProtocolParameters() Timeout: 201067 ms\n00000320 ifdhandler.c:1067:IFDHSetProtocolParameters() Skip SetParameters\n00001296 winscard.c:428:SCardConnect() Active Protocol: T=1\n00001104 winscard.c:454:SCardConnect() hCard Identity: 41995521\n00000264 winscard.c:516:SCardConnect() UnrefReader() count was: 2\n00000179 winscard_svc.c:546:ContextThread() CONNECT for client 13, rv=SCARD_S_SUCCESS\n00003024 winscard_svc.c:381:ContextThread() Received command: CMD_GET_READERS_STATE from client 13\n00001704 winscard_svc.c:381:ContextThread() Received command: STATUS from client 13\n00000336 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1\n00000549 winscard.c:1302:SCardStatus() UnrefReader() count was: 2\n00000143 winscard_svc.c:667:ContextThread() STATUS for client 13, rv=SCARD_S_SUCCESS\n00002501 winscard_svc.c:381:ContextThread() Received command: CMD_GET_READERS_STATE from client 13\n00001695 winscard_svc.c:381:ContextThread() Received command: STATUS from client 13\n00000222 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1\n00000075 winscard.c:1302:SCardStatus() UnrefReader() count was: 2\n00000155 winscard_svc.c:667:ContextThread() STATUS for client 13, rv=SCARD_S_SUCCESS\n02099383 winscard_svc.c:381:ContextThread() Received command: DISCONNECT from client 13\n00000384 readerfactory.c:862:RFReaderInfoById() RefReader() count was: 1\n00000303 winscard.c:883:SCardDisconnect() Active Contexts: 1\n00000101 winscard.c:884:SCardDisconnect() dwDisposition: 2\n00014639 ifdhandler.c:1232:IFDHPowerICC() action: PowerDown, usb:1050/0407:libudev:2:/dev/bus/usb/001/005 (lun: 0)\n00000314 -> 000000 63 00 00 00 00 00 08 00 00 00 \n00023868 <- 000000 81 00 00 00 00 00 08 01 00 03 \n00000381 winscard.c:906:SCardDisconnect() powerState: POWER_STATE_UNPOWERED\n00000212 ifdhandler.c:389:IFDHGetCapabilities() tag: 0xFB2, usb:1050/0407:libudev:2:/dev/bus/usb/001/005 (lun: 0)\n00000139 winscard.c:1032:SCardDisconnect() Stopping polling thread\n00000095 ifdhandler.c:354:IFDHStopPolling() usb:1050/0407:libudev:2:/dev/bus/usb/001/005 (lun: 0)\n00002727 winscard.c:1045:SCardDisconnect() UnrefReader() count was: 2\n00000250 winscard_svc.c:583:ContextThread() DISCONNECT for client 13, rv=SCARD_S_SUCCESS\n00000961 ccid_usb.c:1631:InterruptRead() InterruptRead (1/5): LIBUSB_TRANSFER_CANCELLED\n00003789 winscard_svc.c:381:ContextThread() Received command: RELEASE_CONTEXT from client 13\n00000595 winscard.c:224:SCardReleaseContext() Releasing Context: 0x75F0EE5D\n00000157 winscard_svc.c:500:ContextThread() RELEASE_CONTEXT for client 13, rv=SCARD_S_SUCCESS\n00002988 winscard_svc.c:374:ContextThread() Client die: 13\n00000297 winscard_svc.c:1096:MSGCleanupClient() Thread is stopping: dwClientID=13, threadContext @0xb4fafa3695e0\n00000079 winscard_svc.c:1104:MSGCleanupClient() Freeing SCONTEXT @0xb4fafa3695e0\n00637917 ccid_usb.c:1631:InterruptRead() InterruptRead (1/5): LIBUSB_TRANSFER_ERROR\n00244520 hotplug_libudev.c:639:HPEstablishUSBNotifications() USB Device removed\n00000196 hotplug_libudev.c:345:HPRemoveDevice() Removing USB device[0]: Yubico YubiKey OTP+FIDO+CCID (732885179) at /dev/bus/usb/001/005\n00000103 ifdhandler.c:389:IFDHGetCapabilities() tag: 0xFB4, usb:1050/0407:libudev:2:/dev/bus/usb/001/005 (lun: 0)\n00000119 ifdhandler.c:673:IFDHSetCapabilities() tag: 0xFB4, usb:1050/0407:libudev:2:/dev/bus/usb/001/005 (lun: 0)\n00000088 ccid_usb.c:1200:DisconnectUSB() Disconnect reader\n00000082 ccid_usb.c:1207:DisconnectUSB() Disconnect reader: 0\n00000085 readerfactory.c:624:RFRemoveReader() UnrefReader() count was: 1\n00000079 eventhandler.c:175:EHDestroyEventHandler() Stomping thread.\n00000356 ifdhandler.c:389:IFDHGetCapabilities() tag: 0xFB1, usb:1050/0407:libudev:2:/dev/bus/usb/001/005 (lun: 0)\n00000106 ifdhandler.c:389:IFDHGetCapabilities() tag: 0xFB2, usb:1050/0407:libudev:2:/dev/bus/usb/001/005 (lun: 0)\n00000076 eventhandler.c:200:EHDestroyEventHandler() Request stopping of polling thread\n00000153 ifdhandler.c:354:IFDHStopPolling() usb:1050/0407:libudev:2:/dev/bus/usb/001/005 (lun: 0)\n00154980 eventhandler.c:504:EHStatusHandlerThread() Die\n00001068 eventhandler.c:215:EHDestroyEventHandler() Thread stomped.\n00000191 readerfactory.c:1148:RFUnInitializeReader() Attempting shutdown of Yubico YubiKey OTP+FIDO+CCID (732885179) 00 00.\n00000136 ifdhandler.c:292:IFDHCloseChannel() usb:1050/0407:libudev:2:/dev/bus/usb/001/005 (lun: 0)\n00000104 ccid_usb.c:937:WriteUSB() Reader disconnected\n00000119 ccid_usb.c:1114:CloseUSB() Closing USB device: 1/5\n00000082 ccid_usb.c:1126:CloseUSB() Last slot closed. Release resources\n00000443 ccid_usb.c:208:close_libusb_if_needed() libusb_exit\n00001905 readerfactory.c:1005:RFUnloadReader() Unloading reader driver.\n00004697 hotplug_libudev.c:639:HPEstablishUSBNotifications() USB Device removed\n00001148 hotplug_libudev.c:639:HPEstablishUSBNotifications() USB Device removed\n00189483 winscard_msg_srv.c:256:ProcessEventsServer() Common channel packet arrival\n00000259 winscard_msg_srv.c:267:ProcessEventsServer() ProcessCommonChannelRequest detects: 7\n00000073 pcscdaemon.c:132:SVCServiceRunLoop() A new context thread creation is requested: 7\n00010332 winscard_svc.c:360:ContextThread() Authorized PC/SC client\n00006634 winscard_svc.c:363:ContextThread() Thread is started: dwClientID=7, threadContext @0xb4fafa3c2900\n00000748 winscard_svc.c:381:ContextThread() Received command: CMD_VERSION from client 7\n00008227 winscard_svc.c:393:ContextThread() Client is protocol version 4:4\n00000889 winscard_svc.c:416:ContextThread() CMD_VERSION for client 7, rv=SCARD_S_SUCCESS\n00008671 winscard_svc.c:381:ContextThread() Received command: ESTABLISH_CONTEXT from client 7\n00000377 winscard.c:210:SCardEstablishContext() Establishing Context: 0x17D185F7\n00000078 winscard_svc.c:485:ContextThread() ESTABLISH_CONTEXT for client 7, rv=SCARD_S_SUCCESS\n00001204 winscard_svc.c:381:ContextThread() Received command: CMD_GET_READERS_STATE from client 7\n00003842 winscard_svc.c:381:ContextThread() Received command: RELEASE_CONTEXT from client 7\n00000256 winscard.c:224:SCardReleaseContext() Releasing Context: 0x17D185F7\n00000100 winscard_svc.c:500:ContextThread() RELEASE_CONTEXT for client 7, rv=SCARD_S_SUCCESS\n00003084 winscard_svc.c:374:ContextThread() Client die: 7\n00000635 winscard_svc.c:1096:MSGCleanupClient() Thread is stopping: dwClientID=7, threadContext @0xb4fafa3c2900\n00000182 winscard_svc.c:1104:MSGCleanupClient() Freeing SCONTEXT @0xb4fafa3c2900\n00013126 winscard_msg_srv.c:256:ProcessEventsServer() Common channel packet arrival\n00000435 winscard_msg_srv.c:267:ProcessEventsServer() ProcessCommonChannelRequest detects: 7\n00000242 pcscdaemon.c:132:SVCServiceRunLoop() A new context thread creation is requested: 7\n00003235 winscard_svc.c:360:ContextThread() Authorized PC/SC client\n00000142 winscard_svc.c:363:ContextThread() Thread is started: dwClientID=7, threadContext @0xb4fafa3695e0\n00000582 winscard_svc.c:381:ContextThread() Received command: CMD_VERSION from client 7\n00000365 winscard_svc.c:393:ContextThread() Client is protocol version 4:4\n00000081 winscard_svc.c:416:ContextThread() CMD_VERSION for client 7, rv=SCARD_S_SUCCESS\n00001941 winscard_svc.c:381:ContextThread() Received command: ESTABLISH_CONTEXT from client 7\n00000249 winscard.c:210:SCardEstablishContext() Establishing Context: 0x18E16A12\n00000204 winscard_svc.c:485:ContextThread() ESTABLISH_CONTEXT for client 7, rv=SCARD_S_SUCCESS\n00001263 hotplug_libudev.c:645:HPEstablishUSBNotifications() USB Device add\n00002434 winscard_svc.c:381:ContextThread() Received command: CMD_GET_READERS_STATE from client 7\n00004828 winscard_svc.c:381:ContextThread() Received command: RELEASE_CONTEXT from client 7\n00000650 winscard.c:224:SCardReleaseContext() Releasing Context: 0x18E16A12\n00000252 winscard_svc.c:500:ContextThread() RELEASE_CONTEXT for client 7, rv=SCARD_S_SUCCESS\n00003267 winscard_svc.c:374:ContextThread() Client die: 7\n00001149 winscard_svc.c:1096:MSGCleanupClient() Thread is stopping: dwClientID=7, threadContext @0xb4fafa3695e0\n00000253 winscard_svc.c:1104:MSGCleanupClient() Freeing SCONTEXT @0xb4fafa3695e0\n00010209 hotplug_libudev.c:298:get_driver() Looking for a driver for VID: 0x1050, PID: 0x0406, path: /dev/bus/usb/001/006\n00000367 hotplug_libudev.c:419:HPAddDevice() Adding USB device: Yubico YubiKey FIDO+CCID\n00000624 winscard_msg_srv.c:256:ProcessEventsServer() Common channel packet arrival\n00003873 winscard_msg_srv.c:267:ProcessEventsServer() ProcessCommonChannelRequest detects: 8\n00000109 pcscdaemon.c:132:SVCServiceRunLoop() A new context thread creation is requested: 8\n00003240 winscard_svc.c:360:ContextThread() Authorized PC/SC client\n00000665 winscard_svc.c:363:ContextThread() Thread is started: dwClientID=8, threadContext @0xb4fafa3695e0\n00000443 winscard_svc.c:381:ContextThread() Received command: CMD_VERSION from client 8\n00003846 readerfactory.c:1094:RFInitializeReader() Attempting startup of Yubico YubiKey FIDO+CCID (732885179) 00 00 using /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so\n00000877 winscard_svc.c:393:ContextThread() Client is protocol version 4:4\n00000590 winscard_svc.c:416:ContextThread() CMD_VERSION for client 8, rv=SCARD_S_SUCCESS\n00004558 winscard_svc.c:381:ContextThread() Received command: ESTABLISH_CONTEXT from client 8\n00000495 winscard.c:210:SCardEstablishContext() Establishing Context: 0x469B7F08\n00000111 winscard_svc.c:485:ContextThread() ESTABLISH_CONTEXT for client 8, rv=SCARD_S_SUCCESS\n00005131 winscard_svc.c:381:ContextThread() Received command: CMD_GET_READERS_STATE from client 8\n00006349 winscard_svc.c:381:ContextThread() Received command: RELEASE_CONTEXT from client 8\n00000602 winscard.c:224:SCardReleaseContext() Releasing Context: 0x469B7F08\n00002981 winscard_svc.c:500:ContextThread() RELEASE_CONTEXT for client 8, rv=SCARD_S_SUCCESS\n00004392 readerfactory.c:968:RFBindFunctions() Loading IFD Handler 3.0\n00000624 ifdhandler.c:2088:init_driver() Driver version: 1.5.5\n00003221 winscard_svc.c:374:ContextThread() Client die: 8\n00000903 winscard_svc.c:1096:MSGCleanupClient() Thread is stopping: dwClientID=8, threadContext @0xb4fafa3695e0\n00000376 winscard_svc.c:1104:MSGCleanupClient() Freeing SCONTEXT @0xb4fafa3695e0\n00002387 winscard_msg_srv.c:256:ProcessEventsServer() Common channel packet arrival\n00005347 winscard_msg_srv.c:267:ProcessEventsServer() ProcessCommonChannelRequest detects: 8\n00000139 pcscdaemon.c:132:SVCServiceRunLoop() A new context thread creation is requested: 8\n00008789 winscard_svc.c:360:ContextThread() Authorized PC/SC client\n00000985 winscard_svc.c:363:ContextThread() Thread is started: dwClientID=8, threadContext @0xb4fafa3695e0\n00000412 winscard_svc.c:381:ContextThread() Received command: CMD_VERSION from client 8\n00000698 winscard_svc.c:393:ContextThread() Client is protocol version 4:4\n00000172 winscard_svc.c:416:ContextThread() CMD_VERSION for client 8, rv=SCARD_S_SUCCESS\n00003928 ifdhandler.c:2110:init_driver() LogLevel: 0x0007\n00000120 ifdhandler.c:2121:init_driver() DriverOptions: 0x0000\n00001571 winscard_svc.c:381:ContextThread() Received command: ESTABLISH_CONTEXT from client 8\n00000370 winscard.c:210:SCardEstablishContext() Establishing Context: 0x31648387\n00000123 winscard_svc.c:485:ContextThread() ESTABLISH_CONTEXT for client 8, rv=SCARD_S_SUCCESS\n00000715 ifdhandler.c:111:CreateChannelByNameOrChannel() Lun: 0, device: usb:1050/0406:libudev:0:/dev/bus/usb/001/006\n00000137 ccid_usb.c:261:OpenUSBByName() Reader index: 0, Device: usb:1050/0406:libudev:0:/dev/bus/usb/001/006\n00003922 winscard_svc.c:381:ContextThread() Received command: CONNECT from client 8\n00000226 winscard_svc.c:526:ContextThread() Authorized client for 'Yubico YubiKey FIDO+CCID (732885179) 00 00'\n00000168 winscard.c:253:SCardConnect() Attempting Connect to Yubico YubiKey FIDO+CCID (732885179) 00 00 using protocol: 3\n00000075 readerfactory.c:835:RFReaderInfo() RefReader() count was: 1\n00000066 ccid_usb.c:293:OpenUSBByName() interface_number: 0\n00000127 ccid_usb.c:294:OpenUSBByName() usb bus/device: 1/6\n00000073 ccid_usb.c:331:OpenUSBByName() Using: /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Info.plist\n00000020 winscard.c:307:SCardConnect() Card Not Inserted\n00000458 winscard.c:516:SCardConnect() UnrefReader() count was: 2\n00000092 winscard_svc.c:546:ContextThread() CONNECT for client 8, rv=SCARD_E_NO_SMARTCARD\n00007369 ccid_usb.c:349:OpenUSBByName() ifdManufacturerString: Ludovic Rousseau (ludovic.rousseau@free.fr)\n00000218 ccid_usb.c:350:OpenUSBByName() ifdProductString: Generic CCID driver\n00000202 ccid_usb.c:351:OpenUSBByName() Copyright: This driver is protected by terms of the GNU Lesser General Public License version 2.1, or (at your option) any later version.\n00046761 winscard_svc.c:381:ContextThread() Received command: RELEASE_CONTEXT from client 8\n00000858 winscard.c:224:SCardReleaseContext() Releasing Context: 0x31648387\n00000125 winscard_svc.c:500:ContextThread() RELEASE_CONTEXT for client 8, rv=SCARD_S_SUCCESS\n00002873 winscard_svc.c:374:ContextThread() Client die: 8\n00000235 winscard_svc.c:1096:MSGCleanupClient() Thread is stopping: dwClientID=8, threadContext @0xb4fafa3695e0\n00000072 winscard_svc.c:1104:MSGCleanupClient() Freeing SCONTEXT @0xb4fafa3695e0\n", "usb.log": "functionfs_bound controller=dummy_udc.0\nfunctionfs_configured endpoints=6\nfunctionfs_setup type=33 request=10 value=0 index=0 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=0 length=74 stalled=0\nfunctionfs_setup type=33 request=9 value=512 index=0 length=1 stalled=0\nfunctionfs_setup type=33 request=10 value=0 index=1 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=1 length=34 stalled=0\nfunctionfs_bound controller=dummy_udc.0\nfunctionfs_reenumerated generation=1\nfunctionfs_configured endpoints=5\nfunctionfs_setup type=33 request=10 value=0 index=0 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=0 length=34 stalled=0\n", "daemon.log": "{\"ts\":\"1970-01-01T00:01:24.144Z\",\"lvl\":\"warn\",\"event\":\"presence_auto_allow\",\"warning\":\"SWPASSKEY_TESTING: every request is approved\"}\n{\"ts\":\"1970-01-01T00:01:24.189Z\",\"lvl\":\"warn\",\"event\":\"hid_socket_transport\",\"path\":\"/guest-state/own-stock-large-8ig8db0p/h.sock\",\"note\":\"development transport, not a HID device\"}\n", "card/log.txt": "", "final_service_status": {"bridge": null, "fido": null, "card": null, "pcscd": null}, "test_count": 13, "emulator_binary_sha256": "4a34289e3d8a6eb2e3dbde984ce5433b78b12aa8f419ac7a198ca843d562ba7a", "usb_bridge_binary_sha256": "04a9702cc19d7cb85735d0fd113b9390d65ca465bc10e5dd48954de52ed78099", "card_service_sha256": "f68038ad664fcc4756535ffe85fdd1460048cf6bb9ecfba5fbb2a67ab7187687", "helper_sha256": "fd2d2d08e358c98f0659ae17692ccb57b2e662862436b1fe65af9c1fb339a1fc", "shared_fido_helper_sha256": "445dab690b654dba21421e1b75047dcf2e07089ba39bb0da62e70ae56e42774a"}
+SKE_STOCK_LIBCCID_LARGE_END
+SKE_SYNC_STOCK_EXIT=1
+SKE_SYNC_BASELINE_EXIT=1
+[   21.727583] usb 1-1: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[   21.727665] usb 1-1: Product: Yubico YubiKey compatible software OTP FIDO CCID
+[   21.727763] usb 1-1: Manufacturer: Local software authenticator
+[   21.727825] usb 1-1: SerialNumber: 2866223391
+[   21.769462] input: Local software authenticator Yubico YubiKey compatible software OTP FIDO CCID as /devices/platform/dummy_hcd.0/usb1/1-1/1-1:1.0/0003:1050:0407.0001/input/input0
+[   21.824215] hid-generic 0003:1050:0407.0001: input,hidraw0: USB HID v1.10 Keyboard [Local software authenticator Yubico YubiKey compatible software OTP FIDO CCID] on usb-dummy_hcd.0-1/input0
+[   21.845348] hid-generic 0003:1050:0407.0002: hiddev0,hidraw1: USB HID v1.10 Device [Local software authenticator Yubico YubiKey compatible software OTP FIDO CCID] on usb-dummy_hcd.0-1/input1
+[   33.574942] hrtimer: interrupt took 3036304 ns
+[   58.232838] usb 1-1: USB disconnect, device number 2
+[   62.164007] read descriptors
+[   62.164520] read strings
+[   62.391262] usb 1-1: new full-speed USB device number 3 using dummy_hcd
+[   62.666142] usb 1-1: New USB device found, idVendor=1050, idProduct=0407, bcdDevice= 5.74
+[   62.666319] usb 1-1: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[   62.666381] usb 1-1: Product: Yubico YubiKey compatible software OTP FIDO CCID
+[   62.666441] usb 1-1: Manufacturer: Local software authenticator
+[   62.666489] usb 1-1: SerialNumber: 188559874
+[   62.817902] input: Local software authenticator Yubico YubiKey compatible software OTP FIDO CCID as /devices/platform/dummy_hcd.0/usb1/1-1/1-1:1.0/0003:1050:0407.0003/input/input1
+[   62.873547] hid-generic 0003:1050:0407.0003: input,hidraw0: USB HID v1.10 Keyboard [Local software authenticator Yubico YubiKey compatible software OTP FIDO CCID] on usb-dummy_hcd.0-1/input0
+[   62.892130] hid-generic 0003:1050:0407.0004: hiddev0,hidraw1: USB HID v1.10 Device [Local software authenticator Yubico YubiKey compatible software OTP FIDO CCID] on usb-dummy_hcd.0-1/input1
+[   66.606827] usb 1-1: USB disconnect, device number 3
+[   70.394320] read descriptors
+[   70.394674] read strings
+[   70.665619] usb 1-1: new full-speed USB device number 4 using dummy_hcd
+[   70.826545] usb 1-1: New USB device found, idVendor=1050, idProduct=0407, bcdDevice= 5.74
+[   70.826812] usb 1-1: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[   70.827000] usb 1-1: Product: Yubico YubiKey compatible software OTP FIDO CCID
+[   70.827555] usb 1-1: Manufacturer: Local software authenticator
+[   70.827760] usb 1-1: SerialNumber: 188559874
+[   70.881987] input: Local software authenticator Yubico YubiKey compatible software OTP FIDO CCID as /devices/platform/dummy_hcd.0/usb1/1-1/1-1:1.0/0003:1050:0407.0005/input/input2
+[   70.939957] hid-generic 0003:1050:0407.0005: input,hidraw0: USB HID v1.10 Keyboard [Local software authenticator Yubico YubiKey compatible software OTP FIDO CCID] on usb-dummy_hcd.0-1/input0
+[   71.005055] hid-generic 0003:1050:0407.0006: hiddev0,hidraw1: USB HID v1.10 Device [Local software authenticator Yubico YubiKey compatible software OTP FIDO CCID] on usb-dummy_hcd.0-1/input1
+[   73.523752] usb 1-1: USB disconnect, device number 4
+[   84.685986] read descriptors
+[   84.687095] read strings
+[   84.914391] usb 1-1: new full-speed USB device number 5 using dummy_hcd
+[   85.066707] usb 1-1: New USB device found, idVendor=1050, idProduct=0407, bcdDevice= 5.74
+[   85.067268] usb 1-1: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[   85.067459] usb 1-1: Product: Yubico YubiKey compatible software OTP FIDO CCID
+[   85.067653] usb 1-1: Manufacturer: Local software authenticator
+[   85.067807] usb 1-1: SerialNumber: 732885179
+[   85.157669] input: Local software authenticator Yubico YubiKey compatible software OTP FIDO CCID as /devices/platform/dummy_hcd.0/usb1/1-1/1-1:1.0/0003:1050:0407.0007/input/input3
+[   85.216314] hid-generic 0003:1050:0407.0007: input,hidraw0: USB HID v1.10 Keyboard [Local software authenticator Yubico YubiKey compatible software OTP FIDO CCID] on usb-dummy_hcd.0-1/input0
+[   85.237081] hid-generic 0003:1050:0407.0008: hiddev0,hidraw1: USB HID v1.10 Device [Local software authenticator Yubico YubiKey compatible software OTP FIDO CCID] on usb-dummy_hcd.0-1/input1
+[   89.762789] usb 1-1: USB disconnect, device number 5
+[   89.933408] read descriptors
+[   89.933628] read strings
+[   90.158432] usb 1-1: new full-speed USB device number 6 using dummy_hcd
+[   90.310407] usb 1-1: New USB device found, idVendor=1050, idProduct=0406, bcdDevice= 5.74
+[   90.310576] usb 1-1: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[   90.310670] usb 1-1: Product: Yubico YubiKey compatible software FIDO CCID
+[   90.310796] usb 1-1: Manufacturer: Local software authenticator
+[   90.310877] usb 1-1: SerialNumber: 732885179
+[   90.341667] hid-generic 0003:1050:0406.0009: hiddev0,hidraw0: USB HID v1.10 Device [Local software authenticator Yubico YubiKey compatible software FIDO CCID] on usb-dummy_hcd.0-1/input0
+[   90.709009] usb 1-1: USB disconnect, device number 6
+[   91.715716] reboot: Power down

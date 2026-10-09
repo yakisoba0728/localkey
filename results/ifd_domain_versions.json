@@ -1,0 +1,3615 @@
+{
+  "passed": true,
+  "tests": [
+    {
+      "name": "zero is invalid for custom SCP03 PUT KEY; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "factory SCP03 version 255 cannot be provisioned as custom; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP03 individual KID 2 cannot be imported separately from its whole set; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP03 individual KID 3 cannot be imported separately from its whole set; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "invalid initial versions never remove the factory set or own SCP11b identity",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 1: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 1: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 1: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 2: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 2: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 2: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 3: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 3: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 3: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 4: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 4: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 4: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 5: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 5: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 5: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 6: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 6: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 6: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 7: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 7: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 7: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 8: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 8: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 8: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 9: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 9: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 9: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 10: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 10: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 10: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 11: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 11: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 11: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 12: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 12: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 12: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 13: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 13: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 13: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 14: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 14: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 14: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 15: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 15: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 15: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 16: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 16: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 16: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 17: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 17: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 17: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 18: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 18: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 18: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 19: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 19: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 19: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 20: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 20: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 20: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 21: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 21: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 21: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 22: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 22: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 22: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 23: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 23: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 23: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 24: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 24: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 24: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 25: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 25: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 25: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 26: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 26: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 26: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 27: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 27: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 27: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 28: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 28: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 28: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 29: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 29: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 29: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 30: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 30: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 30: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 31: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 31: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 31: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 32: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 32: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 32: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 33: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 33: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 33: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 34: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 34: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 34: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 35: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 35: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 35: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 36: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 36: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 36: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 37: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 37: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 37: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 38: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 38: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 38: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 39: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 39: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 39: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 40: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 40: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 40: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 41: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 41: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 41: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 42: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 42: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 42: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 43: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 43: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 43: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 44: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 44: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 44: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 45: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 45: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 45: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 46: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 46: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 46: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 47: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 47: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 47: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 48: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 48: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 48: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 49: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 49: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 49: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 50: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 50: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 50: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 51: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 51: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 51: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 52: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 52: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 52: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 53: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 53: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 53: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 54: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 54: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 54: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 55: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 55: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 55: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 56: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 56: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 56: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 57: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 57: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 57: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 58: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 58: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 58: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 59: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 59: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 59: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 60: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 60: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 60: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 61: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 61: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 61: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 62: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 62: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 62: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 63: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 63: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 63: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 64: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 64: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 64: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 65: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 65: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 65: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 66: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 66: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 66: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 67: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 67: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 67: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 68: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 68: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 68: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 69: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 69: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 69: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 70: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 70: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 70: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 71: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 71: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 71: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 72: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 72: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 72: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 73: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 73: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 73: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 74: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 74: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 74: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 75: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 75: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 75: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 76: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 76: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 76: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 77: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 77: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 77: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 78: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 78: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 78: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 79: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 79: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 79: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 80: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 80: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 80: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 81: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 81: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 81: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 82: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 82: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 82: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 83: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 83: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 83: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 84: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 84: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 84: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 85: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 85: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 85: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 86: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 86: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 86: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 87: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 87: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 87: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 88: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 88: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 88: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 89: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 89: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 89: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 90: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 90: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 90: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 91: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 91: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 91: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 92: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 92: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 92: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 93: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 93: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 93: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 94: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 94: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 94: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 95: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 95: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 95: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 96: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 96: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 96: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 97: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 97: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 97: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 98: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 98: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 98: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 99: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 99: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 99: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 100: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 100: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 100: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 101: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 101: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 101: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 102: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 102: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 102: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 103: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 103: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 103: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 104: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 104: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 104: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 105: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 105: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 105: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 106: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 106: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 106: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 107: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 107: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 107: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 108: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 108: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 108: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 109: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 109: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 109: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 110: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 110: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 110: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 111: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 111: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 111: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 112: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 112: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 112: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 113: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 113: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 113: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 114: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 114: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 114: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 115: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 115: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 115: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 116: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 116: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 116: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 117: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 117: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 117: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 118: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 118: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 118: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 119: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 119: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 119: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 120: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 120: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 120: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 121: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 121: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 121: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 122: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 122: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 122: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 123: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 123: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 123: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 124: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 124: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 124: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 125: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 125: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 125: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 126: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 126: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 126: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 127: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 127: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 127: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 boundary KVN 127: restart preserves keys, enumeration and own CPLC",
+      "passed": true
+    },
+    {
+      "name": "SCP03 boundary KVN 127: no key material or certificate is replaced by restart",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 128: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 128: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 128: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 boundary KVN 128: restart preserves keys, enumeration and own CPLC",
+      "passed": true
+    },
+    {
+      "name": "SCP03 boundary KVN 128: no key material or certificate is replaced by restart",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 129: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 129: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 129: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 130: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 130: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 130: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 131: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 131: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 131: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 132: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 132: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 132: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 133: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 133: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 133: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 134: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 134: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 134: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 135: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 135: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 135: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 136: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 136: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 136: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 137: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 137: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 137: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 138: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 138: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 138: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 139: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 139: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 139: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 140: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 140: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 140: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 141: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 141: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 141: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 142: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 142: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 142: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 143: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 143: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 143: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 144: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 144: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 144: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 145: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 145: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 145: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 146: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 146: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 146: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 147: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 147: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 147: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 148: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 148: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 148: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 149: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 149: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 149: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 150: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 150: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 150: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 151: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 151: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 151: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 152: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 152: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 152: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 153: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 153: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 153: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 154: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 154: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 154: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 155: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 155: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 155: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 156: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 156: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 156: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 157: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 157: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 157: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 158: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 158: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 158: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 159: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 159: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 159: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 160: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 160: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 160: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 161: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 161: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 161: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 162: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 162: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 162: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 163: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 163: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 163: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 164: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 164: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 164: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 165: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 165: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 165: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 166: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 166: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 166: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 167: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 167: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 167: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 168: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 168: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 168: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 169: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 169: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 169: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 170: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 170: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 170: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 171: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 171: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 171: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 172: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 172: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 172: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 173: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 173: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 173: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 174: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 174: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 174: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 175: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 175: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 175: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 176: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 176: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 176: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 177: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 177: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 177: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 178: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 178: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 178: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 179: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 179: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 179: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 180: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 180: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 180: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 181: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 181: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 181: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 182: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 182: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 182: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 183: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 183: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 183: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 184: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 184: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 184: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 185: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 185: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 185: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 186: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 186: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 186: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 187: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 187: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 187: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 188: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 188: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 188: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 189: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 189: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 189: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 190: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 190: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 190: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 191: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 191: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 191: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 192: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 192: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 192: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 193: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 193: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 193: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 194: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 194: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 194: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 195: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 195: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 195: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 196: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 196: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 196: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 197: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 197: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 197: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 198: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 198: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 198: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 199: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 199: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 199: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 200: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 200: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 200: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 201: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 201: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 201: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 202: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 202: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 202: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 203: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 203: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 203: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 204: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 204: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 204: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 205: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 205: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 205: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 206: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 206: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 206: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 207: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 207: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 207: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 208: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 208: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 208: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 209: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 209: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 209: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 210: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 210: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 210: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 211: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 211: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 211: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 212: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 212: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 212: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 213: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 213: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 213: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 214: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 214: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 214: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 215: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 215: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 215: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 216: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 216: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 216: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 217: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 217: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 217: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 218: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 218: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 218: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 219: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 219: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 219: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 220: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 220: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 220: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 221: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 221: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 221: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 222: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 222: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 222: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 223: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 223: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 223: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 224: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 224: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 224: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 225: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 225: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 225: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 226: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 226: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 226: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 227: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 227: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 227: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 228: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 228: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 228: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 229: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 229: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 229: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 230: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 230: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 230: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 231: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 231: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 231: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 232: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 232: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 232: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 233: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 233: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 233: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 234: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 234: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 234: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 235: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 235: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 235: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 236: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 236: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 236: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 237: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 237: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 237: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 238: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 238: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 238: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 239: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 239: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 239: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 240: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 240: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 240: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 241: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 241: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 241: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 242: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 242: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 242: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 243: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 243: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 243: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 244: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 244: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 244: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 245: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 245: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 245: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 246: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 246: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 246: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 247: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 247: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 247: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 248: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 248: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 248: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 249: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 249: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 249: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 250: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 250: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 250: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 251: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 251: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 251: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 252: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 252: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 252: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 253: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 253: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 253: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 254: SDK PUT verifies all KCVs and complete key-table replacement",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 254: 29-byte INIT reports selected version/03/60 and independent AES-CMAC cryptogram",
+      "passed": true
+    },
+    {
+      "name": "SCP03 KVN 254: unmodified SDK authenticates, decrypts, verifies response MAC and restores modeled retries",
+      "passed": true
+    },
+    {
+      "name": "SCP03 boundary KVN 254: restart preserves keys, enumeration and own CPLC",
+      "passed": true
+    },
+    {
+      "name": "SCP03 boundary KVN 254: no key material or certificate is replaced by restart",
+      "passed": true
+    },
+    {
+      "name": "all 254 documented custom SCP03 versions were independently imported and authenticated",
+      "passed": true
+    },
+    {
+      "name": "all 254 version rotations preserve the original own SCP11b key/certificate",
+      "passed": true
+    },
+    {
+      "name": "replacement with zero version cannot delete its previous high-version set; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "replacement with factory version cannot delete its previous high-version set; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "low/high SCP03 versions coexist at documented three-set capacity",
+      "passed": true
+    },
+    {
+      "name": "fourth valid high-version SCP03 set is refused at capacity; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "high-version replacement cannot collide with another stored version; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "high-version replacement of a missing set preserves all installed keys; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "full-capacity rotation from low to high SCP03 version is atomic",
+      "passed": true
+    },
+    {
+      "name": "wildcard INIT UPDATE selects numeric highest KVN 254 with the correct independent cryptogram",
+      "passed": true
+    },
+    {
+      "name": "unmodified SDK authenticates KVN=0 against highest high-version static keys",
+      "passed": true
+    },
+    {
+      "name": "same high-version rotation retains its reference with independently verified new key cryptogram",
+      "passed": true
+    },
+    {
+      "name": "same-version replacement authenticates new keys without rotating Domain identity",
+      "passed": true
+    },
+    {
+      "name": "high-version DELETE removes the complete set and frees capacity",
+      "passed": true
+    },
+    {
+      "name": "capacity freed by high-version deletion accepts another complete custom set",
+      "passed": true
+    },
+    {
+      "name": "removed or reserved SCP03 INIT version 1 does not consume another key's modeled retries; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "removed or reserved SCP03 INIT version 253 does not consume another key's modeled retries; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "removed or reserved SCP03 INIT version 255 does not consume another key's modeled retries; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 KID 11 retains maximum seven-bit generation version 127",
+      "passed": true
+    },
+    {
+      "name": "SCP11 KID 11 generation still rejects version 0; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 KID 11 private import still rejects version 0; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 KID 11 generation still rejects version 128; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 KID 11 private import still rejects version 128; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 KID 11 generation still rejects version 255; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 KID 11 private import still rejects version 255; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 KID 13 retains maximum seven-bit generation version 127",
+      "passed": true
+    },
+    {
+      "name": "SCP11 KID 13 generation still rejects version 0; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 KID 13 private import still rejects version 0; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 KID 13 generation still rejects version 128; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 KID 13 private import still rejects version 128; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 KID 13 generation still rejects version 255; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 KID 13 private import still rejects version 255; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 KID 15 retains maximum seven-bit generation version 127",
+      "passed": true
+    },
+    {
+      "name": "SCP11 KID 15 generation still rejects version 0; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 KID 15 private import still rejects version 0; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 KID 15 generation still rejects version 128; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 KID 15 private import still rejects version 128; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 KID 15 generation still rejects version 255; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 KID 15 private import still rejects version 255; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 public KID 10 retains maximum version 127",
+      "passed": true
+    },
+    {
+      "name": "SCP11 public KID 10 import still rejects version 0; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 public KID 10 import still rejects version 128; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 public KID 10 import still rejects version 255; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 public KID 20 retains maximum version 127",
+      "passed": true
+    },
+    {
+      "name": "SCP11 public KID 20 import still rejects version 0; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 public KID 20 import still rejects version 128; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 public KID 20 import still rejects version 255; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 public KID 2f retains maximum version 127",
+      "passed": true
+    },
+    {
+      "name": "SCP11 public KID 2f import still rejects version 0; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 public KID 2f import still rejects version 128; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11 public KID 2f import still rejects version 255; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11b version 127 still completes independent SDK key agreement and encrypted metadata read",
+      "passed": true
+    },
+    {
+      "name": "explicit blocked KVN 254 cannot fall back to another set; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "wildcard INIT skips blocked 254 and selects usable high-byte version 128",
+      "passed": true
+    },
+    {
+      "name": "wildcard SDK channel uses 128 while preserving blocked 254 state",
+      "passed": true
+    },
+    {
+      "name": "mixed high-version SDK reset terminates its old authenticated channel; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SDK reset reaches all low/high/blocked SCP03 sets and restores fresh defaults",
+      "passed": true
+    },
+    {
+      "name": "mixed-version modeled reset rotates own CPLC and independent SCP11b identity",
+      "passed": true
+    },
+    {
+      "name": "mixed-version Domain reset preserves all peer application state",
+      "passed": true
+    },
+    {
+      "name": "fresh default SCP03 keys authenticate after mixed-version reset",
+      "passed": true
+    }
+  ],
+  "verified_scp03_custom_versions": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63,
+    64,
+    65,
+    66,
+    67,
+    68,
+    69,
+    70,
+    71,
+    72,
+    73,
+    74,
+    75,
+    76,
+    77,
+    78,
+    79,
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    86,
+    87,
+    88,
+    89,
+    90,
+    91,
+    92,
+    93,
+    94,
+    95,
+    96,
+    97,
+    98,
+    99,
+    100,
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107,
+    108,
+    109,
+    110,
+    111,
+    112,
+    113,
+    114,
+    115,
+    116,
+    117,
+    118,
+    119,
+    120,
+    121,
+    122,
+    123,
+    124,
+    125,
+    126,
+    127,
+    128,
+    129,
+    130,
+    131,
+    132,
+    133,
+    134,
+    135,
+    136,
+    137,
+    138,
+    139,
+    140,
+    141,
+    142,
+    143,
+    144,
+    145,
+    146,
+    147,
+    148,
+    149,
+    150,
+    151,
+    152,
+    153,
+    154,
+    155,
+    156,
+    157,
+    158,
+    159,
+    160,
+    161,
+    162,
+    163,
+    164,
+    165,
+    166,
+    167,
+    168,
+    169,
+    170,
+    171,
+    172,
+    173,
+    174,
+    175,
+    176,
+    177,
+    178,
+    179,
+    180,
+    181,
+    182,
+    183,
+    184,
+    185,
+    186,
+    187,
+    188,
+    189,
+    190,
+    191,
+    192,
+    193,
+    194,
+    195,
+    196,
+    197,
+    198,
+    199,
+    200,
+    201,
+    202,
+    203,
+    204,
+    205,
+    206,
+    207,
+    208,
+    209,
+    210,
+    211,
+    212,
+    213,
+    214,
+    215,
+    216,
+    217,
+    218,
+    219,
+    220,
+    221,
+    222,
+    223,
+    224,
+    225,
+    226,
+    227,
+    228,
+    229,
+    230,
+    231,
+    232,
+    233,
+    234,
+    235,
+    236,
+    237,
+    238,
+    239,
+    240,
+    241,
+    242,
+    243,
+    244,
+    245,
+    246,
+    247,
+    248,
+    249,
+    250,
+    251,
+    252,
+    253,
+    254
+  ],
+  "scp03_custom_range": [
+    1,
+    254
+  ],
+  "scp03_factory_reserved_version": 255,
+  "scp11_custom_range": [
+    1,
+    127
+  ],
+  "transport": "direct IFD ABI",
+  "physical_device_access": false,
+  "manufacturer_trust_reproduced": false,
+  "system_pcsc_reader_registered": false,
+  "scp03_range_source": "published Yubico SCP technical manual, Key Sets",
+  "init_key_information_option": "60; GP response field agrees with saved public recognition option",
+  "independent_crypto": "GP SCP03 AES-CMAC derivation and card cryptogram; unmodified SDK verifies encrypted PUT KCV and secure messaging",
+  "physical_init_response_measured": false,
+  "unverified": [
+    "physical key-version boundary/error responses and INIT response",
+    "exact hardware retry/deletion timing",
+    "native OS reader/browser conformance"
+  ]
+}

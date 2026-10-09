@@ -1,0 +1,1493 @@
+소프트웨어 보안키 에뮬레이터 0.64.0 프로토콜 단계
+
+FIDO 동일 CID 거래 중 PING/WINK 중첩을 차단하고, YubiHSM Auth의
+대칭형 챌린지 생성과 터치 사용을 분리하며, SCP03 INITIALIZE UPDATE의
+잘못된 Le가 인증 재시도를 소모하지 않도록 수정했습니다. Mac/Linux
+C++ 각 140사례·13,748 assertion, 주 회귀 6,029항목, 네트워크 없는
+USB 게스트 12개 종료 마커를 검증했습니다. 실물 5.7.4, 물리 터치,
+첫 게스트 실행은 커널 경고 후 10/12 실패했고 동일 이미지 재실행은
+12/12 통과했습니다. 안정성 원인은 아직 확정되지 않았습니다.
+외부 호스트, macOS 권한 등록과 제조사 신뢰는 아직 검증하지 못했습니다.
+자세한 기록은 implementation-status.json과 evidence/v64-integration에 있습니다.
+
+0.63 및 이전 기록 — 아래는 해당 버전의 역사적 범위입니다.
+
+소프트웨어 보안키 에뮬레이터 0.63.0 프로토콜 단계
+
+PIV GENERAL AUTHENTICATE의 잘못된 Le를 키 사용 전에 거부해
+PIN_ALWAYS 인증 상태를 보존합니다. Mac/Linux C++ 각 138사례·
+13,706 assertion, 주 회귀 6,027항목, 네트워크 없는 USB 게스트
+12개 종료 마커를 검증했습니다. 실물 5.7.4, 물리 터치, 외부
+호스트, macOS 권한 등록과 제조사 신뢰는 아직 검증하지 못했습니다.
+자세한 기록은 implementation-status.json과 evidence/v63-integration에 있습니다.
+
+0.62 및 이전 기록 — 아래는 해당 버전의 역사적 범위입니다.
+
+소프트웨어 보안키 에뮬레이터 0.62.0 프로토콜 단계
+
+U2F 처리 중 CANCEL, OATH 교차 클라이언트 인증, PIV GENERATE P1,
+CTAP 대용량 데이터 쓰기 순서를 개선했습니다.
+Mac/Linux C++ 각 138사례·13,706 assertion, 주 회귀 6,027항목,
+네트워크 없는 USB 게스트 12개 종료 마커를 검증했습니다.
+실물 5.7.4 응답·타이밍, 물리 터치, 외부 호스트, macOS 권한 등록과
+제조사 신뢰는 아직 검증하지 못했습니다. 자세한 기록은
+implementation-status.json과 evidence/v62-integration에 있습니다.
+
+0.61 및 이전 기록 — 아래는 해당 버전의 역사적 범위입니다.
+
+소프트웨어 보안키 에뮬레이터 0.61.0 프로토콜 단계
+
+FIDO 채널 동시 작업 중 다른 CID의 명령 처리, OATH SEND REMAINING
+CLA 검사, OpenPGP SET RETRIES F2 헤더 검사를 개선했습니다.
+Mac/Linux C++ 136사례·13,687 assertion과 주 회귀 6,025항목,
+네트워크 없는 USB 게스트 12개 마커 검증을 통과했습니다.
+실물 5.7.4 응답·타이밍, 물리 터치, 외부 호스트, macOS 권한 등록과
+제조사 신뢰는 아직 검증하지 못했습니다. 자세한 기록은
+implementation-status.json과 evidence/v61-integration에 있습니다.
+
+0.60 및 이전 기록 — 아래는 해당 버전의 역사적 범위입니다.
+
+소프트웨어 보안키 에뮬레이터 0.60.0 프로토콜 단계
+
+OTP 빈 슬롯 삭제, OpenPGP SELECT DATA Le, PIV MOVE/DELETE KEY
+APDU 형식과 FIDO orphan CONT/채널 점유 처리를 개선했습니다.
+Mac/Linux C++ 135사례·13,642 assertion과 주 회귀 6,024항목,
+네트워크 없는 USB 게스트 12개 마커 검증을 통과했습니다.
+실물 5.7.4 완전 동일성, 물리 터치, 외부 호스트,
+macOS 권한 등록과 제조사 신뢰는 아직 검증하지 못했습니다.
+자세한 기록은 implementation-status.json과 evidence/v60-integration에 있습니다.
+
+0.59 및 이전 기록 — 아래는 해당 버전의 역사적 범위입니다.
+
+소프트웨어 보안키 에뮬레이터 0.59.0 프로토콜 단계
+
+CTAPHID WINK 길이 검사, OTP Dormant 설정 업데이트, OpenPGP 운영 상태
+ACTIVATE FILE 동작을 개선했습니다. Mac/Linux C++ 134사례·13,622
+assertion과 주 회귀 6,023항목, 네트워크 없는 USB 게스트 회귀가
+통과했습니다. 실물 5.7.4 완전 동일성, 물리 터치, 외부 호스트,
+macOS 권한 등록과 제조사 신뢰는 아직 검증하지 못했습니다.
+자세한 기록은 implementation-status.json과 evidence/v59-integration에 있습니다.
+
+0.58 및 이전 기록 — 아래는 해당 버전의 역사적 범위입니다.
+
+소프트웨어 보안키 에뮬레이터 0.58.0 프로토콜·HID 단계
+
+CTAPHID INIT 재동기화, PIV 상태 변경 명령 형식, OTP 빈 슬롯 교환,
+macOS FIDO HID 보고서 길이·포화 처리를 개선했습니다. Mac/Linux C++
+133사례·13,607 assertion과 주 회귀 6,022항목, 네트워크 없는 USB
+게스트 회귀가 통과했습니다. 실물 5.7.4 완전 동일성, 물리 터치,
+외부 호스트, macOS 권한 등록과 제조사 신뢰는 아직 검증하지 못했습니다.
+자세한 기록은 implementation-status.json과 evidence/v58-integration에 있습니다.
+
+0.57 및 이전 기록 — 아래는 해당 버전의 역사적 범위입니다.
+
+소프트웨어 보안키 에뮬레이터 0.57.0 PIN·PIV·USB 단계
+
+PIN 오류 세 번 후 일시 잠금과 재연결·강제 변경 순서를 구현했습니다.
+잘못된 PIV 리셋 명령은 상태를 보존하며, USB 버스 재설정 뒤
+이전 FIDO 보고서가 다시 나오지 않게 했습니다. Mac/Linux C++
+129사례·12,806 assertion과 주 회귀 6,018항목, 네트워크 없는
+USB 게스트 회귀가 통과했습니다. 실물 5.7.4 완전 동일성, 물리 터치,
+외부 호스트, macOS 권한 등록과 제조사 신뢰는 아직 검증하지 못했습니다.
+자세한 기록은 implementation-status.json과 evidence/v57-integration에 있습니다.
+
+0.56 및 이전 기록 — 아래는 해당 버전의 역사적 범위입니다.
+
+소프트웨어 보안키 에뮬레이터 0.56.0 CTAP·PIV·USB 단계
+
+미인식 CTAP 옵션 값은 건너뛰고, PIV 5.7의 F9 키 삭제를 지원합니다.
+호스트가 FIDO 입력을 잠시 읽지 않아도 최대 길이 PING 네 건을
+큐 초과 없이 순서대로 전달합니다. Mac/Linux C++ 124사례·12,422
+assertion과 주 회귀 6,006항목, 네트워크 없는 USB 게스트 회귀가
+통과했습니다. 실물 5.7.4 완전 동일성, 물리 터치, 외부 호스트,
+macOS 권한 등록과 제조사 신뢰는 아직 검증하지 못했습니다.
+자세한 기록은 implementation-status.json과 evidence/v56-integration에 있습니다.
+
+0.55 및 이전 기록 — 아래는 해당 버전의 역사적 범위입니다.
+
+소프트웨어 보안키 에뮬레이터 0.55.0 CTAP·OpenPGP·HID 경계 단계
+
+없는 자격 증명 관리 대상에는 CTAP 0x2e, 잘못된 OpenPGP attestation Le에는
+인증서 변경 없이 6700을 반환합니다. 최대 7,609바이트 CTAPHID PING은
+합법적인 마지막 프레임 127에서 정상 완료됩니다. 격리 Mac/Linux C++
+124사례·12,422 assertion과 주 회귀 5,988항목이 통과했습니다.
+PIV Printed 쓰기는 공식 문서의 상충으로 변경을 보류했습니다. 실물 펌웨어
+완전 동일성, 물리 터치, 외부 호스트, macOS 권한 등록과 제조사 신뢰는
+아직 검증하지 못했습니다. 자세한 기록은 implementation-status.json과
+evidence/v55-integration에 있습니다.
+
+0.54 및 이전 기록 — 아래는 해당 버전의 역사적 범위입니다.
+
+소프트웨어 보안키 에뮬레이터 0.54.0 프로토콜·CCID 안정성 단계
+
+알 수 없는 CTAP 요청 필드의 정규 CBOR 부동소수점 값을 건너뜁니다.
+OpenPGP GET NEXT DATA 종료 오류가 인증서 선택 상태를 지우지 않으며,
+YubiHSM Auth의 중복·잘못된 입력을 문서화된 상태어로 거부합니다.
+Linux FunctionFS 브리지는 CCID 응답 수신 정체에도 종료하지 않습니다.
+주 회귀 5,987항목과 C++ 123사례/11,644 assertion이 통과했습니다.
+격리 게스트 결과와 미검증 범위는 implementation-status.json 및
+evidence/v54-integration에 있습니다. 실물 펌웨어 완전 동일성, 물리
+터치, 외부 호스트, macOS 권한 등록과 제조사 신뢰는 미검증입니다.
+
+0.53 및 이전 기록 — 아래는 해당 버전의 역사적 범위입니다.
+
+소프트웨어 보안키 에뮬레이터 0.53.0 프로토콜·USB 안정성 단계
+
+CTAP hmac-secret과 up=false 조합은 0x2B로 거부하고 서명 카운터를
+유지합니다. OpenPGP GET NEXT DATA의 불필요한 명령 데이터를 거부하고,
+YubiHSM Auth 터치 정책의 1바이트 00/01 구문을 검사합니다. Linux
+FunctionFS 브리지는 게스트 키보드 수신이 멈춰도 입력 큐 포화로 종료하지
+않습니다. 주 회귀 5,986항목과 C++ 122사례/11,639 assertion이
+통과했습니다. 격리 게스트 근거와 남은 경계는 implementation-status.json
+및 evidence/v53-integration에 있습니다. 실물 펌웨어 완전 동일성,
+물리 터치, 외부 호스트, macOS 권한 등록과 제조사 신뢰는 미검증입니다.
+
+0.52 및 이전 기록 — 아래는 해당 버전의 역사적 범위입니다.
+
+소프트웨어 보안키 에뮬레이터 0.52.0 CTAP·OpenPGP·OTP·USB 통합 단계
+
+명시적으로 빈 CTAP allowList는 NoCredentials로 거부하고 서명 카운터를
+올리지 않습니다. OpenPGP GET DATA의 잘못된 CLA 체인을 거부하고,
+여러 소프트웨어 클라이언트의 OTP 터치 소유권을 공유합니다. Linux FunctionFS
+브리지는 소프트웨어 터치를 게스트 USB 키보드 이벤트로 전달하고 USB
+재설정 시 오래된 입력을 폐기합니다. 주 회귀
+5,985항목과 C++ 121사례/11,631 assertion이 통과했습니다. 격리 게스트
+검사와 미검증 경계는 implementation-status.json 및 evidence/v52-integration에
+기록했습니다. 실물 펌웨어 완전 동일성, 물리 터치 센서, 외부 호스트,
+macOS 권한 등록과 제조사 신뢰는 달성하지 못했습니다.
+
+0.51 및 이전 기록 — 아래는 해당 버전의 역사적 범위입니다.
+
+소프트웨어 보안키 에뮬레이터 0.51.0 OpenPGP 체인·OTP 터치 이벤트 단계
+
+OpenPGP 명령 체인 중 GET RESPONSE를 6883으로 거부하고, 사설 OTP 소켓에
+터치 시작·종료 이벤트를 추가했습니다. 단일 슬롯 1은 시작 이벤트에서 한 번
+출력하며 진행 중 기존 버튼 호출은 중복 출력을 막기 위해 거부합니다. 주 회귀
+5,985항목, C++ 121사례/11,627 assertion, 격리 USB 게스트 28/122/8/6
+검사가 통과했습니다. 실제 터치 센서/OS 이벤트 생산자, 실물 5.7.4 타이밍,
+외부 호스트, macOS 권한 등록과 제조사 신뢰는 미검증입니다.
+
+0.50 및 이전 기록 — 아래는 해당 버전의 역사적 범위입니다.
+
+소프트웨어 보안키 에뮬레이터 0.50.0 CTAP·OpenPGP·OTP 정합성 단계
+
+CTAP enterpriseAttestation의 정수 CBOR 형식, OpenPGP GET RESPONSE의 CLA 검사,
+단일 OTP 슬롯 1의 FAST_TRIG 완료된 터치 출력 모델을 보완했습니다. macOS·Linux
+CTAP 엔진을 다시 빌드했고 주 회귀 5,985항목과 121개 C++ 사례/11,627개
+assertion이 통과했습니다. 격리 USB 게스트에서 새 Linux 실행 파일과 통합
+카드 소스를 함께 검사했습니다. OTP의 실제 접촉 즉시 출력과 5.7.4 실물
+상태어·타이밍, macOS 권한 등록, 외부 호스트·제조사 신뢰는 미검증입니다.
+근거는 evidence/v50-* 및 implementation-status.json에 있습니다.
+
+0.49 및 이전 기록 — 아래는 해당 버전의 역사적 범위입니다.
+
+소프트웨어 보안키 에뮬레이터 0.49.0 OATH·YubiHSM Auth 명령 경계 단계
+
+Goal은 활성 상태이며 실제 YubiKey 5C Nano 5.7.4와 완전 동일하다고
+판정하지 않았습니다. OATH PUT의 비밀 키 14바이트 하한과 YubiHSM Auth
+RESET의 APDU 형식 검사를 상태 변경 전에 적용했습니다. 비수정 YubiKit의
+사설 소켓·직접 IFD 통합 검사 559항목과 전체 주 회귀 5,985항목이
+통과했습니다. Linux FunctionFS는 고속 지원 컨트롤러에서도 공식 12 Mbps
+제품 속도와 맞게 Full Speed로 연결하도록 수정했습니다. 새 브리지와 v0.49
+카드의 격리 USB·표준 PC/SC 158항목이 통과했습니다. 실제 펌웨어의 잘못된
+명령 상태어·허용 범위는 미측정입니다. macOS 권한 장치 등록, 실물 차분,
+제조사 신뢰는 계속 남아 있습니다. 근거는 evidence/v49-card-guards,
+evidence/v49-fullspeed-controller 및 implementation-status.json에 있습니다.
+
+0.48 및 이전 기록 — 아래는 해당 버전의 역사적 범위입니다.
+
+소프트웨어 보안키 에뮬레이터 0.48.0 CTAP·PIV·YubiHSM Auth 명령 정합성 단계
+
+Goal은 활성 상태입니다. 실제 YubiKey 5C Nano 5.7.4와 완전 동일하다고 판정하지 않았습니다.
+CTAP 2.1의 빈 minPinLengthRPIDs 유지 규칙, PIV PIN 명령 헤더, YubiHSM Auth
+비밀번호 8회 실패 후 자격 증명 삭제를 구현했습니다. macOS·Linux ARM64 CTAP
+바이너리를 다시 빌드했습니다. 통합 소프트웨어 회귀 5,985항목과 별도
+SDK 소켓·직접 IFD 검사도 통과했습니다. 기본 dummy_hcd의
+엔드포인트 주소 재배치에서 기존 Linux 브리지가 159항목을 통과했고,
+새 Linux FIDO 실행 파일과 통합 카드 소스로 같은 격리 USB·표준
+PC/SC 경로 158항목이 통과했습니다.
+고속 dummy_hcd 구성 열거는 현재 실패하여 별도 전송 수정이 필요합니다.
+실물 펌웨어 차분, 권한이 있는 macOS 장치 등록, 제조사 신뢰는 미검증입니다.
+근거는 evidence/v48-protocol-and-transport 및 implementation-status.json에 있습니다.
+
+0.47 및 이전 기록 — 아래는 해당 버전의 역사적 범위입니다.
+
+소프트웨어 보안키 에뮬레이터 0.47.0 카드 명령·이름 경계 단계
+
+Goal은 활성 상태입니다. 실제 YubiKey 5C Nano 5.7.4와 완전 동일하다고 판정하지 않았습니다.
+이번 단계는 공개 명령 형식에 맞춰 PIV 생성·가져오기·데이터 쓰기와 OpenPGP
+종료·활성화의 명시적 Le를 상태 변경 전에 거부하고, OATH의 바이너리 계정 이름을
+프롬프트에 안전하게 표시하면서 원본 바이트와 HMAC 계산은 유지합니다.
+독립 SDK 소켓·직접 IFD, 전체 회귀, 격리 no-NIC Linux 게스트 근거는
+evidence/v47-card-boundaries에 보존했습니다. Linux 브리지 바이너리는 0.46과 같습니다.
+물리 펌웨어의 오류 상태어·허용 범위, macOS 권한 서명·실제 등록, 제조사 신뢰는 미검증입니다.
+
+0.46 및 이전 기록 — 아래는 해당 버전의 역사적 범위입니다.
+
+소프트웨어 보안키 에뮬레이터 0.46.0 Linux FunctionFS 오류 완료값 단계
+
+Goal은 활성 상태입니다. 실제 YubiKey 5C Nano 5.7.4와 완전 동일하다고 판정하지 않았습니다.
+이번 단계는 Linux FunctionFS OUT 읽기의 비동기 완료값 -EPIPE/-ESHUTDOWN/-ECONNRESET을
+짧은 대기 후 재시도하고, IN 응답 쓰기 오류는 중단 상태로 유지합니다.
+격리 no-NIC 게스트의 모의 오류·정상 경계·v0.45 카드 결합 검증과 원본 콘솔은
+evidence/v46-functionfs-out-error에 보존합니다. 실제 커널 오류 발생 빈도와
+드문 패닉의 제거, macOS 권한 서명·실제 등록, 물리 펌웨어 차분은 미검증입니다.
+
+0.45 및 이전 기록 — 아래는 해당 버전의 역사적 범위입니다.
+
+소프트웨어 보안키 에뮬레이터 0.45.0 카드 프로토콜 경계 단계
+
+Goal은 활성 상태입니다. 실제 YubiKey 5C Nano 5.7.4와 완전 동일하다고 판정하지 않았습니다.
+이번 단계는 OATH HOTP 마지막 64비트 카운터 이후 서비스 지속, OTP 터치 상태 비트와
+전원 세션·커밋/재부팅 경계, OpenPGP 쓰기·키 생성·서명 명령의 잘못된 Le 거부를 더했습니다.
+독립 SDK, AES/CRC 티켓 복호화, 사설 소켓·직접 IFD와 전체 회귀 결과는
+evidence/v45-card-fidelity 및 implementation-status.json에 기록합니다.
+Linux AIO 바이너리와 나머지 C++ 엔진은 0.44 단계와 같습니다. 최종 카드 소스와
+해당 AIO를 합친 격리 no-NIC Linux 게스트에서 OTP 28, 표준 PC/SC 122,
+PIV 인증서 경계 8항목이 통과했습니다. 한 번의 성공으로 드문 커널 패닉 제거를
+입증한 것은 아닙니다.
+물리 펌웨어 오류 응답·전원 경계, macOS 권한 서명·실제 등록은 미검증입니다.
+
+0.44 및 이전 기록 — 아래는 해당 버전의 역사적 범위입니다.
+
+소프트웨어 보안키 에뮬레이터 0.44.0 카드·Linux USB 전송 단계
+
+Goal은 활성 상태입니다. 실제 YubiKey 5C Nano 5.7.4와 완전 동일하거나 완료했다고 판정하지 않았습니다.
+이번 단계는 공개 v0.43 카드 위에 OTP 짧은 LT64 APDU 및 HID 중단/재전송,
+OpenPGP 명시적 Le 및 INTERNAL AUTHENTICATE P1/P2 검사를 더했습니다.
+격리 후보의 기존 주 회귀 5984항목과 새 공동 검사 44항목이 통과했습니다.
+소프트웨어 경계와 재시작 상태만 검증했으며 실제 펌웨어의 오류 응답은 미측정입니다.
+
+Linux FunctionFS는 모든 엔드포인트 요청에 비동기 I/O를 사용하도록 바꿨습니다.
+전용 네트워크 없는 dummy_hcd 게스트에서 7개 장치 구성 49항목, 두 차례
+장기 설정 전환 656항목, 통합 OTP 키보드 28항목, stock libccid/pcscd/SDK
+122항목, PIV X.509 인증서 경계 8항목이 통과했습니다. 카드 준비 전의
+PC/SC 즉시 연결 오류는 이전 동기 바이너리에서도 동일하게 재현됐고,
+카드 준비 후 연결하는 검증은 통과했습니다. 드문 커널 패닉의 제거는
+유한한 반복 검사만으로 입증하지 못했습니다.
+
+이 패키지의 C++ FIDO/macOS 엔진은 0.42.0 버전 문자열을 유지합니다.
+Linux ske-usbd 바이너리만 AIO 소스로 교체했으며 해당 SHA256과
+격리 게스트 원본 증거는 manifest.json과 v44-native-aio-validation.json에
+기록합니다. macOS 권한 서명·실제 등록, 물리 키 차분 검증은 남아 있습니다.
+
+0.43 및 이전 기록 — 아래 “이번 단계”는 해당 버전의 역사적 범위입니다.
+
+소프트웨어 보안키 에뮬레이터 0.43.0 카드 프로토콜 단계
+
+Goal은 활성 상태입니다. YubiKey 5C Nano 5.7.4와 완전 동일하다고 판정하지 않았습니다.
+이번 단계는 0.42.0의 C++/Linux/macOS 엔진 바이너리를 유지하고 Python 카드
+프로토콜 소스와 독립 검사를 갱신했습니다. macOS 권한 서명·실제 장치 등록과
+물리 키 차분 검증은 계속 남아 있습니다.
+
+  PIV: Yubico가 공개한 3052바이트 인증서(tag70) 한계를 구현했습니다.
+  유효한 X.509 DER 3052/3053바이트를 수정하지 않은 SDK, 격리 Linux의
+  stock libccid·pcscd 경로로 확인했습니다. 원시 APDU 재조립은 각각
+  3070/3071바이트 PUT과 9000/6A80 모델 응답을 검증했습니다.
+  이 상태값은 실제 5.7.4 키에서 측정한 값이 아닙니다.
+
+  OTP: LT64 빈 HMAC 도전값을 단일 00바이트로 처리하며 SDK APDU·OTP HID의
+  독립 HMAC 결과를 확인했습니다. 두 슬롯의 짧은/긴 누름은 공개된
+  1–2.5초/3–5초 구간으로 바꿨습니다. 정확한 펌웨어 debounce와
+  FAST_TRIG 동작은 실물 차분 전까지 미검증입니다.
+
+  OpenPGP: RFC 4880의 반복 salted S2K가 짧은 octet count에서도
+  salt+PIN 첫 블록 전체를 해시하도록 수정했습니다. 독립 hashlib와
+  SDK APDU의 소켓·직접 IFD 경로로 확인했습니다. SDK 자체는 이 드문
+  경계에서 잘라 계산하므로 검증기는 독립 계산한 해시를 APDU로 전달합니다.
+  VERIFY/CHANGE REFERENCE DATA의 잘못된 P1과 VERIFY FF의 데이터는
+  PIN 재시도·인증 상태·PIN 변경 전에 거부하도록 바로잡았습니다.
+
+  주 회귀는 5984항목(C++ 120건, 독립 5864건)을 통과했습니다. 이번에
+  추가한 경계 143건은 그 안에 포함됩니다. 증거는 새 *-result.json 및
+  piv-certificate-native-observation.json에 있습니다. FunctionFS의
+  드문 커널 오류는 별도 격리 후보에서 분석 중이며 이 단계에 포함하지 않습니다.
+
+0.42 및 이전 기록 — 아래의 “현재”와 미검증 표현은 당시 버전의 범위입니다.
+
+소프트웨어 보안키 에뮬레이터 0.42.0
+
+목표: YubiKey 5C Nano / 5.7.4 외부 동작·호스트 호환성을 완전히 구현하고 검증합니다.
+Goal은 활성 상태이며 완전 동일·완료로 판정하지 않았습니다.
+현재 검증 범위와 남은 차이는 implementation-status.json과 compatibility-matrix.json에 있습니다.
+
+이번 추가: 표준 libccid·PC/SC의 실제 긴 USB 전송과 원래 키·저장 상태
+
+  격리된 ARM64 Linux 게스트에서 수정하지 않은 libccid 1.5.5, pcscd 2.0.3,
+  pyscard 2.3.1, Yubico SDK 5.9.2 및 fido2 2.2.1로 122항목을 통과했습니다.
+  실제 native USB와 표준 드라이버 로그의 원본 CCID 바이트를 독립 재조립했습니다.
+  입력 명령 체인 1/2·1/3/2와 출력 응답 체인 1/2, ACK·SW·객체 내용을 확인했습니다.
+  큰 응답마다 원래 AIO 제출1회·같은 context 완료1회와 경계의 native ZLP도 확인했습니다.
+  raw io_event.res payload 자체를 직접 기록했다고 보고하지 않습니다.
+
+  정상 응답 전체 길이 2,047·2,048·2,049·3,071·3,072·3,073·3,078·3,079의
+  8경우를 통과했습니다. 마지막 두 PUT은 수정하지 않은 stock 연결의 raw extended
+  APDU API를 사용했으며 stock SDK formatter로 만들었다고 보고하지 않습니다.
+  PIV 데이터 3,073·4,088·4,089·8,185바이트 PUT은 6700으로 거절됐고
+  기존 객체·원래 키·HOTP 상태가 유지됐습니다. 4/8KiB 저장 성공으로 보고하지 않습니다.
+  불투명 CHUID 검사 객체가 물리적으로 유효한 CHUID라고 보고하지 않으며,
+  실제 키의 정확한 PIV 헤더·할당 경계와 동일하다는 판정도 하지 않습니다.
+
+  원래 FIDO PIN/UV protocol2 서명13개와 원래 PIV 키 서명12개를 각각
+  원시 응답에서 독립 암호 검증했고 HOTP는 12번 모두 정확히 한 번 증가했습니다.
+  USB 세대·주소·설정과 원래 서비스가 유지됐습니다. 드라이버 바이너리·SDK는
+  그대로이며 Info.plist의 로그 레벨만 변경했습니다. 원래0.41의 같은122항목과
+  import·package observer·builder metadata 실패 및 실제 oversized6700 실패도 보존합니다.
+
+  안전한 socket/wire 회귀의 복귀 검사는 명령을 큐에 넣은 것만으로 응답이
+  확정됐다고 가정했던 선행조건을 고쳤습니다. 원래 실패35항목에서는 실제 패킷이
+  기록되지 않았습니다. 관찰만 추가한 같은 명령이 active와 CMD_ABORTED 응답을
+  각각 기록했습니다. 실제 첫1바이트를 받은 후 절전·복귀하고 남은9바이트를
+  정확히 이어받는 경우를 수정하지 않은 소스·바이너리로24회×68항목 검증했습니다.
+  이 socket 경우를 전혀 읽지 않은10바이트 응답 보존 증거라고 보고하지 않습니다.
+  실제 native 미수신·버퍼링·부분64바이트 검사 범위는 별도 기록으로 유지합니다.
+
+  마지막 Chromium UI 검사의 원래 실패도 보존합니다. 전체 Linux 실행에서는
+  23항목 뒤 PIN 입력 검사에 실패했으며 당시 실제 길이는 기록되지 않았습니다.
+  입력 관찰만 추가한 실행에서는 포커스가 있는 PIN 필드에22자를 기록했고,
+  같은 원래 명령으로15자가 정확히 입력돼29항목을 통과한 실행도 보존합니다.
+  모두 PIN 실패 횟수0입니다. 원래 실패가 키 반복 때문임을 확정하지 않습니다.
+
+  보강한 검증기는 게스트 Xvfb에서만 실제 키 이벤트 동안 전역 반복을 끄고
+  원래 키보드 설정을 복원합니다. 실제 포커스·빈 필드·선택 범위·15자 입력과
+  실제 PIN 인증을 확인합니다. candidate29와 현재 전체 실행의29항목에서
+  9번 입력·설정 변경/복원과 PIN 오류0을 검증했습니다. 브라우저·SDK·
+  에뮬레이터 전송 소스는 그대로이며 macOS 키보드 설정은 변경하지 않습니다.
+
+  전체 Linux 게스트의 두 번째 실행에서는 긴 USB 전송 복구 검사 328항목 중
+  301개의 PASS를 낸 뒤 Ubuntu 6.8 커널이 FunctionFS 동기 완료 콜백에서
+  패닉을 기록했습니다. 실제 커널 콘솔과 실패 결과를 evidence/native-kernel42에
+  보존했습니다. 같은 커널·에뮬레이터·USB 바이너리·검증 helper와 앞선 검사
+  순서를 재사용한 별도 게스트는 해당 328항목을 모두 통과했고, 이후 새 전체
+  실행도 통과했습니다. 패닉의 원인이 커널인지 사용자 공간인지 확인되지
+  않았으며, 한 번의 전체 성공을 지속 안정성의 증거로 취급하지 않습니다.
+
+  주 회귀 5841항목(C++ 120개/11620 assertions, 독립 5721개)
+  및 압축 해제 후 같은 5841항목을 통과했습니다. 새 native122는 주 회귀와 별도입니다.
+  패키지 검사34개는 소스·실행 바이너리·helper·raw 콘솔과 보존한 원래 실패를 대조합니다.
+  Linux 전송·카드 구현은0.41과 바이트가 같으며 소스 버전 메타데이터2곳만 변경했습니다.
+  기존534 runtime PM·328 cutover·108 partial SIG·205 pending 및 SDK/브라우저
+  범위를 줄이지 않습니다. 자체 드라이버로 측정한 기존534/328의 stock 여부는 여전히 false입니다.
+
+  남은 범위: stock 긴 전송의 PM·설정 전환·오류 복구, 다른 AIO 완료 오류,
+  미완성 입력 명령 체인, 다른 프로필·생산 UDC·GadgetFS·전체 플랫폼 절전·깨우기,
+  터치·전력·타이밍·물리 차등 검증과 macOS 권한 서명·실제 장치 등록입니다.
+  실제 키의 자격 증명·설정은 변경하지 않았습니다. 제조사 비밀키·신뢰·보안칩의
+  물리적 보장은 소프트웨어에서 재현할 수 없는 성질로 구분합니다.
+
+  근거: linux-stock-libccid-large-result.json, stock-libccid-large-observation.json,
+  linux-stock-driver-provenance.json, evidence/stock-original41,
+  wire-resume-fixture-observation.json, evidence/wire-resume42, linux-native-result.json,
+  chromium-pin-input-fixture-observation.json, evidence/chromium-pin42,
+  native-kernel-completion-history.json, evidence/native-kernel42.
+
+0.41 및 이전 기록 — 아래 “현재”와 미검증 표현은 각 당시 버전의 범위를 뜻합니다.
+당시 미검증이던 stock 일반 긴 전송은 위0.42의122항목 범위에서 확인했습니다.
+stock PM·설정 전환·오류 복구와 물리/macOS의 미검증 범위는 유지합니다.
+
+소프트웨어 보안키 에뮬레이터 0.41.0
+
+목표: YubiKey 5C Nano / 5.7.4의 외부 동작과 호스트 호환성을 구현·검증합니다.
+goal은 활성 상태입니다. 완전 동일로 판정하지 않았습니다.
+완료 기준과 남은 차이는 compatibility-matrix.json과 implementation-status.json에 있습니다.
+
+이번 검증 추가: 일부 받은 긴 응답의 실제 USB 절전·복귀, 원래 키·승인 상태
+
+  동결0.40의 바이너리·소스를 그대로 사용한 첫 실험161항목을 보존했습니다.
+  전체 응답2,047·2,048·2,049바이트는 수동 복귀, 3,071·3,072·3,073바이트는
+  native FIDO SDK 접근으로 복귀했습니다. 이 여섯 경우만으로 모든 크기에서
+  모든 복귀 방식을 확인했다고 보고하지 않았습니다.
+
+  확대 검사534항목은 여섯 경계마다 수동 복귀·native FIDO SDK 접근·새 자체
+  usbfs 연결의 세 방식을 모두 적용했습니다. 실제 절전·복귀18회와 각 경우의
+  첫64바이트→동일 원래 IOCB/context/TID/FD/buffer 유지→정확한 남은 첫 패킷
+  수신을 검증했습니다. 원래 io_submit은 단1회이고 completion wait는 해당
+  요청의 완료를 받았습니다. USB 세대·주소·설정과 세 원래 서비스가 유지됐습니다.
+  커널 실제 USB runtime 콜백·return0·절전 시간 증가·usage0도 기록했습니다.
+
+  18번 모두 기존 PIV PIN·관리자 승인이 해제돼 미승인 서명과 객체 쓰기는
+  6982로 거절됐고 저장 상태는 그대로였습니다. 새로운 PIN 승인 뒤 원래 PIV
+  키의 서명19개(초기 포함)를 독립 암호 검증했습니다. 원래 FIDO PIN/UV
+  protocol2 자격 증명 서명19개와 정확한 HOTP 카운터18도 검증했습니다.
+
+  전체3,073바이트 응답은 두 CCID 조각에 걸칩니다. 원래 첫3,072바이트는
+  첫64바이트 이후 정확히 이어졌습니다. 복귀가 카드 세션을 비활성화하므로
+  뒤 응답 체인은 세 복귀 방식에서 모두 inactive/FE로 거절됐습니다.
+  명시적 PowerOn 후 원래 객체·키·SDK 새 요청은 정상 동작했습니다.
+  카드 세션 재설정을 넘어 원래 전체 chained APDU가 완료됐다고 보고하지 않습니다.
+  io_getevents의 완료 수1을 기록했으며 raw io_event.res 값은 직접 기록하지 않았습니다.
+
+  첫 게스트 시작 실패는2GB 설정에서 initramfs unpack write error가 발생해
+  native helper가 실행되기 전 끝난 것입니다. 콘솔·helper·이미지 해시를 보존했고,
+  기존 전체 실행과 같은4GB로 동일 이미지를 실행해161항목을 통과했습니다.
+  이 시작 실패는 에뮬레이터 전송 결함으로 분류하지 않았습니다.
+
+  정식 현재0.41 소스로534항목을 포함한 전체 Linux USB·SDK·PM·EINTR·
+  브라우저 검증을 실행했습니다. Linux 전송 구현은0.40과 바이트가 같고,
+  CMake·IFD 버전 메타데이터만 바꿨습니다.0.40의 실제 부분 전송 EINTR 수리는
+  유지합니다. Endpoint 전체는0.33과 다르며, 추가한 AIO 함수·분기를 정확히
+  제거한 기존 동기 경로만0.33과 바이트가 같습니다.
+
+  주 회귀 검사5841개(C++ 120개/11620 assertions, 독립 검사
+  5721개)와 압축 해제 후 같은5841개를 통과했습니다. 패키지 검사
+  30개는 현재 소스·바이너리·raw 콘솔·원래 실패와 성공 기록의 해시를 확인합니다.
+  새 native534항목은 주 회귀5841개와 별도 범위입니다. 자체 CCID 드라이버로
+  수정하지 않은 PIV/OATH SDK를 사용했으며 stock libccid의 긴 전송은 미검증입니다.
+
+  남은 범위: 다른 AIO 완료 오류·수신 명령 체인·다른 구성·생산 UDC·GadgetFS,
+  다른 절전·원격 깨우기·전력·터치·타이밍, stock libccid의 큰 전송,
+  물리 키 차등 검증, macOS 정식 권한 서명과 실제 장치 등록 등입니다.
+  실제 키의 자격 증명·설정은 변경하지 않았습니다. 제조사 비밀키·신뢰 인증과
+  보안칩의 물리적 보장은 복제하지 않습니다. 소스·프로토콜 구현을 계속합니다.
+
+  근거: linux-usb-large-partial-runtime-result.json,
+  usb-large-partial-runtime-observation.json, linux-native-result.json,
+  tools/linux-native/verify-usb-large-partial-runtime.py,
+  tools/linux-native/validate-usb-large-partial-runtime.py,
+  linux-usb-large-runtime-prior-v40-*.json.
+
+0.40 및 이전 구현·검증 기록 — 아래의 “현재”와 미검증 범위는 각 당시 버전을 뜻합니다.
+0.40의 미검증 profile6 prefix64 runtime PM은 위0.41의 명시한 범위에서 검증했습니다.
+
+소프트웨어 보안키 에뮬레이터 0.40.0
+
+목표: YubiKey 5C Nano / 5.7.4의 외부 동작과 호스트 호환성을 구현·검증합니다.
+goal은 활성 상태입니다. 완전 동일로 판정하지 않았습니다.
+완료 기준과 남은 차이는 compatibility-matrix.json과 implementation-status.json에 있습니다.
+
+이번 수정: 큰 CCID 응답을 일부 받은 뒤 중단할 때 원래 바이트를 다시 보내던 문제
+
+  동결한0.39에서 실제2,047바이트 응답 중 첫64바이트를 받은 뒤 원래 write
+  스레드에 SIGUSR1을 전달했습니다. 커널 write는 EINTR로 끝났고, 구현은 전체
+  2,047바이트를 다시 보냈습니다. 실제 남은 읽기는 예상1,983바이트 대신
+  2,047바이트였으며 원래 헤더·prefix가 반복됐습니다. 같은 USB 세대와 세 서비스가
+  유지됐습니다. 실제14항목 실패·원본 바이너리·helper·콘솔을 보존했습니다.
+
+  0.40은 FunctionFS의64바이트보다 큰 bulk IN만 Linux native AIO로 제출합니다.
+  completion wait가 EINTR로 끝나면 동일한 원래 요청의 완료를 다시 기다립니다.
+  새 데이터 요청을 제출하지 않습니다. 원래 동기 전송과 작은 응답·ZLP 경로는
+  유지합니다. 종료 시 io_cancel과 io_destroy로 요청을 취소·정리한 뒤 버퍼를
+  반환합니다. 전체 Endpoint 소스는0.33과 달라졌습니다. 추가한 AIO 함수·분기만
+  정확히 제거해 비교하면 기존 동기 Endpoint 경로는0.33과 바이트가 같습니다.
+
+  실제 현재 소스의108항목은 전체 CCID 응답2,047·2,048·2,049·3,071·3,072·
+  3,073바이트에서 첫64바이트 수신→원래 TID 중단→같은 세대에서 정확한 꼬리
+  수신을 검증했습니다. 각 경우 원래 io_submit은 단1회이고 io_getevents는
+  EINTR→SIGUSR1 전달→동일 context 완료 순서를 보였습니다. 실제 native 읽기
+  바이트·응답 체인·독립적으로 확인한 원래 PIN/UV protocol2 서명7개·HOTP6도
+  검증했습니다. PIV 데이터는 자체 불투명 시험 객체이며 유효한 CHUID가 아닙니다.
+
+  설정 변경 검사328항목도 같은 현재 소스로 통과했습니다. 14가지 긴 전송,
+  설정 전환28회·재열거29회·원래 자격 증명 서명29개·HOTP14·명령 체인7회·
+  응답 체인2회를 검증했습니다. 대기 중 큰 요청12개는 io_cancel이 실제
+  EINPROGRESS(-115)를 반환한 뒤 같은 context의 io_destroy가0으로 완료됐습니다.
+  io_cancel 자체가 성공으로 끝났다고 보고하지 않습니다.
+
+  동일 helper로 동결0.39의14항목 실패와 후보 수정본108항목 성공을 비교했습니다.
+  실행 권한 복원 전 시작 실패1항목과 관찰기 IOCB assertion 실패164항목도
+  별도로 보존했습니다. 164항목 실패의 원래 IOCB 필드는 기록되지 않아 정확한
+  원인은 미분류입니다. 관찰기 보완 후 동일 후보 소스의328·108항목을 통과했고,
+  이후 정식 현재0.40 전체 Linux·SDK·USB·PM·EINTR·브라우저 실행도 통과했습니다.
+
+  주 회귀 검사5841개(C++ 120개/11620 assertions, 독립 검사
+  5721개)를 통과했습니다. 패키지는 압축 해제 후 동일5841개를
+  다시 실행하고29개 독립 패키지 검사로 소스·바이너리·원본 실패 기록을 확인합니다.
+  Linux native108·328항목은 주 회귀5841개와 별도 범위입니다.
+
+  남은 범위: 일부 수신 후 실제 runtime PM 회복, 다른 AIO 완료 오류,
+  stock libccid의 큰 전송, 미완성 수신 명령 체인, GadgetFS·다른 구성·생산 UDC,
+  물리 키 차등·전력·터치·타이밍, macOS 정식 권한 서명과 실제 장치 등록 등입니다.
+  실제 키의 자격 증명·설정은 변경하지 않았습니다. 서명 환경 없이 소스·프로토콜
+  구현을 계속합니다. 제조사 비밀키·신뢰 인증·보안칩의 물리적 보장은 복제하지 않습니다.
+
+  근거: linux-usb-partial-interrupt-result.json,
+  usb-partial-interrupt-recovery-observation.json, linux-native-result.json,
+  source/src/usb/linux.cpp, tools/linux-native/verify-usb-partial-interrupt.py,
+  tools/linux-native/validate-usb-partial-interrupt.py, linux-usb-partial-prior-v39-*.json.
+
+0.39 및 이전 구현·검증 기록 — 아래의 “현재”와 소스 동일성은 각 당시 버전을 뜻합니다.
+0.39의 일부 수신 후 중단 결함은 위0.40에서 수정했으며, 이전 기록은 그대로 보존합니다.
+
+소프트웨어 보안키 에뮬레이터 0.39.0
+
+목표: YubiKey 5C Nano / 5.7.4의 외부 동작과 호스트 호환성을 구현·검증합니다.
+goal은 활성 상태입니다. 완전 동일로 판정하지 않았습니다.
+완료 기준과 남은 차이는 compatibility-matrix.json과 implementation-status.json에 있습니다.
+
+이번 버전의 검증 추가: 긴 CCID 응답·일부 수신·명령/응답 체인 중 실제 USB 구성 전환
+
+  자체 no-NIC ARM64 Linux 6.8.0-146-generic/dummy_hcd 장치에서 2,047·2,048·
+  2,049·3,071·3,072·3,073바이트 전체 응답 경계를 검사했습니다. 14가지 경우는
+  전체를 읽지 않은 응답6개, 첫64바이트만 읽은 응답6개, 데이터 전체 뒤 읽지 않은
+  큰 ZLP2개입니다. native FIDO Management로 profile6→profile2→profile6을
+  각각 수행했습니다. 설정 전환28회·초기 전환 포함 재열거29회, 원래 세 서비스,
+  독립적으로 확인한 원래 객체·HOTP 카운터14·PIN/UV protocol2 서명29개를
+  검증했습니다. 이전 handle은 실제 ENODEV19로 끝나고, 복원된 CCID에서 새
+  PowerOn·SDK SELECT/GET을 통해 오래된 꼬리·ZLP·응답 체인이 섞이지 않음을 확인합니다.
+
+  3KB 경계의 원래 객체는 수정하지 않은 PIV SDK의 새 SmartCardProtocol을
+  force_short로 구성해 APDU 체인으로 저장합니다. 기존 extended 객체에
+  configure(force_short=True)를 다시 호출하면 이미 선택된 형식은 그대로였고,
+  이때 SDK에서 발생한 길이 제한 실패161항목도 그대로 보존했습니다.
+  실제 CCID 명령 체인(first/final)7회와 응답 체인(first/final)2회를 별도로
+  검증했습니다. SDK의 APDU 코드는 변경하지 않았으며, 이 fixture의 CCID 계층은
+  자체 NativeLongCcid 드라이버입니다. stock libccid의 큰 전송을 입증한 것은 아닙니다.
+
+  최초97항목 관찰 실패는 2,048바이트 데이터가 정확히 도착한 후 ZLP도 커널
+  write에서0으로 완료됐는데 반드시 쓰기 대기 중일 것이라고 가정한 결과입니다.
+  원본 데이터 write2048·ZLP write0 기록과 원본 helper·콘솔을 보존했습니다.
+  동일 큰 데이터 뒤 실제0바이트 패킷을 받는 대조 검사를 수행하고, 원래 요청의
+  syscall 진입·완료 기록으로 읽지 않은 ZLP의 실제 표현을 구분했습니다. FIFO 정책은
+  바꾸지 않았습니다. 이 관찰 실패를 응답 유실이나 에뮬레이터 수리로 보고하지 않습니다.
+
+  새 세대의 sysfs 정보 뒤 일회성 장치 조회가 실패한154항목도 보존했습니다.
+  원본 실패에는 libusb 후보 목록이 없어 정확한 원인은 미분류 상태입니다.
+  이후 검사는 제한 시간 안에 실제 주소·자체 serial이 모두 일치하는 장치를
+  선택하고 조회 시도도 기록합니다. 314항목 전체 전송·복원 성공과 명령 체인을
+  추가한328항목 성공을 동결한0.38 바이너리·helper 해시와 함께 보존했습니다.
+
+  실제0.39 전체 실행의328항목과 기존5,841개 회귀·OS·브라우저 검증을 다시
+  수행했습니다. 프로토콜 구현 소스는0.38과 같으며 CMake·IFD 버전 메타데이터만
+  변경했습니다. 테스트 객체는 불투명 데이터이며 유효한 CHUID가 아닙니다.
+  reboot 유예는 사설 모델이고 실제 firmware 타이밍·물리 전력·터치 차등 결과는
+  미검증입니다. 카드 자동 승인은 없고 FIDO 자동 승인은 자체 fixture에만 적용합니다.
+
+  남은 범위: 같은 USB 세대에서 일부 수신 후의 중단·runtime PM 회복, 미완성
+  수신 명령, stock libccid의 긴 전송, 다른 구성·생산 UDC·오류 경합·원격 깨우기,
+  macOS 권한 서명과 실제 장치 등록·물리 키 차등 검증 등입니다. goal은 활성입니다.
+  근거: linux-usb-long-cutover-result.json, usb-long-cutover-observation.json,
+  linux-native-result.json, tools/linux-native/verify-usb-long-cutover.py,
+  tools/linux-native/validate-usb-long-cutover.py, linux-usb-long-prior-v38-*.json.
+
+0.38 및 이전 구현·검증 기록
+
+소프트웨어 보안키 에뮬레이터 0.38.0
+
+목표: YubiKey 5C Nano / 5.7.4의 외부 동작과 호스트 호환성을 구현·검증합니다.
+goal은 활성 상태입니다. 완전 동일 구현으로 판정하지 않았습니다.
+완료 기준과 남은 차이는 compatibility-matrix.json과 implementation-status.json에 있습니다.
+
+이번 버전의 검증 추가: 읽지 않은 CCID 응답·승인 대기 중 실제 USB 구성 전환
+
+  no-NIC ARM64 Linux 6.8.0-146-generic/dummy_hcd의 자체 시험 장치에서 원래0.37
+  구현을 먼저 검증했습니다. 네 경우의 79항목과 확대 CID 라우팅 86항목을 통과했습니다.
+  두 stock SDK 수신기가 동시에 같은 HID 리포트를 읽는 확대 검사의 Wrong channel
+  실패 61항목도 원본 보고서·콘솔·helper로 보존했습니다. 이 실패를 장치 소스 수정의
+  근거로 사용하지 않았습니다. USB backend·Linux·macOS·카드 코어는 동결한0.37과
+  바이트가 같고, 버전 메타데이터와 정식 검증·결과·포장 게이트를 추가했습니다.
+
+  실제0.38 전체 Linux 실행에서 커널에 저장됐지만 읽지 않은19바이트 HOTP,
+  먼저 저장한 슬롯 응답으로 차단한19바이트 쓰기, 원래64바이트 PIV 응답 뒤의 ZLP,
+  실제 stdin 터치 승인을 기다리는 요청을 각각 유지한 채 native FIDO Management로
+  FIDO+CCID profile6에서 FIDO 전용 profile2로 변경하고 복원했습니다. 8회 구성 전환과
+  초기 전환을 포함한9회 재열거, 같은 세 서비스와 기존 자격 증명 유지, 새 세대에서
+  이전 CCID worker 부재, 이전 handle의 실제 ENODEV19, 새 PowerOn·SDK 회복을
+  검증했습니다. worker 부재 관찰만으로 재열거 전 정확한 join 시각을 주장하지 않습니다.
+
+  승인을 기다리는 카드 요청이 설정 트랜잭션을 막는 동안 두 번째 CID의 실제
+  GetInfo CHANNEL_BUSY6과 PING을 확인했습니다. 변경하지 않은64바이트 실제 HID
+  리포트를 한 hidraw FD에서 CID별로 전달하는 시험용 호스트 라우터를 사용했습니다.
+  BUSY 자동 재시도를 피하기 위해 stock SDK의 변경하지 않은 단일 transaction
+  메서드를 호출했습니다. 서로 독립된 stock SDK 프로세스의 동시 동작을 입증한 것은
+  아닙니다. 실제 USB controlABORT와 원래sequence의 bulkABORT 후 설정이 완료됐고,
+  원래 터치 요청은 HOTP를 소비하지 않았습니다. 복원 후 새 실제 승인이 필요합니다.
+
+  원래 자격 증명의 독립 PIN/UV protocol2 서명9개와 단조 증가 카운터를 검증했습니다.
+  OATH HOTP는 독립 HMAC과 비교하며 일반 카운터6·터치 카운터1을 확인했습니다.
+  설정과 OTP 내부 sequence 외의 카드 평문 상태는 두 전환을 거쳐 보존됩니다.
+  50바이트 PIV 객체는 불투명 전송 fixture이며 유효한 CHUID로 취급하지 않습니다.
+  읽지 않은 응답의 reboot 유예는 사설 소프트웨어 모델이고 실제 키의 타이밍은
+  측정하지 않았습니다. 카드 자동 승인은 없고 FIDO 자동 승인은 자체 fixture 전용입니다.
+
+  기존5841개 소스·프로토콜 회귀,205개 실제 CCID 복귀 검사와 OS·브라우저 검증을
+  다시 실행했습니다. 완전 동일 판정은 하지 않았습니다. macOS 권한 서명·실제 장치
+  등록, 생산 UDC·다른 구성·긴 메시지 경합·실제 firmware 차등 검증은 남아 있습니다.
+
+  근거: linux-usb-reboot-pending-result.json, usb-reboot-pending-observation.json,
+  linux-native-result.json, tools/linux-native/verify-usb-reboot-pending.py,
+  tools/linux-native/validate-usb-reboot-pending.py, linux-usb-reboot-prior-v37-*.json.
+
+0.37 구현·검증과 이전 기록
+
+소프트웨어 보안키 에뮬레이터 0.37.0
+
+목표: YubiKey 5C Nano / 5.7.4의 외부 동작과 호스트 호환성을 구현·검증합니다.
+goal은 활성 상태입니다. 현재는 완전 동일 구현으로 판정하지 않았습니다.
+완료 기준과 남은 차이는 compatibility-matrix.json과 implementation-status.json에 있습니다.
+
+swpasskey MIT 소스를 확장한 C++ FIDO 코어와 새 Python 스마트카드·OTP 코어입니다.
+새 키를 생성하고 서비스에 별도 등록합니다. 기존 실제 키의 비밀키·PIN·자격 증명은
+복사하거나 변경하지 않았습니다. 기준 키에서는 INIT/GetInfo와 공개 USB 메타데이터,
+OpenPGP 공개 기능 정보를 읽었습니다. USB 설정·HID 리포트 수집은 IORegistry/캐시를
+사용하며 USB 장치를 열거나 리셋·설정하지 않았습니다. 이번 OpenPGP 관찰은 시스템
+PC/SC의 shared 연결로 SELECT·GET VERSION·허용 목록 GET DATA만 수행하고
+LEAVE_CARD로 종료했습니다. 공개 알고리즘 FA와 보안 지원 7A도 읽었습니다.
+PIN 시도·쓰기·활성화·초기화는 없었습니다. 임시 앱 선택은 바뀌었으며 실제 serial·
+지문·cardholder·서명 카운터 payload는 보고서에서 폐기했습니다. 공개 증명 템플릿
+FC에서는 firmware 확장의 DER 태그/길이만 확인하고 인증서 원문·serial·subject·
+공개 키·날짜·확장 값은 저장하지 않았습니다.
+
+이번 버전의 구현·검증 추가: 실제 USB 복귀 후 CCID 카드 전원·인증 수명
+
+  USB CCID Rev1.1 3.3·6.3.1의 복귀 모델을 구현했습니다. FunctionFS의 실제
+  SUSPEND/RESUME 이벤트를 처리하고, 복귀 후 점유 슬롯을 비활성 상태1·정지 클록3으로
+  보고합니다. 삽입 알림 5003을 한 번 보내며 새 IccPowerOn 전에는 APDU를 거절합니다.
+  명시적 PowerOn 후 기존 ATR과 활성 상태0·동작 클록0을 받습니다. 0.36의 실제
+  31항목 뒤 활성 상태0 실패 기록·콘솔·원본 관찰 보고서는 별도로 그대로 보존했습니다.
+
+  카드 세션만 종료하므로 이미 확정한 응답은 기존 USB 세대·주소·sequence와 함께
+  유지됩니다. 기존 전송 스레드·fd·버퍼에서 대기 중인 HOTP 응답 세 개와 ZLP,
+  커널에 먼저 저장된 슬롯 응답 세 개와 별도 19바이트 HOTP 응답을 검사했습니다.
+  커널 write 진입·종료 기록으로 먼저 완료된 쓰기를 입증하고, 읽지 않은 원본을
+  실제 절전·복귀 후 받아 독립 HMAC과 단일 HOTP 증가를 검증했습니다. 커널 FIFO에
+  저장된 응답의 write 완료를 응답 유실로 판정하지 않습니다. 시험용 불투명 50바이트
+  PIV 객체는 유효한 CHUID가 아닙니다. 일반 READ 뒤 암호문 변경은 평문 상태로 비교합니다.
+
+  PIV PIN·관리자 인증은 복귀 후 해제되고, 새 PIN 확인 후 같은 영구 키로 서명합니다.
+  실제 stdin 승인을 기다리던 HOTP는 CMD_ABORTED로 끝나며 카운터·저장 바이트는
+  변경하지 않습니다. 새 요청은 새 실제 승인을 받아야 하고 결과·단일 증가를 독립
+  HMAC으로 검증합니다. 이 카드 서비스에는 --testing을 사용하지 않았습니다.
+  FIDO 시험의 자동 승인은 자체 시험 장치에만 적용하며 물리 터치를 뜻하지 않습니다.
+
+  no-NIC ARM64 Linux 6.8.0-146-generic/dummy_hcd의 기준과 같은 FIDO+CCID 구성에서
+  여섯 번의 실제 runtime PM과 205항목, 원래 자격 증명의 일곱 독립 PIN/UV protocol2
+  서명을 검증했습니다. 원래 세 서비스·주소·설정·HID 드라이버는 유지됩니다.
+  실제 삽입 알림은 초기 한 개와 복귀 여섯 개이고 추가 알림이 없음을 확인합니다.
+  Linux Endpoint 클래스는 동결한0.33과 바이트가 같지만 카드 복귀 처리가 추가된
+  전체 USB 소스·bridge 바이너리는 다릅니다. 두 사실을 별도 보고서로 구분합니다.
+
+  macOS IOUSBHost PortSuspend/PortResume도 같은 카드 처리를 호출하며, 처리 완료 후
+  명령에 응답하도록 구현·컴파일했습니다. 공통 --wire-test는 중복 복귀의 무효성,
+  슬롯 전원·인증 해제·원래 PIV/FIDO 서명 등을 13개 추가 검사로 확인했습니다.
+  이 결과는 macOS의 권한을 갖춘 실제 장치 등록·복귀 시험을 대신하지 않습니다.
+  GadgetFS 복귀, 다른 USB 구성·UDC, 전체 메시지 경합·원격 깨우기·플랫폼 수면과
+  실제 유비키의 전력·타이밍·토큰 차등 검사는 아직 미검증입니다. goal은 활성 상태이고
+  완전 동일 판정은 하지 않았습니다.
+
+  근거: linux-usb-runtime-pending-result.json, usb-runtime-pending-observation.json,
+  usb-runtime-slot-conformance-observation.json, usb-endpoint-frozen33-equivalence.json,
+  linux-usb-runtime-slot-prior-v36-failure.json, linux-usb-runtime-slot-prior-v36-console.txt,
+  usb-runtime-slot-conformance-prior-v36-observation.json, usb-bridge-result.json.
+
+0.36의 중단 관찰 보정 기록
+
+  당시 전체 실행에서 신호 전달만 관찰하고 대응 write 종료를 찾지 못한 실패를
+  보존했습니다. 원래 CCID 읽기 전 중지했으므로 응답 유실로 판정하지 않았습니다.
+  원래 쓰기 전에 추적을 켜 실제 fd·버퍼·길이 진입 후 EINTR·신호 쌍을 확인하는
+  보정은 유지하며 현재 새 전체 게스트에서도 113항목·12쌍을 검증합니다.
+  근거: linux-usb-interrupt-prior-v36-trace-arm-failure.json,
+  usb-interrupt-trace-arm-observation.json. 원래 Endpoint 쓰기 로직은 같습니다.
+
+0.35의 검증 추가: 실제 Linux USB 자동 절전과 SDK 접근에 의한 복귀
+
+  연결된 기준 키에서 저장한 것과 같은 FIDO+CCID USB 설정을 실제 Linux에 등록하고
+  USBDEVFS_ALLOW_SUSPEND, 커널 runtime_status와 절전 시간, 실제 rpm 반환값 및
+  usb_runtime_suspend/resume 추적을 검증합니다. 수동 on, native FIDO SDK 접근,
+  native CCID/OATH SDK 접근으로 복귀하는 세 번의 실제 주기가 52항목을 통과했습니다.
+  같은 USB 주소·설정·HID 드라이버·서비스 세 개를 유지하며, 절전 중 저장 파일은
+  그대로입니다. 복귀 후 네 번의 독립 PIN/UV 서명과 HOTP 0→1 단일 증가를 확인했습니다.
+
+  OTP 키보드가 포함된 기본 7번 설정이 자동 절전되지 않던 원인도 확인했습니다.
+  사용 횟수는 0이지만 실제 커널은 remote wakeup needed for autosuspend를 기록하고
+  autosuspend_check는 EOPNOTSUPP, 장치 runtime suspend는 EAGAIN을 반환합니다.
+  절전을 강제로 성립시키기 위해 USB 설정 바이트나 HID 드라이버를 변경하지 않았습니다.
+  전송 코어는 0.33 구현과 같습니다. 이번 변경은 검증 범위와 근거의 추가입니다.
+
+  이 결과는 격리된 Linux 6.8.0-146-generic의 dummy_hcd에서 관찰한 6번 구성의
+  실제 runtime PM입니다. 다른 구성의 runtime PM, 더 넓은 동시 전송·취소·설정 변경, 원격 깨우기,
+  전체 플랫폼 수면과 실제 하드웨어의 전력·타이밍·PIN 토큰 동작은 아직 미검증입니다.
+  보고서: linux-usb-runtime-result.json, usb-runtime-power-observation.json.
+
+  전체 시험에서 기존 중단 검사가 write 종료 이벤트만 기다리고 곧바로 신호 전달을
+  판정하는 경합도 발견했습니다. 실제 EINTR은 이미 관찰됐습니다. 데이터와 ZLP
+  모두 두 이벤트의 수를 함께 기다리도록 검사를 수정했고, 원본 실패 기록은
+  linux-usb-interrupt-prior-v35-trace-failure.json에 보존했습니다.
+
+  새 runtime 보고서에 이전 dmesg가 포함되어 호스트 검증이 재설정 문구를 두 번
+  세는 문제도 수정했습니다. 해당 시험 구간의 실제 커널 로그 행 네 개를 검증하며,
+  원본 실행 종료0·게스트 종료0과 동일 console SHA-256을 보존해 다시 판정했습니다.
+  linux-native-host-gate-observation.json과 linux-native-prior-v35-host-console.txt에
+  당시 원본 실패·재검증 범위를 보존했습니다. 0.36은 새 전체 게스트 실행입니다.
+
+0.34의 검증 추가: 연결 유지 중 응답 데이터·종료 패킷 중단 복구
+
+  실제 Linux 커널에서 CCID 응답을 보내는 스레드만 식별해 SIGUSR1을 전달합니다.
+  프로세스 그룹·엔드포인트 파일·실제 write 호출·버퍼를 확인하며 실제 커널의
+  write EINTR와 signal_deliver 기록을 함께 검증합니다. 전송 중단 12회를 포함한
+  113항목이 같은 USB 주소·설정·서비스 세 개를 유지하면서 통과했습니다.
+  HOTP 응답 세 개는 각각 세 번 중단한 뒤 원래 순서와 값으로 수신했으며,
+  독립 HMAC과 0→1→2→3 단일 카운터 증가, 다음 SDK 요청의 무중복을 확인했습니다.
+
+  별도로 64바이트 PIV 객체 응답을 받은 뒤 종료용 ZLP만 세 번 중단합니다.
+  다시 받는 것은 0바이트 종료 패킷이며 이전 데이터가 재전송되지 않습니다.
+  다음 PIV SDK 요청의 새 순서와 원본 객체, FIDO GetInfo·PING 격리와 다섯 독립
+  PIN/UV 서명·OTP HMAC도 검증합니다. 중단 재시도 동안 저장 파일은 그대로이며,
+  다음 일반 PIV 읽기 트랜잭션의 재암호화 이후에도 저장된 논리 상태는 같습니다.
+
+  보존된 원본 0.32는 데이터와 ZLP 모두 실제 USB 시간 초과로 실패했습니다.
+  각각 동일한 검증 소스에서 0.33의 성공도 확인했습니다. 이번 검증은 이미 0.33에서
+  수정한 전송 보존 로직을 확인하며, USB 브리지 바이너리와 해당 로직은 동일합니다.
+  linux-usb-interrupt-result.json과 usb-interrupt-recovery-observation.json에 근거가 있습니다.
+  실제 키·일반 UDC·다른 오류와 경합·전기적 타이밍까지 검증한 것은 아닙니다.
+
+이전 버전에서 이어진 실제 커널 장치 절전·복귀 때 USB 브리지 종료 수정
+
+  이전 0.32의 원본 Linux 바이너리는 커널 pm_test=devices / state=freeze 뒤
+  FunctionFS 전송의 ESHUTDOWN을 치명적 오류로 처리해 종료했습니다.
+  이 오류는 전원 관리·재설정 이벤트보다 먼저 전달될 수 있습니다. 같은 전송을
+  유지하며 엔드포인트가 준비되거나 ep0가 작업을 폐기할 때까지 기다리도록 수정했습니다.
+  EINTR에서도 이미 꺼낸 패킷을 잃지 않으며 CCID의 ZLP만 별도로 재시도합니다.
+  다른 오류는 보존하고 짧은 IN 전송은 오류로 처리합니다.
+
+  실제 커널 장치 PM 세 회와 실제 stdin 승인·CCID IN 전송 대기 중 한 회를
+  포함한 50항목을 검증합니다. 커널 USB/HID/HCD/UDC 콜백과 5초 대기 기록,
+  동일한 서비스 세 개와 저장 상태, 복귀 후 독립 PIN/UV 서명·OTP HMAC을 확인합니다.
+  dummy UDC는 이 경로에서 연결을 끊고 재열거합니다. 오래된 CCID 핸들의
+  ENODEV와 대기 요청의 무변경 취소, 새 연결·순서·새 터미널 승인 뒤 독립 HOTP와
+  단 한 번의 카운터 증가를 검증했습니다. 전체 플랫폼 수면·자연 runtime autosuspend,
+  실제 컨트롤러·물리 키의 전원·터치·PIN 토큰 동작은 검증하지 않았습니다.
+  실패한 원본 0.32 게스트의 바이너리·카드 서비스가 보존 ZIP과 같음도 확인했습니다.
+  linux-usb-power-result.json과 usb-power-recovery-observation.json에 근거가 있습니다.
+
+이전 버전에서 이어진 실제 USB 상태 시험과 CCID 대기 중 FIDO 오류 수정
+
+  Linux 게스트의 실제 USB 경로에서 91항목을 검증합니다. 여섯 엔드포인트를 각각
+  HALT하고 GET_STATUS·실제 EPIPE·CLEAR_HALT·반복 해제를 확인합니다.
+  USBDEVFS_RESET 세 회와 SET_CONFIGURATION 0→1을 거친 뒤, 동일한 서비스 세 개와
+  저장된 키를 유지하며 독립 SDK가 FIDO PIN/UV 서명과 OTP HMAC을 검증합니다.
+  OATH의 실제 터미널 승인 대기 중에도 새 FIDO SDK GetInfo·PING이 완료됩니다.
+  이전 0.31 소스는 이 GetInfo를 CTAP OTHER로 거부했습니다. FIDO의 기능 조회가
+  공유 상태 잠금을 기다렸기 때문이며, 확정된 설정 스냅샷을 읽도록 수정했습니다.
+  읽기 요청은 저장 파일을 다시 쓰거나 대기 중인 스마트카드 작업에 개입하지 않습니다.
+  실패하는 설정 저장 중에는 이전 확정 설정을 반환하며, 성공한 저장만 공개합니다.
+  대기 중 네 번째 실제 USB 리셋은 HOTP 카운터를 소비하지 않고 작업을 취소합니다.
+  새 CCID 순서의 SDK 복구, 새 승인 대기와 실제 stdin 승인 후 독립 HOTP 결과를
+  확인하고 카운터가 한 번만 증가하는지 검증합니다. FIDO 시험의 사용자 존재는 자체 개발용 자동 승인으로 모형화하며,
+  실제 키의 터치를 검증한 것은 아닙니다.
+  자체 PIN/UV 자격 증명의 일곱 인증 서명·RP hash·userHandle·카운터도 독립 검증합니다.
+  FunctionFS·dummy_hcd의 선택적 주소 정책에서 얻은 결과이며 일반 UDC·전원 관리·
+  실제 펌웨어 타이밍·리셋 토큰 의미·macOS 수정본 등록은 아직 미검증입니다.
+  증거: linux-usb-state-result.json, ccid-fido-concurrency-observation.json,
+        ccid-result.json, usb-reboot-result.json, linux-native-result.json
+
+이전 버전의 변경: stock Chromium largeBlob와 독립 SDK·재시작 검증
+
+  Debian ARM64 Chromium154.0.8037.92의 실제 USB WebAuthn 경로에서 29항목을 검증했습니다.
+  ES256·Ed25519 상주 키 두 개로 각각 792바이트를 브라우저에서 저장합니다.
+  별도 python-fido2 SDK가 PIN/UV protocol2, 서명·userHandle·credential binding,
+  저장된 blob의 복호화와 다른 키의 읽기 거부를 독립 확인합니다.
+  SDK에서 1056바이트로 교체한 뒤, 같은 프로필 브라우저 재시작과 실행 중 USB
+  재부팅 후 브라우저가 읽은 네 결과를 길이·SHA256으로 대조합니다.
+  브라우저 인증 여섯 회와 SDK 기준 인증 두 회는 구분해서 기록합니다.
+  USB 주소는 바뀌며 세 에뮬레이터 서비스는 같은 프로세스로 유지됩니다.
+  실제 게스트의 PIN 입력 칸·키 이벤트·Next 버튼으로 입력하고 PIN 실패는 0입니다.
+  게스트 내부 Xvfb/AT-SPI만 사용하며 호스트 키보드나 USB 장치는 전달하지 않습니다.
+  stock Chromium은 별도 ES384 요청의 정상 curve2·48바이트 공개키 응답을 거부합니다.
+  실제 API의 NotAllowedError와 거부된 authData를 기록하고, 그 자격 증명으로 독립
+  SDK가 추가 UV 서명·userHandle을 검증했습니다. 이 키를 포함해 장치는 총 세 키를
+  만들었지만 브라우저 등록 성공은 두 개입니다. P256으로 바꾸거나 ES384라고
+  오표기하지 않습니다. 정확한 브라우저 revision의 공개 파서가 P256만 처리하는
+  경계를 기록하며, Debian의 모든 패치를 독립 재현했다는 주장은 하지 않습니다.
+  Chromium ELF·버전·서명 APT·base image digest와 게스트 helper hash를 고정합니다.
+  일반 User-Agent의 Linux x86_64 문자열은 축약 값이며 실제 ELF는 AArch64입니다.
+  Linux 컨테이너 안에서 대소문자를 구분해 게스트를 조립합니다. 호스트에는 압축
+  initramfs와 kernel·manifest만 내보내며, 브라우저 runtime은 배포 ZIP에 포함하지 않습니다.
+  재현은 Docker 빌드의 고정 버전 APT 패키지를 사용하므로 향후 저장소 보존은 미보장입니다.
+  Chromium sandbox는 호스트 장치·NIC 없는 테스트 게스트에서만 비활성화합니다.
+  제조사 신뢰·실제 터치·다른 알고리즘·확장 경계·다른 OS의 완전 적합성은 미검증입니다.
+  증거: linux-browser-largeblob-result.json, chromium-es384-parser-observation.json,
+        linux-native-result.json, tools/linux-native/README.md
+
+이전 버전의 변경: 실제 Firefox PRF·credProps와 독립 SDK 출력 대조
+
+  실제 게스트 USB에서 공식 Firefox157.0.1의 PRF 결과를 123항목으로 검증했습니다.
+  ES256·Ed25519·ES384마다 계정 두 개씩, 자체 resident 키 여섯 개를 등록합니다.
+  브라우저가 PRF 활성과 credProps의 resident 속성을 보고하는지 확인합니다.
+  독립 python-fido2 SDK가 UV를 수행하고 각 키의 서명·ECDH·AES·HMAC 응답을
+  검증합니다. WebAuthn PRF 문자열·NUL·입력의 SHA256으로 CTAP salt를 만들고,
+  복호화한 첫 번째·두 번째 결과를 실제 브라우저 결과와 비교합니다.
+  초기·브라우저 재시작·실행 중 USB 재부팅 뒤 각각 여섯 계정의 두 출력값,
+  총 18회 인증에서 SDK 결과가 유지되는지 확인합니다. 추가로 여섯 계정에서
+  출력 하나만 요청해 두 번째 결과가 없는지 검증하고, evalByCredential 입력이
+  다른 전역 fallback 입력보다 우선하는지도 여섯 계정에서 확인합니다.
+  서버가 검증한 브라우저 인증은 총 30회이며, SDK 기준 인증 여섯 회와 구분합니다.
+  코어 횟수에는 이 두 종류의 요청과 브라우저 사전 확인 요청이 포함될 수 있습니다.
+  실제 PIN·계정 선택 UI와 보안 알림 지연을 사용하고, 브라우저 가상 인증기·
+  WebAuthn API 교체·서비스 콜백 직접 호출을 사용하지 않습니다.
+  PRF 시험과 기본 43항목·resident 68항목은 별도 결과로 기록합니다.
+  largeBlob의 남은 경계·오류 조건, 남은 attestation 조건, 추가 브라우저 및 macOS
+  수정본의 실제 OS 연동은 남은 항목입니다. 제조사 인증 신뢰와 실제 터치는 미검증입니다.
+  증거: linux-browser-prf-result.json, linux-native-result.json
+
+이전 버전의 변경: 실제 attestation 동의·거절 UI와 자체 증명 검증
+
+  실제 Firefox의 Allow·Block 버튼을 사용해 40항목을 검증합니다.
+  ES256·Ed25519·ES384 각각 동의·거절 계정을 만들어 resident 키 여섯 개를 등록합니다.
+  동의한 응답의 packed 자체 서명은 독립 SDK가 검증하고, 서명과 clientDataHash를
+  바꾼 여섯 사례도 거부하는지 확인합니다. 제조사 인증서 체인은 사용하지 않습니다.
+  거절한 응답은 fmt=none·빈 attStmt가 되며, Firefox는 자체 모델 AAGUID를 유지합니다.
+  AAGUID까지 지워진다는 이전 시험의 가정은 Mozilla 소스 확인 후 수정했습니다.
+  동의·거절 어느 쪽으로 만든 키도 정상 등록되어, 초기·브라우저 재시작 뒤 각각
+  여섯 계정, 총 12회 UV·userHandle·서명·challenge·origin·counter 검증을 통과합니다.
+  동의를 자동 우회하는 브라우저 설정은 실제 실행 중 false인 것을 확인합니다.
+  실제 알림 보안 지연과 창 활성 조건을 기다리고 기존 버튼을 클릭합니다.
+  서비스 콜백을 직접 호출하거나 attestation 응답을 교체하지 않습니다.
+  이 검증은 자체 software 키의 브라우저 동작이며 제조사 신뢰·물리적 보장의
+  재현을 의미하지 않습니다. macOS 및 다른 브라우저·남은 증명 조건은 미검증입니다.
+  증거: linux-browser-attestation-result.json, linux-native-result.json
+
+이전 버전의 변경: 실제 Firefox PIN·UV·발견 가능한 자격 증명과 계정 선택
+
+  공식 Linux ARM64 Firefox157.0.1과 실제 게스트 USB 경로에서 68항목을 검증했습니다.
+  ES256·Ed25519·ES384마다 자체 계정 두 개씩, 발견 가능한 자격 증명 여섯 개를
+  PIN·사용자 검증 필수로 등록합니다. 첫 등록은 실제 PIN 창에 잘못된 테스트 PIN을
+  입력해 오류를 확인하고, 올바른 PIN으로 재시도합니다. 실제 코어의 PIN 오류와
+  복구된 재시도 수를 확인합니다. PIN 실패 집계는 USB 재부팅 때 초기화되므로
+  재부팅 전 오류와 재부팅 후 재시도 상태를 각각 검증합니다.
+  allowCredentials 없이 요청한 인증은 실제 브라우저의 계정 버튼과 메뉴로 선택합니다.
+  브라우저의 보안 알림 지연과 창 활성 조건을 그대로 기다리며 값을 변경하지 않습니다.
+  초기·같은 프로필 브라우저 재시작·실행 중 USB 재부팅 뒤에 각각 여섯 계정,
+  총 18회 인증합니다. 서버가 서명·challenge·정확한 origin·UV·userHandle·증가한
+  counter를 독립 검증하고, 다섯 필드를 바꾼 응답 30개도 거부하는지 확인합니다.
+  PIN 창이 열린 동안 WebDriver 명령이 창을 닫는 제약이 있어, 요청 전에 자체
+  origin으로 제한한 UI 타이머를 설치해 기존 입력 칸과 실제 버튼을 조작합니다.
+  WebAuthn 서비스 콜백을 직접 호출하거나 API·인증 응답을 교체하지 않습니다.
+  기존 43항목 기본 USB 브라우저 검증과 새 68항목은 별도 결과로 기록합니다.
+  사용자 존재는 새 테스트 상태에서 명시적으로 자동 허용하며 실제 터치는 미검증입니다.
+  PRF와 자체 attestation 동의·거절은 위의 별도 시험에서 검증합니다.
+  largeBlob을 포함한 확장·attestation의 남은 경계 조건, 추가 브라우저와 macOS 수정본의
+  OS 연동은 남은 항목입니다. 실제 유비키는 이번 시험에서 열거나 변경하지 않았습니다.
+  증거: linux-browser-resident-result.json, linux-native-result.json
+
+이전 버전의 변경: Linux 가상 USB 컨트롤러의 endpoint 주소 일치
+
+  격리 게스트의 dummy_hcd에 요청 endpoint 주소를 보존하는 선택 옵션을 추가했습니다.
+  원본 Linux6.8 소스 hash를 고정하고 GPL 패치·컴파일된 module hash를 기록합니다.
+  기본값은 비활성이며, 검증 게스트에서만 requested_ep_addresses=1로 켭니다.
+  7가지 인터페이스 조합과 같은 구성 재부팅을 포함한 49항목을 통과했습니다.
+  실제 커널의 FIDO+CCID 설정 125바이트 및 FIDO HID report34바이트가 저장된
+  기준 자료와 일치합니다. 실제 키는 다시 열지 않았습니다.
+  이전 기본 할당 정책의 5바이트 차이는 linux-functionfs-descriptor-comparison-v27.json에
+  보존하며 현재 비교와 분리합니다. 다른 UDC와 production 타이밍은 미검증입니다.
+  카드 서비스 준비 대기는 격리 QEMU 검증에서 30초 상한을 사용합니다.
+  증거: linux-functionfs-descriptor-comparison.json, linux-usb-reboot-result.json
+
+이전 버전의 변경: 실제 Firefox USB WebAuthn·FunctionFS·유휴 연결 수정
+
+  공식 Linux ARM64 Firefox 157.0.1을 격리 게스트에 넣고 실제 USB HID 경로로
+  자체 localhost 사이트에서 ES256·Ed25519·ES384 등록 3회와 인증 12회를 수행했습니다.
+  서버가 challenge·정확한 origin·공개키 서명·증가한 counter를 독립 검증합니다.
+  challenge·origin·signature를 변경한 응답도 서버가 거부하는지 확인했습니다.
+  수정 코어 처리 횟수와 실제 hidraw/USB 커널 경로를 확인했습니다.
+  코어 횟수에는 브라우저 내부 사전 확인 요청도 포함됩니다. 서버가 검증한 인증
+  응답 12회와 CTAP 요청 횟수는 따로 기록합니다.
+  Firefox의 실행 중 설정을 읽어 USB 활성·software authenticator 비활성을 확인합니다.
+  브라우저 가상 인증기를 만들거나 navigator.credentials를 교체하지 않습니다.
+  같은 프로필로 브라우저를 다시 시작한 뒤 기존 자격 증명 인증을 검증했습니다.
+  USB 관리 재부팅으로 주소가 바뀐 뒤에도 실행 중인 브라우저가 같은 자격 증명을
+  인증합니다. FIDO·카드·USB 서비스 프로세스는 그대로 유지됩니다.
+  공식 배포판의 SHA512SUMS와 고정 SHA256, 실제 실행 파일·libxul hash를 기록합니다.
+  WebAuthn 요청의 사용자 존재는 새 테스트 상태의 명시적 testing 모드로 자동 허용합니다.
+  이 기본 검증에는 PIN/UV·발견 가능한 자격 증명을 포함하지 않습니다. v0.30의
+  별도 68항목이 이를 검증하며, PRF 123항목과 자체 attestation 동의·거절 40항목도
+  추가했습니다. 실제 터치, largeBlob과 남은 확장·attestation 조건, 다른 브라우저 및
+  macOS 수정본의 실제 OS 등록은 남은 항목입니다.
+  GadgetFS 경로에서는 OTP 오류가 네 차례 발생했고, SDK가 보낸 중간 report가
+  수신 기록에 없는 경우를 확인했습니다. 실패 기록을 보존했습니다.
+  새 FunctionFS/ConfigFS 경로는 상세 진단 로그·SDK 재시도·임의 지연 없이
+  고정 64바이트 HMAC 요청 128회를 연속 수행하고 독립 결과와 비교했습니다.
+  GadgetFS의 신뢰성, production UDC와 펌웨어 타이밍은 여전히 미검증입니다.
+  v0.27 기본 FunctionFS 할당에서 endpoint 주소 5바이트 차이를 확인했습니다.
+  v0.28의 선택적인 가상 컨트롤러 정책에서 저장된 기준 구성 일치를 검증했습니다.
+  linux-otp-timing-observation.json·linux-otp-gadgetfs-failure-evidence.txt를 확인하세요.
+
+  브라우저 실행 중 카드 RPC가 조용할 때 30초 후 닫히던 연결도 수정했습니다.
+  정상 유휴 세션은 유지하고, 첫 요청 바이트 이후 불완전한 frame에 30초 제한을
+  적용합니다. 조각별 수신으로 제한을 연장할 수 없습니다. 시간 제한을 축소한
+  실제 서버 검증에서 유휴 재사용·불완전/과대 frame·연결 정리·상태 보존을 확인했습니다.
+  증거: linux-browser-result.json, linux-native-result.json, linux-native-console.log
+  재실행: python tools/linux-native/verify-linux.py (Docker 및 공식 배포판 다운로드 필요)
+
+이전 USB 재부팅 구현: 관리 설정 재부팅과 USB 자동 재열거
+
+  설정 저장 성공 후 재부팅 태그가 있는 요청만 장치 재열거를 발생시킵니다.
+  잠금 코드 오류·잘못된 설정·저장 실패는 설정과 재부팅 알림을 롤백합니다.
+  재부팅 없이 저장한 설정은 현재 USB 인터페이스를 유지하며, 이후 재부팅이나
+  새 컨트롤러 시작 때 저장된 USB 프로필을 등록합니다.
+  Linux 실제 USB 경로에서 FIDO·OTP·CCID의 stock SDK 요청으로 7가지 인터페이스
+  조합과 같은 프로필 재부팅을 검증했습니다. 서비스 프로세스를 재시작하지 않습니다.
+  FIDO PIN·자격 증명·OTP HMAC 키·자체 serial은 유지되고, 이전 PIN 토큰·ECDH·HID
+  채널·다른 카드 연결의 인증 상태·부분 전송은 초기화됩니다.
+  독립 서명/HMAC과 실패한 저장 검사를 포함한 usb-reboot-result.json,
+  linux-usb-reboot-result.json에 각각 소프트웨어/실제 Linux 검증을 기록했습니다.
+  macOS 공개 컨트롤러 API에도 재연결을 구현하고 컴파일했습니다. 권한을 포함한
+  서명과 실제 OS 등록 검증은 남아 있습니다.
+  응답 유예 100ms·미수신 응답 대기 상한 2초·Linux 분리 100ms는 소프트웨어
+  전송 모델이며 실제 YubiKey 펌웨어 시간 측정값이 아닙니다.
+  명세: https://developers.yubico.com/yubikey-manager/Config_Reference.html
+
+이전 Linux 복합 USB 구현
+
+  Linux 복합 USB 전송을 추가하고 macOS와 공통 프로토콜 백엔드를 사용합니다.
+  실제 guest USB 버스에서 OTP·FIDO·CCID를 한 장치로 인식하고 stock SDK로 검증합니다.
+  USB FIDO75항목과 3회 생성/재시작, stock ykman 장치 통합/OTP 탐색,
+  실제 USB 키보드/해제, stock libccid/pcscd·PIV/OATH/OpenPGP/SCP03·긴 APDU·
+  재시작을 검사합니다. 추가 검사 수는 linux-composite-result.json에 있습니다.
+  기존 UHID FIDO75, OTP/키보드/private PCSC25, Linux 직접IFD32도 다시 통과했습니다.
+  Linux/macOS C++120사례/11620assertion 및 전체 주회귀도 통과했습니다.
+  독립 소프트웨어 ATR3bf011000001e0은 표준 PCSC SDK에서 USB로 분류됩니다.
+  호스트 장치 전달·guest 네트워크·실제 키 접근 없이 Ubuntu6.8.0-146-generic에서
+  동작합니다. 가상 컨트롤러는 테스트 커널과 같은 헤더로 빌드하며 호스트에 로드하지 않습니다.
+  bin/linux-arm64/ske-usbd와 tools/linux-native/verify-linux.py에 소스/검증 도구가 있습니다.
+  Linux 관리 재부팅과 7가지 USB 조합의 자동 재열거를 검증했습니다.
+  GadgetFS의 데이터가 있는 control OUT 사후STALL 제한, 추가 UDC/USB 상태 전환,
+  브라우저 PIN/UV·discoverable·확장·다른 브라우저, macOS 서명/등록,
+  실제 펌웨어 차등 검증은 남습니다.
+
+
+이전 v0.23 허용 목록 변경
+
+  허용 목록이 마지막 OCE serial만 검사하던 동작을 수정했습니다. Yubico CLI의
+  체인 전체 규칙에 따라 제시된 root·중간·leaf 각각의 serial을 검사합니다.
+  유효한 조각이라도 serial이 없으면 즉시 거부하며 한 CA의 목록이 전체 체인을
+  허용해야 합니다. 여러 CA 목록을 합쳐서 인증할 수 없습니다.
+  wildcard 후보를 조각마다 유지하고, 첫 명시 CA의 정책은 후속 참조로 바뀌지 않습니다.
+  제출하지 않은 optional root나 저장된 CA 인증서의 serial은 요구하지 않습니다.
+  허용 serial도 서명/역할 검증을 건너뛰지 않으며 ASN.1 부호 padding도 검증합니다.
+  거부는 기존 OCE를 지우지만 retry·암호화 저장소·다른 보호 채널을 바꾸지 않습니다.
+  peer의 subset 정책 commit 실패는 기존 목록/캐시를 보존하며 성공하면 캐시를
+  무효화합니다. clearlist·restart·정책 복구·SDK a/c receipt/KDF/R-MAC도 검증했습니다.
+  소켓/직접 IFD 검사 81개씩 통과합니다. 기존 최종 v0.22 ZIP은 첫 누락 root를
+  받아 같은 새 검사에서 실패합니다. 기존 정상 fixture도 전체 serial 목록으로 수정했습니다.
+  출처: https://docs.yubico.com/software/yubikey/tools/ykman/Security_Domain_SD_Commands.html
+  즉시 거부 시점은 소프트웨어 모델입니다. 실제 serial 범위·오류 코드·펌웨어 타이밍은
+  아직 미측정이며 GP 일반 규칙을 Yubico 동작으로 대신하지 않았습니다.
+  실제 키에 접근하지 않았습니다. goal은 활성이고 완전 동일 판정은 아직 아닙니다.
+
+이전 평문 명령·SELECT 권한 종료 수정
+
+  Yubico 문서의 평문 명령 종료 규칙에 맞춰 기존 핸드셰이크 예외를 수정했습니다.
+  열린 SCP03/a/b/c에서 평문 PSO·INIT UPDATE·MUT·INTERNAL·CLA90 및
+  일반 명령은 처리 전에 거부하고 채널과 OCE·PIV PIN/admin·OATH 권한을 지웁니다.
+  거부만으로 키 retry·저장 상태·암호화 파일·다른 연결 채널을 바꾸지 않습니다.
+  암호화된 PSO와 정상 보호 핸드셰이크는 유지하며 SDK 복구도 검증했습니다.
+  잘못된 SELECT도 헤더/AID 검증 전에 OCE·PIN/admin 권한을 지웁니다.
+  OCE를 먼저 검사하여 이전 wrapper 거부가 남은 캐시를 지우고 가리지 않게 합니다.
+  소켓/직접 IFD에서 새 경계 검사 394개씩 통과합니다. 기존 v0.21 ZIP은
+  첫 평문 PSO를 통과시키므로 같은 새 검사에서 실패하는 것을 확인했습니다.
+  기존 PSO 검사는 보호 전송 61개씩으로 수정하여 캐시 검사가 전송 거부에
+  가려지지 않도록 했습니다. 공유 reset의 캐시 연결과 활성 전송 연결도 분리합니다.
+  규칙 출처: https://docs.yubico.com/hardware/yubikey/yk-tech-manual/yk5-apps-scp.html
+  실제 오류 코드와 핸드셰이크 예외는 미측정입니다. 소프트웨어6982 모델입니다.
+  GP의 CCT는 새 LOAD/INSTALL 콘텐츠 범위이며 기존 키/데이터 수정의 rollback이
+  아닙니다. Yubico 적용 여부를 먼저 확인해야 합니다. SubjectID 비교 대상도
+  INSTALL의 Application Provider Identifier이며 SD 인증서 subject/CPLC가 아닙니다.
+  실제 키에는 접근하지 않았습니다. 실제 OS 통합·펌웨어 차이 검증이 남습니다.
+
+이전 인증서 조각 검증 구현 (v0.22의 보호 전송 규칙 적용)
+
+  잘못된 중간 인증서를 마지막 leaf까지 받기 전에는 통과시키던 PSO를 수정했습니다.
+  매 조각에서 서명·역할·공개 키·CA/keyCertSign·누적 path-length와 기존
+  날짜/critical 제약 모델을 검증합니다. 불완전 체인은 OCE 권한을 만들지 않습니다.
+  첫 PSO의 CA 참조가 체인을 결정하며 후속 P1/P2 참조는 무시합니다.
+  wildcard의 첫 일치 CA에 고정하지 않고 제시된 모든 조각/최종 serial 허용 판단까지 후보를 유지합니다.
+  protected PSO는 기존 채널과 PIV PIN 확인 상태를 유지합니다. 평문은 위 규칙을 따릅니다.
+  거부된 조각은 체인/캐시를 지우며 암호화 저장소와 기존 채널을 보존합니다.
+  잘못된 DER는 최초 CA의 모델 retry만 소비하고 중복 확장은 malformed로 처리합니다.
+  자체 정상 root/중간/직접 leaf와 policy-free 체인의 SDK receipt/KDF/MAC,
+  보호 PSO 전후 PIV 서명을 독립 검증했습니다. 실제 MUT 전환은 이전 PIN을 지웁니다.
+  소켓과 직접 IFD에서 새 자체 키만 사용했습니다. 실제 키에 접근하지 않았습니다.
+  기존 모델6982를 유지합니다. 실제 거부 코드와 GP6600, 날짜/qualifier/한도의
+  펌웨어 허용 범위·체인 serial 허용 규칙·확정 GP1.4는 미비교입니다.
+  SD transaction·critical SubjectID·실제 OS 연동도 남아 있으며 goal은 활성입니다.
+
+이전 버전의 보호 핸드셰이크·단일 c 세션 모델
+
+  성공한 보호 SCP11a/b/c 핸드셰이크 뒤 새 채널을 잃던 오류를 수정했습니다.
+  기존 채널이 마지막 핸드셰이크 응답을 보호한 후 후속 APDU는 새 채널로
+  처리합니다. 외부03/a/b/c에서 새 a/b/c로 전환하는 12개 조합의 SDK
+  receipt/KDF·응답 복호화/MAC·기존 채널 거부를 확인했습니다.
+  SDK reset의 내부 잘못된 인증과 미완료 SCP03 INIT 경로는 유지합니다.
+  공유 SD에서는 성공적으로 저장된 최신 c 세션이 이전 c 세션을 대체하는
+  모델을 구현했습니다. c 토큰과 키 상태가 함께 commit/rollback되며
+  평문/보호 핸드셰이크 저장 실패나 잘못된 요청은 다른 연결을 종료하지 않습니다.
+  다른 연결의03/a/b, SELECT·연결 종료·새 세션·키/앱 보존을 검사했습니다.
+  GP의 단일 영속 OCE 규칙은 i-byte1 bit3이 켜졌을 때 적용합니다.
+  실제 공개 option9b06은 이 비트가 꺼져 임시 OCE만 표시하므로,
+  이전 문서의 전역 단일 영속 캐시를 필수 구현 대상으로 보던 표현을 정정합니다.
+  임시 OCE와 실제 논리 채널 범위는 계속 대조해야 합니다.
+  자체 새 키만 사용하며 소켓과 별도 직접 IFD에서 검증했습니다.
+  최신 c가 이전 c를 대체하는 정책/상태 코드·실패한 MUT의 이전 채널 수명은
+  물리 펌웨어와 미비교입니다. SD transaction·확정 GP1.4·실제 OS 연동도 남습니다.
+
+이전 버전의 공유 Domain 정책·초기화·저장 실패 복구
+
+  v0.18에서 재현한 서로 다른 클라이언트의 오래된 OCE 캐시 오류를 수정했습니다.
+  성공한 허용 목록 변경은 연결별 캐시와 업로드 중인 체인을 무효화합니다.
+  같은 값·목록 삭제·다른 CA·c counter 변경을 모두 검사했습니다.
+  내부 세대값은 정책과 함께 저장하며 거부/저장 실패 시 함께 복구합니다.
+  이미 열린 SCP03/a/c 채널은 일반 정책 변경 이후에도 계속 동작합니다.
+  CA 공개 키 교체는 이전에 검증한 OCE를 유지하되 새 PSO는 새 CA로 검사합니다.
+  공유 Domain 초기화는 다른 연결의 이전 채널과 캐시를 종료합니다.
+  같은 자체 SD 키를 다시 넣어도 초기화 전 캐시는 사용할 수 없습니다.
+  초기화 저장 실패에서는 다른 연결의 채널/캐시와 키·정책·식별자를 보존합니다.
+  이전 상태의 키·인증서·재시도·CPLC를 바꾸지 않고 누락된 내부 필드만 추가합니다.
+  변경하지 않은 SDK의 receipt/KDF/암호화/MAC을 소켓과 별도 직접 IFD에서
+  확인했습니다. 자체 새 소프트웨어 키만 사용하며 실제 키에 접근하지 않았습니다.
+  GP 공개 검토본의 수명 주기 모델입니다. v0.20은 보호 핸드셰이크와 단일 c
+  모델을 추가했습니다. 임시 OCE·SD transaction·확정 GP1.4·실제 논리 채널과
+  OS 연결은 계속 대조해야 합니다. 전역 단일 영속 OCE 표현은 위에서 정정했습니다.
+
+이전 버전의 SCP11c 키 교환·명령 제한·카운터
+
+  SCP11c의 SD 측 키 교환을 정적 키로 수정했습니다. 응답 5F49도 자체 SD
+  정적 공개 키를 반환하며 SCP11a/b는 새 임시 키를 계속 사용합니다.
+  ECDH·SHA256 counter KDF·receipt CMAC를 독립 계산하고 SDK의 암호화·MAC을
+  확인했습니다. 같은 자체 요청을 재전송하면 c의 응답은 같고 a/b는 달라집니다.
+  c 채널의 PUT KEY·키 DELETE·SET STATUS를 모델 6985로 거부합니다.
+  기존 검사도 c의 잘못된 키 가져오기 성공 기대에서 실제 제한 검사로 바꿨습니다.
+  Yubico Android/.NET의 공개 시험 코드도 c의 키 삭제 실패를 요구합니다.
+  SCP11c 허용 목록에는 tag92의 2바이트 양수 카운터 1..32767을 요구하고,
+  비-c 채널에서는 이 필드를 거부합니다. 각 CA의 카운터가 엄격히 증가하며
+  목록 삭제·다른 SCP 쓰기·CA 교체·재시작으로 카운터를 되돌리지 않습니다.
+  자체 c 세션에서 같은 키·유효한 MAC의 관리 패킷을 다시 보내면 카운터가
+  거부합니다. 요청 MAC과 거부 응답 MAC을 독립 계산해 검증했습니다.
+  실패한 입력은 카운터를 소비하지 않습니다. 제어된 저장 실패에서는 목록과
+  카운터의 디스크·메모리 상태를 함께 복구하고, 이전 채널을 종료합니다.
+  소켓과 직접 IFD에서 새 자체 키만 사용했고 실제 키에는 접근하지 않았습니다.
+  GP1.3.0.13 공개 검토본 모델입니다. 확정 GP1.4·실제 펌웨어 상태/시간 특성,
+  SD content transaction·동시 c 세션·proprietary GENERATE 정책은 남아 있습니다.
+  당시 재현한 공유 허용 목록과 다른 연결의 OCE 캐시 문제는 v0.19에서 수정했습니다.
+  shared-domain-observation.json은 v0.18의 역사적 자체 재현 기록이며
+  현재 검증은 domain-shared-result.json / ifd-domain-shared-result.json에 있습니다.
+
+이전 버전의 SCP11 OCE 캐시·체인·허용 목록 수명 주기
+
+  SCP11a/c에서 허용 목록 변경 뒤 캐시된 이전 OCE 권한으로 채널을
+  여는 오류를 재현하고 수정했습니다. 성공한 허용 목록 업데이트는
+  같은 값·목록 삭제·다른 CA 대상이라도 SD의 OCE 캐시를 무효화합니다.
+  누락·불완전·무효 캐시는 MUTUAL AUTHENTICATE에서 모델 6985를 반환합니다.
+  기존 암호화 채널은 유지하며 거부된 목록 업데이트는 캐시와 데이터를 유지합니다.
+  완료된 PSO 체인을 다음 체인의 접두부로 붙이던 오류를 수정했습니다.
+  새로운 완전한 체인이 호스트를 교체하고 새 불완전 체인은 이전 권한을 사용하지 못합니다.
+  CA 키 교체는 기존 허용 목록과 검증된 OCE를 유지하고 이전 SKI를 제거합니다.
+  키 삭제는 목록을 제거합니다. 교체 목록의 실제 인증 제한과 재시작도 검사했습니다.
+  자체 새 CA·OCE를 사용해 소켓과 직접 IFD에서 검사했습니다. SDK 소스는
+  변경하지 않았으며, 분리된 시험 단계에서 이미 보낸 PSO만 생략했습니다.
+  SDK가 MUT 요청·ECDH receipt·세션 KDF·암호화 응답 MAC을 검증합니다.
+  이 lifecycle/6985는 GP1.3.0.13 공개 검토본 모델이며 GP1.4 확정본과
+  실제 5.7.4 상태·시간 특성은 미검증입니다. 이번 버전은 실제 키에 접근하지 않았습니다.
+  남은 체인 serial 허용 규칙·중간 PSO 즉시 검증·critical Subject ID·30초
+  캐시 제한은 계속 점검해야 합니다. v0.18은 당시 남았던 c의 정적 SD ECDH,
+  key-command 제한과 tag92 counter를 소프트웨어 모델로 구현·검증했습니다.
+
+이전 버전의 SCP03 전체 버전 범위
+
+  SCP03의 사용자 키 버전을 공개 Yubico 문서의 1..254에 맞췄습니다.
+  공장 기본값 255와 사용자 버전 0은 거부합니다. 이전에는 SCP11의
+  7비트 범위를 SCP03에도 적용하여 정상적인 128..254를 거부했습니다.
+  각 버전마다 새로운 소프트웨어 AES 키를 넣고 SDK의 KCV와 키 열거를
+  확인했습니다. 모든 254개 버전에서 INIT UPDATE 헤더와 AES-CMAC
+  카드 암호문을 독립 재계산하고 SDK 인증·응답 복호화·MAC을 검증했습니다.
+  INIT UPDATE는 측정된 공개 지원 정보와 같은 option 60을 반환합니다.
+  SDK가 무시하던 이 필드의 기존 00 값을 수정했습니다. 실제 카드의
+  초기화 응답이나 128/254 경계 인증·거부 코드는 측정하지 않았습니다.
+  127/128/254 재시작, 3세트 용량, 상위 버전 교체·삭제·wildcard·
+  차단 항목 선택과 mixed-version SDK 초기화를 양쪽 전송에서 검사했습니다.
+  SCP11의 사용자 버전은 별도 1..127 프로파일을 유지합니다. private/public
+  키 생성·가져오기의 0/128/255 거부와 127의 SDK key agreement도 확인했습니다.
+  이 버전은 새 자체 소프트웨어 키만 사용하며 실제 키에 접근하지 않았습니다.
+
+이전 버전의 Security Domain 공개 메타데이터·초기화 프로파일
+
+  Security Domain의 SELECT 25바이트와 GET DATA 0066 63바이트를
+  실제 5.7.4 키의 공개 응답과 동일하게 맞췄습니다. 고정 SELECT·GET DATA를
+  시스템 PC/SC shared 연결로 읽고 LEAVE_CARD로 종료했습니다. 버전 조회는
+  명시적으로 선택한 OpenPGP에서만 수행했습니다. PIN·handshake·PSO·쓰기·
+  초기화는 수행하지 않았으며 임시 앱 선택은 바뀌었습니다. SELECT는 고정
+  공개 AID/OID만, key information은 type/length만 저장합니다. CPLC의 고유
+  식별 payload와 실제 키 reference·인증서·공개 키는 저장하지 않았습니다.
+  SCP03 option은 60, SCP11 option은 9b06입니다. SCP11a/b/c, 임시 OCE 키,
+  체인, S8, X509를 표시하며 BF20은 a/c 모두 지원하지 않는다고 표시합니다.
+  BF20 X509 확장은 GP public-review의 미지원 모델 6A81로 거부합니다.
+  실제 카드의 거부 코드와 critical SD subject-ID 동작은 아직 미측정입니다.
+  CPLC 42바이트 형식을 구현했습니다. 소프트웨어 marker 0000과 자체 무작위
+  식별자를 사용하며 실제 키의 Infineon marker 4090이나 식별자를 복제하지 않습니다.
+  CPLC는 일반 선택·SCP 조회·키 삭제·재시작에서 유지하며 Domain 초기화 때
+  회전합니다. 이전 상태에는 없는 필드만 추가하고 키·인증서·재시도를 보존합니다.
+  명시적 마지막 관리 키 삭제 후 새 기본 Domain을 복구하는 공개 문서의
+  동작을 구현했습니다. 기존 채널로 마지막 응답 MAC을 반환한 뒤 인증을 종료합니다.
+  암호화된 SELECT 이후에도 이전 채널을 되살리던 동작을 수정했습니다.
+  이 lifecycle은 소켓/직접 IFD SDK 모델 검사이며 실제 카드 초기화 증거가 아닙니다.
+
+이전 버전의 Security Domain 역할·재시도 프로파일
+
+  Security Domain의 새 자체 SCP11b 인증서는 critical SD 역할 정책과
+  ECKA Key Usage를 포함합니다. 기존 소프트웨어 인증서는 유지합니다.
+  critical Certificate Policies에서 CA·중간 발급자·OCE 역할을 실제로
+  검사하며, 잘못된 역할·미지원 qualifier·알 수 없는 critical 제약은 거부합니다.
+  체인의 AKI/SKI 연결과 사용자/CA 제약을 검사하고, SCP11 호스트 인증이
+  PIV 관리 키 권한을 부여하지 않는 것도 확인했습니다.
+  같은 자체 공개 키의 여러 anchor가 있으면 wildcard 조회가 허용된
+  allowlist를 계속 찾습니다. 명시한 anchor의 거부는 다른 항목으로 우회하지 않습니다.
+  1회 남은 인증 기회를 처리하기 전에 차단하던 오류를 수정했습니다.
+  SCP03/SCP11a/b/c의 마지막 모델 기회가 성공하면 64회를 복구하며,
+  실패한 횟수는 재시작 뒤에도 유지합니다. KVN=0은 차단된 최신 항목을
+  건너뛰므로 SDK reset이 세 SCP03 세트와 16개 EC 항목을 모두 처리합니다.
+  꽉 찬 상태의 교체·삭제·재시작, 실패 시 상태 보존과 앱 간 분리를 검증했습니다.
+  PIV 자체 발급자와 OATH 비밀·HOTP 진행은 Domain 초기화 후 유지합니다.
+  공개 문서는 SCP03 세트 3개를 명시합니다. 현재 64회 재시도·EC 16개·
+  체인 8개·allowlist 64개·SCP11 KVN 1..127은 소프트웨어 모델입니다.
+  SCP03 KVN 1..254는 공개 문서 범위이며 현재 전 범위를 SDK 검증했습니다.
+  실제 펌웨어 한도·삭제/차단 시점·SCP11 예약·인증서/날짜 규칙은 미측정입니다.
+  8개 저장 인증서 fixture는 3062바이트인 고정 SDK 기본 한도를 넘으므로
+  fixture 전용 MAC formatter와 짧은 APDU 조각으로 별도 검사했습니다.
+  SDK 원본/기본 상한은 그대로이며 실제 카드의 큰 묶음 수용을 증명하지 않습니다.
+  현재 관찰은 BF20 미지원으로 표시합니다. critical SD subject-ID와 실제 거부
+  상태·인증서 허용 규칙·키 삭제/초기화 시점은 다음 대조 항목입니다.
+
+이전 버전에서 검증한 OpenPGP 증명 프로파일
+
+  OpenPGP 앱 초기화가 현재 자체 ATT 키와 인증서를 유지하도록 수정했습니다.
+  이전의 '초기화가 새 발급자를 생성한다'는 테스트도 보존 동작으로 바로잡았습니다.
+  기본·교체한 RSA/EC 발급자는 초기화/재시작 뒤에도 새 사용자 키를 증명합니다.
+  삭제한 키·인증서를 되살리거나 잘못된 인증서를 자동 교체하지 않습니다.
+  사용자 키·객체·PIN/KDF는 초기화하며 별도 PIV 발급자와 OATH HOTP는 유지합니다.
+  증명 인증서는 발급자 subject와 유효기간을 따르고 16바이트 무작위 입력의
+  양수 serial을 사용합니다. RSA는 SHA256 PKCS1v1.5, EC는 ECDSA SHA256입니다.
+  카드 소유자 이름·생성 출처·버전 프로파일·지문·생성 날짜·SIG counter·
+  자체 serial·사용자 키 UIF·form factor를 공개 OID의 DER 형식으로 추가했습니다.
+  Latin1 이름의 UTF8 변환과 양수 INTEGER 부호, SIG에만 포함되는 counter를
+  독립 파서로 확인했습니다. 자체 소프트웨어 이름·키·신뢰를 사용하며
+  FIPS/CSPN 값은 0입니다. 버전/form factor는 호환 프로파일입니다.
+  잘못된 CLA·헤더와 2048바이트를 넘는 생성 인증서를 거부하고 상태를 유지합니다.
+  실제 FC의 firmware 확장은 DER OCTET STRING 태그와 3바이트 길이만
+  측정했습니다. 실제 생성 leaf의 전체 확장·정확한 ATT metadata/UIF 초기화·
+  교체 인증서 파싱과 거부 규칙은 미비교입니다. socket/직접 IFD의 소프트웨어
+  검증과 물리적 제조사 증명은 구분하며 제조사 신뢰를 재현하지 않습니다.
+
+이전 버전에서 검증한 OpenPGP 알고리즘 프로파일
+
+  실제 5.7.4 키의 421바이트 OpenPGP Algorithm Information(FA) 응답을
+  읽고 곡선 순서까지 반영했습니다. SIG/DEC/AUT 각 11개와 ATT 10개입니다.
+  RSA2048/3072/4096, NIST·K1·Brainpool의 일곱 곡선, Ed25519 SIG/AUT,
+  X25519 DEC의 총 43개 조합을 소프트웨어에서 모두 생성하고 가져왔습니다.
+  독립 SDK로 공개 키·키 상태를 읽고 RSA/ECDSA/Ed25519 서명, RSA 복호화,
+  ECDH/X25519 공유 비밀과 10개 자체 증명 발급자의 서명을 독립 검증했습니다.
+  생성한 발급자 개인키를 꺼내지 않고 공개 키로 증명 서명을 검증합니다.
+  잘못된 슬롯 용도·지수·가져오기 형식과 길이, 중복/알 수 없는 필드,
+  순서·길이 헤더·값 불일치를 거부합니다. 거부 시 기존 키와 저장소를 유지합니다.
+  표준 short/extended CRT를 SIG/DEC/AUT에 처리하고 잘못된 참조를 거부합니다.
+  실제 키에서 공개 7A의 외부 태그와 3바이트 93 구조를 확인했습니다.
+  빠진 7A 래핑을 수정해 SDK가 서명 카운터를 읽을 수 있습니다. 새 SIG 키
+  생성·가져오기는 규격대로 0으로 초기화하며 다른 슬롯 연산은 바꾸지 않습니다.
+  P-521의 표준 private field는 66바이트입니다. 고정 SDK의 floor 길이 계산은
+  raw SDK APDU의 zero padding으로 검사했습니다. 재시작 후 서명도 대조했습니다.
+  socket/네이티브 IFD 직접 ABI 검증입니다. 실제 키의 공개 목록·7A 구조만
+  비교했으며 실제 가져오기 허용 범위·거부 순서/status·counter 초기화/포화·
+  P-521 padding 허용 범위·암호/터치 타이밍·OS 인식은 미비교입니다.
+
+이전 버전에서 검증한 OpenPGP 객체 프로파일
+
+  실제 5.7.4 키에서 읽은 OpenPGP 공개 기능 바이트와 객체 배치를 반영했습니다.
+  C0는 6E/73 안에서 읽으며, 직접 C0 조회의 6B00도 기준 응답과 같습니다.
+  historical bytes, general feature 정보와 discretionary 안의 extended length
+  정보, 네 키의 RSA2048 알고리즘 속성·객체 길이를 저장한 기준과 대조했습니다.
+  자체 증명 발급자의 새 기본 키도 RSA2048입니다. 이전 EC 발급자와 사용자 키는
+  유지하며, 기존 키의 서명과 증명 인증서를 독립 암호 라이브러리로 검증했습니다.
+  공개 기능이 선언한 challenge 3070, 인증서 2048, special DO 255바이트를
+  소프트웨어 한도로 적용했습니다. 이름은 39바이트, 언어는 최대 8바이트의
+  쌍, 성별은 ASCII 값, 지문은 20바이트, 생성 시간은 4바이트입니다.
+  Private Use 101/103 쓰기는 PW1의 82 확인이 필요하며 서명용 81만으로
+  허용하지 않습니다. 102/104 쓰기와 104 읽기는 관리자 83을 요구합니다.
+  읽기 전용·미지원 객체 쓰기와 Resetting Code 읽기를 거부합니다.
+  네 인증서 슬롯의 한도·빈 PUT 삭제·재시작, oversized 교체 실패 시 불변성,
+  기존 큰 객체의 읽기 보존과 작은 값 교체·삭제로 복구를 확인했습니다.
+  socket과 네이티브 IFD 직접 ABI에서 독립 SDK·암호 검증이 통과했습니다.
+  실제 키의 공개 메타데이터만 비교했습니다. 실제 키에 저장/PIN/challenge/
+  암호 명령을 시험하지 않았으므로 정확한 쓰기 거부 status·할당 오버헤드·
+  내용 허용 범위·aggregate PUT·증명 reset lifecycle·터치 타이밍은 남아 있습니다.
+
+이전 버전에서 검증한 OATH 프로파일
+
+  OATH PUT의 초기 카운터 IMF를 HOTP 전용 4바이트로 검사합니다.
+  중복 property·누락/중복/알 수 없는 TLV와 명령 P1/P2·본문을 검사하며,
+  없는 자격 증명 계산과 접근 코드 없는 VALIDATE는 문서의 0x6984를 반환합니다.
+  SET CODE의 host challenge는 8바이트, SHA1 proof는 20바이트입니다.
+  VALIDATE는 가변 challenge TLV를 처리하며 7/9바이트 응답을 독립 HMAC으로 확인했습니다.
+  잘못된 SET CODE proof는 문서의 mismatch 0x6984를 반환하고 상태를 유지합니다.
+  독립 SDK로 SHA1/256/512의 RFC6238 벡터 18개를 확인했습니다.
+  HOTP 초기 카운터·재시작·full/truncated HMAC, CALCULATE ALL의 실제 값과
+  HOTP/touch placeholder, 증가 전용 challenge 보존도 독립 계산과 대조했습니다.
+  접근 코드의 자체 salt/PBKDF2와 상호 인증·제거를 확인했습니다.
+  5.7 공식 문서의 64개 용량 모델은 65번째 거부, 꽉 찬 상태의 교체·이름 변경,
+  삭제 후 새 등록과 재시작을 검증했습니다. 잠긴 OATH 앱 초기화는 salt를
+  교체하고 OATH 데이터만 지우며, 자체 PIV F9 발급자를 유지합니다.
+  잘못된 요청의 거부 status와 암호화 저장소 불변성을 함께 검사했습니다.
+  socket/직접 IFD 경로의 소프트웨어 검증입니다. 실제 펌웨어의 malformed 입력
+  허용 범위·검사 순서·최대 secret/challenge 길이·카운터 포화는 미비교입니다.
+
+이전 버전에서 검증한 PIV 초기 프로파일
+
+  PIV SELECT의 application template와 고정 Discovery AID/PIN policy를 반영했습니다.
+  읽기 전용 Discovery·Biometric Information Group Template 쓰기를 거부하며,
+  생체 기능이 없는 카드의 빈 BITGT와 초기 표준 객체를 독립 SDK로 확인했습니다.
+  PIN/PUK 재시도 설정은 1~255회입니다. 오류 status word는 15에서 포화하지만
+  metadata는 실제 8비트 횟수를 유지합니다. 255/200회 설정, 16→15→14 경계,
+  성공 시 전체 횟수 복구, 잘못된 VERIFY 길이·재시도 설정의 불변성을 확인했습니다.
+  자체 F9 키·인증서를 처음부터 준비합니다. F9의 EC P-256/P-384와
+  RSA 2048/3072/4096 생성, EC/RSA 가져오기 및 교체한 키의 증명을 검증했습니다.
+  증명은 발급자 subject·유효기간을 따르고, 자체 16바이트 무작위 인증서 serial과
+  별도 카드 serial을 사용합니다. 제조사 CA·FIPS/CSPN 인증은 주장하지 않습니다.
+  PIV 초기화와 재시작은 현재 F9 키·인증서를 유지합니다. 삭제한 인증서는
+  되살리지 않습니다. 불일치·잘못된 DER 인증서는 opaque 객체로 보관하며,
+  서명 검증 실패나 증명 오류가 이를 자동 교체하거나 상태를 변경하지 않습니다.
+  이전 지연 생성 CA 상태를 읽을 때 기존 발급자와 사용자 키를 보존합니다.
+  기존 사용자 키의 서명을 독립 검증하고, PIV 초기화 후에도 OATH 키와
+  HOTP 카운터가 유지되는 것을 확인했습니다. 용량이 가득 차도 이미 준비된 F9로
+  증명할 수 있습니다. 이 검사는 fresh socket과 네이티브 IFD 직접 ABI에서
+  실행했으며, 실제 유비키의 초기 객체·거부 status와 차등 비교하지 않았습니다.
+
+이전 버전에서 검증한 비상주 FIDO 동작
+
+  새 소프트웨어 비상주 FIDO2/U2F 키를 저장소 항목에 보관하지 않습니다.
+  ES256/Ed25519/ES384 키와 보호 정책을 자체 128바이트 암호화 ID에서 복원하며,
+  RP 해시를 인증하여 다른 서비스와 변조된 ID의 사용을 거부합니다.
+  저장소에는 공통 래핑 루트와 서명 카운터만 유지합니다. 초기화는 루트를
+  없애 기존 ID를 무효화합니다. credRandom은 ID별로 UV/noUV 값을 분리해 유도합니다.
+  10,001회 생성해도 항목 수와 초기화된 저장소 바이트가 늘지 않는 것을 확인했습니다.
+  상주 100개가 가득 찬 상태에서도 새 비상주 FIDO2/U2F 등록이 동작합니다.
+  독립 FIDO SDK로 세 알고리즘 서명, 재시작, hmac-secret, PIN 보호, U2F 교차 사용,
+  excludeList와 초기화 뒤 무효화를 검증했습니다. 저장 실패 시 루트·카운터를 롤백하고
+  32비트 카운터의 최대값에서 추가 UP 서명을 거부하여 0으로 돌아가지 않습니다.
+  공식 문서의 상주 credBlob 설명에 맞춰 새 등록에서는 상주 키만 blob을 저장합니다.
+  카운터와 비상주 credBlob의 실제 펌웨어 경계 응답은 아직 비교하지 않았습니다.
+  암호화 저장소 v1/v2를 읽고 첫 변경에서 v3으로 옮깁니다. 기존 32바이트 ID와
+  비상주 저장 항목의 개인키는 유지하며, 이전 버전의 writer는 v3을 거부합니다.
+  하드웨어 백엔드의 기본 ES256 키는 기존 저장된 핸들 방식입니다.
+  별도 래핑 형식을 사용하며 실제 유비키의 비밀키나 제조사 형식을 복제하지 않습니다.
+
+이전 버전에서 검증한 USB·CCID·PIV 동작
+
+  기준 키의 FIDO+CCID USB 설정 125바이트와 FIDO HID 리포트 34바이트를 읽었습니다.
+  같은 인터페이스 조합에서 설정·리포트 바이트가 wire 모델과 일치합니다.
+  FIDO OUT 04/IN 84, CCID OUT 02/IN 82/알림 83, 버스 전력 30mA,
+  HID 1.10, CCID 메시지 3072바이트와 4000kHz/307200bps 프로파일을 반영했습니다.
+  공개 USB bcdDevice 0x0574는 호환 프로파일입니다. GetInfo firmwareVersion은
+  독립 소프트웨어 값 3이며, 제품 이름·일련번호·키·증명 신뢰도 별도입니다.
+  OTP가 포함된 다른 USB 설정 조합은 실제 키와 아직 비교하지 않았습니다.
+
+  CCID 긴 명령·응답 조각을 socket/IFD/컴파일한 native wire 경로에서 처리합니다.
+  전송 전용 fixture로 최대 ISO APDU 65544바이트와 긴 응답의 중간·마지막 조각을
+  확인했습니다. 이는 PIV가 같은 크기의 데이터를 저장할 수 있다는 뜻이 아닙니다.
+  카드 승인을 기다릴 때 native CCID가 시간 연장 응답을 보내고,
+  클라이언트 연결 종료가 승인 대기를 취소하여 공유 상태 잠금을 해제합니다.
+  macOS kqueue로 아직 읽지 않은 후속 요청 뒤의 연결 종료도 감지합니다.
+  시간 연장의 500ms 간격은 소프트웨어 모델이며 실제 키의 타이밍은 미측정입니다.
+  bulk-first ABORT가 빠르게 완료되는 경우의 상태 경합을 수정하고
+  40회 연속 완료·즉시 SDK 재사용을 확인했습니다.
+
+  PIV 앱의 조립된 평문 데이터 버퍼를 3072바이트로, 객체 값의 합을
+  51200바이트로 제한했습니다. 14KiB 저장을 거부하고 교체·삭제·재시작,
+  용량 초과 시 롤백, 개인키 저장의 분리와 자체 CA 인증서의 용량 반영을 확인했습니다.
+  네 가지 PIN 보호 데이터와 객체 태그·GET/PUT 헤더도 검사합니다.
+  PIV 수치는 공식 문서에 기반한 모델입니다. 실제 APDU 헤더/NVM 할당 오버헤드와
+  문서의 인증서 3052바이트 경계는 아직 동일하다고 검증하지 않았습니다.
+  고정 SDK의 extended APDU 한도는 3062바이트입니다. 더 긴 ISO 명령 조립 검사는
+  새 short formatter를 사용하며, 기본 SDK 경로의 한도를 바꾸지 않았습니다.
+
+기존 CCID 취소·파라미터 처리는 유지합니다. 성공 연산은 저장과 취소의 공통 완료
+경계를 사용하고, 이미 수행한 인증 실패는 응답 취소 뒤에도 재시도 횟수를 소비합니다.
+USB 리셋은 대기 요청을 취소하고 이전 세대 응답을 버립니다.
+이 취소·reset 전환은 fresh 상태와 wire 모델 검증입니다. 기본 Linux 실제 USB
+등록은 검증했으며, 해당 전환의 실제 버스 및 macOS 검증은 남아 있습니다.
+
+기존 프로토콜과 전송
+
+  실제 GetInfo에서 확인한 버전 순서와 한도를 반영했습니다.
+  전체 CTAP 메시지 1536바이트, credential ID 한도 128바이트,
+  최소 PIN 길이를 공개할 RP 1개, LargeBlob 조각 1472바이트입니다.
+  AAGUID와 firmwareVersion(3)은 독립 소프트웨어 모델의 값입니다.
+  기존 기준 키와 새 에뮬레이터의 PIN 설정·저장된 자격 증명 수도 다릅니다.
+
+  IFD Handler 3.0 네이티브 reader 드라이버를 추가했습니다.
+  bin/macos-arm64/ifd-ske.bundle의 직접 ABI 호출과 SDK APDU 경로를 검증했습니다.
+  이 번들은 시스템 PC/SC에 설치한 상태가 아니며, 자체적으로 USB reader를 만들지 않습니다.
+  직접 연결은 같은 사용자의 private Unix 소켓을 사용합니다.
+
+  ske-usbd에 공개 IOUSBHostControllerInterface 전송 소스를 추가했습니다.
+  하나의 USB 설정에 OTP 키보드·FIDO HID·CCID 인터페이스를 구성합니다.
+  USB 제어 요청, HID feature report, CCID 프레임 분할·조립, 엔드포인트 정지,
+  재설정, 키보드 프로토콜·LED·idle 반복·버튼 출력의 wire 모델을 검증했습니다.
+  --yubico-usb-ids는 SDK가 검사하는 공개 USB ID/PID와 reader 이름을 맞춥니다.
+  7가지 인터페이스 조합을 SDK 판별식과 대조했습니다. 제품 이름에 software를 표시하며,
+  새 키·일련번호·별도 AAGUID·자체 증명 인증서를 사용합니다.
+  macOS에서 수정본의 실제 OS 장치 등록과 자동 탐색은 아직 검증하지 않았습니다.
+
+실행 — 이 폴더에서
+
+  uv sync
+  uv run python emulator.py test
+  uv run python emulator.py device
+
+device 모드는 카드/FIDO 상태를 work/device/에 보관하고, 짧은 private 소켓 경로를
+출력합니다. 일련번호와 USB 앱 설정을 공유합니다. 사용자 존재 확인이 기본입니다.
+자동 시험에서만 --testing을 명시하여 터치를 모사합니다.
+
+개별 실행:
+
+  uv run python emulator.py fido
+  uv run python emulator.py card
+
+소스 빌드:
+
+  uv run python emulator.py build
+  uv run python emulator.py test --binary-dir work/build
+
+C++23, CMake/Ninja, OpenSSL 3 개발 파일과 macOS SDK가 필요합니다.
+동봉 바이너리는 이 맥의 macOS 27.0.1 ARM64 Debug 빌드입니다.
+Python 3.12 이상과 uv를 사용하며 의존성은 uv.lock에 고정했습니다.
+
+macOS 네이티브 USB 연결
+
+ske-usbd에는 본인 개발자 팀에서 정식 프로비저닝한
+com.apple.developer.usb.host-controller-interface 권한이 필요합니다.
+source/packaging/macos/composite.entitlements.plist는 필요한 권한을 기술하는 소스입니다.
+이 파일만으로 실행 권한이나 유효한 개발자 서명이 생기지는 않습니다.
+사용자가 아직 서명 환경이 없다고 답해 소스·프로토콜 구현을 계속했습니다.
+
+권한과 서명 준비 후, 실행 중인 device의 소켓을 지정합니다.
+
+  uv run python emulator.py usb --card-socket <카드 경로> --fido-socket <FIDO 경로> --yubico-usb-ids
+
+전용 터미널에 hold 500 / hold 3500을 입력하면 짧은/긴 버튼 동작을 요청합니다.
+이 실행 모드는 실제 키보드 리포트를 보낼 수 있습니다.
+검증 도구는 --wire-test만 실행하며 OS 장치를 만들거나 키를 타이핑하지 않습니다.
+
+별도 IOHID 전송은 com.apple.developer.hid.virtual.device 권한이 필요합니다.
+동봉된 prebuilt/swpasskeyd.app은 수정하지 않은 원본 0.2.0 서명 앱입니다.
+원본 앱의 브라우저 검증 결과는 수정본을 검증한 결과와 구분합니다.
+
+구현된 프로토콜
+
+  FIDO: CTAPHID, CTAP2.1/U2F, ES256/Ed25519/ES384, PIN 1/2,
+        토큰 권한·RP 범위·만료, credProtect/credBlob/hmac-secret/largeBlobKey,
+        CredentialManagement/preview, LargeBlobs, Config, 정규 CBOR·UTF-8 검사,
+        취소·10초 초기화 요청 제한·암호화 저장소 v1/v2→v3 마이그레이션.
+  PIV: PIN/PUK/재시도, 관리키 인증, RSA/EC/Ed25519/X25519,
+       키 생성·가져오기·이동·삭제, 서명·복호화·ECDH, 인증서·소프트웨어 증명,
+       PIN/터치 정책과 차단 후 초기화.
+  OpenPGP: SIG/DEC/AUT 분리, 키 생성·가져오기, 암호 연산,
+           PIN/관리자 PIN/복구 코드, SHA256/SHA512 KDF·해시 PIN,
+           별도 인증서 슬롯과 네 번째 증명 슬롯, 15초 캐시·고정 터치 정책.
+  YubiHSM Auth: 대칭 SCP03/P-256 ECDH 세션키·receipt, 키 관리·암호 재시도.
+  OATH: HOTP/TOTP SHA1/256/512, 목록·계산·이름 변경·삭제·접근 코드·초기화.
+  OTP: 2개 슬롯 설정·교환·접근 코드·스캔 맵, HID 8바이트 report/CRC,
+       HMAC-SHA1/Yubico challenge-response, HOTP/Yubico OTP/정적 비밀번호,
+       키보드 수정자·누름/해제·지연, 휴면·슬롯 보호·버튼 hold/release,
+       단일 정적 ticket 슬롯의 변경 준비/확정 동작.
+  SCP03/SCP11a/b/c: SDK 핸드셰이크, 암호화·MAC·receipt,
+                  호스트 인증서 체인·유효기간·CA 제약·허용 목록.
+  Security Domain: AES/P-256 키 세트, KCV·인증서·CA SKI·허용 목록·삭제·초기화.
+  Management: CCID/OTP/FIDO vendor 0x42/0x43, 일련번호·USB 앱 설정 공유와 잠금.
+  저장: AES-256-GCM, 원자적 쓰기·실패 롤백·0600 파일/소켓·실행 잠금.
+
+남은 검증과 차이
+
+Linux guest의 UHID/hidraw 및 실제 복합USB 버스·stock FIDO/OTP·evdev·libccid/pcscd는 검증했습니다.
+Firefox 기본 USB WebAuthn, PIN/UV·discoverable·다중 계정 선택, PRF와 자체
+attestation 동의·거절과 Chromium 두 알고리즘의 largeBlob은 검증했습니다. 남은 확장·attestation 조건,
+다른 브라우저 및 macOS PC/SC/키보드 등록,
+Linux dummy_hcd에서 명시된 중단·PM·재연결 범위는 위 보고서로 검증했습니다. 다른 controller/doorbell/완료 순서와 추가 동시 요청·물리 동작은 미검증입니다.
+CCID 조각·시간 연장의 실제 키 차등 타이밍, 기준 ATR/T=1 전기 파라미터 비교,
+PIV의 정확한 인증서/할당 경계·F9 인증서 파싱 제약·거부 status 차등 비교와
+OpenPGP의 정확한 쓰기 status·할당/SCP 오버헤드·내용 허용 범위·aggregate PUT·
+증명 키/인증서 보존과 metadata/UIF 초기화의 실제 차등 비교·생성 leaf 확장 형식·
+교체 인증서 파싱/거부 규칙·미공지 알고리즘/가져오기 형식 허용 범위·
+P-521 padding/SDK 상호 운용·확장 CRT·서명 counter 초기화/포화,
+Security Domain 인증서 권한 확장·정확한 키 한도/재시도,
+OTP 디바운스·FAST_TRIG·시작 시 serial 입력·LED·두 MAN_UPDATE 슬롯 선택·legacy
+동작, OATH malformed 입력 허용 범위/검사 순서·최대 secret/challenge·카운터 포화와
+전체 표준/차등 적합성 검사가 남아 있습니다.
+CCID 1.1은 CMD_NOT_ABORTED의 숫자 값을 지정하지 않아 모델에서는 CMD_ABORTED를 사용합니다.
+미완성 bulk-first ABORT 쌍에는 private 전송의 25초 대기 한도가 있습니다.
+같은 카드 서비스의 공유 상태 잠금 때문에 모든 앱 요청의 동시 진행을 보장하지 않습니다.
+
+새 소프트웨어 비상주 FIDO 키의 항목 수 제한은 없습니다. 상주 용량은 100개입니다.
+하드웨어 백엔드와 이전 버전 비상주 항목에는 저장된 핸들/행 방식과 전체 10000개
+저장 한도가 남아 있습니다. 실제 credential-ID 형식, 카운터 초기값·업데이트·포화와
+비상주 credBlob 경계 응답은 미검증입니다. 제조사 비밀키·공장 증명 신뢰·보안칩·
+물리 터치 보장은 재현하지 않았습니다. 같은 사용자가 래핑키를 읽을 수 있는 소프트웨어 저장입니다.
+기본 스마트카드 PIN·관리키와 SCP03 키는 공개 개발 프로파일 값입니다.
+이 프로젝트에는 제조사 신뢰나 공식 FIDO 인증이 없습니다.
+
+검증 자료
+
+주요 검사는 C++ 120개(11620 assertions)와 검증 항목 5721개, 총 5841개가 통과했습니다.
+동일 SDK 시나리오를 다른 전송으로 재실행한 항목도 포함합니다.
+이 숫자는 고유한 펌웨어 동작 수나 완전 동일성을 뜻하지 않습니다.
+
+  reference-observation.json / reference-profile-result.json: 읽기 전용 기준과 한도 비교.
+  unit-test-result.txt / ctap-upgrade-result.json: C++와 FIDO SDK.
+  smartcard-result.json / domain-result.json / pgp-extensions-result.json: 카드와 보안 채널.
+  ifd-result.json / ifd-smartcard-result.json: 네이티브 IFD ABI 32개, SDK 97개.
+  usb-bridge-result.json: 컴파일한 USB wire 모델 55개.
+  usb-reference-observation.json: 장치를 열지 않고 읽은 공개 USB 메타데이터.
+  ccid-result.json: CCID 파라미터·오류·동시 요청·취소·터미널 승인·리셋.
+  ccid-chaining-result.json: 조각·descriptor 일치·시간 연장·연결 종료 복구.
+  piv-storage-result.json: 저장 한도 모델·롤백·재시작·PIN 보호 데이터 검사.
+  nonresident-result.json: 비상주 SDK 서명·저장소 증거·PIN·U2F·재시작·초기화.
+  piv-profile-result.json / ifd-piv-profile-result.json: 초기 객체·8비트 재시도·F9 lifecycle·마이그레이션·앱 분리.
+  oath-profile-result.json / ifd-oath-profile-result.json: OATH 문법·RFC/HMAC·용량·인증·초기화.
+  openpgp-reference-observation.json: PC/SC로 읽은 공개 기능·알고리즘 속성·객체 배치.
+  pgp-objects-result.json / ifd-pgp-objects-result.json: 공개 바이트 비교·객체 한도·권한·기존 키 보존.
+  pgp-algorithms-result.json / ifd-pgp-algorithms-result.json: 43개 알고리즘 생성/가져오기·독립 암호 검증·counter·거부 불변성.
+  domain-pso-result.json / ifd-domain-pso-result.json: 인증서 조각 즉시 검증·CA 참조 범위·wildcard·채널/PIV PIN 보존·자체 서명.
+  domain-allowlist-result.json / ifd-domain-allowlist-result.json: 전체 체인 serial·단일 CA 정책·wildcard·optionalroot·padding·캐시·peer rollback·restart.
+  domain-plaintext-result.json / ifd-domain-plaintext-result.json: Yubico 평문 종료 규칙·모든 SCP·OCE/PIV/OATH 권한·불변 저장소·SDK 복구.
+  domain-handoff-result.json / ifd-domain-handoff-result.json: 보호 핸드셰이크 12개 조합·새 채널·기존 채널 종료·공유 c 세션·commit 실패·SELECT/disconnect.
+  domain-shared-result.json / ifd-domain-shared-result.json: 다중 연결 캐시/채널·정책 commit·초기화·실패 롤백·기존 상태 보존.
+  domain-scp11c-result.json / ifd-domain-scp11c-result.json: 정적 SD ECDH·독립 KDF/CMAC·키 명령 제한·유효 MAC replay 거부·영속 counter·저장 실패 롤백.
+  domain-cache-result.json / ifd-domain-cache-result.json: 자체 SCP11a/c 캐시·허용 목록 무효화·체인 교체·CA 교체/삭제·SDK receipt/KDF/MAC.
+  domain-versions-result.json / ifd-domain-versions-result.json: SCP03 전 254개 버전·독립 AES-CMAC·SDK KCV/암호화·교체/재시작·SCP11 범위 분리.
+  domain-metadata-result.json / ifd-domain-metadata-result.json: 실제 공개 SELECT/recognition 일치, 자체 CPLC·migration·마지막 키 reset·채널 종료.
+  security-domain-reference-observation.json: PIN/인증/쓰기 없는 공개 PC/SC 관찰; 고유 식별 payload 폐기.
+  domain-profile-result.json / ifd-domain-profile-result.json: critical 역할·issuer 연결·키 용량/교체·모델 재시도·전체 reset·앱 분리.
+  ifd-domain-result.json: 기존 Management/SCP03/SCP11 흐름을 CCID 직접 IFD 및 OTP 소켓에서 재검증.
+  pgp-attestation-result.json / ifd-pgp-attestation-result.json: 발급자 초기화 보존·삭제/오류 유지·DER metadata·독립 서명·앱 분리.
+  button-result.json / keyboard-bridge-result.json: 버튼·키보드 소켓/컴파일 전송.
+  composite-result.json / launcher-result.json: 공유 설정·실행·종료.
+  migration-result.json / e2e-compatibility-result.txt: v0.2 마이그레이션과 기존 E2E.
+  linux-browser-largeblob-result.json: Chromium 두 알고리즘 blob·SDK·재시작 및 실제 ES384 거부 경계.
+  browser-native-result.json: 별도 원본 서명 앱의 macOS HID + Chrome 결과.
+  browser-virtual-result.json: Chrome 자체 가상 인증기 결과.
+  results/: 동봉된 바이너리와 uv 환경을 사용한 재실행 결과.
+  manifest.json: 파일 SHA-256와 검증·전송 범위.
+
+출처
+
+  https://github.com/madeye/swpasskey (MIT)
+  기준 commit: 59f08259202028888934597513515fc3cb8ca8c9
+  원본 0.2.0 앱: https://github.com/madeye/swpasskey/releases/tag/v0.2.0
+  원본 ZIP SHA-256: 00830c14a375ba40417d56b793a8e5ac301370023f88915234a99845898b04c6
+  PIV 한도: https://docs.yubico.com/yesdk/users-manual/application-piv/cert-size.html
+  PIV 객체: https://docs.yubico.com/yesdk/users-manual/application-piv/piv-objects.html
+  PIV 명령: https://docs.yubico.com/yesdk/users-manual/application-piv/commands.html
+  Security Domain 키/인증서: https://docs.yubico.com/yesdk/users-manual/application-security-domain/security-domain-certificates.html
+  SCP03: https://docs.yubico.com/hardware/yubikey/yk-tech-manual/yk5-apps-scp.html
+  GP SCP11 public-review 역할 정책: https://globalplatform.org/wp-content/uploads/2023/08/GPC_2.3_F_SCP11_v1.3.0.13_PublicRvw.pdf
+  F9 동작: https://developers.yubico.com/PIV/Introduction/PIV_attestation.html
+  THIRD_PARTY_SOURCES.txt / licenses/ / source/LICENSE에 출처·라이선스를 보존했습니다.
+  source/README.md와 STATUS.md는 기준 프로젝트 문서입니다.
+
+이전 v0.25의 Linux 검증
+아래는 당시 기록입니다. 현재 Linux와 브라우저의 추가 검증 범위는 앞의 버전별 항목과 최신 보고서를 확인하세요.
+- Ubuntu ARM64 실제 커널6.8.0-146-generic: UHID/hidraw 및 stock python-fido2 SDK 75항목 통과.
+- native OTP feature ioctl/HMAC, 실제 guest evdev 키 눌림/해제, private pcscd+표준SDK/PIV/OATH/OpenPGP/SCP03/재시작 25항목 통과.
+- Linux IFD 직접 ABI32항목, C++120사례/11620assertion 통과. 기존 사례의 플랫폼 재검증이 포함되며 고유 firmware동작의 수가 아닙니다.
+- Linux ARM64 실행파일은 bin/linux-arm64에 포함합니다. Linux IFD는 실제 PC/SC 헤더/ctypes ABI를 사용합니다.
+- 로컬 Docker로 재현: python3 tools/linux-native/verify-linux.py
+  새 guest 소프트웨어 상태만 사용하며 guest 네트워크/호스트 USB·키보드 전달은 없습니다.
+- linux-native-result.json, linux-native-console.log, linux-ifd-result.json 참조.
+- 실제 guest 복합USB에서 FIDO75·재시작2, stock ykman 통합·OTP 탐색·USB키보드·libccid/pcscd 추가항목을 검증했습니다. linux-composite-result.json의 개별 항목/범위를 확인하세요.
+- 독립 ATR3bf011000001e0은 stockSDK에서 USB로 분류됩니다. 브라우저·추가USB상태/UDC·macOS서명/등록 및 펌웨어차등 검증은 남습니다.

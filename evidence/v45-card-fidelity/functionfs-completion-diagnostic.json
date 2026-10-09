@@ -1,0 +1,65 @@
+{
+  "finding": "No reproducible FunctionFS defect in the exercised completion, ZLP, halt, reset, and pending-CCID boundaries.",
+  "product_fix": null,
+  "diagnostic_patch_only": true,
+  "recommend_promotion": false,
+  "limitation": "Finite dummy_hcd/QEMU runs do not prove rare kernel panic elimination, production UDC behavior, or recovery from an actual negative io_event completion; none occurred in this probe.",
+  "published_v44_bridge_sha256": "2bf02ac6da2d027f64478e0977220d367a029db3c239e8ab5ed4184b5b5ba102",
+  "instrumented_bridge_sha256": "991b174f43728d61f0ddacb3ef755512e1565bbd6445e429a433ff00c818bc75",
+  "diagnostic_source_sha256": "c37f57e731737f155d1c9cbb0eccb9bf605a86b0948ce23449ca63e1c4cc4105",
+  "diagnostic_patch_sha256": "2538a585cdc9a20bc5ae80df569aa040f69ec657983a60009d35b92fc8782d02",
+  "io_events": {
+    "completed": 645,
+    "min_res": 0,
+    "max_res": 3072,
+    "negative_res": 0,
+    "nonzero_res2": 0,
+    "teardown_io_cancel_attempts": 12,
+    "io_cancel_return_and_errno": [
+      -1,
+      115
+    ]
+  },
+  "baseline_focused": {
+    "console_sha256": "c31bfc9071da0c234cbaa7b3d198c2fd6c35c216ffeeef72c69ae1af9870b02c",
+    "image_sha256": "6cf2e7d27a294118d25c2cae68808f667744747d3c97624e99d21d722a930eeb",
+    "passed": true,
+    "checks": 82,
+    "kernel_panic": false,
+    "host_received_zlp_positive_controls": [
+      2048,
+      3072
+    ],
+    "partial64_original_packet_bytes": 3072,
+    "cycles": 3,
+    "bridge_sha256_reported": "2bf02ac6da2d027f64478e0977220d367a029db3c239e8ab5ed4184b5b5ba102"
+  },
+  "instrumented_focused": {
+    "console_sha256": "ca415c73f9700fd510c15d3022b36c5595fd57f5e6e7cd4061f7ad8c0487639b",
+    "image_sha256": "d8897e61ffa3557a811cd1c3536b0a9d195ef6faca8324cb41a07f4ac368ae68",
+    "passed": true,
+    "checks": 82,
+    "kernel_panic": false,
+    "host_received_zlp_positive_controls": [
+      2048,
+      3072
+    ],
+    "partial64_original_packet_bytes": 3072,
+    "cycles": 3,
+    "bridge_sha256_reported": "991b174f43728d61f0ddacb3ef755512e1565bbd6445e429a433ff00c818bc75"
+  },
+  "instrumented_state": {
+    "console_sha256": "66b56f88e1f8bf3548a99b95b5d0cac0bc0751e1de934f46560090c1b610c8d4",
+    "image_sha256": "c8b921e9a9b81dd31671eaedc99708a11dc4ea1dd2704b1220f50146347b3674",
+    "passed": true,
+    "checks": 91,
+    "kernel_panic": false,
+    "halted_endpoints": 6,
+    "usbdevfs_resets": 3,
+    "pending_ccid_reset": true,
+    "bridge_sha256_reported": "991b174f43728d61f0ddacb3ef755512e1565bbd6445e429a433ff00c818bc75"
+  },
+  "guest_network_devices": false,
+  "host_usb_passthrough": false,
+  "physical_device_access": false
+}

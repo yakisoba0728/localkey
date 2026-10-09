@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "transport": "direct IFD",
+  "expect_fixed": true,
+  "invalid_sw": "6a88",
+  "last_occurrence_preserved_after_error": true,
+  "put_data_created_certificateNone": false,
+  "write_destination_survived_restart": true,
+  "normal_sdk_certificate_paths": true,
+  "physical_key_accessed": false
+}

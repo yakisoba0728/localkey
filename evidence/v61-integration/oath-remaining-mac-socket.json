@@ -1,0 +1,23 @@
+{
+  "passed": true,
+  "variant": "fixed",
+  "root": "/Users/yakisoba0728/Documents/Codex/2026-10-07/new-chat/work/security-key-emulator-v61-staging/security-key-emulator",
+  "platform": "mac",
+  "route": "socket",
+  "unmodified_yubikit": true,
+  "private_ccid_or_direct_ifd": true,
+  "physical_or_host_device_access": false,
+  "network_devices": false,
+  "core_sha256": "fc663baf17c6a66bffe5e6aae1bdf70d9dd9bf5ba1206c12eca6e9d901b25116",
+  "credential_count": 24,
+  "expected_list_length": 504,
+  "first_sw": "61ff",
+  "malformed_cla_sw": "6e00",
+  "malformed_cla_consumed_bytes": 0,
+  "valid_remainder_matches_expected": true,
+  "continuation_statuses": [
+    "61f7",
+    "9000"
+  ],
+  "state_sha256": "2c661e68ce9d51c4e85a1f2dafa0b299831cd5ec5dbcf1f31eb66fd24ef1ae19"
+}

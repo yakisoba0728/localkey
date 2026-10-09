@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "fresh_guest_boots": 2,
+  "tests_per_boot": 328,
+  "cases_per_boot": 14,
+  "total_guest_checks": 656,
+  "candidate_binary_sha256": "2bf02ac6da2d027f64478e0977220d367a029db3c239e8ab5ed4184b5b5ba102",
+  "image_sha256": "27b26be2bb942fe47a276cba8d07f3851a22e800d5e38d442ce7e3801ef7c5da",
+  "observer_patch_sha256": "923dd7cbda5dea1df5275a01e5018e3e790cdb6635fe5767c462264c83482806",
+  "observer_only_aio_zero_length_changes": true,
+  "host_received_zlp_positive_controls_preserved": true,
+  "console_sha256": [
+    "f8c9cf6efc6a358205527186178ad768fd28dc16be4d8c7c2fa5a5d3a2809b56",
+    "de2b254945ac0464adf70e5b8a63d81bcacb3e403bb98c99be51e30c9a13c968"
+  ],
+  "raw_report_sha256": [
+    "0b0371e39901868eb5d0d751c64a8e619f3600774c8d5f7693ff738224f6fe42",
+    "7c8c02cd7a6b01b29b6c07e2c40c3c9124264396c76996ac36fdef6f7c23c2c7"
+  ],
+  "kernel_panic_observed": false,
+  "rare_kernel_panic_elimination_proven": false,
+  "published_zip_sha256": "f770854c7e2765421843303f01ee73c8fdfb394db733f5d67682c1a07d79bf70",
+  "guest_network_devices": false,
+  "physical_device_access": false
+}

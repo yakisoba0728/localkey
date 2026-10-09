@@ -1,0 +1,98 @@
+{
+  "passed": true,
+  "finding": "same-CID PING/WINK interleave a processing CBOR transaction",
+  "official_spec": "https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#protocol-structure-and-data-framing",
+  "official_sections": [
+    "11.2.2",
+    "11.2.5.1",
+    "11.2.5.3"
+  ],
+  "source_baseline": "locally published v0.62.0",
+  "source_patch_sha256": "5a6c155bef6ba47f277bf36474644c45e035b852a6b6f87d915be6385b162933",
+  "tests_patch_sha256": "582a1459ea8a7be4441f3c0032d90a345f40844d041613aed2bdd9358b033220",
+  "baseline_source_sha256": "0939943e529907b6bccc9b3f05c6b54aaf780b67eb3b039683311a1bf92d8fc8",
+  "fixed_source_sha256": "629e1289a3293bc96e1161f23357d44b181f45d6f616f6b0343020bca29189b4",
+  "baseline_daemon_sha256": {
+    "mac": "16263eb6ef5ec2ad07baf9cf4daff988a49376e230d64fd992d4d3737a63349a",
+    "linux": "317f02d89bb42d7ebabd65425d4bcae71d6392ef756c11b5ac71849b1ffafc0a"
+  },
+  "fixed_daemon_sha256": {
+    "mac": "1a0b63cea59961b9574cfa04b7bdbeda41ab00eac72a285675679e0c9c438c92",
+    "linux": "af0e26ebd9bc50393bd4092b3c2711d0dee4c036545b1d3ec80cf2ecf1c28551"
+  },
+  "focused_cpp": {
+    "baseline_linux": "0/2 cases pass, 16/18 assertions pass",
+    "fixed_mac": "2/2 cases, 42/42 assertions pass",
+    "fixed_linux": "2/2 cases, 42/42 assertions pass"
+  },
+  "full_cpp": {
+    "fixed_mac": "140/140 cases, 13748/13748 assertions pass",
+    "fixed_linux": "140/140 cases, 13748/13748 assertions pass"
+  },
+  "independent_python_fido2": {
+    "passed": true,
+    "tests": 82,
+    "result_sha256": "19353363858cccf4f94e70f099210fff47abbff4beb02d0b452340d3d9d0e1c0",
+    "raw_log_sha256": "6c6b1cdc3ddcb5b0d3f7ba8561205727e82e180e02f8db52b5b9a11dbf89e359"
+  },
+  "private_socket": {
+    "mac_baseline": {
+      "passed": true,
+      "result_sha256": "a9d5ae1ff289b45c8b9172d5b340a9d9aa2846d0016f034de7942dceeff98d83",
+      "daemon_log_sha256": "f1f388b07565818d674d46e6b062167bfa5ed290b921921ee1b46e44f6475cc2",
+      "ping_command": "81",
+      "wink_command": "88"
+    },
+    "mac_fixed": {
+      "passed": true,
+      "result_sha256": "96719e64783e2b833eb3dadf634e9df2a352e07cf406337b8220e7ec2c349c1d",
+      "daemon_log_sha256": "87cdb6a529eaf03c9c7f8b9f0fd6e53269605a07e7cac84a7c362a00f356b1d8",
+      "ping_command": "bf",
+      "wink_command": "bf"
+    },
+    "linux_baseline": {
+      "passed": true,
+      "result_sha256": "6f037636583f4a1f4cdff971552610c7e36be65e60f5597b95831e4b539fbb0d",
+      "daemon_log_sha256": "f9f9d0d9834669355dbfd00e5b4f6415fa5e69ff23d9a03a5eece88b120d2a57",
+      "ping_command": "81",
+      "wink_command": "88"
+    },
+    "linux_fixed": {
+      "passed": true,
+      "result_sha256": "48b4c4571125229d5be0f9cfb58b8a265e015d03763ef2697729a7c8f7d3f102",
+      "daemon_log_sha256": "242ec186c28e6ca8a06ffc1dd8d43f2049415d2637aeaa6cd110713bab83899b",
+      "ping_command": "bf",
+      "wink_command": "bf"
+    }
+  },
+  "owned_no_nic_usb": {
+    "baseline": {
+      "passed": true,
+      "ping_command": "81",
+      "wink_command": "88",
+      "raw_console_sha256": "e80185565a13c2723f7af11949b572d3a22313887cf760a3ce151d117b6592c9",
+      "inputs_sha256": "2e8b43e587a8e62ef127ca4aaacfbe1c495f83222316ee261f9e7c503975c5be",
+      "result_sha256": "f064f6872f24c01559a6a235d6af88b8d423850f608080c3b414700f9863f511"
+    },
+    "fixed": {
+      "passed": true,
+      "ping_command": "bf",
+      "wink_command": "bf",
+      "raw_console_sha256": "7f5abd00f8ee398d2d2f193b1e24ad5dd8f5d378717a6a30c61a4bcda71402b2",
+      "inputs_sha256": "5e02c382baab08cee46da6f83879e1e40a75fa02834fa256e3284461eba49f2e",
+      "result_sha256": "9c68f8d387ecde4d611909f5bbc9765448f68616f8cbad320a70cb8d7a844fef"
+    }
+  },
+  "guest_network_devices": false,
+  "host_usb_passthrough": false,
+  "host_hid_access": false,
+  "host_pcsc_access": false,
+  "host_keychain_access": false,
+  "physical_device_access": false,
+  "kernel_panic_observed": false,
+  "limits": [
+    "Physical YubiKey 5C Nano 5.7.4 behavior was not measured.",
+    "Exact same-CID busy error byte on physical firmware is unknown.",
+    "USB proof is owned QEMU dummy_hcd, not a production UDC or external OS."
+  ]
+}

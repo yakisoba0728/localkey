@@ -1,0 +1,7 @@
+Filters: "WINK accepts only the zero-length CTAPHID request"
+RNG seed: 4045681071
+/Users/yakisoba0728/Documents/Codex/2026-10-07/new-chat/work/v59-hid-candidate/source/tests/hid_device_test.cpp:152: FAILED: cmd_of(malformed.reply[0]) == ctap::kCmdError for: 8 == '?'
+test cases:  1 |  0 passed | 1 failed
+assertions: 11 | 10 passed | 1 failed
+
+

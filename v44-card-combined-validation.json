@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "base_version": "0.43.0",
+  "candidate": "unpublished four-card-protocol fixes",
+  "portable_reports": 56,
+  "portable_checks": 5864,
+  "cpp_unit_cases": 120,
+  "full_main_checks": 5984,
+  "joint_checks": 44,
+  "joint_reports": {
+    "joint-otp-result.json": 12,
+    "joint-pgp-socket-result.json": 16,
+    "joint-pgp-ifd-result.json": 16
+  },
+  "patch_sha256": "10946aa98e8ed8ed0affee0d8985502ccddec6573f9071eab65cb5158d357f5f",
+  "patch_roundtrip_exact": true,
+  "physical_firmware_differential_verified": false,
+  "native_usb_v49_card_verified": false,
+  "published_v43_untouched": true,
+  "timestamp_utc": "2026-10-09T13:16:01.479529+00:00"
+}

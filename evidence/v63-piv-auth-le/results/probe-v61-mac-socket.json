@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "fixed": false,
+  "route": "private CCID socket",
+  "malformed_apdu": "0087119c267c248200812064315884ce9929d0badb2929ef7cc99f70c3296f568d23fdd088543a1562648801",
+  "malformed_sw": "61xx_then_9000",
+  "baseline_malformed_signature_verified": true,
+  "malformed_persistent_state_unchanged": true,
+  "malformed_encrypted_state_bytes_unchanged": false,
+  "normal_sdk_after_malformed": "6982",
+  "normal_sdk_wire": "0087119c0000267c248200812064315884ce9929d0badb2929ef7cc99f70c3296f568d23fdd088543a15626488",
+  "normal_sdk_signature_verified_after_reverify": true,
+  "normal_sdk_key_persists_after_restart": true,
+  "core_sha256": "fc663baf17c6a66bffe5e6aae1bdf70d9dd9bf5ba1206c12eca6e9d901b25116",
+  "physical_or_host_device_access": false,
+  "firmware_5_7_4_differential": false
+}

@@ -1,0 +1,15 @@
+{
+  "passed": false,
+  "scope": "targeted original logging-only Chromium own PIN UI observer; production source and browser/device binaries unchanged",
+  "base_guest_image_sha256": "99a60bd1fcc3ea537c86129e7c8d6dcccd9809869268f895467813949f284b5a",
+  "probe_guest_image_sha256": "a9f156aad54dc832c00f759b7efe47cdf25232a3364ad0a28f9090c235017455",
+  "kernel_sha256": "6001f54164a5201cd5a80e0a09bb05c43fa6e910a0abfe0f5a4e8d7d781cc737",
+  "original_helper_sha256": "0ece937f8c29d071d2ebfe2c5840ced7fb4a6197a4bbdf72f34022558a5e5c12",
+  "observer_helper_sha256": "a3edbba7fcdf261941f5296ef0a994c3273eef7d85211f5ca33fc8c6d56a7b4b",
+  "init_sha256": "d44ac300508b65ce9d8c2c9f62b66275d457686ecd0c7ce4fd8975012b8fde99",
+  "observer_changes_protocol_commands": false,
+  "character_count_at_original_full_failure_recorded": false,
+  "physical_device_access": false,
+  "host_device_passthrough": false,
+  "guest_network_devices": false
+}

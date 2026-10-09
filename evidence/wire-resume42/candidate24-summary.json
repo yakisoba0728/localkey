@@ -1,0 +1,2138 @@
+[
+  {
+    "trial": 1,
+    "exit_code": 0,
+    "passed": true,
+    "test_count": 68,
+    "resume_observations": [
+      {
+        "original_sequence": 12,
+        "actual_slot_reply_hex": "8100000000000c000000",
+        "actual_committed_prefix_hex": "81",
+        "actual_retained_tail_hex": "00000000000c000000",
+        "expected_slot_reply_hex": "8100000000000c000000",
+        "actual_recent_wire_requests": [
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1688.777639708
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "804e000000000b0000007c4a8248304602210094c622194b3fb76314f8f037f7619128831e4ba8f69315437d01102e3edb4d0002210083d76741214ad137bd44317cd9f8bc06a1ebe67a0c11e59c05b4b06df761d62c9000"
+            },
+            "observed_monotonic": 1688.783168541
+          },
+          {
+            "request": "out 02 6500000000000c000000",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1688.786537
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1688.786597208
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "81"
+            },
+            "observed_monotonic": 1688.791956583
+          },
+          {
+            "request": "suspend",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1688.791983958
+          },
+          {
+            "request": "resume",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1688.792153833
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "00000000000c000000"
+            },
+            "observed_monotonic": 1688.792190208
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trial": 2,
+    "exit_code": 0,
+    "passed": true,
+    "test_count": 68,
+    "resume_observations": [
+      {
+        "original_sequence": 12,
+        "actual_slot_reply_hex": "8100000000000c000000",
+        "actual_committed_prefix_hex": "81",
+        "actual_retained_tail_hex": "00000000000c000000",
+        "expected_slot_reply_hex": "8100000000000c000000",
+        "actual_recent_wire_requests": [
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1689.742588291
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "804c000000000b0000007c488246304402207f16b3c67a7013b77bcce5f1a5c3cb4daf796d112989dad957470c3564edef35022038977e469d8db4b1776b3a1c123a8e9730f647a7546a0cc023b27ca318d363379000"
+            },
+            "observed_monotonic": 1689.748865875
+          },
+          {
+            "request": "out 02 6500000000000c000000",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1689.749152791
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1689.749182583
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "81"
+            },
+            "observed_monotonic": 1689.755215666
+          },
+          {
+            "request": "suspend",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1689.755271416
+          },
+          {
+            "request": "resume",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1689.755636
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "00000000000c000000"
+            },
+            "observed_monotonic": 1689.755658958
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trial": 3,
+    "exit_code": 0,
+    "passed": true,
+    "test_count": 68,
+    "resume_observations": [
+      {
+        "original_sequence": 12,
+        "actual_slot_reply_hex": "8100000000000c000000",
+        "actual_committed_prefix_hex": "81",
+        "actual_retained_tail_hex": "00000000000c000000",
+        "expected_slot_reply_hex": "8100000000000c000000",
+        "actual_recent_wire_requests": [
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1690.670104541
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "804d000000000b0000007c49824730450220403b3d0faea112b272d71ce29aee4c94e4c44236f3503144f64650feca071529022100a7ff84da4147fe6ebca6fe25247c9cd64a8e72e73251a0a028439bd353c3c1bb9000"
+            },
+            "observed_monotonic": 1690.676442208
+          },
+          {
+            "request": "out 02 6500000000000c000000",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1690.676805
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1690.676846208
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "81"
+            },
+            "observed_monotonic": 1690.682454041
+          },
+          {
+            "request": "suspend",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1690.682483958
+          },
+          {
+            "request": "resume",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1690.682663958
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "00000000000c000000"
+            },
+            "observed_monotonic": 1690.682682916
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trial": 4,
+    "exit_code": 0,
+    "passed": true,
+    "test_count": 68,
+    "resume_observations": [
+      {
+        "original_sequence": 12,
+        "actual_slot_reply_hex": "8100000000000c000000",
+        "actual_committed_prefix_hex": "81",
+        "actual_retained_tail_hex": "00000000000c000000",
+        "expected_slot_reply_hex": "8100000000000c000000",
+        "actual_recent_wire_requests": [
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1691.504398291
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "804d000000000b0000007c4982473045022100ec34a5292dff7c698c8c6a716f8973a4075cee7c9e2295ffe212d98a6efc344b0220592565d5338cb544e853af3f3f4fc02e6bcb805c64280d3c358e73d8be3de6849000"
+            },
+            "observed_monotonic": 1691.509537916
+          },
+          {
+            "request": "out 02 6500000000000c000000",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1691.509766166
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1691.509797958
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "81"
+            },
+            "observed_monotonic": 1691.515390875
+          },
+          {
+            "request": "suspend",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1691.515404458
+          },
+          {
+            "request": "resume",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1691.515518125
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "00000000000c000000"
+            },
+            "observed_monotonic": 1691.515538416
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trial": 5,
+    "exit_code": 0,
+    "passed": true,
+    "test_count": 68,
+    "resume_observations": [
+      {
+        "original_sequence": 12,
+        "actual_slot_reply_hex": "8100000000000c000000",
+        "actual_committed_prefix_hex": "81",
+        "actual_retained_tail_hex": "00000000000c000000",
+        "expected_slot_reply_hex": "8100000000000c000000",
+        "actual_recent_wire_requests": [
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1692.304591166
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "804d000000000b0000007c4982473045022072047bc39bdceeb0ce6f5a626364242ae81767505529431dfe2c987c022b539b022100c60c343b041ab7d5b812606e1511854d7cc9691a30c04e1bb4abf02b9149fe8e9000"
+            },
+            "observed_monotonic": 1692.310945125
+          },
+          {
+            "request": "out 02 6500000000000c000000",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1692.311220375
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1692.311241791
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "81"
+            },
+            "observed_monotonic": 1692.316391833
+          },
+          {
+            "request": "suspend",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1692.31640775
+          },
+          {
+            "request": "resume",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1692.316524
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "00000000000c000000"
+            },
+            "observed_monotonic": 1692.316542
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trial": 6,
+    "exit_code": 0,
+    "passed": true,
+    "test_count": 68,
+    "resume_observations": [
+      {
+        "original_sequence": 12,
+        "actual_slot_reply_hex": "8100000000000c000000",
+        "actual_committed_prefix_hex": "81",
+        "actual_retained_tail_hex": "00000000000c000000",
+        "expected_slot_reply_hex": "8100000000000c000000",
+        "actual_recent_wire_requests": [
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1693.178447083
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "804d000000000b0000007c4982473045022100ba123982294ae3b1ae6686408285222d95136a6ab8ada5b7841b039ffddbd87b022024295e9124cd2fe45af7dac30ee73079dee04abb3c737662beb333aaddf012c29000"
+            },
+            "observed_monotonic": 1693.184890833
+          },
+          {
+            "request": "out 02 6500000000000c000000",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1693.185323166
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1693.185364166
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "81"
+            },
+            "observed_monotonic": 1693.191754625
+          },
+          {
+            "request": "suspend",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1693.191787208
+          },
+          {
+            "request": "resume",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1693.192006458
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "00000000000c000000"
+            },
+            "observed_monotonic": 1693.192048208
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trial": 7,
+    "exit_code": 0,
+    "passed": true,
+    "test_count": 68,
+    "resume_observations": [
+      {
+        "original_sequence": 12,
+        "actual_slot_reply_hex": "8100000000000c000000",
+        "actual_committed_prefix_hex": "81",
+        "actual_retained_tail_hex": "00000000000c000000",
+        "expected_slot_reply_hex": "8100000000000c000000",
+        "actual_recent_wire_requests": [
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1694.102695708
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "804e000000000b0000007c4a82483046022100849893a488dcdc124204adbad7e7dd34b85382f738d790616dbbafa3947161600221008effc291ff8c6880e759dc538e390cd91052c152fb1c9f692746a6a721b3c5da9000"
+            },
+            "observed_monotonic": 1694.108505333
+          },
+          {
+            "request": "out 02 6500000000000c000000",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1694.109189
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1694.109214458
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "81"
+            },
+            "observed_monotonic": 1694.114562541
+          },
+          {
+            "request": "suspend",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1694.114630541
+          },
+          {
+            "request": "resume",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1694.115044041
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "00000000000c000000"
+            },
+            "observed_monotonic": 1694.115086916
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trial": 8,
+    "exit_code": 0,
+    "passed": true,
+    "test_count": 68,
+    "resume_observations": [
+      {
+        "original_sequence": 12,
+        "actual_slot_reply_hex": "8100000000000c000000",
+        "actual_committed_prefix_hex": "81",
+        "actual_retained_tail_hex": "00000000000c000000",
+        "expected_slot_reply_hex": "8100000000000c000000",
+        "actual_recent_wire_requests": [
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1694.943281875
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "804e000000000b0000007c4a82483046022100a481ae4508b08864ba647a0c902f7b44e797170c96041c59c0f4631cdde175f0022100cc8021f0317a692fa8eefc1fd46a35a2cef4c24c4e7f009338851549d627076e9000"
+            },
+            "observed_monotonic": 1694.948366125
+          },
+          {
+            "request": "out 02 6500000000000c000000",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1694.948577166
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1694.948598541
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "81"
+            },
+            "observed_monotonic": 1694.954038875
+          },
+          {
+            "request": "suspend",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1694.954069625
+          },
+          {
+            "request": "resume",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1694.954286
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "00000000000c000000"
+            },
+            "observed_monotonic": 1694.954308708
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trial": 9,
+    "exit_code": 0,
+    "passed": true,
+    "test_count": 68,
+    "resume_observations": [
+      {
+        "original_sequence": 12,
+        "actual_slot_reply_hex": "8100000000000c000000",
+        "actual_committed_prefix_hex": "81",
+        "actual_retained_tail_hex": "00000000000c000000",
+        "expected_slot_reply_hex": "8100000000000c000000",
+        "actual_recent_wire_requests": [
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1695.761159541
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "804d000000000b0000007c4982473045022100984449fbab5d62ad5ca2c4616e46747a8aaa1cfedcb7fe8058f67a2e134ad16a0220522c94cd3d20de24d78d34dc2f220a4a9a36524a586596aa4e82ec6c7d83a09a9000"
+            },
+            "observed_monotonic": 1695.766387666
+          },
+          {
+            "request": "out 02 6500000000000c000000",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1695.766550875
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1695.766568083
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "81"
+            },
+            "observed_monotonic": 1695.772204
+          },
+          {
+            "request": "suspend",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1695.772222333
+          },
+          {
+            "request": "resume",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1695.772382208
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "00000000000c000000"
+            },
+            "observed_monotonic": 1695.772395291
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trial": 10,
+    "exit_code": 0,
+    "passed": true,
+    "test_count": 68,
+    "resume_observations": [
+      {
+        "original_sequence": 12,
+        "actual_slot_reply_hex": "8100000000000c000000",
+        "actual_committed_prefix_hex": "81",
+        "actual_retained_tail_hex": "00000000000c000000",
+        "expected_slot_reply_hex": "8100000000000c000000",
+        "actual_recent_wire_requests": [
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1696.603733
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "804d000000000b0000007c49824730450220248beeeaa67ffbba034e8202a1e64dc8409ce9d2c0475031bea63c230a125c2b022100d7b8123bd2f0aa97142592283cd9df8b256e980a80db83bcc69cb29fa2981dd69000"
+            },
+            "observed_monotonic": 1696.60924925
+          },
+          {
+            "request": "out 02 6500000000000c000000",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1696.60949375
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1696.609506
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "81"
+            },
+            "observed_monotonic": 1696.615796916
+          },
+          {
+            "request": "suspend",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1696.615809958
+          },
+          {
+            "request": "resume",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1696.615964083
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "00000000000c000000"
+            },
+            "observed_monotonic": 1696.615977166
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trial": 11,
+    "exit_code": 0,
+    "passed": true,
+    "test_count": 68,
+    "resume_observations": [
+      {
+        "original_sequence": 12,
+        "actual_slot_reply_hex": "8100000000000c000000",
+        "actual_committed_prefix_hex": "81",
+        "actual_retained_tail_hex": "00000000000c000000",
+        "expected_slot_reply_hex": "8100000000000c000000",
+        "actual_recent_wire_requests": [
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1697.403615625
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "804d000000000b0000007c49824730450220060c9952a3ad6ed82b91c17ba2c226c777e56c3b6fa8e49454fcf0c92095b12c022100921e5397edc5f2ce21ed4bfc2330ae0a9df8ca95cc1512209c714dfa0281e4029000"
+            },
+            "observed_monotonic": 1697.409929875
+          },
+          {
+            "request": "out 02 6500000000000c000000",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1697.410207916
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1697.410227541
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "81"
+            },
+            "observed_monotonic": 1697.415365083
+          },
+          {
+            "request": "suspend",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1697.4153785
+          },
+          {
+            "request": "resume",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1697.415504375
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "00000000000c000000"
+            },
+            "observed_monotonic": 1697.415516625
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trial": 12,
+    "exit_code": 0,
+    "passed": true,
+    "test_count": 68,
+    "resume_observations": [
+      {
+        "original_sequence": 12,
+        "actual_slot_reply_hex": "8100000000000c000000",
+        "actual_committed_prefix_hex": "81",
+        "actual_retained_tail_hex": "00000000000c000000",
+        "expected_slot_reply_hex": "8100000000000c000000",
+        "actual_recent_wire_requests": [
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1698.224648333
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "804d000000000b0000007c4982473045022059d3cfab49233b0e1f303d0b4cac46b54475391d6daf5c7770c5aa9556eecc8d022100c5c892ff910f4aceb3f92f6f70d4960f62a9b4f8cb924090a7359dac9ad09bc99000"
+            },
+            "observed_monotonic": 1698.230409916
+          },
+          {
+            "request": "out 02 6500000000000c000000",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1698.230626041
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1698.230649583
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "81"
+            },
+            "observed_monotonic": 1698.23627125
+          },
+          {
+            "request": "suspend",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1698.236297583
+          },
+          {
+            "request": "resume",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1698.236449
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "00000000000c000000"
+            },
+            "observed_monotonic": 1698.236461875
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trial": 13,
+    "exit_code": 0,
+    "passed": true,
+    "test_count": 68,
+    "resume_observations": [
+      {
+        "original_sequence": 12,
+        "actual_slot_reply_hex": "8100000000000c000000",
+        "actual_committed_prefix_hex": "81",
+        "actual_retained_tail_hex": "00000000000c000000",
+        "expected_slot_reply_hex": "8100000000000c000000",
+        "actual_recent_wire_requests": [
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1699.048675791
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "804c000000000b0000007c488246304402204f41f3b2c7fb02c43739c12bb11847a9b83e77c498989fd802d47716103b3885022070b26f92cca3498dec117e5d0f10e9f21c97ea0a2dc2f3be5e04e5d85221fe649000"
+            },
+            "observed_monotonic": 1699.054968
+          },
+          {
+            "request": "out 02 6500000000000c000000",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1699.055184333
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1699.055206416
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "81"
+            },
+            "observed_monotonic": 1699.061394541
+          },
+          {
+            "request": "suspend",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1699.061411333
+          },
+          {
+            "request": "resume",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1699.061527583
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "00000000000c000000"
+            },
+            "observed_monotonic": 1699.061573791
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trial": 14,
+    "exit_code": 0,
+    "passed": true,
+    "test_count": 68,
+    "resume_observations": [
+      {
+        "original_sequence": 12,
+        "actual_slot_reply_hex": "8100000000000c000000",
+        "actual_committed_prefix_hex": "81",
+        "actual_retained_tail_hex": "00000000000c000000",
+        "expected_slot_reply_hex": "8100000000000c000000",
+        "actual_recent_wire_requests": [
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1699.88157325
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "804c000000000b0000007c4882463044022007dcc7eec06031e03bc0b37db7d3afb66702fed8f0965b2bad28d1ab5115337202202c4b35becc47e8358cd8701f35c5583827052bbaff2c92afcd935d43258c45b99000"
+            },
+            "observed_monotonic": 1699.887164583
+          },
+          {
+            "request": "out 02 6500000000000c000000",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1699.887346458
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1699.887358125
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "81"
+            },
+            "observed_monotonic": 1699.893539916
+          },
+          {
+            "request": "suspend",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1699.893562375
+          },
+          {
+            "request": "resume",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1699.893715541
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "00000000000c000000"
+            },
+            "observed_monotonic": 1699.893731291
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trial": 15,
+    "exit_code": 0,
+    "passed": true,
+    "test_count": 68,
+    "resume_observations": [
+      {
+        "original_sequence": 12,
+        "actual_slot_reply_hex": "8100000000000c000000",
+        "actual_committed_prefix_hex": "81",
+        "actual_retained_tail_hex": "00000000000c000000",
+        "expected_slot_reply_hex": "8100000000000c000000",
+        "actual_recent_wire_requests": [
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1700.678047291
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "804c000000000b0000007c488246304402207399bd3ee4db621cd538f869c5fe65e76071c9d2ba64b0c9deb4157b986ed70102206846a12a720ae4f5a383bfd078e32305a6953d17d0713dc18272a7085cacbf649000"
+            },
+            "observed_monotonic": 1700.683444416
+          },
+          {
+            "request": "out 02 6500000000000c000000",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1700.6837235
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1700.683810416
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "81"
+            },
+            "observed_monotonic": 1700.689593125
+          },
+          {
+            "request": "suspend",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1700.689669
+          },
+          {
+            "request": "resume",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1700.6899185
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "00000000000c000000"
+            },
+            "observed_monotonic": 1700.689943625
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trial": 16,
+    "exit_code": 0,
+    "passed": true,
+    "test_count": 68,
+    "resume_observations": [
+      {
+        "original_sequence": 12,
+        "actual_slot_reply_hex": "8100000000000c000000",
+        "actual_committed_prefix_hex": "81",
+        "actual_retained_tail_hex": "00000000000c000000",
+        "expected_slot_reply_hex": "8100000000000c000000",
+        "actual_recent_wire_requests": [
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1701.628734375
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "804e000000000b0000007c4a8248304602210087a26ad0ab293c25ec13fa1624357116e555b2a3b29364c2fda33fb10192fec5022100a910b888df700f82c7e9fab3afd044005f3e19e78cff33a9d7e9f8c7cc2b2b9c9000"
+            },
+            "observed_monotonic": 1701.634605083
+          },
+          {
+            "request": "out 02 6500000000000c000000",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1701.635007916
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1701.635028541
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "81"
+            },
+            "observed_monotonic": 1701.641106458
+          },
+          {
+            "request": "suspend",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1701.641142166
+          },
+          {
+            "request": "resume",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1701.641325916
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "00000000000c000000"
+            },
+            "observed_monotonic": 1701.641343625
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trial": 17,
+    "exit_code": 0,
+    "passed": true,
+    "test_count": 68,
+    "resume_observations": [
+      {
+        "original_sequence": 12,
+        "actual_slot_reply_hex": "8100000000000c000000",
+        "actual_committed_prefix_hex": "81",
+        "actual_retained_tail_hex": "00000000000c000000",
+        "expected_slot_reply_hex": "8100000000000c000000",
+        "actual_recent_wire_requests": [
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1702.633482208
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "804c000000000b0000007c488246304402200fdf537df4fece55b0687137bd8babe1f44153c93d47eff223efd2b50b783df802205df2e4f90e271e2dc379c29aa2198cb14bd8ebaf7ef841336039ad43b812c6479000"
+            },
+            "observed_monotonic": 1702.638677125
+          },
+          {
+            "request": "out 02 6500000000000c000000",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1702.639056375
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1702.639106083
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "81"
+            },
+            "observed_monotonic": 1702.6454595
+          },
+          {
+            "request": "suspend",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1702.645480875
+          },
+          {
+            "request": "resume",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1702.645727791
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "00000000000c000000"
+            },
+            "observed_monotonic": 1702.645753625
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trial": 18,
+    "exit_code": 0,
+    "passed": true,
+    "test_count": 68,
+    "resume_observations": [
+      {
+        "original_sequence": 12,
+        "actual_slot_reply_hex": "8100000000000c000000",
+        "actual_committed_prefix_hex": "81",
+        "actual_retained_tail_hex": "00000000000c000000",
+        "expected_slot_reply_hex": "8100000000000c000000",
+        "actual_recent_wire_requests": [
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1703.569269125
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "804e000000000b0000007c4a824830460221008c48c618296551b30467e376aea4363d998c2bada534d74566328ee69096368d022100f01629fdbf01e1068d87440e57a8f84b3570a37b409032b8366e1d27e128a84a9000"
+            },
+            "observed_monotonic": 1703.574450041
+          },
+          {
+            "request": "out 02 6500000000000c000000",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1703.5749265
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1703.574947625
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "81"
+            },
+            "observed_monotonic": 1703.581331166
+          },
+          {
+            "request": "suspend",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1703.581404875
+          },
+          {
+            "request": "resume",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1703.581743458
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "00000000000c000000"
+            },
+            "observed_monotonic": 1703.581769208
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trial": 19,
+    "exit_code": 0,
+    "passed": true,
+    "test_count": 68,
+    "resume_observations": [
+      {
+        "original_sequence": 12,
+        "actual_slot_reply_hex": "8100000000000c000000",
+        "actual_committed_prefix_hex": "81",
+        "actual_retained_tail_hex": "00000000000c000000",
+        "expected_slot_reply_hex": "8100000000000c000000",
+        "actual_recent_wire_requests": [
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1704.476378125
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "804d000000000b0000007c4982473045022100e054849fce4c9e49acddf27a6ece00b359ea59ecfa41917af6edbe0661cca476022046eeb8a7c807ffee1ba310265965984f643a50c416dbb965d84eef7f92bf055c9000"
+            },
+            "observed_monotonic": 1704.481643
+          },
+          {
+            "request": "out 02 6500000000000c000000",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1704.482139541
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1704.48216225
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "81"
+            },
+            "observed_monotonic": 1704.488144125
+          },
+          {
+            "request": "suspend",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1704.488175708
+          },
+          {
+            "request": "resume",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1704.488799208
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "00000000000c000000"
+            },
+            "observed_monotonic": 1704.488836958
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trial": 20,
+    "exit_code": 0,
+    "passed": true,
+    "test_count": 68,
+    "resume_observations": [
+      {
+        "original_sequence": 12,
+        "actual_slot_reply_hex": "8100000000000c000000",
+        "actual_committed_prefix_hex": "81",
+        "actual_retained_tail_hex": "00000000000c000000",
+        "expected_slot_reply_hex": "8100000000000c000000",
+        "actual_recent_wire_requests": [
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1705.437508
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "804c000000000b0000007c488246304402203300763010a9982ceecfa3c7ba2dc445f0f1352d0d2d4429376207ec671a5a9002201642dd6391f090a501c138b76924b118caeb9ca077de50c4db9b5a05a57b89559000"
+            },
+            "observed_monotonic": 1705.443940041
+          },
+          {
+            "request": "out 02 6500000000000c000000",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1705.444311875
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1705.444364583
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "81"
+            },
+            "observed_monotonic": 1705.450429041
+          },
+          {
+            "request": "suspend",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1705.450469875
+          },
+          {
+            "request": "resume",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1705.450758791
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "00000000000c000000"
+            },
+            "observed_monotonic": 1705.450782458
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trial": 21,
+    "exit_code": 0,
+    "passed": true,
+    "test_count": 68,
+    "resume_observations": [
+      {
+        "original_sequence": 12,
+        "actual_slot_reply_hex": "8100000000000c000000",
+        "actual_committed_prefix_hex": "81",
+        "actual_retained_tail_hex": "00000000000c000000",
+        "expected_slot_reply_hex": "8100000000000c000000",
+        "actual_recent_wire_requests": [
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1706.32361725
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "804e000000000b0000007c4a82483046022100d303c247f54b19b78d04a0db879bd9929d0434aaade1f0f1985e4f186cf6183d022100e806d842779b0c366a3f2967825407859c2c219b37f26000b31aff13afbc2e8a9000"
+            },
+            "observed_monotonic": 1706.329427791
+          },
+          {
+            "request": "out 02 6500000000000c000000",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1706.329662791
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1706.329687875
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "81"
+            },
+            "observed_monotonic": 1706.335996791
+          },
+          {
+            "request": "suspend",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1706.336014458
+          },
+          {
+            "request": "resume",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1706.336193833
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "00000000000c000000"
+            },
+            "observed_monotonic": 1706.336212291
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trial": 22,
+    "exit_code": 0,
+    "passed": true,
+    "test_count": 68,
+    "resume_observations": [
+      {
+        "original_sequence": 12,
+        "actual_slot_reply_hex": "8100000000000c000000",
+        "actual_committed_prefix_hex": "81",
+        "actual_retained_tail_hex": "00000000000c000000",
+        "expected_slot_reply_hex": "8100000000000c000000",
+        "actual_recent_wire_requests": [
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1707.191818625
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "804e000000000b0000007c4a82483046022100952400851bf61be1c4159bc8617ee4719f79a27fb944b9dd37337662591aeaef022100ebc0651477634003dd50225c3b2f2c53e62dbc4a27f544afb5fe8f93b095e15f9000"
+            },
+            "observed_monotonic": 1707.198225583
+          },
+          {
+            "request": "out 02 6500000000000c000000",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1707.198640083
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1707.198688833
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "81"
+            },
+            "observed_monotonic": 1707.203981916
+          },
+          {
+            "request": "suspend",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1707.204047125
+          },
+          {
+            "request": "resume",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1707.204268833
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "00000000000c000000"
+            },
+            "observed_monotonic": 1707.204289
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trial": 23,
+    "exit_code": 0,
+    "passed": true,
+    "test_count": 68,
+    "resume_observations": [
+      {
+        "original_sequence": 12,
+        "actual_slot_reply_hex": "8100000000000c000000",
+        "actual_committed_prefix_hex": "81",
+        "actual_retained_tail_hex": "00000000000c000000",
+        "expected_slot_reply_hex": "8100000000000c000000",
+        "actual_recent_wire_requests": [
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1708.029089208
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "804e000000000b0000007c4a82483046022100e61bbbd32224073f19aa5d1cba648703f634f8553c2899ecf894e777d2b2ca23022100e56a531837c9fdff0d232047285a6008bcffe306d854546b5e8451396e85eae39000"
+            },
+            "observed_monotonic": 1708.03545675
+          },
+          {
+            "request": "out 02 6500000000000c000000",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1708.035634166
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1708.035649041
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "81"
+            },
+            "observed_monotonic": 1708.041966125
+          },
+          {
+            "request": "suspend",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1708.041981916
+          },
+          {
+            "request": "resume",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1708.042147375
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "00000000000c000000"
+            },
+            "observed_monotonic": 1708.042171416
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trial": 24,
+    "exit_code": 0,
+    "passed": true,
+    "test_count": 68,
+    "resume_observations": [
+      {
+        "original_sequence": 12,
+        "actual_slot_reply_hex": "8100000000000c000000",
+        "actual_committed_prefix_hex": "81",
+        "actual_retained_tail_hex": "00000000000c000000",
+        "expected_slot_reply_hex": "8100000000000c000000",
+        "actual_recent_wire_requests": [
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1708.89058125
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "804d000000000b0000007c498247304502201a0012cde54b586b9cb961fe62ea11fea54972fac51187e0199dcc6171af97f70221009b4e81bf11e32c0ad4cd48b307e71d78fe5b6a199322ca461a0b81a534e348849000"
+            },
+            "observed_monotonic": 1708.895810625
+          },
+          {
+            "request": "out 02 6500000000000c000000",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1708.896136666
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": true,
+              "data": ""
+            },
+            "observed_monotonic": 1708.89616925
+          },
+          {
+            "request": "in 82 1",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "81"
+            },
+            "observed_monotonic": 1708.902416916
+          },
+          {
+            "request": "suspend",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1708.902437875
+          },
+          {
+            "request": "resume",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": ""
+            },
+            "observed_monotonic": 1708.902600541
+          },
+          {
+            "request": "in 82 3072",
+            "actual_response": {
+              "stalled": false,
+              "pending": false,
+              "data": "00000000000c000000"
+            },
+            "observed_monotonic": 1708.902621291
+          }
+        ]
+      }
+    ]
+  }
+]

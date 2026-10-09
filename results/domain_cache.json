@@ -1,0 +1,263 @@
+{
+  "passed": true,
+  "tests": [
+    {
+      "name": "SCP11a PSO retains current SDK SCP03 protected read",
+      "passed": true
+    },
+    {
+      "name": "SCP11a deny-list update preserves existing SCP03 channel",
+      "passed": true
+    },
+    {
+      "name": "SCP11a disallowing update invalidates cached OCE; GP modeled 6985 and only modeled retry consumed",
+      "passed": true
+    },
+    {
+      "name": "SCP11a fresh SDK PSO also denies the now unlisted own leaf",
+      "passed": true
+    },
+    {
+      "name": "SCP11a cached PSO independently passes SDK receipt/KDF/MAC",
+      "passed": true
+    },
+    {
+      "name": "SCP11a MUTUAL AUTHENTICATE requires PSO first; GP modeled 6985 and only modeled retry consumed",
+      "passed": true
+    },
+    {
+      "name": "SCP11a identical update keeps current channel",
+      "passed": true
+    },
+    {
+      "name": "SCP11a identical update drops cached OCE; GP modeled 6985 and only modeled retry consumed",
+      "passed": true
+    },
+    {
+      "name": "SCP11a identical update recovers with fresh SDK PSO",
+      "passed": true
+    },
+    {
+      "name": "SCP11a clear update keeps current channel",
+      "passed": true
+    },
+    {
+      "name": "SCP11a clear update drops cached OCE; GP modeled 6985 and only modeled retry consumed",
+      "passed": true
+    },
+    {
+      "name": "SCP11a clear update recovers with fresh SDK PSO",
+      "passed": true
+    },
+    {
+      "name": "SCP11a other anchor update keeps current channel",
+      "passed": true
+    },
+    {
+      "name": "SCP11a other anchor update drops cached OCE; GP modeled 6985 and only modeled retry consumed",
+      "passed": true
+    },
+    {
+      "name": "SCP11a other anchor update recovers with fresh SDK PSO",
+      "passed": true
+    },
+    {
+      "name": "SCP11a wrong serial tag; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11a empty serial; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11a oversized serial; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11a truncated serial; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11a rejected updates retain independently validated OCE",
+      "passed": true
+    },
+    {
+      "name": "SCP11a second complete PSO replaces first host before MUT",
+      "passed": true
+    },
+    {
+      "name": "SCP11a new partial PSO cannot reuse prior complete OCE; GP modeled 6985 and only modeled retry consumed",
+      "passed": true
+    },
+    {
+      "name": "SCP11a SELECT drops volatile OCE; GP modeled 6985 and only modeled retry consumed",
+      "passed": true
+    },
+    {
+      "name": "SCP11a restart never persists host cache; GP modeled 6985 and only modeled retry consumed",
+      "passed": true
+    },
+    {
+      "name": "SCP11c PSO retains current SDK SCP03 protected read",
+      "passed": true
+    },
+    {
+      "name": "SCP11c deny-list update preserves existing SCP03 channel",
+      "passed": true
+    },
+    {
+      "name": "SCP11c disallowing update invalidates cached OCE; GP modeled 6985 and only modeled retry consumed",
+      "passed": true
+    },
+    {
+      "name": "SCP11c fresh SDK PSO also denies the now unlisted own leaf",
+      "passed": true
+    },
+    {
+      "name": "SCP11c cached PSO independently passes SDK receipt/KDF/MAC",
+      "passed": true
+    },
+    {
+      "name": "SCP11c MUTUAL AUTHENTICATE requires PSO first; GP modeled 6985 and only modeled retry consumed",
+      "passed": true
+    },
+    {
+      "name": "SCP11c identical update keeps current channel",
+      "passed": true
+    },
+    {
+      "name": "SCP11c identical update drops cached OCE; GP modeled 6985 and only modeled retry consumed",
+      "passed": true
+    },
+    {
+      "name": "SCP11c identical update recovers with fresh SDK PSO",
+      "passed": true
+    },
+    {
+      "name": "SCP11c clear update keeps current channel",
+      "passed": true
+    },
+    {
+      "name": "SCP11c clear update drops cached OCE; GP modeled 6985 and only modeled retry consumed",
+      "passed": true
+    },
+    {
+      "name": "SCP11c clear update recovers with fresh SDK PSO",
+      "passed": true
+    },
+    {
+      "name": "SCP11c other anchor update keeps current channel",
+      "passed": true
+    },
+    {
+      "name": "SCP11c other anchor update drops cached OCE; GP modeled 6985 and only modeled retry consumed",
+      "passed": true
+    },
+    {
+      "name": "SCP11c other anchor update recovers with fresh SDK PSO",
+      "passed": true
+    },
+    {
+      "name": "SCP11c wrong serial tag; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11c empty serial; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11c oversized serial; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11c truncated serial; persistent state unchanged",
+      "passed": true
+    },
+    {
+      "name": "SCP11c rejected updates retain independently validated OCE",
+      "passed": true
+    },
+    {
+      "name": "SCP11c second complete PSO replaces first host before MUT",
+      "passed": true
+    },
+    {
+      "name": "SCP11c new partial PSO cannot reuse prior complete OCE; GP modeled 6985 and only modeled retry consumed",
+      "passed": true
+    },
+    {
+      "name": "SCP11c SELECT drops volatile OCE; GP modeled 6985 and only modeled retry consumed",
+      "passed": true
+    },
+    {
+      "name": "SCP11c restart never persists host cache; GP modeled 6985 and only modeled retry consumed",
+      "passed": true
+    },
+    {
+      "name": "same-version CA replacement retains linked allowlist and drops old SKI",
+      "passed": true
+    },
+    {
+      "name": "CA replacement preserves previously validated OCE per GP model",
+      "passed": true
+    },
+    {
+      "name": "new-version CA replacement moves linked allowlist to replacement row",
+      "passed": true
+    },
+    {
+      "name": "restart preserves replacement CA key and its linked allowlist",
+      "passed": true
+    },
+    {
+      "name": "retained allowlist rejects the new unlisted chain signed by the replacement CA",
+      "passed": true
+    },
+    {
+      "name": "invalid replacement leaves CA key and linked allowlist unchanged",
+      "passed": true
+    },
+    {
+      "name": "CA deletion removes linked allowlist; later key creation has no inherited list",
+      "passed": true
+    },
+    {
+      "name": "new CA and own certificate chain work after linked-list deletion",
+      "passed": true
+    },
+    {
+      "name": "successful allowlist STORE retains the current SCP11a protected channel",
+      "passed": true
+    },
+    {
+      "name": "current SCP11a still authorizes later management after cache invalidation",
+      "passed": true
+    },
+    {
+      "name": "cache/allowlist/anchor tests and restart preserve every peer application",
+      "passed": true
+    }
+  ],
+  "transport": "private CCID socket",
+  "physical_device_access": false,
+  "manufacturer_trust_reproduced": false,
+  "system_pcsc_reader_registered": false,
+  "source": {
+    "url": "https://globalplatform.org/wp-content/uploads/2023/08/GPC_2.3_F_SCP11_v1.3.0.13_PublicRvw.pdf",
+    "version": "1.3.0.13 public review",
+    "sections": [
+      "7.5",
+      "7.6.1",
+      "7.9",
+      "7.10"
+    ]
+  },
+  "sdk_phase_control": "only skip the already explicitly presented own PSO certificates; unchanged SDK MUT request, receipt/KDF/secure messaging",
+  "unverified": [
+    "physical cache/lifecycle/error status and finalized GP1.4 differences",
+    "allowlist scope across every chain certificate",
+    "firmware SCP11c counter semantics and critical SD subject ID",
+    "intermediate PSO per-certificate validation and firmware constraints",
+    "actual OS reader/browser interoperability"
+  ]
+}

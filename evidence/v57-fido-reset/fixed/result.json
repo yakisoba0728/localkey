@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "mode": "fixed",
+  "scope": "owned no-NIC dummy_hcd USB bus reset with unread CTAPHID response backlog",
+  "guest_network_devices": false,
+  "host_usb_passthrough": false,
+  "physical_device_access": false,
+  "own_serial": "2413620937",
+  "address_before": 2,
+  "assigned_cid_hex": "f489f407",
+  "sent_reports": [
+    129,
+    129,
+    129,
+    129
+  ],
+  "address_after": 2,
+  "bridge_alive_after_reset": true,
+  "stale_observed": false,
+  "fresh_init": true,
+  "raw_console_sha256": "bb8951a47bd11f981788b2e75676301c10b3d83b0501cf2d14622b6eefff5d58",
+  "inputs_sha256": "0d372d3e0b372b99e5dfe45b8a172e040a2f79701b0b589889821e8168f4b9eb",
+  "kernel_panic_observed": false
+}

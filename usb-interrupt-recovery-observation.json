@@ -1,0 +1,55 @@
+{
+  "version": "0.42.0",
+  "fixed_in_version": "0.33.0",
+  "prior_version": "0.32.0",
+  "endpoint_transfer_source_byte_equal_frozen33": false,
+  "existing_synchronous_path_without_new_async_dispatch_byte_equal_frozen33": true,
+  "large_functionfs_aio_changed_in40": true,
+  "prior_failures": {
+    "data": {
+      "original32_failure_reproduced": true,
+      "error": "USBTimeoutError: [Errno 110] Operation timed out",
+      "passed_before_failure": 13,
+      "actual_write_bytes": 19,
+      "actual_kernel_errno": 4,
+      "fixed33_identical_helper_passed": true,
+      "fixed33_checks": 86,
+      "identical_helper_sha256": "8f44e96181d121a9c641f6fc72d7cc1539c0259d02a188afb85c96465bec7c6b"
+    },
+    "zlp": {
+      "original32_failure_reproduced": true,
+      "error": "USBTimeoutError: [Errno 110] Operation timed out",
+      "passed_before_failure": 13,
+      "actual_write_bytes": 0,
+      "actual_kernel_errno": 4,
+      "fixed33_identical_helper_passed": true,
+      "fixed33_checks": 34,
+      "identical_helper_sha256": "5432376af4315ebccc935e9eaec665051b7e94e25cca4c36d2090ec3c6048d15"
+    }
+  },
+  "actual_native_checks": 113,
+  "kernel_eintr_count": 12,
+  "data_response_count": 3,
+  "data_interruptions": 9,
+  "zlp_interruptions": 3,
+  "actual_kernel_write_exit_and_targeted_signal_delivery_verified": true,
+  "same_buffer_endpoint_thread_and_usb_generation_verified": true,
+  "independent_hotp_each_commits_once_verified": true,
+  "no_duplicate_data_on_zlp_retry_verified": true,
+  "next_native_sdk_sequence_and_fido_isolation_verified": true,
+  "fixed_source_sha256": "d1be0586e061e3529bfea2fc4d3b716a137a6f10032dac94fe16d7eac3786dfc",
+  "fixed_usb_bridge_sha256": "04a9702cc19d7cb85735d0fd113b9390d65ca465bc10e5dd48954de52ed78099",
+  "physical_device_access": false,
+  "manufacturer_trust_reproduced": false,
+  "native_macos_registration_verified": false,
+  "production_hardware_udcs_verified": false,
+  "complete_yubikey_equivalence": false,
+  "evidence": [
+    "linux-usb-interrupt-result.json",
+    "linux-usb-interrupt-prior-v32-data-failure.json",
+    "linux-usb-interrupt-prior-v32-zlp-failure.json",
+    "linux-usb-interrupt-paired-v33-data-result.json",
+    "linux-usb-interrupt-paired-v33-zlp-result.json",
+    "linux-native-result.json"
+  ]
+}

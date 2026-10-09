@@ -1,0 +1,228 @@
+Reference implementation: madeye/swpasskey, MIT; copyright notice retained in LICENSE.
+https://github.com/madeye/swpasskey
+Baseline commit 59f08259202028888934597513515fc3cb8ca8c9.
+The original v0.2.0 signed app is preserved separately under prebuilt/.
+
+Protocol and SDK references:
+https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-errata-20220621.html
+https://docs.yubico.com/yesdk/users-manual/application-piv/commands.html
+https://www.gnupg.org/ftp/specs/OpenPGP-smart-card-application-3.4.pdf
+https://developers.yubico.com/OATH/YKOATH_Protocol.html
+https://developers.yubico.com/OTP/OTPs_Explained.html
+https://docs.yubico.com/yesdk/users-manual/application-otp/how-to-calculate-a-challenge-response-code.html
+https://github.com/Yubico/yubikey-manager
+https://github.com/Yubico/python-fido2
+https://github.com/Yubico/python-yubihsm
+
+C++ binaries statically include OpenSSL (Apache-2.0) and the test executable includes Catch2 (BSL-1.0).
+License texts are in licenses/. Python dependencies are installed by uv and excluded from this package.
+This project has no Yubico affiliation, factory keys, manufacturer certificates, or formal FIDO certification.
+
+Additional protocol references for 0.4:
+https://docs.yubico.com/yesdk/users-manual/sdk-programming-guide/secure-channel-protocol.html
+https://developers.yubico.com/PGP/YubiKey_5.2.3_Enhancements_to_OpenPGP_3.4.html
+https://developers.yubico.com/yubikey-manager/API_Documentation/autoapi/yubikit/securitydomain/index.html
+https://downloads.yubico.com/support/yubico_YubiKey-Technical-Manual-v3.3_2014.pdf
+Native OTP HID uses public Apple IOHIDUserDevice APIs and requires a legitimately provisioned developer entitlement.
+
+OTP flag and current scan-map references:
+https://github.com/Yubico/yubikey-personalization/blob/master/ykcore/ykdef.h
+https://developers.yubico.com/yubikey-manager/API_Documentation/_modules/yubikit/yubiotp.html
+
+Native reader and synthetic USB API references for 0.5:
+https://pcsclite.apdu.fr/api/group__IFDHandler.html
+https://github.com/apple-oss-distributions/SmartCardServices/blob/main/src/PCSC/ifdhandler.h
+https://developer.apple.com/documentation/iousbhost/iousbhostcontrollerinterface
+The native controller uses the public macOS SDK IOUSBHost CI APIs. It requires
+com.apple.developer.usb.host-controller-interface provisioning. SDK headers and
+Apple's framework implementation are not redistributed by this package.
+Optional public USB matching IDs/name predicates follow the pinned Yubico SDK's
+PID enum and discovery code; software keys/AAGUID/attestation remain independent.
+
+Public USB and PIV allocation references for 0.7:
+usb-reference-observation.json contains public IORegistry/cached descriptors read
+without USBDeviceOpen, reset/configuration, serial strings or credential access.
+tools/observe_usb.mm uses the public IOKit SDK descriptor-cache API; its --help
+mode does not access a device. The observed profile covers FIDO+CCID only.
+https://www.usb.org/sites/default/files/DWG_Smart-Card_CCID_Rev110.pdf
+https://docs.yubico.com/yesdk/users-manual/application-piv/cert-size.html
+https://docs.yubico.com/yesdk/users-manual/application-piv/piv-objects.html
+https://docs.yubico.com/yesdk/users-manual/application-piv/apdu/put-data.html
+https://github.com/Yubico/yubikey-manager/blob/5.9.2/yubikit/core/smartcard/__init__.py
+The PIV buffer/storage ceilings are a documented-limit model, not a measurement
+of firmware header overhead, allocation records or exact certificate boundaries.
+
+Stateless nonresident credential references for 0.8:
+https://docs.yubico.com/yesdk/users-manual/application-fido2/fido2-credentials.html
+https://docs.yubico.com/yesdk/users-manual/application-fido2/fido2-cred-mgmt.html
+https://developers.yubico.com/Passkeys/Passkey_concepts/Discoverable_vs_non-discoverable_credentials.html
+https://docs.yubico.com/hardware/yubikey/yk-tech-manual/yk5-apps-fido.html#credential-blob
+New software credentials use this project's own RP-bound encrypted handle format,
+wrapping root and counters, not Yubico firmware or manufacturer secrets. The
+published discoverable-only credential-blob profile is a model; its reference
+boundary response and reference counter timing/rollover remain unmeasured.
+
+PIV initial-object, retry and independent F9 lifecycle references for 0.9:
+https://docs.yubico.com/yesdk/users-manual/application-piv/commands.html
+https://docs.yubico.com/yesdk/users-manual/application-piv/apdu/verify.html
+https://docs.yubico.com/yesdk/users-manual/application-piv/attestation.html
+https://developers.yubico.com/PIV/Introduction/PIV_attestation.html
+https://developers.yubico.com/PIV/Introduction/Certificate_slots.html
+Fresh cards initialize an independent software F9 issuer; PIV reset retains the
+current key and certificate. Own certificates label a local software issuer and
+do not inherit manufacturer roots, hardware provenance or FIPS/CSPN claims.
+Published Discovery/retry rules and F9 generation/replacement behavior are SDK
+fixtures over private socket/direct IFD paths, not physical differential proof.
+Exact certificate parsing restrictions, allocation overhead and rejection status
+at malformed-input boundaries remain unverified against firmware 5.7.4.
+
+OATH syntax, capacity and independent crypto references for 0.10:
+https://developers.yubico.com/OATH/YKOATH_Protocol.html
+https://docs.yubico.com/hardware/yubikey/yk-tech-manual/yk5-apps-oath.html
+https://www.rfc-editor.org/rfc/rfc6238.html
+https://www.rfc-editor.org/rfc/rfc4226.html
+The 64-credential ceiling follows the published firmware-5.7 profile. IMF,
+SET CODE challenge/SHA1 proof lengths, variable VALIDATE challenges, named error responses and published RFC
+vectors are verified on fresh software cards with the independent SDK. Unknown
+or duplicate-field tolerance, malformed-input rejection order, maximum HMAC
+key/challenge lengths and counter rollover remain physical differential gaps.
+
+OpenPGP public metadata and object-limit references for 0.11:
+https://www.gnupg.org/ftp/specs/OpenPGP-smart-card-application-3.4.pdf
+https://docs.yubico.com/hardware/yubikey/yk-tech-manual/yk5-apps-openpgp.html
+https://github.com/Yubico/yubikey-manager/blob/5.9.2/yubikit/openpgp.py
+openpgp-reference-observation.json records public 5.7.4 capability bytes,
+algorithm attributes and application-related tag placement/lengths. Capture
+used native PC/SC shared access, SELECT/GET VERSION/allowlisted GET DATA and
+SCARD_LEAVE_CARD; no PIN, persistent write, activation or reset. Volatile app
+selection changed. Serial/cardholder/fingerprint payloads were discarded.
+Measured declared ceilings are challenge 3070, certificate 2048 and special
+DO 255; exact rejection, allocation/header/SCP overhead and field tolerance at
+write/challenge boundaries remain unmeasured. Specification tables supply
+PW1-reference-82 private-use access, name/language/sex and fixed metadata
+rules; independent SDK/crypto fixtures validate them only on software cards.
+Fresh own attestation defaults to independent RSA2048; existing software EC
+issuers and user keys are preserved. No manufacturer provenance is copied.
+Pinned yubikit 5.9.2 has DO.LANGUAGE=EF2D; fixtures use raw SDK APDUs with
+the specification's 5F2D instead of changing the third-party SDK. No reference
+firmware or GPL implementation code is copied; public protocol facts are used.
+
+OpenPGP algorithm inventory, key import and signature-counter references for 0.12:
+https://docs.yubico.com/hardware/yubikey/yk-tech-manual/yk5-apps-openpgp.html
+https://developers.yubico.com/PGP/YubiKey_5.2.3_Enhancements_to_OpenPGP_3.4.html
+https://www.gnupg.org/ftp/specs/OpenPGP-smart-card-application-3.4.pdf
+https://github.com/Yubico/yubikey-manager/blob/5.9.2/yubikit/openpgp.py
+The saved public observation now includes the complete 421-byte FA list and
+only the 7A/93 counter tag layout, with the physical counter payload discarded.
+FA supplies 43 ordered slot/algorithm variants (11 SIG/DEC/AUT and 10 ATT).
+Every variant is generated and imported on fresh software cards; independent
+SDK/crypto verifies signatures, decryption/exchange and own issuer attestations.
+Specification sections 4.4.3.9-12 and 7.2.14 supply canonical attribute/import
+layout, adjusted private-field width, extended CRT and SIG counter reset rules.
+Measured public lists/schema do not prove physical import tolerance, rejection
+status/order, P-521 padding acceptance or counter reset/rollover semantics.
+The pinned SDK computes EC import minimum width with key_size // 8; tests send
+zero-padded standard 66-byte P-521 scalars over raw SDK APDUs. Physical behavior
+for the SDK's shorter field remains unmeasured. No physical key write or PIN
+operation is used, and no manufacturer issuer or protected key is reproduced.
+
+OpenPGP own attestation retention and certificate references for 0.13:
+https://developers.yubico.com/PGP/Attestation.html
+App reset retains the current independent ATT key/certificate, including an own
+replacement. Deleted, empty or malformed issuer data is not restored/repaired.
+Generated own certificates copy template issuer/validity and use a positive
+16-byte random serial input. Metadata uses DER primitives at the documented
+OpenPGP OIDs; independently parsed and signature-verified socket/IFD fixtures
+cover all three user roles. Local software names, keys and serial remain
+independent; compatibility version/form factor carry no hardware provenance,
+and FIPS/CSPN flags are zero. A shared PC/SC read measured only the physical FC
+template firmware extension's DER tag/length. The original certificate, subject,
+serial, public key, dates and extension payloads were discarded. Generated
+physical leaf encoding/order, ATT metadata/UIF retention and exact certificate
+rejection rules remain unmeasured. No manufacturer trust or secret is copied.
+
+Security Domain role, retry and capacity references for 0.14:
+https://globalplatform.org/wp-content/uploads/2023/08/GPC_2.3_F_SCP11_v1.3.0.13_PublicRvw.pdf
+https://docs.yubico.com/hardware/yubikey/yk-tech-manual/yk5-apps-scp.html
+https://docs.yubico.com/yesdk/users-manual/application-security-domain/security-domain-keys.html
+https://docs.yubico.com/yesdk/users-manual/application-security-domain/security-domain-certificates.html
+The GP public-review certificate tables and Annex D supply role OIDs; no tables
+or third-party implementation code are copied. Fresh own SD identities include
+SD policy/ECKA usage. Presented critical policies are constrained by OCE/CA/KA
+role, issuer identifiers and CA/leaf permissions; unknown critical constraints
+and unsupported qualifiers remain denied. Legacy policy-free own profiles remain
+accepted. This is not proof of exact firmware X.509 tolerance or certification.
+Final modeled retries remain usable, and wildcard selection skips blocked newer
+SCP03 rows. The documented three-set capacity and full-table reset are SDK-tested
+over private socket/direct IFD. Numeric retries/EC/chain/allowlist/KVN limits,
+certificate dates based on the host clock, and reference deletion/timing remain
+unmeasured. Large stored-bundle fixtures use a per-instance test MAC formatter
+and fresh short command chaining; the unmodified SDK's normal 3062-byte limit
+remains. Critical SD subject-ID handling and exact firmware restrictions remain
+unresolved; v0.15's public option observation below shows BF20 is not advertised.
+No physical card authentication, reset or provisioning is used.
+
+15. Security Domain public metadata and software lifecycle (v0.15)
+    https://docs.yubico.com/hardware/yubikey/yk-tech-manual/yk5-apps-scp.html
+    https://globalplatform.org/wp-content/uploads/2023/08/GPC_2.3_F_SCP11_v1.3.0.13_PublicRvw.pdf
+    Public review, not final v1.4. Tables 4-1/4-2 interpret measured SCP11 i=9b06:
+    a/b/c, transient OCE key, chains, S8, X509 and no legacy format; no BF20 for a/c.
+    Table 7-13 provides unsupported BF20 6A81, a source model without physical
+    rejection measurements. Public manual describes CPLC 42-byte raw format,
+    per-domain random data and automatic reset upon explicit last-key deletion.
+    Our CPLC uses 0000 software platform and own random bytes, preserving clear
+    identity differences from the physical 4090 chipset prefix. These lifecycle
+    behaviors are SDK-tested over socket/direct IFD, not hardware reset evidence.
+    security-domain-reference-observation.json contains only allowlisted shared
+    PC/SC reads: fixed SELECT, OpenPGP-only GET VERSION, Domain GET DATA 66/E0/9F7F.
+    Only fixed public SELECT AID/OID and recognition bytes plus key/CPLC schema
+    are retained. No PIN, handshake, PSO, crypto, activation, reset or write was
+    sent; volatile app selection changed. Unique CPLC/key-reference payloads,
+    reader name, certificates and public keys are not retained. No PDF is bundled.
+
+16. Full documented SCP03 key-version range and INIT metadata (v0.16)
+    https://docs.yubico.com/hardware/yubikey/yk-tech-manual/yk5-apps-scp.html
+    https://globalplatform.org/wp-content/uploads/2014/07/GPC_2.3_D_SCP03_v1.1.2_PublicRelease.pdf
+    https://globalplatform.org/specs-library/secure-channel-protocol-03-amendment-d-v1-2/
+    Yubico Key Sets documents custom SCP03 versions 1..254, reserving factory255.
+    The implementation previously limited every SCP variant to 1..127; SCP03
+    now uses its documented independent range. GP SCP03 INIT UPDATE key info
+    contains selected version/protocol/i; option60 now agrees with the previously
+    measured public recognition. Card authentication cryptograms are independently
+    recomputed with AES-CMAC; unmodified SDK verifies encrypted import KCV and
+    secure messaging for every custom version. GP 1.1.2 predates S16; the current
+    public profile uses random S8 and R-MAC/R-ENC. No copyrighted PDF is bundled.
+    SCP11's separate seven-bit P1 profile remains 1..127 (public-review F §7.6.2.1),
+    and its exact hardware reservations/status are still unmeasured. All fixtures
+    use fresh own software keys over socket/direct IFD. No physical device is
+    opened for this checkpoint; INIT/boundary responses and hardware lifecycle
+    have not been captured or proved equivalent.
+
+Linux composite USB native tests (v0.25):
+https://github.com/torvalds/linux/blob/v6.8/include/uapi/linux/usb/gadgetfs.h
+https://github.com/torvalds/linux/blob/v6.8/drivers/usb/gadget/legacy/inode.c
+https://github.com/torvalds/linux/blob/v6.8/drivers/usb/gadget/udc/dummy_hcd.c
+The private test builder downloads upstream GPL-licensed dummy_hcd source with
+SHA256 6892efeaca7d13e0f8ba172fac6b9607f9ac5c60de1a5f1812a57eb7998fd993,
+compiles against exact Ubuntu 6.8.0-146-generic headers, and loads it only in an
+isolated QEMU guest. No kernel module or upstream implementation is included
+in the distributed emulator ZIP. Linux GadgetFS transport is original code
+using public UAPI; stock HID/libccid/pcscd and unmodified SDK paths are tested.
+Own USB strings/serial/AAGUID/keys/attestation remain independent. The stock
+CCID ID table supplies a reader label for public matching IDs, not hardware
+provenance. Software ATR 3bf011000001e0 is T=1/LRC with explicit FI/DI1/1 and
+valid TCK; stock SDK classifies it USB. It does not copy a manufacturer's ATR
+historical identity. GadgetFS post-receipt nonzero control OUT stall limits,
+production UDCs, bus state changes, browser and differential timings remain.
+
+Native kernel device-PM source review (v0.33):
+  https://raw.githubusercontent.com/torvalds/linux/v6.8/Documentation/power/basic-pm-debugging.rst
+  https://raw.githubusercontent.com/torvalds/linux/v6.8/drivers/usb/gadget/function/f_fs.c
+  https://raw.githubusercontent.com/torvalds/linux/v6.8/drivers/usb/gadget/udc/dummy_hcd.c
+  https://raw.githubusercontent.com/torvalds/linux/v6.8/include/uapi/linux/usbdevice_fs.h
+  Exact downloaded bytes/SHA-256 are recorded in linux-usb-power-reference-provenance.json.
+  These pinned upstream sources guide interpretation; Ubuntu kernel 6.8.0-146-generic
+  is the actual tested runtime. Its full distro patch delta was not independently
+  reproduced. pm_test=devices verifies freezer/device callbacks and recovery,
+  not full platform sleep or runtime autosuspend. No kernel code was copied into
+  the emulator from these references.

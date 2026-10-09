@@ -1,0 +1,174 @@
+{
+  "passed": true,
+  "product_patch": null,
+  "scope": "Exact published v0.49 card, Linux daemon and Full Speed bridge; two private no-NIC ARM64 QEMU/dummy_hcd boots with a high-speed-capable controller under requested-address and default-remapping policies",
+  "published_v49_bridge_sha256": "43d51da274874ea515a567e7bb54aa5bae6110cc6c5c428c2a3acedcfc808c31",
+  "published_v49_daemon_sha256": "fc0258674f0c42ccc087686589b90b34f6720af42db96b10451f1ed29555ef2d",
+  "published_v49_core_sha256": "4d2b50bf7a1a616696c66e1da1171f0b394a1c1a41b7e27323a7ba86eaa0f1d1",
+  "results": {
+    "requested-baseline": {
+      "passed": true,
+      "test_count": 49,
+      "usb_profile_pids_in_order": [
+        1031,
+        1025,
+        1026,
+        1027,
+        1028,
+        1029,
+        1030,
+        1031,
+        1031
+      ],
+      "host_visible_endpoint_addresses_by_enumeration": {
+        "0": [
+          129,
+          4,
+          132,
+          2,
+          130,
+          131
+        ],
+        "1": [
+          129
+        ],
+        "2": [
+          4,
+          132
+        ],
+        "3": [
+          129,
+          4,
+          132
+        ],
+        "4": [
+          2,
+          130,
+          131
+        ],
+        "5": [
+          129,
+          2,
+          130,
+          131
+        ],
+        "6": [
+          4,
+          132,
+          2,
+          130,
+          131
+        ],
+        "7": [
+          129,
+          4,
+          132,
+          2,
+          130,
+          131
+        ],
+        "8": [
+          129,
+          4,
+          132,
+          2,
+          130,
+          131
+        ]
+      },
+      "host_full_speed_attachments": 9,
+      "host_high_speed_attachments": 0,
+      "guest_image_sha256": "c5485ee30f9abf93c4a3f4452638c2bca305dd151fe3b2e43ed85477ca850f68",
+      "helper_sha256": "8178a07ed5935dfdc0bbe9437a41cc5ec76cdcdd85150a27d0a09392aaada2a7",
+      "inputs_sha256": "9820698740b74aedea97a043e98589b509e3e78c1a355519fd5ae961ca6fb6ff",
+      "raw_console_sha256": "c04bc40dbbd78208284da24abac38b1831c44e831a507521facef02bc863ab95",
+      "kernel_panic": false
+    },
+    "remapped-default": {
+      "passed": true,
+      "test_count": 50,
+      "usb_profile_pids_in_order": [
+        1031,
+        1025,
+        1026,
+        1027,
+        1028,
+        1029,
+        1030,
+        1031,
+        1031
+      ],
+      "host_visible_endpoint_addresses_by_enumeration": {
+        "0": [
+          129,
+          2,
+          133,
+          7,
+          134,
+          138
+        ],
+        "1": [
+          129
+        ],
+        "2": [
+          2,
+          129
+        ],
+        "3": [
+          129,
+          2,
+          133
+        ],
+        "4": [
+          2,
+          129,
+          133
+        ],
+        "5": [
+          129,
+          2,
+          134,
+          133
+        ],
+        "6": [
+          2,
+          129,
+          7,
+          134,
+          133
+        ],
+        "7": [
+          129,
+          2,
+          133,
+          7,
+          134,
+          138
+        ],
+        "8": [
+          129,
+          2,
+          133,
+          7,
+          134,
+          138
+        ]
+      },
+      "host_full_speed_attachments": 9,
+      "host_high_speed_attachments": 0,
+      "guest_image_sha256": "1085ebf1386594fa5cd245724897f8e66fc1c552c543384520979466622d1cb0",
+      "helper_sha256": "0be99361a7c0a88edd22276407e07eeeb1e033e095f4e0a88bb3421325b337e2",
+      "inputs_sha256": "cba4efc4ed7f04a0784309b3114117b71f9fa4e3a543b2fb1d5f5955d4729f4e",
+      "raw_console_sha256": "fae7c6f32ef9b16fa9d4fd81bbe2f5b13f25c3501c58d7024043ae335490991f",
+      "kernel_panic": false
+    }
+  },
+  "finding": "All seven profile combinations reenumerated and stock SDK paths traversed under both endpoint allocation policies. No reproducible FunctionFS transport defect found.",
+  "guest_network_devices": false,
+  "host_usb_passthrough": false,
+  "physical_device_access": false,
+  "limitations": [
+    "The suite verifies native guest USB, not an external macOS/Windows/Linux host or production UDC.",
+    "Finite trials do not rule out rare timing/kernel failures."
+  ]
+}

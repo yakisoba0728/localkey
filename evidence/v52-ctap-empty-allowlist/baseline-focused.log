@@ -1,0 +1,31 @@
+{"ts":"2026-10-09T15:23:42.925Z","lvl":"info","event":"ctap","cmd":"getAssertion","cmd_byte":"0x02","status":"46","ms":"0"}
+{"ts":"2026-10-09T15:23:42.925Z","lvl":"info","event":"make_credential","rp":"example.com","key_backend":"software"}
+{"ts":"2026-10-09T15:23:42.926Z","lvl":"info","event":"ctap","cmd":"makeCredential","cmd_byte":"0x01","status":"0","ms":"0"}
+{"ts":"2026-10-09T15:23:42.926Z","lvl":"info","event":"ctap","cmd":"getAssertion","cmd_byte":"0x02","status":"46","ms":"0"}
+{"ts":"2026-10-09T15:23:42.926Z","lvl":"info","event":"ctap","cmd":"getAssertion","cmd_byte":"0x02","status":"46","ms":"0"}
+{"ts":"2026-10-09T15:23:42.926Z","lvl":"info","event":"get_assertion","rp":"example.com","up":"1","creds":"1"}
+{"ts":"2026-10-09T15:23:42.926Z","lvl":"info","event":"ctap","cmd":"getAssertion","cmd_byte":"0x02","status":"0","ms":"0"}
+{"ts":"2026-10-09T15:23:42.926Z","lvl":"info","event":"get_assertion","rp":"example.com","up":"1","creds":"1"}
+{"ts":"2026-10-09T15:23:42.926Z","lvl":"info","event":"ctap","cmd":"getAssertion","cmd_byte":"0x02","status":"0","ms":"0"}
+Filters: "getAssertion no credentials / wrong rp / allowList miss"
+Randomness seeded to: 1704653074
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+swpasskey_tests is a Catch2 v3.8.1 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+getAssertion no credentials / wrong rp / allowList miss
+-------------------------------------------------------------------------------
+/Users/yakisoba0728/Documents/Codex/2026-10-07/new-chat/work/v52-ctap-empty-allowlist-candidate/source/tests/get_assertion_test.cpp:91
+...............................................................................
+
+/Users/yakisoba0728/Documents/Codex/2026-10-07/new-chat/work/v52-ctap-empty-allowlist-candidate/source/tests/get_assertion_test.cpp:106: FAILED:
+  REQUIRE( rig.call(get_assert_request(o)).error() == Status::NoCredentials )
+with expansion:
+  'P' == '.'
+
+===============================================================================
+test cases: 1 | 1 failed
+assertions: 5 | 4 passed | 1 failed
+

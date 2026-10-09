@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "transport": "direct IFD",
+  "expect_fixed": false,
+  "explicit_le_1_sw": "9000",
+  "malformed_command_overwrote_sig_certificate": true,
+  "malformed_command_mutated_persistent_state": true,
+  "normal_sdk_attestation_signature_verified": true,
+  "physical_key_accessed": false
+}

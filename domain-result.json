@@ -1,0 +1,160 @@
+{
+  "passed": true,
+  "tests": [
+    {
+      "name": "management USB-C Nano compatibility profile",
+      "passed": true
+    },
+    {
+      "name": "management own serial, USB capabilities and no FIPS claim",
+      "passed": true
+    },
+    {
+      "name": "management configuration lock",
+      "passed": true
+    },
+    {
+      "name": "management write requires current lock code",
+      "passed": true
+    },
+    {
+      "name": "management unlock and timeout persistence",
+      "passed": true
+    },
+    {
+      "name": "disabled OATH AID unavailable",
+      "passed": true
+    },
+    {
+      "name": "management re-enables OATH",
+      "passed": true
+    },
+    {
+      "name": "OTP HID management matches CCID identity",
+      "passed": true
+    },
+    {
+      "name": "OTP HID management write and response CRC",
+      "passed": true
+    },
+    {
+      "name": "Security Domain default key information",
+      "passed": true
+    },
+    {
+      "name": "SCP11 development certificate bundle",
+      "passed": true
+    },
+    {
+      "name": "SCP11b SDK receipt, encrypted read and response MAC",
+      "passed": true
+    },
+    {
+      "name": "SCP11b cannot provision Security Domain keys",
+      "passed": true
+    },
+    {
+      "name": "SCP11b encrypted PIV signature independently verified",
+      "passed": true
+    },
+    {
+      "name": "SCP11b encrypted OATH credential",
+      "passed": true
+    },
+    {
+      "name": "SCP11b management reads",
+      "passed": true
+    },
+    {
+      "name": "Security Domain GP recognition data",
+      "passed": true
+    },
+    {
+      "name": "SCP03 authenticated SCP11a/c generation",
+      "passed": true
+    },
+    {
+      "name": "OCE anchor SKI provisioning and enumeration",
+      "passed": true
+    },
+    {
+      "name": "Security Domain stores leaf-last certificate bundle",
+      "passed": true
+    },
+    {
+      "name": "SCP11 11 mutual certificate authentication",
+      "passed": true
+    },
+    {
+      "name": "SCP11 11 encrypted private-key import using session DEK",
+      "passed": true
+    },
+    {
+      "name": "imported SCP11 private key establishes verified channel",
+      "passed": true
+    },
+    {
+      "name": "SCP11 15 mutual certificate authentication",
+      "passed": true
+    },
+    {
+      "name": "SCP11c denies current-key DELETE as in published SDK tests",
+      "passed": true
+    },
+    {
+      "name": "SCP11c denies private PUT KEY in replayable session",
+      "passed": true
+    },
+    {
+      "name": "SCP11 OCE certificate serial allowlist rejection",
+      "passed": true
+    },
+    {
+      "name": "SCP11 rejects invalid certificate signature",
+      "passed": true
+    },
+    {
+      "name": "SCP11 wrong card key rejected by SDK receipt verification",
+      "passed": true
+    },
+    {
+      "name": "first custom SCP03 key removes public default set",
+      "passed": true
+    },
+    {
+      "name": "custom SCP03 keys handshake and secure messaging",
+      "passed": true
+    },
+    {
+      "name": "Security Domain rejects factory-reserved SCP03 version 255",
+      "passed": true
+    },
+    {
+      "name": "rejected provision leaves key table unchanged",
+      "passed": true
+    },
+    {
+      "name": "Security Domain authenticated key deletion",
+      "passed": true
+    },
+    {
+      "name": "SCP03/SCP11 keys and metadata persist across restart",
+      "passed": true
+    },
+    {
+      "name": "Security Domain reset blocks all keys and restores defaults",
+      "passed": true
+    },
+    {
+      "name": "Security Domain reset generates a fresh software SCP11b key",
+      "passed": true
+    },
+    {
+      "name": "Security Domain reset preserves device serial and management configuration",
+      "passed": true
+    }
+  ],
+  "physical_key_accessed": false,
+  "transport": "private CCID and OTP HID sockets",
+  "system_pcsc_reader_registered": false
+}

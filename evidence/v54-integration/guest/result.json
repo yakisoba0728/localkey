@@ -1,0 +1,64 @@
+{
+  "passed": true,
+  "checks_in_order": [
+    "reset boundary",
+    12,
+    28,
+    122,
+    8,
+    6,
+    6,
+    "hmac up=false 5",
+    "CBOR float 5",
+    "CCID stress 310",
+    49
+  ],
+  "hmac_upfalse_status": 43,
+  "float_unknown_key_statuses": {
+    "integer_control": 46,
+    "half_zero": 46,
+    "half_one": 46,
+    "float_one": 46,
+    "double_one": 46
+  },
+  "ccid_stress_sent": 310,
+  "ccid_stress_replies": 310,
+  "ccid_stress_sequence_multiset_matches": true,
+  "seven_profiles": true,
+  "full_speed_attachments": 23,
+  "high_speed_attachments": 0,
+  "card_file_sha256": {
+    "__init__.py": "b3ac50ebe9c426cf689415f135b9049ac19e67de6808ad213dd7ad21b0bdbf67",
+    "client.py": "8dd1fe3584f3e5cd2fdb885702bfc776536a0f82799b358dab6c9ca92897a283",
+    "core.py": "dc16113dac3b2e0c852303f9caf605d4106155932f9bebadc7724cc1179f2154",
+    "domain.py": "87a192dd4f76d6d1562abd94d8cef4ea0bd932ddb4e35991c61baffc4c0ea6a1",
+    "ifd.py": "cf173daf50ace2bd3718438a92769d40e3f8c470e364f68aeba06dd3dff83ecf",
+    "keyboard.py": "d058cc356978b0477f49cef11673f734a46465e58ebe0edb3910de5098ff1ece",
+    "management.py": "163d0f51dbb34b3f1c2d33ff63053d44b959ea478883b946771cd1a54cef7810",
+    "otp_hid.py": "c7a5f9c73cdb1c506b99343785436b25cf85f772602f8a1727aa0b71e9756136",
+    "pgp_algorithms.py": "445333c3f9cf9643eb2f6a446b456ae8519dab8a7758ebfe0e74f2755eedc0a5",
+    "pgp_extensions.py": "234e049d977bde85c5e608327be8f74d5311e525add058b94ea688177d969bd1",
+    "pgp_objects.py": "1a8b4a15812b2d0eb748813c3999ebfd4d298536bef1c78787153d8dc3c0d2c3",
+    "piv_objects.py": "6503c64561e904929d1aff05d127b9e1369f8a1961540f965ee00708c7b41664",
+    "profile.py": "319745d0f753de27edb2997f18f98809268fe8ecf84d20fb5acd3a6300cfe2ed",
+    "secure_channel.py": "40cd0713d623722b418d3d67ca20025eb33d4da15583df8058545c25e5b82073",
+    "service.py": "94640c0a5353fc75b7c46cfa8983d7da1f2a72965173036723b4471946b123d6"
+  },
+  "linux_binary_sha256": {
+    "ske-usbd": "0897e3277354494261b50699d4c31546ad4330d704e9ae8ccb0e23426cefbf07",
+    "swpasskeyd": "df152499a5dcd9c3de11bb2c165d9ef006a909c3f64bb0ced1fd5dbf0e71e545",
+    "ske-otpd": "6fc3e1509c4ed9a07fa40057feb53e4f45fcd3fed8d7ca05e3509617d449695e"
+  },
+  "source_sha256": {
+    "src/usb/backend.hpp": "6edb6b25fc3af16fc81276e36cdc6298f90fad7972261eb0e9bca3890be2624b",
+    "src/usb/linux.cpp": "029229f039b3d619e415f44a2ef5d37568695cffc571771b9e6ef9e07dda6726",
+    "src/cbor/ctap_validation.cpp": "01ffcce81e58ec2f6067b329d6d87dc23bf6e4df3ab2c8170e81f6c165fa4363"
+  },
+  "guest_image_sha256": "26944105dbc19b503c677e5a52da56ef0f8400726405c960644c36794afa2637",
+  "inputs_sha256": "77448f699aa63930635804cdb8895fa7328f4b1b2b8ba9cd4201f6e5f8433a0c",
+  "raw_console_sha256": "8fa99e499540c614277b77e9469570100f8ab5bc380c936887bf7fdec79ea3c1",
+  "guest_network_devices": false,
+  "host_usb_passthrough": false,
+  "physical_device_access": false,
+  "kernel_panic_observed": false
+}

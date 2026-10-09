@@ -1,0 +1,6 @@
+{
+  "host_runner_source_sha256_as_started": "044904be4b793d3134b484877d291152bc11e2036c7491eef8883d4e204aa85a",
+  "host_runner_edited_after_start": true,
+  "new_post_gate_loaded_by_live_process": false,
+  "required_next_step": "after terminal completion independently validate actual raw report with strict current PIN gate; do not assume new gate ran"
+}

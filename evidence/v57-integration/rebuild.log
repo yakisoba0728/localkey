@@ -1,0 +1,42 @@
+[ 12%] Built target swpasskey_log
+[ 12%] Built target swpasskey_cbor
+[ 33%] Built target swpasskey_hid
+[ 33%] Built target swpasskey_crypto
+[ 41%] Built target swpasskey_store
+[ 50%] Built target swpasskey_ui
+[ 50%] Building CXX object CMakeFiles/swpasskey_ctap.dir/src/ctap/authenticator.cpp.o
+[ 50%] Building CXX object CMakeFiles/swpasskey_ctap.dir/src/ctap/client_pin.cpp.o
+[ 54%] Building CXX object CMakeFiles/swpasskey_ctap.dir/src/ctap/hmac_secret.cpp.o
+[ 54%] Building CXX object CMakeFiles/swpasskey_ctap.dir/src/ctap/management.cpp.o
+[ 54%] Linking CXX static library libswpasskey_ctap.a
+[ 75%] Built target swpasskey_ctap
+[ 83%] Built target swpasskey_daemon
+[ 91%] Built target swpasskey_ctl
+[ 95%] Linking CXX executable swpasskeyd
+[100%] Built target swpasskeyd
+[ 13%] Built target swpasskey_log
+[ 13%] Built target swpasskey_cbor
+[ 34%] Built target swpasskey_hid
+[ 34%] Built target swpasskey_crypto
+[ 43%] Built target swpasskey_store
+[ 52%] Built target swpasskey_ui
+[ 78%] Built target swpasskey_ctap
+[ 86%] Built target swpasskey_daemon
+[ 95%] Built target swpasskey_ctl
+[ 95%] Linking CXX executable swpasskeyctl
+[100%] Built target swpasskeyctl
+[  2%] Built target swpasskey_log
+[  3%] Built target swpasskey_cbor
+[  5%] Built target swpasskey_hid
+[  8%] Built target swpasskey_crypto
+[ 10%] Built target swpasskey_store
+[ 13%] Built target swpasskey_ui
+[ 19%] Built target swpasskey_ctap
+[ 21%] Built target swpasskey_daemon
+[ 23%] Built target swpasskey_ctl
+[ 84%] Built target Catch2
+[ 85%] Built target Catch2WithMain
+[ 85%] Building CXX object CMakeFiles/swpasskey_tests.dir/tests/pin_test.cpp.o
+[ 85%] Linking CXX executable swpasskey_tests
+[100%] Built target swpasskey_tests
+[100%] Built target ske-usbd

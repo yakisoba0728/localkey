@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "expect": "baseline",
+  "first_count": 2,
+  "empty_status": 0,
+  "empty_count": 3,
+  "nonmatch_status": 46,
+  "explicit_count": 4,
+  "final_count": 5,
+  "remaining_before": 99,
+  "remaining_after": 99,
+  "transport": "unmodified python-fido2 over private Unix CTAPHID",
+  "physical_device_access": false,
+  "spec": "https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#ga-allowlist"
+}

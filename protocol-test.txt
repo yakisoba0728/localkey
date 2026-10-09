@@ -1,0 +1,67 @@
+Source: https://github.com/madeye/swpasskey
+Revision: 59f08259202028888934597513515fc3cb8ca8c9
+Transport: 64-byte CTAPHID reports over an isolated local Unix socket
+Keys and credential store: generated test data; removed after testing
+Presence: debug test-only automatic approval
+Physical YubiKey, OS HID enumeration and browser login: not exercised
+
+device CtapHidDevice('/Users/yakisoba0728/Documents/Codex/2026-10-07/new-chat/work/swpk-0xo_8e8v/hid.sock') caps=0x5 version (0, 1, 0)
+ok   CAPABILITY_CBOR set
+ok   PING echoes 500 bytes across CONT packets
+versions ['FIDO_2_1', 'FIDO_2_0', 'U2F_V2'] aaguid 6fb1dfdd-51c0-43a0-a6f2-f74812cbf8fb options {'rk': True, 'up': True, 'plat': False, 'alwaysUv': False, 'credMgmt': False, 'clientPin': False, 'pinUvAuthToken': True, 'makeCredUvNotRqd': False}
+ok   getInfo advertises FIDO_2_0
+ok   AAGUID
+ok   rk/up options
+ok   remainingDiscoverableCredentials present
+features: pin=True hmac=True u2f=True
+ok   attestation fmt packed
+ok   authData AAGUID
+ok   UP flag
+ok   AT flag
+ok   BE/BS zero
+ok   signCount starts at 1
+ok   32-byte credential id
+ok   self-attestation: no x5c
+ok   PackedAttestation.verify -> SELF
+ok   remaining slots decreased by 2
+ok   excludeList -> CREDENTIAL_EXCLUDED
+ok   rk=false -> UNSUPPORTED_OPTION
+ok   credProtect=3 -> UNSUPPORTED_EXTENSION (0x4B)
+ok   RS256 only -> UNSUPPORTED_ALGORITHM
+ok   getAssertion + getNextAssertion return 2 credentials
+ok   both credential ids present
+ok   user.id only when UV=0
+ok   assertion UP flag
+ok   user.id only when UV=0
+ok   assertion UP flag
+ok   assertion signatures verify with the credential public keys
+ok   signCount incremented to 2
+ok   allowList narrows to one credential
+ok   up=false: UP=0 and counter unchanged
+ok   up=false assertion still carries a valid signature
+ok   unknown RP -> NO_CREDENTIALS
+ok   PIN retries 8 before set
+ok   clientPin false before set
+ok   clientPin true after set
+ok   wrong PIN -> PIN_INVALID
+ok   retries decremented to 7
+ok   retries reset to 8 on success
+ok   makeCredential without pinUvAuthParam -> PUAT_REQUIRED (0x36)
+ok   UV flag set with PIN token (token not one-shot)
+ok   hmac-secret create output
+ok   getAssertion without PIN -> UV=0
+ok   getAssertion with PIN -> UV=1
+ok   full user entity when UV=1
+ok   token rpId binding enforced
+ok   hmac-secret (no UV) is deterministic, one output
+ok   two salts -> two outputs, first matches
+ok   hmac-secret differs between UV=1 and UV=0 (dual credRandom)
+ok   UV credRandom is stable
+ok   changePIN works
+ok   U2F_VERSION
+ok   U2F register self-signed cert verifies
+ok   U2F authenticate verifies
+ok   U2F check-only -> conditions not satisfied
+ok   reset restores remaining slots
+ok   after reset -> NO_CREDENTIALS
+ALL OK

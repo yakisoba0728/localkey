@@ -1,0 +1,130 @@
+{
+  "passed": false,
+  "tests": [
+    {
+      "name": "private native interrupt guest marker",
+      "passed": true
+    },
+    {
+      "name": "actual ARM64 kernel and only loopback for interruption probe",
+      "passed": true
+    },
+    {
+      "name": "fresh owned resident ES256 PIN/UV credential for interruption fixture",
+      "passed": true
+    },
+    {
+      "name": "native SDK UV signature and user binding initial",
+      "passed": true
+    },
+    {
+      "name": "native OTP SDK independently verifies retained key initial",
+      "passed": true
+    },
+    {
+      "name": "fresh owned native OATH HOTP counter zero",
+      "passed": true
+    },
+    {
+      "name": "actual kernel exposes write-exit and signal-delivery trace events",
+      "passed": true
+    },
+    {
+      "name": "unmodified native PIV SDK verifies own fifty-byte object before ZLP interruption",
+      "passed": true
+    },
+    {
+      "name": "actual USB receives original complete sixty-four-byte CCID object response once",
+      "passed": true
+    },
+    {
+      "name": "real CCID ZLP write blocks separately after data packet is delivered",
+      "passed": true
+    },
+    {
+      "name": "same actual queued zero-length transfer before signal 0",
+      "passed": true
+    },
+    {
+      "name": "kernel accepts own targeted ZLP thread SIGUSR1 0",
+      "passed": true
+    },
+    {
+      "name": "actual kernel ZLP write EINTR and signal delivery observed 0",
+      "passed": true
+    }
+  ],
+  "signals": [
+    {
+      "cycle": "zlp",
+      "attempt": 0,
+      "before": {
+        "tid": 148,
+        "tgid": 128,
+        "fd": 11,
+        "bytes": 0,
+        "buffer": "0x0",
+        "syscall": "64 0xb 0x0 0x0 0x0 0x0 0xb5a9cefe8a20 0xe07a4bffe700 0xe07a52b01e4c",
+        "wchan": "ffs_epfile_io"
+      },
+      "after": null,
+      "actual_kernel_write_errno": 4,
+      "signal": 10,
+      "actual_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 2/2   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-148     [001] ...1.    12.861358: sys_write -> 0xfffffffffffffffc\n        ske-usbd-148     [001] d..1.    12.861683: signal_deliver: sig=10 errno=0 code=-6 sa_handler=b5a9c16c6664 sa_flags=0\n"
+    }
+  ],
+  "cycles": [],
+  "assertions": [
+    {
+      "phase": "initial",
+      "signature_verified": true,
+      "user_verified": true,
+      "user_handle_verified": true,
+      "rp_id_hash_verified": true,
+      "counter": 2,
+      "pin_uv_protocol": 2,
+      "challenge_sha256": "6169e379391ec7f29f271df5d7e7562c5df43a0aef0ae912a5b1740d60550b4b",
+      "credential_sha256": "98dab852186ddd324259d20998da80dbbb5fe2385d7954dd1cc0241ecbe6a245"
+    }
+  ],
+  "scope": "actual same-generation queued FunctionFS CCID IN interruption in isolated ARM64 guest",
+  "physical_device_access": false,
+  "host_device_passthrough": false,
+  "manufacturer_trust_reproduced": false,
+  "native_macos_registration_verified": false,
+  "production_hardware_udcs_verified": false,
+  "physical_touch_verified": false,
+  "card_testing_auto_allow": false,
+  "fido_presence_auto_approved_only_for_owned_fixture": true,
+  "observed_version": "0.32.0",
+  "emulator_binary_sha256": "ed474cba5c78baaea59068e7b61da159847e764a7c4637950911ba02cad30274",
+  "usb_bridge_binary_sha256": "e577d36dcd06c8c21c49239a128f66c8b2363bb730866b89aef4ee902f18fc38",
+  "write_exit_format": "name: sys_exit_write\nID: 671\nformat:\n\tfield:unsigned short common_type;\toffset:0;\tsize:2;\tsigned:0;\n\tfield:unsigned char common_flags;\toffset:2;\tsize:1;\tsigned:0;\n\tfield:unsigned char common_preempt_count;\toffset:3;\tsize:1;\tsigned:0;\n\tfield:int common_pid;\toffset:4;\tsize:4;\tsigned:1;\n\n\tfield:int __syscall_nr;\toffset:8;\tsize:4;\tsigned:1;\n\tfield:long ret;\toffset:16;\tsize:8;\tsigned:1;\n\nprint fmt: \"0x%lx\", REC->ret\n",
+  "signal_delivery_format": "name: signal_deliver\nID: 135\nformat:\n\tfield:unsigned short common_type;\toffset:0;\tsize:2;\tsigned:0;\n\tfield:unsigned char common_flags;\toffset:2;\tsize:1;\tsigned:0;\n\tfield:unsigned char common_preempt_count;\toffset:3;\tsize:1;\tsigned:0;\n\tfield:int common_pid;\toffset:4;\tsize:4;\tsigned:1;\n\n\tfield:int sig;\toffset:8;\tsize:4;\tsigned:1;\n\tfield:int errno;\toffset:12;\tsize:4;\tsigned:1;\n\tfield:int code;\toffset:16;\tsize:4;\tsigned:1;\n\tfield:unsigned long sa_handler;\toffset:24;\tsize:8;\tsigned:0;\n\tfield:unsigned long sa_flags;\toffset:32;\tsize:8;\tsigned:0;\n\nprint fmt: \"sig=%d errno=%d code=%d sa_handler=%lx sa_flags=%lx\", REC->sig, REC->errno, REC->code, REC->sa_handler, REC->sa_flags\n",
+  "mode": "zlp-only",
+  "last_actual_trace": "# tracer: nop\n#\n# entries-in-buffer/entries-written: 2/2   #P:2\n#\n#                                _-----=> irqs-off/BH-disabled\n#                               / _----=> need-resched\n#                              | / _---=> hardirq/softirq\n#                              || / _--=> preempt-depth\n#                              ||| / _-=> migrate-disable\n#                              |||| /     delay\n#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION\n#              | |         |   |||||     |         |\n        ske-usbd-148     [001] ...1.    12.861358: sys_write -> 0xfffffffffffffffc\n        ske-usbd-148     [001] d..1.    12.861683: signal_deliver: sig=10 errno=0 code=-6 sa_handler=b5a9c16c6664 sa_flags=0\n",
+  "error": "USBTimeoutError: [Errno 110] Operation timed out",
+  "traceback": "Traceback (most recent call last):\n  File \"/opt/verification/verify-usb-interrupt-prototype.py\", line 226, in main\n    terminator=bytes(d.read(0x82,1,timeout=1500))\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/ske-venv/lib/python3.12/site-packages/usb/core.py\", line 1043, in read\n    ret = fn(\n          ^^^\n  File \"/opt/ske-venv/lib/python3.12/site-packages/usb/backend/libusb1.py\", line 850, in bulk_read\n    return self.__read(self.lib.libusb_bulk_transfer,\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/ske-venv/lib/python3.12/site-packages/usb/backend/libusb1.py\", line 958, in __read\n    _check(retval)\n  File \"/opt/ske-venv/lib/python3.12/site-packages/usb/backend/libusb1.py\", line 602, in _check\n    raise USBTimeoutError(_strerror(ret), ret, _libusb_errno[ret])\nusb.core.USBTimeoutError: [Errno 110] Operation timed out\n",
+  "failure_process_status": {
+    "bridge": null,
+    "fido": null,
+    "card": null
+  },
+  "card_log": "",
+  "bridge_log": "functionfs_bound controller=dummy_udc.0\nfunctionfs_configured endpoints=6\nfunctionfs_setup type=33 request=10 value=0 index=0 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=0 length=74 stalled=0\nfunctionfs_setup type=33 request=9 value=512 index=0 length=1 stalled=0\nfunctionfs_setup type=33 request=10 value=0 index=1 length=0 stalled=0\nfunctionfs_setup type=129 request=6 value=8704 index=1 length=34 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=161 request=1 value=768 index=0 length=8 stalled=0\nfunctionfs_setup type=33 request=9 value=768 index=0 length=8 stalled=0\n",
+  "test_count": 13,
+  "runner_exit": 0,
+  "prototype_helper_sha256": "5432376af4315ebccc935e9eaec665051b7e94e25cca4c36d2090ec3c6048d15",
+  "corrected_in_version": "0.33.0",
+  "trigger": "queued zero-length terminator after sixty-four-byte response interrupted by one actual kernel SIGUSR1/EINTR",
+  "original_native_components_byte_equal_frozen32": true,
+  "frozen32_archive_sha256": "13a0290df89adb87d86f7080029d5136fbc29f27169fc67284c94fa34e970855",
+  "fixed33_paired_identical_helper_verified": true,
+  "fixed33_paired_test_count": 34,
+  "fixed33_paired_usb_bridge_sha256": "cd7a86b0f189addd88eca8475ddda46192a0e970ef6c450265a27b356b286959",
+  "fixed33_paired_result_sha256": "9d37413b3047f485b790c716468645906e8ca60b6f478f52d3316ecb65a5c094",
+  "fixed33_paired_console_sha256": "edcdb426969b4cf8a152cb244443e0589a9d34a315612cf6e42670f988025224",
+  "original_console_sha256": "649f3f5f853f0deb21d471344522ec466d4a1546444458e253582b857e96d5aa",
+  "original_helper_source_sha256": "5432376af4315ebccc935e9eaec665051b7e94e25cca4c36d2090ec3c6048d15",
+  "current_status": "historical exact original32 native interruption failure; existing33 transfer retention fixes it; expanded34 verification"
+}

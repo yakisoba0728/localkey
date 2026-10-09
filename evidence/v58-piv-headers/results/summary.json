@@ -1,0 +1,87 @@
+{
+  "baseline_core_sha256": "b104af76f876607a6d46bb9ab8066c768a2b6449d3633023c1dc51773723ebd4",
+  "candidate_core_sha256": "4f6c71325b35550afc1530b39c811d1c2e44f090a8f489e9c1ee1b0fd4de19f1",
+  "patch_sha256": "3a24977d9aa6ee0947688aecc9e9702e6a79df7a7f4ac44b77a42b2850a66e48",
+  "environments": {
+    "mac": {
+      "socket": {
+        "management": {
+          "malformed_cases": 3,
+          "before_mutated": 3,
+          "after_immutable": 3,
+          "normal_sdk_scp03": true,
+          "restart_verified": true
+        },
+        "retries": {
+          "malformed_cases": 2,
+          "before_mutated": 2,
+          "after_immutable": 2,
+          "normal_sdk_scp03": true,
+          "restart_verified": true
+        },
+        "smartcard_checks": 97,
+        "profile_checks": 60,
+        "f9_checks": 6
+      },
+      "ifd": {
+        "management": {
+          "malformed_cases": 3,
+          "before_mutated": 3,
+          "after_immutable": 3,
+          "normal_sdk_scp03": true,
+          "restart_verified": true
+        },
+        "retries": {
+          "malformed_cases": 2,
+          "before_mutated": 2,
+          "after_immutable": 2,
+          "normal_sdk_scp03": true,
+          "restart_verified": true
+        },
+        "smartcard_checks": 97,
+        "profile_checks": 60,
+        "f9_checks": 6
+      }
+    },
+    "linux": {
+      "socket": {
+        "management": {
+          "malformed_cases": 3,
+          "before_mutated": 3,
+          "after_immutable": 3,
+          "normal_sdk_scp03": true,
+          "restart_verified": true
+        },
+        "retries": {
+          "malformed_cases": 2,
+          "before_mutated": 2,
+          "after_immutable": 2,
+          "normal_sdk_scp03": true,
+          "restart_verified": true
+        },
+        "smartcard_checks": 97,
+        "profile_checks": 60,
+        "f9_checks": 6
+      },
+      "ifd": {
+        "management": {
+          "malformed_cases": 3,
+          "before_mutated": 3,
+          "after_immutable": 3,
+          "normal_sdk_scp03": true,
+          "restart_verified": true
+        },
+        "retries": {
+          "malformed_cases": 2,
+          "before_mutated": 2,
+          "after_immutable": 2,
+          "normal_sdk_scp03": true,
+          "restart_verified": true
+        },
+        "smartcard_checks": 97,
+        "profile_checks": 60,
+        "f9_checks": 6
+      }
+    }
+  }
+}
