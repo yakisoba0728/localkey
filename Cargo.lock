@@ -402,6 +402,7 @@ name = "lk-ccid"
 version = "0.1.0"
 dependencies = [
  "lk-core",
+ "lk-testkit",
 ]
 
 [[package]]
@@ -409,6 +410,8 @@ name = "lk-codec"
 version = "0.1.0"
 dependencies = [
  "lk-core",
+ "lk-crypto",
+ "lk-testkit",
 ]
 
 [[package]]
@@ -444,6 +447,7 @@ name = "lk-ctaphid"
 version = "0.1.0"
 dependencies = [
  "lk-core",
+ "lk-testkit",
 ]
 
 [[package]]
@@ -463,6 +467,7 @@ dependencies = [
  "lk-otp",
  "lk-piv",
  "lk-sd",
+ "lk-testkit",
 ]
 
 [[package]]
@@ -472,6 +477,7 @@ dependencies = [
  "lk-codec",
  "lk-core",
  "lk-crypto",
+ "lk-testkit",
 ]
 
 [[package]]
@@ -481,6 +487,7 @@ dependencies = [
  "lk-codec",
  "lk-core",
  "lk-crypto",
+ "lk-testkit",
 ]
 
 [[package]]
@@ -489,6 +496,7 @@ version = "0.1.0"
 dependencies = [
  "lk-codec",
  "lk-core",
+ "lk-testkit",
 ]
 
 [[package]]
@@ -498,6 +506,7 @@ dependencies = [
  "lk-codec",
  "lk-core",
  "lk-crypto",
+ "lk-testkit",
 ]
 
 [[package]]
@@ -507,6 +516,7 @@ dependencies = [
  "lk-codec",
  "lk-core",
  "lk-crypto",
+ "lk-testkit",
 ]
 
 [[package]]
@@ -516,6 +526,7 @@ dependencies = [
  "lk-codec",
  "lk-core",
  "lk-crypto",
+ "lk-testkit",
 ]
 
 [[package]]
@@ -525,6 +536,7 @@ dependencies = [
  "lk-codec",
  "lk-core",
  "lk-crypto",
+ "lk-testkit",
 ]
 
 [[package]]
@@ -534,6 +546,7 @@ dependencies = [
  "lk-codec",
  "lk-core",
  "lk-crypto",
+ "lk-testkit",
 ]
 
 [[package]]
@@ -541,7 +554,7 @@ name = "lk-testkit"
 version = "0.1.0"
 dependencies = [
  "lk-core",
- "lk-device",
+ "lk-crypto",
 ]
 
 [[package]]

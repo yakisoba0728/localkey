@@ -11,4 +11,4 @@ workspace = true
 
 [dependencies]
 lk-core.workspace = true
-lk-device.workspace = true
+lk-crypto.workspace = true

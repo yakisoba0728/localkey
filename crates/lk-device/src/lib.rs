@@ -11,6 +11,8 @@
 
 #![forbid(unsafe_code)]
 
+pub mod storage;
+
 use lk_core::{Millis, UsbInterfaces};
 
 /// Everything the host can deliver to the device.

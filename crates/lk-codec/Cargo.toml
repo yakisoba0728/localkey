@@ -11,3 +11,7 @@ workspace = true
 
 [dependencies]
 lk-core.workspace = true
+
+[dev-dependencies]
+lk-testkit.workspace = true
+lk-crypto.workspace = true

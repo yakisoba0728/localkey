@@ -13,3 +13,6 @@ workspace = true
 lk-core.workspace = true
 lk-crypto.workspace = true
 lk-codec.workspace = true
+
+[dev-dependencies]
+lk-testkit.workspace = true
