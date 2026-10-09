@@ -1,2 +1,0 @@
-release/security-key-emulator.zip filter=lfs diff=lfs merge=lfs -text
-evidence/v50-linux-ctap/native-guest-v49-card/guest-initramfs.gz filter=lfs diff=lfs merge=lfs -text

@@ -1,8 +1,0 @@
-{
-  "classification": "builder_package_metadata_setup_failure_before_qemu_or_native_helper",
-  "native_protocol_helper_executed": false,
-  "production_source_modified": false,
-  "actual_error": "importlib.metadata.PackageNotFoundError: No package metadata was found for fido2",
-  "exit_code": 1,
-  "host_log_sha256": "2256165052d4a8dda43bcd0923fdc6244856e15f2c7952abf03178f3f45b35a1"
-}

@@ -1,0 +1,51 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.89"
+publish = false
+# The project's own license is still undecided (see docs/DESIGN.md §12).
+
+[workspace.dependencies]
+lk-core = { path = "crates/lk-core" }
+lk-crypto = { path = "crates/lk-crypto" }
+lk-codec = { path = "crates/lk-codec" }
+lk-ctaphid = { path = "crates/lk-ctaphid" }
+lk-ccid = { path = "crates/lk-ccid" }
+lk-fido = { path = "crates/lk-fido" }
+lk-oath = { path = "crates/lk-oath" }
+lk-otp = { path = "crates/lk-otp" }
+lk-piv = { path = "crates/lk-piv" }
+lk-openpgp = { path = "crates/lk-openpgp" }
+lk-hsmauth = { path = "crates/lk-hsmauth" }
+lk-sd = { path = "crates/lk-sd" }
+lk-mgmt = { path = "crates/lk-mgmt" }
+lk-device = { path = "crates/lk-device" }
+lk-testkit = { path = "crates/lk-testkit" }
+
+# Third-party crates are allowed only inside lk-crypto (docs/DESIGN.md §8).
+p256 = { version = "0.14", default-features = false, features = ["ecdsa", "ecdh", "arithmetic"] }
+p384 = { version = "0.14", default-features = false, features = ["ecdsa", "ecdh", "arithmetic"] }
+ed25519-dalek = { version = "3", default-features = false, features = ["zeroize"] }
+x25519-dalek = { version = "3", default-features = false, features = ["static_secrets", "zeroize"] }
+aes = "0.9"
+aes-gcm = { version = "0.11", default-features = false, features = ["aes"] }
+cbc = "0.2"
+cmac = "0.8"
+sha1 = "0.11"
+sha2 = "0.11"
+hmac = "0.13"
+hkdf = "0.13"
+getrandom = "0.4"
+zeroize = "1.9"
+subtle = "2.6"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_debug_implementations = "warn"
+
+[workspace.lints.clippy]
+unwrap_used = "warn"

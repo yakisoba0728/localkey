@@ -1,7 +1,0 @@
-# CTAP hmac-secret with user presence disabled
-
-Base: published v0.52.0 source. The [FIDO CTAP 2.1 hmac-secret extension processing rule](https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-hmac-secret-extension) requires `CTAP2_ERR_UNSUPPORTED_OPTION` when `options.up` is false. The published implementation silently omitted the extension output and returned a signed assertion.
-
-An unmodified python-fido2 client over private Unix CTAPHID reproduced success (`0x00`) on the published daemon in `sdk-baseline.json`; the candidate returns `0x2b` in `sdk-fixed.json`. A preceding and following ordinary `up=false` pre-flight still return assertions without incrementing the credential counter; a normal assertion still increments it. No physical key or host USB/HID device was accessed.
-
-`source.patch` adds the option guard after PIN authentication and candidate credential selection, preserving those error precedences. It updates the old C++ expectation that success without extension output was acceptable and adds an independent request-shape test. The new test fails against the published source in `cpp-baseline.log` and passes with the fix. The full macOS C++ suite passes 122 cases / 11,639 assertions in `cpp-full-fixed.log`. The actual 5.7.4 firmware response to this invalid request was not measured; Linux ARM64 build and USB guest are integration gates.

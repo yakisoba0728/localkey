@@ -1,0 +1,25 @@
+[package]
+name = "lk-device"
+description = "Composite device model that routes host inputs to applications"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+lk-core.workspace = true
+lk-crypto.workspace = true
+lk-codec.workspace = true
+lk-ctaphid.workspace = true
+lk-ccid.workspace = true
+lk-fido.workspace = true
+lk-oath.workspace = true
+lk-otp.workspace = true
+lk-piv.workspace = true
+lk-openpgp.workspace = true
+lk-hsmauth.workspace = true
+lk-sd.workspace = true
+lk-mgmt.workspace = true

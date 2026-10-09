@@ -1,15 +1,35 @@
 # localkey
 
-An unofficial software security-key emulator project. Its current compatibility target is the externally observable behavior of a YubiKey 5C Nano running firmware 5.7.4 on macOS and Linux. **Full equivalence has not been established.** It cannot reproduce manufacturer attestation trust, a secure element, or a physical touch sensor.
+보안키(YubiKey 5C Nano, 펌웨어 5.7.4)의 외부 동작을 재현하는 소프트웨어 엔진입니다. Rust로 처음부터 새로
+작성합니다. 지금은 **설계 단계**입니다. `docs/DESIGN.md`가 승인되면 단계별로 구현합니다.
 
-The repository starts from the verified v0.64.0 release. It contains the C++ and Python source, Mac/Linux compiled artifacts, versioned evidence, full file-hash manifest, documentation, and the release ZIP. The original reference is [`madeye/swpasskey`](https://github.com/madeye/swpasskey) at commit `59f08259202028888934597513515fc3cb8ca8c9`; its MIT notice is retained in [LICENSE](LICENSE). This project is not affiliated with Yubico or certified as a hardware authenticator.
+- 엔진은 전송 계층과 분리된 동기식 상태 기계입니다. USB/HID 장치 등록, 데몬, UI는 이후 "프로그램화"
+  단계에서 만듭니다.
+- 다른 프로젝트의 코드는 쓰지 않습니다. 예외는 암호 원시 기능뿐이고, `lk-crypto` 한 곳에서만 씁니다.
+  목록과 라이선스는 `THIRD_PARTY.md`에 있습니다.
+- 제조사 증명 신뢰, 보안 칩, 물리 터치 센서는 소프트웨어로 재현할 수 없습니다.
 
-Read [the repository handoff](REPOSITORY_HANDOFF.md) first when continuing work. [Implementation status](implementation-status.json) and the [compatibility matrix](compatibility-matrix.json) define what has and has not been verified. [Progress history](docs/PROGRESS_HISTORY.md), [evidence index](docs/EVIDENCE_INDEX.md), [validation procedure](docs/REPRODUCE_VALIDATION.md), and [open gaps](docs/OPEN_GAPS.md) preserve the prior work.
+## 구성
 
-The release was verified with 59 Python reports containing 5,889 checks, Mac/Linux C++ suites of 140 cases and 13,748 assertions each, 82 independent Linux FIDO SDK checks, and an isolated no-NIC USB guest. The USB guest passed all 12 flows on an identical-image retry; its first run failed after 10 flows with a kernel/FunctionFS warning. Both raw logs are preserved in [v0.64 integration evidence](evidence/v64-integration/README.md), and the transport stability issue remains open. These checks do not establish identical physical firmware responses or timing.
+| 경로 | 내용 |
+| --- | --- |
+| `docs/DESIGN.md` | 설계 문서 (경계, 장치 모델, 크레이트, 저장, 암호 정책, 구현 순서, 미결 질문) |
+| `crates/` | 워크스페이스 크레이트 15개 (현재는 경계 타입과 문서만 있는 뼈대) |
+| `reference/` | 실물 키에서 읽은 공개 바이트, legacy 동작 카탈로그, 프로필 값 |
+| `tools/license_check.py` | 의존성 라이선스와 "외부 의존은 `lk-crypto`에만" 규칙 검사 |
+| `THIRD_PARTY.md` | 제3자 크레이트 목록 (자동 생성) |
 
-The [release ZIP](release/security-key-emulator.zip) and one historical guest image use Git LFS because they exceed GitHub's regular Git file limit. Run `git lfs pull` after cloning. The ZIP SHA-256 is recorded in [the checksum file](release/security-key-emulator.zip.sha256), and [manifest.json](manifest.json) hashes every file in the original v0.64.0 release snapshot. `README.md`, `REPOSITORY_HANDOFF.md`, `.gitattributes`, and `release-tools/` are repository additions; they are outside that frozen manifest.
+## 빌드와 검사
 
-Run `python3 repo-tools/verify_snapshot.py` to check the complete release snapshot, ZIP and both USB guest attempts without contacting a device.
+```sh
+CARGO_BUILD_JOBS=2 cargo check --workspace
+CARGO_BUILD_JOBS=2 cargo test --workspace
+python3 tools/license_check.py            # 정책 검사
+python3 tools/license_check.py --write    # THIRD_PARTY.md 갱신
+```
 
-`pyproject.toml` and `source/CMakeLists.txt` retain older internal version strings from development. The authoritative delivered snapshot version is `manifest.json: 0.64.0`.
+## 이전 구현
+
+이전 구현은 `madeye/swpasskey` 포크와 Python 카드 모듈로 된 v0.64입니다. 태그 `legacy-v0.64.0`과 브랜치
+`legacy/v0.64-tooling`에만 남아 있습니다. 새 엔진은 그 코드를 쓰지 않습니다. 동작 기록만
+`reference/BEHAVIOR_CATALOG.md`로 참고합니다.

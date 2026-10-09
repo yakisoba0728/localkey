@@ -1,0 +1,15 @@
+[package]
+name = "lk-piv"
+description = "PIV application (NIST SP 800-73-4 plus vendor extensions)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+lk-core.workspace = true
+lk-crypto.workspace = true
+lk-codec.workspace = true

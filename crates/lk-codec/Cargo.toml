@@ -1,0 +1,13 @@
+[package]
+name = "lk-codec"
+description = "CTAP2 canonical CBOR, BER-TLV and ISO 7816-4 APDU codecs"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+lk-core.workspace = true

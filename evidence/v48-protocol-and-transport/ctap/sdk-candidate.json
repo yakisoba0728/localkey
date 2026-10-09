@@ -1,8 +1,0 @@
-{
-  "passed": true,
-  "expect": "fixed",
-  "minPinLength_extension_after_empty_list": 8,
-  "previous_allowlist_retained": true,
-  "transport": "private Unix CTAPHID; unmodified python-fido2 client",
-  "physical_device_access": false
-}

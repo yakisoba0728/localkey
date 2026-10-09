@@ -1,0 +1,28 @@
+[package]
+name = "lk-crypto"
+description = "The only crate that touches third-party cryptography"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+lk-core.workspace = true
+p256.workspace = true
+p384.workspace = true
+ed25519-dalek.workspace = true
+x25519-dalek.workspace = true
+aes.workspace = true
+aes-gcm.workspace = true
+cbc.workspace = true
+cmac.workspace = true
+sha1.workspace = true
+sha2.workspace = true
+hmac.workspace = true
+hkdf.workspace = true
+getrandom.workspace = true
+zeroize.workspace = true
+subtle.workspace = true

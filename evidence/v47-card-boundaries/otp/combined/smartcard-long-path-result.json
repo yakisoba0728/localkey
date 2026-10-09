@@ -1,9 +1,0 @@
-{
-  "subject": "new CCID/APDU emulator",
-  "physical_device_access": false,
-  "transport": "private Unix socket with CCID frames",
-  "system_pcsc_reader_registered": false,
-  "passed": false,
-  "tests": [],
-  "error": "RuntimeError: Traceback (most recent call last):\n  File \"<frozen runpy>\", line 203, in _run_module_as_main\n  File \"<frozen runpy>\", line 88, in _run_code\n  File \"/Users/yakisoba0728/Documents/Codex/2026-10-07/new-chat/work/security-key-emulator-v47-candidate/security-key-emulator/emucard/service.py\", line 367, in <module>\n    main()\n    ~~~~^^\n  File \"/Users/yakisoba0728/Documents/Codex/2026-10-07/new-chat/work/security-key-emulator-v47-candidate/security-key-emulator/emucard/service.py\", line 349, in main\n    with Server(a.socket, state, touch) as server:\n         ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/yakisoba0728/Documents/Codex/2026-10-07/new-chat/work/security-key-emulator-v47-candidate/security-key-emulator/emucard/service.py\", line 126, in __init__\n    super().__init__(str(path), Handler)\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/yakisoba0728/.local/share/uv/python/cpython-3.13.15-macos-aarch64-none/lib/python3.13/socketserver.py\", line 457, in __init__\n    self.server_bind()\n    ~~~~~~~~~~~~~~~~^^\n  File \"/Users/yakisoba0728/.local/share/uv/python/cpython-3.13.15-macos-aarch64-none/lib/python3.13/socketserver.py\", line 478, in server_bind\n    self.socket.bind(self.server_address)\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^\nOSError: AF_UNIX path too long\n"
-}

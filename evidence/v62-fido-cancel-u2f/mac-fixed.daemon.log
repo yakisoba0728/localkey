@@ -1,3 +1,0 @@
-{"ts":"2026-10-09T18:40:05.768Z","lvl":"warn","event":"hid_socket_transport","path":"/var/folders/zr/vy43gthn00q9wntc4xvs_k8h0000gn/T/ske-v62-cancel-u2f-nlcfaysa/hid.sock","note":"development transport, not a HID device"}
-
-[swpasskey] Create a passkey on "u2f:2222222222222222222222222222222222222222222222222222222222222222"? [y/N] 

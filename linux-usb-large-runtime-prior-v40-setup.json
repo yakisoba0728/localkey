@@ -1,9 +1,0 @@
-{
-  "passed": false,
-  "runner_exit": 0,
-  "host_gate_error": "AssertionError: ",
-  "original_frozen_archive_sha256": "c327a32eb64f6f8fdb1fc0a343cf76e8c52d5680e170ae623f77f2a79ea6a7d5",
-  "original_linux_source_sha256": "d1be0586e061e3529bfea2fc4d3b716a137a6f10032dac94fe16d7eac3786dfc",
-  "prototype_helper_host_sha256": "25445871fa747fa586d302a9c7d83e554c5753fb6ce82b2f7c7d115c3957f27f",
-  "console_sha256": "759d4971beb9cc1cb9c3cf6b6e143188f058580b10c676ec49e9a95175d05adc"
-}

@@ -1,0 +1,14 @@
+[package]
+name = "lk-mgmt"
+description = "Management application: device information and configuration"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+lk-core.workspace = true
+lk-codec.workspace = true

@@ -1,7 +1,0 @@
-{
-  "classification": "private_test_unix_socket_setup_path_length_failure",
-  "native_protocol_case_executed": false,
-  "production_source_changed": false,
-  "actual_error": "OSError: AF_UNIX path too long",
-  "corrective_action": "use original short /tmp fixture path, observer protocol commands unchanged"
-}

@@ -1,6 +1,0 @@
-{"ts":"2026-10-09T17:37:44.437Z","lvl":"warn","event":"hid_socket_transport","path":"/tmp/swpk-resync-56477-31157910129916.sock","note":"development transport, not a HID device"}
-Filters: [loop] [resync] [socket]
-Randomness seeded to: 1868553235
-===============================================================================
-All tests passed (10 assertions in 1 test case)
-

@@ -1,9 +1,0 @@
-# CTAP 2.1 present-but-empty allowList candidate
-
-Base: published v0.51 source. Only `src/ctap/get_assertion.cpp` and its existing `tests/get_assertion_test.cpp` case change. No published output or physical key was modified.
-
-The [FIDO CTAP 2.1 specification, authenticatorGetAssertion allowList and algorithm](https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetAssertion) says a platform must omit an empty allowList and that, if the parameter is present, an assertion may use only a denoted credential. The current emulator treated a present empty array as an absent array. A request could therefore sign with a discoverable credential not denoted by the supplied list. The one-branch fix treats all present lists as restricting selection; an empty list yields CTAP2_ERR_NO_CREDENTIALS (`0x2e`) after the existing PIN-authentication checks. The exact response of a physical 5.7.4 YubiKey to this invalid platform input has not been measured.
-
-Changing the C++ test first reproduced the failure: the baseline focused test passed 4 assertions and failed at the empty-list expectation. The fixed focused test passed 9/9, and the full macOS C++ suite passed 121 cases / 11,631 assertions. An unmodified python-fido2 client over the private Unix CTAPHID socket created a resident credential, then compared absent, empty, nonmatching and matching lists. On v0.51 an empty list signed and advanced the counter; on the candidate it returned `0x2e` with no counter advance. Both versions still rejected a nonmatching list and accepted an explicit matching list. `sdk-baseline.json`, `sdk-candidate.json`, and raw logs preserve these observations.
-
-Linux ARM64 build, native USB guest and physical-firmware differential validation are separate integration gates. No host USB/HID or physical key was opened by this candidate.
