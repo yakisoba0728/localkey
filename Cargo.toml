@@ -30,6 +30,7 @@ lk-run = { path = "crates/lk-run" }
 lk-wire = { path = "crates/lk-wire" }
 lk-uhid = { path = "crates/lk-uhid" }
 lk-gadget = { path = "crates/lk-gadget" }
+lk-vpcd = { path = "crates/lk-vpcd" }
 
 # Third-party crates are allowed only inside lk-crypto (docs/DESIGN.md §8).
 p256 = { version = "0.14", default-features = false, features = ["ecdsa", "ecdh", "arithmetic"] }

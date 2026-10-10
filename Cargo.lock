@@ -643,6 +643,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "lk-vpcd"
+version = "0.1.0"
+dependencies = [
+ "lk-core",
+ "lk-device",
+ "lk-run",
+]
+
+[[package]]
 name = "lk-wire"
 version = "0.1.0"
 dependencies = [

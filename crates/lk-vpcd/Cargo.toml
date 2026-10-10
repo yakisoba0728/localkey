@@ -1,0 +1,15 @@
+[package]
+name = "lk-vpcd"
+description = "PC/SC transport for the localkey program through the vsmartcard vpcd reader driver"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+lk-core.workspace = true
+lk-device.workspace = true
+lk-run.workspace = true
