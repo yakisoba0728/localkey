@@ -419,3 +419,37 @@ pub fn plain(sd: &mut SecurityDomain, host: &mut dyn Host, apdu: &[u8]) -> Vec<u
 pub fn status(resp: &[u8]) -> u16 {
     u16::from_be_bytes([resp[resp.len() - 2], resp[resp.len() - 1]])
 }
+
+/// A host that lends a wall-clock reading (`Host::unix_time`, docs/CONTRACTS.md
+/// "Applications B"), which `lk_testkit::TestHost` does not offer. Everything else
+/// (time, profile, entropy, persistence and its fault injection) is the wrapped host.
+#[derive(Debug, Default)]
+pub struct ClockHost {
+    pub inner: lk_testkit::TestHost,
+    /// Seconds since the Unix epoch, or `None` for no wall clock.
+    pub unix_time: Option<u64>,
+}
+
+impl lk_core::Entropy for ClockHost {
+    fn fill(&mut self, out: &mut [u8]) {
+        self.inner.fill(out);
+    }
+}
+
+impl Host for ClockHost {
+    fn now(&self) -> lk_core::Millis {
+        self.inner.now()
+    }
+
+    fn profile(&self) -> &lk_core::DeviceProfile {
+        self.inner.profile()
+    }
+
+    fn unix_time(&self) -> Option<u64> {
+        self.unix_time
+    }
+
+    fn persist(&mut self, record: lk_core::Record, plaintext: &[u8]) -> Result<(), lk_core::StoreError> {
+        self.inner.persist(record, plaintext)
+    }
+}

@@ -603,3 +603,34 @@ fn a_write_sequence_ends_when_its_token_expires() {
     );
     assert_eq!(read_all(&mut auth, &mut host), array);
 }
+
+#[test]
+fn with_always_uv_and_no_pin_a_presented_token_is_pin_auth_invalid() {
+    // Regression: verification answered CTAP2_ERR_PIN_NOT_SET when no PIN was set. CTAP 2.1
+    // §6.10.2 step 5 applies when "the authenticator is protected by some form of user
+    // verification or the alwaysUv option ID is present and true": no pinUvAuthParam is
+    // CTAP2_ERR_PUAT_REQUIRED (step 5.1) and a failed verify() is CTAP2_ERR_PIN_AUTH_INVALID
+    // (step 5.4.1); without a PIN no token is in use, so verify() fails (§6.5.6).
+    let (_, mut host) = device();
+    let mut auth = with_state(&mut host, |s| s.pin.always_uv = true);
+    let forged = Token {
+        protocol: 2,
+        value: vec![0x42; 32],
+    };
+    let array = INITIAL_LARGE_BLOB;
+    assert_eq!(
+        write_fragment(&mut auth, &mut host, &array, 0, Some(array.len()), None),
+        vec![status::PUAT_REQUIRED]
+    );
+    assert_eq!(
+        write_fragment(
+            &mut auth,
+            &mut host,
+            &array,
+            0,
+            Some(array.len()),
+            Some(&forged)
+        ),
+        vec![status::PIN_AUTH_INVALID]
+    );
+}

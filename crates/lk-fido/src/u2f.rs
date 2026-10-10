@@ -2,7 +2,11 @@
 //! carried in CTAPHID_MSG (CTAP 2.1 §11.2, §10 "Interoperating with CTAP1/U2F").
 //!
 //! - Request framing: ISO 7816-4 APDUs in short or extended length (§3.1, `lk_codec::apdu`);
-//!   a malformed APDU is `SW_WRONG_LENGTH` (6700).
+//!   a malformed APDU is `SW_WRONG_LENGTH` (6700). The pre-ISO layout of §9
+//!   "Implementation Considerations", `CLA INS P1 P2 00 00 00 Le1 Le2` (an extended Lc of
+//!   zero followed by an extended Le), is accepted as a command without data: §9 documents
+//!   it for U2F_VERSION, and python-fido2 (`Ctap1.send_apdu`), Firefox's authenticator-rs and
+//!   Chromium's legacy version request still send it.
 //! - CLA other than 00 is `SW_CLA_NOT_SUPPORTED` (6E00); INS other than REGISTER (01),
 //!   AUTHENTICATE (02) and VERSION (03) is `SW_INS_NOT_SUPPORTED` (6D00) (§3.3).
 //! - REGISTER (§4) issues an ES256 key handle in the same format as a CTAP
@@ -43,6 +47,20 @@ fn status(code: u16, presence: U2fPresence) -> (Vec<u8>, U2fPresence) {
     (apdu::status(code), presence)
 }
 
+/// Parse a request APDU, accepting the §9 legacy layout `CLA INS P1 P2 00 00 00 Le1 Le2`
+/// as the ISO 7816-4 case 2E command `CLA INS P1 P2 00 Le1 Le2`. ISO 7816-4 gives that
+/// byte string no other meaning (an extended Lc may not be zero), so nothing valid is
+/// reinterpreted.
+fn parse_request(raw: &[u8]) -> Result<Command, u16> {
+    let parsed = match raw {
+        [cla, ins, p1, p2, 0, 0, 0, le1, le2] => {
+            Command::parse(&[*cla, *ins, *p1, *p2, 0, *le1, *le2])
+        }
+        _ => Command::parse(raw),
+    };
+    parsed.map_err(|err| err.sw())
+}
+
 impl Authenticator {
     pub(crate) fn handle_u2f(
         &mut self,
@@ -50,9 +68,9 @@ impl Authenticator {
         user_present: bool,
         host: &mut dyn Host,
     ) -> (Vec<u8>, U2fPresence) {
-        let cmd = match Command::parse(raw) {
+        let cmd = match parse_request(raw) {
             Ok(cmd) => cmd,
-            Err(err) => return status(err.sw(), U2fPresence::NotNeeded),
+            Err(sw) => return status(sw, U2fPresence::NotNeeded),
         };
         if cmd.cla != 0x00 {
             return status(sw::CLA_NOT_SUPPORTED, U2fPresence::NotNeeded);
@@ -101,7 +119,8 @@ impl Authenticator {
         let Ok(keys_changed) = ensure_keys(&mut next, host) else {
             return status(sw::UNKNOWN, U2fPresence::NotNeeded);
         };
-        let (Some(secret), Some(attestation)) = (next.secret, next.attestation.as_ref()) else {
+        let (Some(secret), Some(attestation)) = (next.secret.clone(), next.attestation.as_ref())
+        else {
             return status(sw::UNKNOWN, U2fPresence::NotNeeded);
         };
         let cred = CredSecret::generate(Alg::Es256, 1, false, host);

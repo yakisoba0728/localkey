@@ -516,3 +516,90 @@ fn every_tampered_credential_id_and_key_handle_is_refused() {
         status::OK
     );
 }
+
+/// What python-fido2's `Ctap1.send_apdu` puts on the wire:
+/// `struct.pack(">BBBBBH", cla, ins, p1, p2, 0, len(data)) + data + b"\0\0"`, i.e. an
+/// extended Lc (`00 Lc1 Lc2`, zero for no data) followed by an extended Le of `00 00`.
+fn python_fido2_apdu(ins: u8, p1: u8, data: &[u8]) -> Vec<u8> {
+    let len = u16::try_from(data.len()).unwrap().to_be_bytes();
+    [
+        &[0x00, ins, p1, 0x00, 0x00, len[0], len[1]][..],
+        data,
+        &[0x00, 0x00],
+    ]
+    .concat()
+}
+
+#[test]
+fn legacy_version_encoding_is_accepted() {
+    // U2F raw message formats v1.2 §9 "Implementation Considerations": earlier revisions
+    // defined U2F_VERSION as 00 03 00 00 00 00 00 00 00 (an extended Lc of zero and an
+    // extended Le), which is not ISO 7816-4. python-fido2 (`Ctap1.get_version`),
+    // Firefox's authenticator-rs and Chromium's legacy version request send exactly this;
+    // it used to be refused with 6700.
+    let (mut auth, mut host) = device();
+    let legacy = python_fido2_apdu(0x03, 0x00, &[]);
+    assert_eq!(
+        legacy,
+        [0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+    );
+    let (response, presence) = auth.u2f(&legacy, false, &mut host);
+    assert_eq!(response, [b"U2F_V2".as_slice(), &[0x90, 0x00]].concat());
+    assert_eq!(presence, U2fPresence::NotNeeded);
+    // The ISO 7816-4 forms Chromium sends (case 2E) and the short case 2S still work.
+    for iso in [
+        vec![0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00],
+        vec![0x00, 0x03, 0x00, 0x00, 0x00],
+    ] {
+        let (response, _) = auth.u2f(&iso, false, &mut host);
+        assert_eq!(response, [b"U2F_V2".as_slice(), &[0x90, 0x00]].concat());
+    }
+    // The legacy layout means "no data": REGISTER in it lacks its 64 bytes.
+    let (response, _) = auth.u2f(&python_fido2_apdu(0x01, 0x03, &[]), true, &mut host);
+    assert_eq!(response, vec![0x67, 0x00]);
+    // A zero extended Lc followed by anything but a two-byte Le stays malformed.
+    for bad in [
+        vec![0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+        vec![0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+    ] {
+        let (response, _) = auth.u2f(&bad, false, &mut host);
+        assert_eq!(response, vec![0x67, 0x00], "{bad:02x?}");
+    }
+}
+
+#[test]
+fn python_fido2_register_and_authenticate_shapes_work() {
+    // python-fido2 `Ctap1.register` / `Ctap1.authenticate` (extended Lc, data, Le 00 00);
+    // U2F raw message formats v1.2 §4.1, §5.1.
+    let (mut auth, mut host) = device();
+    let (response, presence) = auth.u2f(
+        &python_fido2_apdu(0x01, 0x00, &[&CHALLENGE[..], &app()].concat()),
+        true,
+        &mut host,
+    );
+    assert_eq!(presence, U2fPresence::Consumed);
+    let (data, sw) = split(&response);
+    assert_eq!(sw, sw::OK);
+    let reg = parse_register(data);
+    let mut request = Vec::new();
+    request.extend_from_slice(&CHALLENGE);
+    request.extend_from_slice(&app());
+    request.push(u8::try_from(reg.key_handle.len()).unwrap());
+    request.extend_from_slice(&reg.key_handle);
+    let (response, presence) = auth.u2f(&python_fido2_apdu(0x02, 0x03, &request), true, &mut host);
+    assert_eq!(presence, U2fPresence::Consumed);
+    let (data, sw) = split(&response);
+    assert_eq!(sw, sw::OK);
+    assert_eq!(data[0], 0x01, "user presence");
+    let signed = [&app()[..], &data[..5], &CHALLENGE].concat();
+    assert!(ecdsa_verify_prehash(
+        Curve::P256,
+        &reg.public_key,
+        &sha256(&signed),
+        &data[5..]
+    ));
+    // Check-only (P1 07) with a known handle: 6985 without asking for a touch.
+    let (response, presence) = auth.u2f(&python_fido2_apdu(0x02, 0x07, &request), false, &mut host);
+    assert_eq!(response, vec![0x69, 0x85]);
+    assert_eq!(presence, U2fPresence::NotNeeded);
+}

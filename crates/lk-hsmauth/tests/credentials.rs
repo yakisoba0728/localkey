@@ -304,6 +304,14 @@ fn list_longer_than_256_bytes_uses_get_response() {
     // Extended Le: everything at once.
     let (all, status) = card.send_raw(&[0, ins::LIST, 0, 0, 0, 0, 0]);
     assert_eq!((all.len(), status), (32 * 69, sw::OK));
+    // yubikit 5.0 extended frames (`_encode_extended_apdu`, data-less: `00 00 00`, Ne
+    // 65 536): LIST in one piece, and a GET RESPONSE that takes all that remains.
+    let (all, status) = card.send_raw(&[0, ins::LIST, 0, 0, 0, 0, 0]);
+    assert_eq!((all.len(), status), (32 * 69, sw::OK));
+    let (_, status) = card.send_raw(&apdu(ins::LIST, 0, 0, &[]));
+    assert_eq!(status, 0x6100);
+    let (rest, status) = card.send_raw(&[0, ins::GET_RESPONSE, 0, 0, 0, 0, 0]);
+    assert_eq!((rest.len(), status), (32 * 69 - 256, sw::OK));
     // GET RESPONSE with nothing pending.
     assert_eq!(card.send_raw(&[0, ins::GET_RESPONSE, 0, 0, 0]).1, sw::CONDITIONS);
     // Another command drops pending response data.
@@ -400,11 +408,29 @@ fn unknown_instruction_class_and_malformed_apdus() {
     for unknown in [0x00, 0x0C, 0x20, 0xA4, 0xCA, 0xFF] {
         assert_eq!(card.cmd(unknown, &[]).1, sw::INS_NOT_SUPPORTED, "INS {unknown:02x}");
     }
-    for cla in [0x80, 0x84, 0x01, 0x40, 0xFF] {
+    for cla in [0x80, 0x84, 0x20, 0x40, 0xFF] {
         assert_eq!(card.send_raw(&[cla, ins::LIST, 0, 0]).1, sw::CLA_NOT_SUPPORTED, "CLA {cla:02x}");
     }
-    // Secure-messaging indication bits are tolerated (the secure channel unwrapped it).
-    assert_eq!(card.send_raw(&[0x04, ins::GET_VERSION, 0, 0]).1, sw::OK);
+    // `docs/CONTRACTS.md` "APDU conventions": secure-messaging bits are `6882` — the
+    // device's secure channel clears them after unwrapping, so a command that still has
+    // them was never verified (before the review fix `04` was processed as plaintext).
+    // Logical channels are `6881` (ISO/IEC 7816-4 §5.1.1), as in lk-piv and lk-oath.
+    for cla in [0x04, 0x08, 0x0C, 0x14, 0x1C, 0x07] {
+        assert_eq!(card.send_raw(&[cla, ins::GET_VERSION, 0, 0]).1, sw::SM_NOT_SUPPORTED, "CLA {cla:02x}");
+    }
+    for cla in [0x01, 0x02, 0x03, 0x13] {
+        assert_eq!(card.send_raw(&[cla, ins::GET_VERSION, 0, 0]).1, sw::LOGICAL_CHANNEL_NOT_SUPPORTED, "CLA {cla:02x}");
+    }
+    // A secure-messaging CALCULATE is not run: no try is spent.
+    assert_eq!(card.put_symmetric("s", [1; 16], [2; 16], pw("p")), sw::OK);
+    let mut calc = apdu(ins::CALCULATE, 0, 0, &calculate_data("s", &[0; 16], None, None, &pw("wrong")));
+    calc[0] = 0x04;
+    assert_eq!(card.send_raw(&calc).1, sw::SM_NOT_SUPPORTED);
+    assert_eq!(card.retries_of("s"), Some(8));
+    // A secure-messaging part ends a chain that was in progress.
+    assert_eq!(card.send_raw(&[0x10, ins::PUT, 0, 0, 1, 0x7B]).1, sw::OK);
+    assert_eq!(card.send_raw(&[0x04, ins::PUT, 0, 0, 1, 0x10]).1, sw::SM_NOT_SUPPORTED);
+    assert_eq!(card.send_raw(&[0x00, ins::GET_VERSION, 0, 0]).1, sw::OK, "the chain was dropped");
     assert_eq!(card.send_raw(&[0x00, ins::LIST]).1, sw::WRONG_LENGTH);
     assert_eq!(card.send_raw(&[0x00, ins::LIST, 0, 0, 2, 1]).1, sw::WRONG_LENGTH);
     // A changed header in the middle of a chain.

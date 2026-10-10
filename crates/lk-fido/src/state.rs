@@ -19,9 +19,19 @@
 //! | `8C` | alwaysUv (1) |
 //! | `8D` | PIN length in Unicode code points (1), present with `88` (CTAP 2.1 §6.11.4: a new minimum above it forces a PIN change) |
 //! | `8E` | serialized large-blob array (CTAP 2.1 §6.10); absent means the initial empty array |
+//! | `8F` | organization (`O`) the attestation certificate was issued for (UTF-8); absent means `"localkey"` |
+//! | `90` | country (`C`) the attestation certificate was issued for (UTF-8); absent means `"ZZ"` |
 //! | `A1` | minPinLengthRPIDs: one `80` (UTF-8 RP ID) per entry |
 //! | `A2` | one discoverable credential (repeated, oldest first), see [`Resident`] |
 //!
+//! Inside `A2`: `80` credential ID, `81` RP ID, `82` user ID, `83` user name, `84` user
+//! display name, `85` credBlob, `86` largeBlobKey, `87` credProtect level, `88` RP name.
+//!
+//! The wrapping secret, the attestation scalar, the PIN hash and each discoverable
+//! credential's credBlob ("additional, secret information", CTAP 2.1 §6.10) and largeBlobKey
+//! (a random key, §12.3) are held in [`SecretBytes`] (wiped when dropped, redacted in
+//! `Debug`); the serialized record is wrapped the same way by its caller
+//! (`Authenticator::commit`).
 //! Top-level objects with other tags are kept and written back unchanged, so a newer
 //! format's additions survive a round trip through this version (`docs/DESIGN.md` §7).
 //! Anything that cannot be parsed, or a known field with an invalid value, makes the whole
@@ -29,9 +39,9 @@
 //! (`lk_core::CardApplet` constructor convention).
 
 use lk_codec::tlv;
-use lk_crypto::sha256;
+use lk_crypto::{SecretBytes, sha256};
 
-use crate::attestation::Attestation;
+use crate::attestation::{Attestation, DEFAULT_COUNTRY, DEFAULT_ORGANIZATION};
 
 const FORMAT_VERSION: u8 = 0x01;
 
@@ -49,6 +59,8 @@ const TAG_FORCE_PIN_CHANGE: u32 = 0x8B;
 const TAG_ALWAYS_UV: u32 = 0x8C;
 const TAG_PIN_CODE_POINTS: u32 = 0x8D;
 const TAG_LARGE_BLOB: u32 = 0x8E;
+const TAG_ATT_ORGANIZATION: u32 = 0x8F;
+const TAG_ATT_COUNTRY: u32 = 0x90;
 const TAG_MIN_PIN_RP_IDS: u32 = 0xA1;
 const TAG_RESIDENT: u32 = 0xA2;
 
@@ -64,6 +76,14 @@ const R_DISPLAY_NAME: u32 = 0x84;
 const R_CRED_BLOB: u32 = 0x85;
 const R_LARGE_BLOB_KEY: u32 = 0x86;
 const R_CRED_PROTECT: u32 = 0x87;
+const R_RP_NAME: u32 = 0x88;
+
+/// Length of the wrapping secret and of the attestation scalar.
+const SECRET_LEN: usize = 32;
+/// Length of the stored PIN hash, `LEFT(SHA-256(pin), 16)`.
+pub(crate) const PIN_HASH_LEN: usize = 16;
+/// Length of a largeBlobKey (CTAP 2.1 §12.3: "a freshly generated 32-byte key").
+pub(crate) const LARGE_BLOB_KEY_LEN: usize = 32;
 
 /// Factory PIN retry counter (CTAP 2.1 §6.5: the pinRetries counter starts at its maximum, 8).
 pub(crate) const DEFAULT_PIN_RETRIES: u8 = 8;
@@ -82,8 +102,8 @@ pub(crate) const INITIAL_LARGE_BLOB: [u8; 17] = [
 /// authenticatorConfig).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct PinState {
-    /// `LEFT(SHA-256(PIN), 16)`, the "CurrentStoredPIN" of §6.5.5.5.
-    pub hash: Option<[u8; 16]>,
+    /// `LEFT(SHA-256(PIN), 16)`, the "CurrentStoredPIN" of §6.5.5.5 (16 bytes).
+    pub hash: Option<SecretBytes>,
     /// Length of the current PIN in Unicode code points (0 without a PIN).
     pub code_points: u8,
     /// pinRetries (§6.5.2.2), persisted before any response that reveals it.
@@ -115,15 +135,20 @@ impl Default for PinState {
 pub(crate) struct Resident {
     pub id: Vec<u8>,
     pub rp_id: String,
+    /// The RP name given at registration (`rp.name`, CTAP 2.1 §6.1), truncated to 64 bytes
+    /// (WebAuthn L2 §5.4.1); returned by credentialManagement enumerateRPs (§6.8.3).
+    pub rp_name: Option<String>,
     /// SHA-256 of `rp_id`, derived on load.
     pub rp_id_hash: [u8; 32],
     pub user_id: Vec<u8>,
     pub user_name: Option<String>,
     pub display_name: Option<String>,
-    /// credBlob (CTAP 2.1 §12.2).
-    pub cred_blob: Option<Vec<u8>>,
-    /// largeBlobKey (CTAP 2.1 §12.3).
-    pub large_blob_key: Option<[u8; 32]>,
+    /// credBlob (CTAP 2.1 §12.2), at most 32 bytes; secret (§6.10: "additional, secret
+    /// information").
+    pub cred_blob: Option<SecretBytes>,
+    /// largeBlobKey (CTAP 2.1 §12.3), 32 random bytes that decrypt the credential's large
+    /// blob.
+    pub large_blob_key: Option<SecretBytes>,
     /// credProtect level (CTAP 2.1 §12.1), duplicated from the ID for filtering.
     pub cred_protect: u8,
 }
@@ -131,8 +156,8 @@ pub(crate) struct Resident {
 /// Everything the FIDO application persists.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct State {
-    /// Credential wrapping secret; generated on first use, rotated by reset.
-    pub secret: Option<[u8; 32]>,
+    /// Credential wrapping secret (32 bytes); generated on first use, rotated by reset.
+    pub secret: Option<SecretBytes>,
     /// Attestation key and certificate; generated on first use.
     pub attestation: Option<Attestation>,
     /// Global signature counter shared by every credential and U2F.
@@ -165,9 +190,41 @@ impl State {
         self.pin.hash.is_some()
     }
 
+    /// An upper bound of the serialized length, so that [`State::serialize`] fills one
+    /// allocation and leaves no partial copies of secrets behind in reallocated buffers.
+    fn serialized_len_bound(&self) -> usize {
+        // Each TLV adds at most 4 header bytes (one tag byte, `82 xx xx` or `83 xx xx xx`
+        // length); fixed-size fields are covered by the constant.
+        const HEADER: usize = 5;
+        let attestation = self.attestation.as_ref().map_or(0, |a| {
+            a.scalar.len()
+                + a.cert.len()
+                + a.root_cert.len()
+                + a.aaguid.len()
+                + a.common_name.len()
+                + a.organization.len()
+                + a.country.len()
+                + 7 * HEADER
+        });
+        let rp_ids: usize = self
+            .pin
+            .min_pin_rp_ids
+            .iter()
+            .map(|rp| rp.len() + HEADER)
+            .sum();
+        let residents: usize = self
+            .residents
+            .iter()
+            .map(|r| resident_len_bound(r) + HEADER)
+            .sum();
+        let unknown: usize = self.unknown.iter().map(Vec::len).sum();
+        128 + attestation + rp_ids + residents + self.large_blob.len() + unknown
+    }
+
     /// Serialize as `0x01 || TLV*` (see the module documentation).
     pub(crate) fn serialize(&self) -> Vec<u8> {
-        let mut out = vec![FORMAT_VERSION];
+        let mut out = Vec::with_capacity(self.serialized_len_bound());
+        out.push(FORMAT_VERSION);
         if let Some(secret) = &self.secret {
             tlv::encode_into(&mut out, TAG_SECRET, secret);
         }
@@ -177,6 +234,8 @@ impl State {
             tlv::encode_into(&mut out, TAG_ATT_ROOT, &att.root_cert);
             tlv::encode_into(&mut out, TAG_ATT_AAGUID, &att.aaguid);
             tlv::encode_into(&mut out, TAG_ATT_CN, att.common_name.as_bytes());
+            tlv::encode_into(&mut out, TAG_ATT_ORGANIZATION, att.organization.as_bytes());
+            tlv::encode_into(&mut out, TAG_ATT_COUNTRY, att.country.as_bytes());
         }
         tlv::encode_into(&mut out, TAG_COUNTER, &self.counter.to_be_bytes());
         if let Some(hash) = &self.pin.hash {
@@ -202,7 +261,8 @@ impl State {
             tlv::encode_into(&mut out, TAG_LARGE_BLOB, &self.large_blob);
         }
         for r in &self.residents {
-            let mut row = Vec::new();
+            // The row holds the credBlob and the largeBlobKey: one allocation, wiped below.
+            let mut row = Vec::with_capacity(resident_len_bound(r));
             tlv::encode_into(&mut row, R_ID, &r.id);
             tlv::encode_into(&mut row, R_RP_ID, r.rp_id.as_bytes());
             tlv::encode_into(&mut row, R_USER_ID, &r.user_id);
@@ -219,7 +279,12 @@ impl State {
                 tlv::encode_into(&mut row, R_LARGE_BLOB_KEY, key);
             }
             tlv::encode_into(&mut row, R_CRED_PROTECT, &[r.cred_protect]);
+            if let Some(name) = &r.rp_name {
+                tlv::encode_into(&mut row, R_RP_NAME, name.as_bytes());
+            }
             tlv::encode_into(&mut out, TAG_RESIDENT, &row);
+            row.fill(0);
+            core::hint::black_box(&row);
         }
         for raw in &self.unknown {
             out.extend_from_slice(raw);
@@ -238,14 +303,16 @@ impl State {
         for item in tlv::parse_all(body).ok()? {
             let v = item.value;
             match item.tag {
-                TAG_SECRET => state.secret = Some(v.try_into().ok()?),
-                TAG_ATT_SCALAR => att.scalar = Some(v.try_into().ok()?),
+                TAG_SECRET => state.secret = Some(fixed(v, SECRET_LEN)?),
+                TAG_ATT_SCALAR => att.scalar = Some(fixed(v, SECRET_LEN)?),
                 TAG_ATT_CERT => att.cert = Some(v.to_vec()),
                 TAG_ATT_ROOT => att.root = Some(v.to_vec()),
                 TAG_ATT_AAGUID => att.aaguid = Some(v.try_into().ok()?),
                 TAG_ATT_CN => att.common_name = Some(utf8(v)?),
+                TAG_ATT_ORGANIZATION => att.organization = Some(utf8(v)?),
+                TAG_ATT_COUNTRY => att.country = Some(utf8(v)?),
                 TAG_COUNTER => state.counter = u32::from_be_bytes(v.try_into().ok()?),
-                TAG_PIN_HASH => state.pin.hash = Some(v.try_into().ok()?),
+                TAG_PIN_HASH => state.pin.hash = Some(fixed(v, PIN_HASH_LEN)?),
                 TAG_PIN_RETRIES => state.pin.retries = single(v)?,
                 TAG_MIN_PIN_LENGTH => state.pin.min_length = single(v)?,
                 TAG_FORCE_PIN_CHANGE => state.pin.force_change = flag(v)?,
@@ -274,18 +341,38 @@ impl State {
     }
 }
 
+/// An upper bound of the encoded length of one resident row (the contents of `A2`): each
+/// TLV adds at most 4 header bytes (see [`State::serialized_len_bound`]).
+fn resident_len_bound(r: &Resident) -> usize {
+    const HEADER: usize = 5;
+    r.id.len()
+        + r.rp_id.len()
+        + r.rp_name.as_ref().map_or(0, String::len)
+        + r.user_id.len()
+        + r.user_name.as_ref().map_or(0, String::len)
+        + r.display_name.as_ref().map_or(0, String::len)
+        + r.cred_blob.as_ref().map_or(0, |b| b.len())
+        + r.large_blob_key.as_ref().map_or(0, |k| k.len())
+        + 1
+        + 9 * HEADER
+}
+
 #[derive(Default)]
 struct AttestationParts {
-    scalar: Option<[u8; 32]>,
+    scalar: Option<SecretBytes>,
     cert: Option<Vec<u8>>,
     root: Option<Vec<u8>>,
     aaguid: Option<[u8; 16]>,
     common_name: Option<String>,
+    organization: Option<String>,
+    country: Option<String>,
 }
 
 impl AttestationParts {
-    /// `Some(None)` when no attestation is stored, `Some(Some(_))` when every part is
-    /// present and valid, `None` (unreadable) for a partial or invalid set.
+    /// `Some(None)` when no attestation is stored, `Some(Some(_))` when every required
+    /// part is present and valid, `None` (unreadable) for a partial or invalid set. The
+    /// organization and country were added later: a record without them was issued with
+    /// the former constants `"localkey"` / `"ZZ"`.
     fn finish(self) -> Option<Option<Attestation>> {
         match (
             self.scalar,
@@ -294,7 +381,9 @@ impl AttestationParts {
             self.aaguid,
             self.common_name,
         ) {
-            (None, None, None, None, None) => Some(None),
+            (None, None, None, None, None) => {
+                (self.organization.is_none() && self.country.is_none()).then_some(None)
+            }
             (Some(scalar), Some(cert), Some(root_cert), Some(aaguid), Some(common_name)) => {
                 let att = Attestation {
                     scalar,
@@ -302,6 +391,10 @@ impl AttestationParts {
                     root_cert,
                     aaguid,
                     common_name,
+                    organization: self
+                        .organization
+                        .unwrap_or_else(|| DEFAULT_ORGANIZATION.to_owned()),
+                    country: self.country.unwrap_or_else(|| DEFAULT_COUNTRY.to_owned()),
                 };
                 att.is_valid().then_some(Some(att))
             }
@@ -317,6 +410,7 @@ fn resident(bytes: &[u8]) -> Option<Resident> {
     let mut row = Resident {
         id: Vec::new(),
         rp_id: String::new(),
+        rp_name: None,
         rp_id_hash: [0; 32],
         user_id: Vec::new(),
         user_name: None,
@@ -333,14 +427,15 @@ fn resident(bytes: &[u8]) -> Option<Resident> {
             R_USER_ID => user_id = Some(v.to_vec()),
             R_USER_NAME => row.user_name = Some(utf8(v)?),
             R_DISPLAY_NAME => row.display_name = Some(utf8(v)?),
-            R_CRED_BLOB => row.cred_blob = Some(v.to_vec()),
-            R_LARGE_BLOB_KEY => row.large_blob_key = Some(v.try_into().ok()?),
+            R_CRED_BLOB => row.cred_blob = Some(SecretBytes::from_slice(v)),
+            R_LARGE_BLOB_KEY => row.large_blob_key = Some(fixed(v, LARGE_BLOB_KEY_LEN)?),
             R_CRED_PROTECT => {
                 row.cred_protect = single(v)?;
                 if !(1..=3).contains(&row.cred_protect) {
                     return None;
                 }
             }
+            R_RP_NAME => row.rp_name = Some(utf8(v)?),
             _ => {}
         }
     }
@@ -349,6 +444,11 @@ fn resident(bytes: &[u8]) -> Option<Resident> {
     row.user_id = user_id?;
     row.rp_id_hash = sha256(row.rp_id.as_bytes());
     Some(row)
+}
+
+/// A secret field of exactly `len` bytes.
+fn fixed(bytes: &[u8], len: usize) -> Option<SecretBytes> {
+    (bytes.len() == len).then(|| SecretBytes::from_slice(bytes))
 }
 
 fn utf8(bytes: &[u8]) -> Option<String> {
@@ -377,11 +477,11 @@ mod tests {
 
     fn sample() -> State {
         State {
-            secret: Some([1; 32]),
+            secret: Some(SecretBytes::from_slice(&[1; 32])),
             attestation: None,
             counter: 0x0102_0304,
             pin: PinState {
-                hash: Some([9; 16]),
+                hash: Some(SecretBytes::from_slice(&[9; 16])),
                 code_points: 6,
                 retries: 5,
                 min_length: 6,
@@ -392,12 +492,13 @@ mod tests {
             residents: vec![Resident {
                 id: vec![2; 128],
                 rp_id: "example.com".into(),
+                rp_name: Some("Example".into()),
                 rp_id_hash: sha256(b"example.com"),
                 user_id: vec![3; 16],
                 user_name: Some("alice".into()),
                 display_name: None,
-                cred_blob: Some(vec![4; 32]),
-                large_blob_key: Some([5; 32]),
+                cred_blob: Some(SecretBytes::from_slice(&[4; 32])),
+                large_blob_key: Some(SecretBytes::from_slice(&[5; 32])),
                 cred_protect: 2,
             }],
             large_blob: vec![0xA5; 40],
@@ -411,6 +512,74 @@ mod tests {
         let bytes = state.serialize();
         assert_eq!(bytes.first(), Some(&FORMAT_VERSION));
         assert_eq!(State::deserialize(&bytes), Some(state));
+    }
+
+    #[test]
+    fn serialization_fits_its_preallocated_bound() {
+        // The record holds secrets: serialize() reserves an upper bound so the buffer is
+        // never reallocated (a reallocation would leave an unwiped copy behind).
+        let mut state = sample();
+        assert!(state.serialize().len() <= state.serialized_len_bound());
+        // A full store with the largest field values a 1536-byte request can carry.
+        let row = state.residents[0].clone();
+        state.residents = (0..100)
+            .map(|i| Resident {
+                id: vec![i; 128],
+                rp_id: "r".repeat(300),
+                rp_id_hash: sha256("r".repeat(300).as_bytes()),
+                rp_name: Some("n".repeat(64)),
+                user_id: vec![i; 1000],
+                user_name: Some("u".repeat(64)),
+                display_name: Some("d".repeat(64)),
+                cred_blob: Some(SecretBytes::from_slice(&[i; 32])),
+                ..row.clone()
+            })
+            .collect();
+        state.large_blob = vec![0x5A; 4096];
+        state.pin.min_pin_rp_ids = vec!["x".repeat(1000)];
+        let bytes = state.serialize();
+        assert!(bytes.len() <= state.serialized_len_bound());
+        assert!(bytes.len() > 0xFFFF, "three-byte lengths are exercised");
+        // Each resident row (it holds the credBlob and the largeBlobKey) is built in its own
+        // buffer, which must not be reallocated either.
+        let rows: Vec<usize> = tlv::parse_all(&bytes[1..])
+            .unwrap()
+            .iter()
+            .filter(|t| t.tag == TAG_RESIDENT)
+            .map(|t| t.value.len())
+            .collect();
+        assert_eq!(rows.len(), state.residents.len());
+        for (len, r) in rows.iter().zip(&state.residents) {
+            assert!(*len <= resident_len_bound(r), "row {len} > bound");
+        }
+        assert!(State::deserialize(&bytes) == Some(state), "round trip");
+    }
+
+    #[test]
+    fn debug_output_redacts_secrets() {
+        // docs/DESIGN.md §8: secret buffers are SecretBytes, whose Debug is redacted.
+        let state = State {
+            secret: Some(SecretBytes::from_slice(&[0xAB; 32])),
+            pin: PinState {
+                hash: Some(SecretBytes::from_slice(&[0xCD; 16])),
+                ..PinState::default()
+            },
+            ..State::default()
+        };
+        let text = format!("{state:?}");
+        assert!(text.contains("<redacted>"));
+        assert!(!text.contains("171") && !text.contains("205"), "{text}");
+        // credBlob (CTAP 2.1 §6.10 "additional, secret information") and largeBlobKey
+        // (§12.3, a random key) of a discoverable credential are redacted too.
+        let mut with_resident = sample();
+        with_resident.residents[0].cred_blob = Some(SecretBytes::from_slice(&[0xB7; 32]));
+        with_resident.residents[0].large_blob_key = Some(SecretBytes::from_slice(&[0xE9; 32]));
+        let text = format!("{with_resident:?}");
+        assert!(
+            !text.contains("183, 183") && !text.contains("233, 233"),
+            "{text}"
+        );
+        assert!(text.contains("SecretBytes(32 bytes, <redacted>)"), "{text}");
     }
 
     #[test]

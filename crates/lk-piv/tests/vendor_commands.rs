@@ -46,7 +46,9 @@ fn metadata_for_factory_references() {
     assert_eq!(f9[14], 0x04, "uncompressed point");
     assert_eq!(f9.len(), 14 + 65);
     assert_eq!(card.metadata(0x00).1, 0x6A86);
-    assert_eq!(card.metadata(0x96).1, 0x6A86);
+    // SP 800-73-4 Part 1 Table 4 biometric reference this card does not hold: 6A88, which
+    // python yubikit get_bio_metadata() needs (tests/interop.rs).
+    assert_eq!(card.metadata(0x96).1, 0x6A88);
     assert_eq!(card.cmd(0xF7, 0x01, 0x80, &[], None).1, 0x6A86);
 }
 

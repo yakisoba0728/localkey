@@ -262,3 +262,35 @@ fn policies_persist_across_restart() {
     assert_eq!(card.host.persist_count(), count + 2, "only the VERIFY commits");
     assert_eq!(card.host.persisted(Record::Piv), before);
 }
+
+#[test]
+fn x25519_low_order_peer_is_refused_before_pin_and_touch() {
+    // Second review. RFC 7748 §6.1: a peer key of small order gives the all-zero
+    // shared secret whatever the private key, so it is a malformed request: 6A80 at
+    // once, with no touch request and the PIN-always authorization kept (catalog:
+    // GENERAL AUTHENTICATE checks come "before ... consuming PIN_ALWAYS signing
+    // authorization"). Before the fix such a key asked for a touch, spent the
+    // authorization and only then failed.
+    let mut card = Card::new();
+    card.auth_default();
+    let public = card.generate(0x9D, X25519, Some(PIN_ALWAYS), Some(TOUCH_ALWAYS));
+    card.verify_default_pin();
+    // Small-order u-coordinates: 0 (order 4), 1 (order 1) and a point of order 8, as
+    // listed in libsodium's X25519 small-order blocklist.
+    let order8 = hex("E0EB7A7C3B41B8AE1656E3FAF19FC46ADA098DEB9C32B1FD866205165F49B800");
+    let mut one = [0u8; 32];
+    one[0] = 1;
+    for peer in [&[0u8; 32][..], &one[..], &order8[..]] {
+        assert_eq!(
+            card.ga_outcome(0x9D, X25519, 0x85, peer),
+            Outcome::Done(hex("6A80")),
+            "{peer:02X?}: refused without a touch request"
+        );
+    }
+    // The authorization armed by the VERIFY is still there for a valid peer key.
+    let peer = lk_crypto::X25519Key::generate(&mut lk_testkit::SeededEntropy::new(0x7748));
+    assert!(matches!(card.ga_outcome(0x9D, X25519, 0x85, &peer.public()), Outcome::NeedTouch { .. }));
+    let (shared, sw) = card.touch(true);
+    assert_eq!(sw, 0x9000);
+    assert_eq!(shared, peer.dh(public.point()).unwrap().to_vec());
+}

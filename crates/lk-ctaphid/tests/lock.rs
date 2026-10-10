@@ -1,5 +1,8 @@
 //! `CTAPHID_LOCK` (CTAP 2.1 §11.2.9.2.2): 0..=10 seconds, others answered
-//! `ERR_LOCK_REQUIRED` while the lock holds.
+//! `ERR_CHANNEL_BUSY` while the lock holds (CTAP 2.1 §11.2.9.1.6: "The device is busy
+//! for the requesting channel. The client SHOULD retry the request after a short
+//! delay"; `ERR_LOCK_REQUIRED` is "Command requires channel lock", which no command
+//! here does; sources on the lock check in `src/framer.rs`).
 
 mod common;
 
@@ -31,7 +34,7 @@ fn lock_keeps_other_channels_out_until_it_lapses() {
     ] {
         assert_eq!(
             dev.report(5999, &init_packet(cid, cmd, bcnt, &[1; 8])),
-            error_events(cid, ERR_LOCK_REQUIRED),
+            error_events(cid, ERR_CHANNEL_BUSY),
             "CID {cid:#x} command {cmd:#x}"
         );
     }
@@ -63,7 +66,7 @@ fn ten_seconds_is_the_longest_lock() {
     assert_eq!(dev.next_deadline(), Some(10_000));
     assert_eq!(
         dev.report(9_999, &init_packet(b, PING, 0, &[])),
-        error_events(b, ERR_LOCK_REQUIRED)
+        error_events(b, ERR_CHANNEL_BUSY)
     );
     assert_ping_echo(&mut dev, 10_000, b, 0);
 }
@@ -108,7 +111,7 @@ fn lock_zero_releases_and_the_holder_can_renew() {
     assert_eq!(dev.next_deadline(), Some(4500));
     assert_eq!(
         dev.report(4499, &init_packet(b, PING, 0, &[])),
-        error_events(b, ERR_LOCK_REQUIRED)
+        error_events(b, ERR_CHANNEL_BUSY)
     );
     assert_eq!(dev.report(4499, &lock(a, 0)), lock_ok(a));
     assert_eq!(dev.next_deadline(), None);
@@ -126,7 +129,7 @@ fn another_channel_cannot_take_or_release_the_lock() {
     for seconds in [0u8, 5] {
         assert_eq!(
             dev.report(1, &lock(b, seconds)),
-            error_events(b, ERR_LOCK_REQUIRED)
+            error_events(b, ERR_CHANNEL_BUSY)
         );
     }
     assert_eq!(dev.next_deadline(), Some(5000));
@@ -169,7 +172,33 @@ fn holder_resynchronising_with_init_keeps_the_lock() {
     assert_eq!(dev.report(1, &init_packet(a, INIT, 8, &[1; 8])).len(), 1);
     assert_eq!(
         dev.report(2, &init_packet(b, PING, 0, &[])),
-        error_events(b, ERR_LOCK_REQUIRED)
+        error_events(b, ERR_CHANNEL_BUSY)
     );
     assert_eq!(dev.next_deadline(), Some(5000));
+}
+
+#[test]
+fn locked_out_client_retrying_on_busy_gets_through_when_the_lock_lapses() {
+    // Interop regression: Chromium (`FidoHidDevice`, 100 ms retry on kChannelBusy) and
+    // python-fido2 (`CtapHidDevice.call`, 100 ms retry on CHANNEL_BUSY) retry only
+    // CHANNEL_BUSY and abandon the request on any other error, so a channel kept out by
+    // a lock must get CHANNEL_BUSY, never LOCK_REQUIRED, and a retrying client then
+    // succeeds once the lock lapses (CTAP 2.1 §11.2.9.2.2: at most 10 s).
+    let mut dev = device();
+    let holder = allocate(&mut dev, 0);
+    let client = allocate(&mut dev, 0);
+    assert_eq!(dev.report(0, &lock(holder, 1)), lock_ok(holder));
+    let mut now = 0;
+    loop {
+        now += 100;
+        let events = dev.report(now, &init_packet(client, PING, 1, &[0x5A]));
+        if events == error_events(client, ERR_CHANNEL_BUSY) {
+            assert!(now < 1000, "still locked out at {now} ms");
+            continue;
+        }
+        assert_ne!(events, error_events(client, ERR_LOCK_REQUIRED));
+        assert_eq!(events, vec![Event::Send(init_packet(client, PING, 1, &[0x5A]))]);
+        break;
+    }
+    assert_eq!(now, 1000, "served at the first retry after the lock lapsed");
 }

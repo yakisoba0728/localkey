@@ -2,11 +2,11 @@
 
 use lk_codec::cbor::{MapBuilder, Value};
 use lk_core::{Host, Millis, Outcome};
-use lk_crypto::{hmac_sha256, sha256};
+use lk_crypto::{SecretBytes, hmac_sha256, sha256};
 
 use crate::client_pin::permission;
 use crate::make_credential::{FLAG_ED, FLAG_UP, FLAG_UV};
-use crate::pin_protocol::PinProtocol;
+use crate::pin_protocol::{PinProtocol, secret_from};
 use crate::request::{
     CtapResult, PUBLIC_KEY, Params, boolean, bytes, descriptor_ids, map, options, required, text,
     uint_key, unsigned,
@@ -38,12 +38,13 @@ fn hmac_secret_input(value: &Value) -> CtapResult<HmacSecretInput> {
     })
 }
 
-/// Decrypted hmac-secret salts and the shared secret to encrypt the output with.
+/// Decrypted hmac-secret salts and the shared secret to encrypt the output with, both
+/// wiped when dropped (the getNextAssertion state keeps them for up to 30 s).
 pub(crate) struct HmacSalts {
     protocol: PinProtocol,
-    shared: Vec<u8>,
+    shared: SecretBytes,
     /// salt1, or salt1 || salt2 (32 or 64 bytes).
-    salts: Vec<u8>,
+    salts: SecretBytes,
 }
 
 impl core::fmt::Debug for HmacSalts {
@@ -361,7 +362,8 @@ impl Authenticator {
         if plan.ext.cred_blob {
             let blob = resident
                 .as_ref()
-                .and_then(|r| r.cred_blob.clone())
+                .and_then(|r| r.cred_blob.as_ref())
+                .map(|b| b.to_vec())
                 .unwrap_or_default();
             ext_out.set("credBlob", blob);
         }
@@ -373,9 +375,9 @@ impl Authenticator {
             && cred.hmac_secret
         {
             let key = cred.hmac_secret_key(plan.uv);
-            let mut output = Vec::with_capacity(hmac.salts.len());
-            for salt in hmac.salts.chunks(32) {
-                output.extend_from_slice(&hmac_sha256(&key, salt));
+            let mut output = SecretBytes::zeroed(hmac.salts.len());
+            for (out, salt) in output.chunks_mut(32).zip(hmac.salts.chunks(32)) {
+                out.copy_from_slice(&secret_from(hmac_sha256(&key, salt)));
             }
             let encrypted = hmac.protocol.encrypt(&hmac.shared, &output, host)?;
             ext_out.set("hmac-secret", encrypted);
@@ -432,7 +434,7 @@ impl Authenticator {
         }
         // §12.3: the credential's largeBlobKey at key 0x07, if it has one.
         if plan.ext.large_blob_key == Some(true)
-            && let Some(key) = resident.as_ref().and_then(|r| r.large_blob_key)
+            && let Some(key) = resident.as_ref().and_then(|r| r.large_blob_key.as_ref())
         {
             response.set(0x07, key.to_vec());
         }

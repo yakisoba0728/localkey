@@ -34,7 +34,7 @@ pub(crate) const MAX_TOTAL_OBJECT_BYTES: usize = 51_200;
 /// limit").
 pub(crate) const MAX_CERT_VALUE: usize = 3052;
 
-/// Tag list tag of GET DATA / PUT DATA (SP 800-73-4 Part 2 §3.1.2, §3.3.2).
+/// Tag list tag of GET DATA / PUT DATA (SP 800-73-4 Part 2 §3.1.2, §3.3.1).
 pub(crate) const TAG_TAG_LIST: u32 = 0x5C;
 /// Data field tag wrapping a container's value (SP 800-73-4 Part 2 §3.1.2).
 pub(crate) const TAG_DATA: u32 = 0x53;
@@ -135,8 +135,8 @@ impl ObjectStore {
         self.map.get(&tag).map(Vec::as_slice)
     }
 
-    /// Store `value` under `tag`; an empty value deletes the object (SP 800-73-4
-    /// Part 2 §3.3.2: PUT DATA with a zero-length `53` erases the container).
+    /// Store `value` under `tag`; an empty value deletes the object (PUT DATA with a
+    /// zero-length `53`, as python yubikit `put_object(object_id, None)` sends it).
     pub(crate) fn put(&mut self, tag: u32, value: Vec<u8>) {
         if value.is_empty() {
             self.map.remove(&tag);

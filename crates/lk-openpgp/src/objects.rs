@@ -19,14 +19,6 @@ pub const AID_PREFIX: [u8; 6] = [0xD2, 0x76, 0x00, 0x01, 0x24, 0x01];
 /// Specification version 3.4 as announced in the AID (spec §4.2.1).
 const SPEC_VERSION: [u8; 2] = [0x03, 0x04];
 
-/// Manufacturer ID of Yubico in the OpenPGP card manufacturer registry (spec §4.2.1,
-/// registry maintained with the specification).
-const MANUFACTURER_YUBICO: [u8; 2] = [0x00, 0x06];
-
-/// Manufacturer ID reserved for test cards (spec §4.2.1: `FF FF` is a test card). Used for
-/// this engine's own identity profile, which must not claim a registered manufacturer.
-const MANUFACTURER_TEST: [u8; 2] = [0xFF, 0xFF];
-
 /// Historical bytes 5F52 (spec §6; observation `public_objects.5f52`): category 00,
 /// card capabilities 73 00 00 E0 (command chaining, extended Lc/Le, extended length
 /// information), status indicator 05 (operational) 90 00.
@@ -257,15 +249,18 @@ impl Slot {
 ///
 /// The serial is BCD-encoded when it has at most eight decimal digits, so that hosts that
 /// print the AID serial in hex show the same number as the device serial (as the
-/// YubiKey does); larger serials fall back to big-endian binary. The manufacturer is Yubico
-/// (`00 06`) for a profile whose manufacturer is "Yubico", otherwise the test-card ID.
+/// YubiKey does, and as yubikit's `OpenPgpAid.serial` parses it, BCD first with a binary
+/// fallback); larger serials fall back to big-endian binary.
+///
+/// The manufacturer ID (bytes 9-10) is `DeviceProfile::openpgp_manufacturer`, big-endian
+/// (docs/CONTRACTS.md "lk-core additions": derived from the profile field, never inferred
+/// from the USB manufacturer string). The compatibility profile carries Yubico's
+/// registered `00 06`; the own profile carries `FF 00`, from the `FF00..FFFE` range the
+/// manufacturer registry of spec §4.2.1 leaves unassigned, so it claims no registered
+/// manufacturer.
 pub(crate) fn full_aid(profile: &DeviceProfile) -> [u8; 16] {
     let mut aid = [0u8; 16];
-    let manufacturer = if profile.manufacturer == "Yubico" {
-        MANUFACTURER_YUBICO
-    } else {
-        MANUFACTURER_TEST
-    };
+    let manufacturer = profile.openpgp_manufacturer.to_be_bytes();
     let serial = serial_bytes(profile.serial);
     let parts: [&[u8]; 4] = [&AID_PREFIX, &SPEC_VERSION, &manufacturer, &serial];
     let mut at = 0;
@@ -428,8 +423,25 @@ mod tests {
             aid,
             [0xD2, 0x76, 0x00, 0x01, 0x24, 0x01, 0x03, 0x04, 0x00, 0x06, 0x12, 0x34, 0x56, 0x78, 0x00, 0x00]
         );
+        // The own profile's openpgp_manufacturer is FF00 (lk-core profile.rs).
         let own = full_aid(&DeviceProfile::own(1));
-        assert_eq!(own[8..10], [0xFF, 0xFF]);
+        assert_eq!(own[8..10], [0xFF, 0x00]);
+    }
+
+    #[test]
+    fn manufacturer_comes_from_the_profile_field_not_the_string() {
+        // docs/CONTRACTS.md "lk-core additions": the AID manufacturer is
+        // DeviceProfile::openpgp_manufacturer. A "Yubico" string with a test-range ID, and
+        // a foreign string with Yubico's ID, each follow the field.
+        let mut yubico_string = DeviceProfile::yubikey_5c_nano_5_7_4(1);
+        yubico_string.openpgp_manufacturer = 0xFFFE;
+        assert_eq!(full_aid(&yubico_string)[8..10], [0xFF, 0xFE]);
+        let mut own_string = DeviceProfile::own(1);
+        assert_eq!(own_string.manufacturer, "localkey");
+        own_string.openpgp_manufacturer = 0x0006;
+        assert_eq!(full_aid(&own_string)[8..10], [0x00, 0x06]);
+        own_string.openpgp_manufacturer = 0x1234;
+        assert_eq!(full_aid(&own_string)[8..10], [0x12, 0x34]);
     }
 
     #[test]

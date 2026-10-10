@@ -1,7 +1,8 @@
 # localkey 엔진 설계
 
-상태: **결정됨** (2026-10-10). 사용자가 결정을 위임했고, §12의 결정 기록대로 §10 순서에 따라 구현합니다.
-진행 상황은 `docs/STATUS.md`에 있습니다.
+상태: **결정됨** (2026-10-10). 사용자가 결정을 위임했고, §12의 결정 기록대로 §10 순서에 따라 구현했습니다.
+진행 상황은 `docs/STATUS.md`에 있습니다. 모든 단계가 끝났습니다. 구현이 이 설계와 달라진 곳은 **as built**로
+표시했고, 확정된 공개 API는 `docs/CONTRACTS.md`에 있습니다.
 
 ## 1. 목표와 비목표
 
@@ -82,6 +83,8 @@
   - 터치 눌림/뗌
   - `Tick` (시간 경과)
   - 버스 이벤트 (리셋, 서스펜드, 재개, 전원 재인가)
+  - **as built**: CCID class 요청 ABORT(`Input::CcidControlAbort { slot, seq }`). 이 요청은 bulk 파이프가
+    아니라 control 파이프로 오므로 CCID bulk-out 입력으로는 전달할 수 없다.
 - **출력** (`lk_device::Output`):
   - FIDO 입력 리포트
   - OTP feature 값, OTP 키보드 리포트
@@ -93,6 +96,9 @@
   - 이 방식으로 KEEPALIVE, 터치 대기 시간 초과, CTAPHID 트랜잭션 시간 초과, OTP 버튼 길이를 처리한다.
   - TOTP는 호스트가 시간 단계를 챌린지로 보내므로 벽시계가 필요 없다.
   - 증명서 유효기간은 프로필의 고정 값을 쓴다.
+  - **as built**: 프로그램이 신뢰할 수 있는 벽시계를 가지고 있으면 `Device::set_unix_time`으로 알려 준다.
+    이 값은 `Host::unix_time`으로 전달되어 Security Domain의 OCE 증명서 유효기간 검사에 쓰인다. 엔진은
+    이 값을 스스로 증가시키지 않는다. 값이 없으면 프로필의 시작일을 하한으로 쓴다.
 - **난수**: `lk_core::Entropy`. 프로그램은 OS 난수를, 테스트는 고정 시드 스트림을 준다.
 - **저장**: `lk_core::Store`. 앱별 레코드를 원자적으로 저장한다(§7). 저장소는 이미 봉인된 바이트만 본다.
 - **스레드 없음**: 엔진 안에는 스레드도 대기도 없다. 터치 대기는 대기 상태와 마감 시각으로 표현하고,
@@ -101,12 +107,24 @@
 API 초안은 `crates/lk-core/src/lib.rs`와 `crates/lk-device/src/lib.rs`에 코드로 있다. Phase 0에서
 `Device::open(profile, store, entropy, storage_key)` 생성자를 추가한다.
 
+**as built**: 생성자는 `Device::open`과 `Device::open_at(now, ...)` 두 가지다. `open_at`은 프로그램 시계의
+다른 시각을 전원 투입 시각으로 지정한다. 프로그램이 장치를 노출하는 데 필요한 조회 함수도 있다.
+- `usb_identity()`: VID/PID, 문자열, HID/CCID 디스크립터, 장치/구성 디스크립터.
+- `interfaces()`, `profile()`.
+- `unreadable_records()`: 열지 못한 레코드.
+- `presence_pending()`: 터치 대기 중인지 여부.
+
+목록 전체는 `docs/CONTRACTS.md` "Final integration (as built)"에 있다. `Device`는 `Send`가 아니다(저장소와
+난수 트레이트 객체에 `Send` 경계가 없다). 그래서 프로그램은 장치를 구동하는 스레드 안에서 만든다.
+
 ## 5. 장치 모델 (`lk-device`)
 
 - **세 인터페이스**: FIDO HID (`lk-ctaphid` → `lk-fido`), OTP HID (`lk-otp`), CCID (`lk-ccid` →
   카드 세션).
   - Management 설정으로 켜고 끌 수 있다.
   - 바뀌면 `Output::Reenumerate`를 낸다.
+  - **as built**: `REBOOT` 없이 쓴 설정이라도 인터페이스 조합이 바뀌면 곧바로 재열거한다. 실물은 재삽입을
+    기다릴 가능성이 있으므로, 측정 전까지 미결 모델 정책으로 둔다(`docs/CONTRACTS.md`).
 - **카드 세션**: AID로 앱을 SELECT하고, 선택 상태, 명령/응답 체이닝, 보안 채널 래핑(`lk-sd`)을
   관리한다.
   - CCID 전원 차단, USB 리셋, 다른 AID 선택 시 각 앱의 휘발 상태를 규칙대로 지운다.
@@ -138,6 +156,11 @@ API 초안은 `crates/lk-core/src/lib.rs`와 `crates/lk-device/src/lib.rs`에 �
 | `lk-device` | 위 전부를 묶는 장치 모델과 공개 API | 전부 |
 | `lk-testkit` | 결정론 테스트 하네스, 메모리 저장소, 고장 주입 | core, device |
 
+**as built**: 의존 관계 두 곳이 표와 다르다.
+- `lk-mgmt`는 `lk-crypto`도 쓴다. 설정 잠금 코드를 상수 시간으로 비교하기 위해서다(`ct_eq`).
+- `lk-testkit`은 `lk-device`가 아니라 `core`와 `crypto`에 의존한다. 장치 시나리오 하네스는 `lk-device`의
+  테스트(`crates/lk-device/tests/common`) 안에 있다.
+
 규칙:
 - 앱 크레이트끼리는 서로 의존하지 않는다. 공유가 필요하면 `lk-device`가 중재한다.
 - `unsafe`는 워크스페이스 전체에서 금지한다(`forbid`).
@@ -146,6 +169,9 @@ API 초안은 `crates/lk-core/src/lib.rs`와 `crates/lk-device/src/lib.rs`에 �
 
 - 앱마다 레코드 하나(`lk_core::Record`)를 둔다. 한 앱의 저장 실패가 다른 앱 상태를 되돌리지 않는다.
 - **형식**: 자체 정의 이진 형식(버전 바이트 + TLV). 필드 추가는 새 태그로 하고, 모르는 태그는 보존한다.
+  - **as built**: 모르는 태그를 보존할지 건너뛸지는 크레이트마다 다르다. 예를 들어 `lk-piv`, `lk-fido`,
+    `lk-mgmt`는 보존하고 `lk-hsmauth`는 건너뛴다. 어느 쪽이든 읽기가 실패하지는 않는다
+    (`docs/CONTRACTS.md`).
 - **봉인**: AES-256-GCM. 연관 데이터는 레코드 이름과 형식 버전이고, nonce는 저장할 때마다 새로 만든다.
   - 저장 키(32바이트)는 프로그램이 준다. 나중에 OS 키체인 등에 보관한다.
   - 엔진은 키를 파일에 쓰지 않는다.
@@ -154,6 +180,15 @@ API 초안은 `crates/lk-core/src/lib.rs`와 `crates/lk-device/src/lib.rs`에 �
   - 실패하면 메모리 상태를 이전으로 되돌리고 오류를 응답한다.
   - 카운터(서명 카운터, HOTP 카운터, PIN 재시도)는 응답 **전에** 저장한다.
 - **휘발 상태**는 저장하지 않는다. PIN/UV 토큰, 보안 채널 세션, 선택 상태, 체이닝 버퍼가 여기에 해당한다.
+- **as built, 재시도 카운터**: PIN 등 비밀을 비교하기 **전에** 시도 횟수를 하나 줄여 저장하고, 맞으면
+  되돌린다. 저장이 실패하면 비밀이 맞든 틀리든 저장 실패 상태를 응답하므로, 고장 난 저장소를 추측
+  수단으로 쓸 수 없다. 그래서 맞는 VERIFY 한 번에 저장이 두 번 일어난다.
+- **as built, 열 때의 저장**: 일부 앱은 첫 시작 때 생성자에서 자기 정체성을 만들어 저장한다(Security
+  Domain, PIV, OpenPGP, OATH). 이 저장에는 다음 규칙이 붙는다.
+  - 읽지 못한 기존 레코드는 덮어쓰지 않는다.
+  - 열린 레코드가 하나도 없고 읽지 못한 레코드가 있으면, 저장 키가 틀렸을 수 있으므로 아무것도 쓰지
+    않는다.
+  - 저장소가 거절한 생성자 저장은 이후 입력마다 다시 시도한다.
 
 ## 8. 암호 정책
 
@@ -166,6 +201,12 @@ API 초안은 `crates/lk-core/src/lib.rs`와 `crates/lk-device/src/lib.rs`에 �
   - 모두 순수 Rust라 C 컴파일러가 필요 없다.
   - 2026-10-10 기준으로 실제 연결되는 제3자 크레이트는 macOS와 Linux 모두 56개다(`rsa`, `des` 포함, 중복 버전 없음). 빌드 시에만 쓰는 매크로
     등은 별도다.
+  - **as built**: 곡선 크레이트 `p521`, `k256`, `bp256`, `bp384`를 추가했다. brainpool 서명에 필요한
+    `ecdsa`, 그리고 `elliptic-curve`, `rfc6979`는 이미 의존 그래프에 있었고, 이제 직접 의존한다. 난수는
+    언제나 호스트의 `Entropy`에서 오므로 `getrandom`은 쓰지 않는다(`rand_core`가 어댑터 역할을 한다).
+    `python3 tools/license_check.py` 기준으로 실제 연결되는 제3자 크레이트는 68개, 빌드 시에만 쓰는 것은
+    10개이고 중복 버전은 없다. brainpoolP512r1은 RustCrypto 크레이트가 없어 지원하지 않는다. 이 때문에
+    OpenPGP 알고리즘 변형 4개가 `6A81`로 응답한다.
 - **라이선스**:
   - 허용 목록: MIT, Apache-2.0, BSD-2/3-Clause, ISC, Zlib, Unicode-3.0.
   - `python3 tools/license_check.py`가 허용 목록과 "외부 의존은 `lk-crypto`에만" 규칙을 검사한다.
@@ -174,6 +215,13 @@ API 초안은 `crates/lk-core/src/lib.rs`와 `crates/lk-device/src/lib.rs`에 �
 - **RSA**: `rsa` 0.10(`=0.10.0-rc.19` 고정, §12-6). 복호화 타이밍 공격(Marvin, RUSTSEC-2023-0071)
   공지가 있지만, 에뮬레이터 용도로는 받아들일 수 있는 위험으로 보고 기록해 둔다. 3DES는 `des`를 쓴다.
 - 비밀 값 비교는 `subtle`의 상수 시간 비교, 비밀 버퍼는 `zeroize`로 처리한다.
+  - **as built**: 다른 크레이트는 `zeroize`를 직접 쓸 수 없으므로 `lk_crypto::SecretBytes`(drop 시 0으로
+    지움)에 비밀을 담는다. 이 지우기는 부분적이다.
+    - `lk-fido`, `lk-piv`, OpenPGP S2K는 `SecretBytes`를 쓴다.
+    - `lk-hsmauth`, `lk-sd`, `lk-device`, OpenPGP 키 재료는 `Drop`에서 자체적으로 지운다(최선 노력).
+    - `lk-oath`, `lk-otp`, `lk-mgmt`의 비밀과 `lk-codec`의 APDU 버퍼는 아직 지우지 않는다.
+
+    목록은 `docs/STATUS.md`에 있다.
 
 ## 9. 장치 정체성 프로필
 

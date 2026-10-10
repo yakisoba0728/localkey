@@ -26,8 +26,12 @@
 //!   guards"). Le `00`, `0000` or absent are served in chunks with `61xx`.
 //! - Touch (Yubico OpenPGP UIF, D6 SIG, D7 DEC, D8 AUT, D9 attestation): 01 on and 02 fixed
 //!   need a touch for every operation; 03 cached and 04 cached-fixed accept a touch on that
-//!   key made less than 15 s earlier (catalog "15-second cached/fixed touch"; the cache is
-//!   per key and kept until power is removed, model policy). The touch is requested after
+//!   key made less than 15 s earlier in the same OpenPGP session (catalog "15-second
+//!   cached/fixed touch"; Yubico "YubiKey 5.2.3 Enhancements to OpenPGP 3.4", Touch
+//!   Cache: "for up to 15 seconds or until the OpenPGP session ends", so SELECT,
+//!   deselection and every reset forget it). That the cache is per key is model policy:
+//!   the stricter reading of "unlocks the OpenPGP cryptographic functions". The touch is
+//!   requested after
 //!   every access and input check, so a request that would fail never waits; the command
 //!   then finishes in `touch_resolved`: on a touch it runs, otherwise it answers `6982`
 //!   (model policy shared with lk-piv) and changes nothing. A touch waits at most 15 s.

@@ -50,6 +50,7 @@ mod tests;
 
 use lk_codec::cbor::{self, Value};
 use lk_core::{Host, Millis, Outcome, Record};
+use lk_crypto::SecretBytes;
 
 use crate::attestation::Attestation;
 use crate::client_pin::PinSession;
@@ -65,6 +66,9 @@ pub const TOUCH_TIMEOUT_MS: Millis = 30_000;
 /// `authenticatorReset` is accepted only this long after power-up (CTAP 2.1 §6.6: "request
 /// MUST have come to the authenticator within 10 seconds of powering up").
 pub const RESET_WINDOW_MS: Millis = 10_000;
+
+/// Length of the credential wrapping secret (the HKDF input of `credential`).
+const WRAPPING_SECRET_LEN: usize = 32;
 
 /// What a U2F request did with the device's latched touch (`docs/CONTRACTS.md`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -266,7 +270,7 @@ impl Authenticator {
 
     /// Power was removed and restored: drop the waiting command, the getNextAssertion
     /// and credentialManagement enumeration state, the pinUvAuthToken, the key-agreement
-    /// keys, the soft PIN block (CTAP 2.1 §6.5.5.4 "power cycling is needed") and any
+    /// keys, the soft PIN block (CTAP 2.1 §6.5.5.7.2 step 9 "power cycling is needed") and any
     /// largeBlobs write in progress, and restart the reset window.
     pub fn power_cycle(&mut self, host: &mut dyn Host) {
         self.pending = None;
@@ -308,7 +312,7 @@ impl Authenticator {
     /// attestation identity is kept, as a hardware attestation key is. Tokens and
     /// key-agreement keys are discarded too.
     fn finish_reset(&mut self, host: &mut dyn Host) -> Vec<u8> {
-        let mut secret = [0u8; 32];
+        let mut secret = SecretBytes::zeroed(WRAPPING_SECRET_LEN);
         host.fill(&mut secret);
         let next = State {
             secret: Some(secret),
@@ -325,9 +329,12 @@ impl Authenticator {
     }
 
     /// Persist `next` and make it current; on failure keep the current state and report
-    /// `CTAP1_ERR_OTHER` (`docs/CONTRACTS.md`, persisted state).
+    /// `CTAP1_ERR_OTHER` (`docs/CONTRACTS.md`, persisted state). The serialized record holds
+    /// the wrapping secret, the attestation scalar and the PIN hash, so it is wiped once
+    /// the host has stored it.
     fn commit(&mut self, next: State, host: &mut dyn Host) -> CtapResult<()> {
-        host.persist(Record::Fido, &next.serialize())
+        let record = SecretBytes::new(next.serialize());
+        host.persist(Record::Fido, &record)
             .map_err(|_| status::OTHER)?;
         self.state = next;
         Ok(())
@@ -369,7 +376,7 @@ impl Authenticator {
 fn ensure_keys(next: &mut State, host: &mut dyn Host) -> CtapResult<bool> {
     let mut changed = false;
     if next.secret.is_none() {
-        let mut secret = [0u8; 32];
+        let mut secret = SecretBytes::zeroed(WRAPPING_SECRET_LEN);
         host.fill(&mut secret);
         next.secret = Some(secret);
         changed = true;

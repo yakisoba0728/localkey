@@ -295,6 +295,52 @@ fn static_ticket_is_constant_and_short_ticket_is_half() {
 }
 
 #[test]
+fn static_ticket_strong_password_special_is_not_a_reference_string() {
+    // yubikit StaticTicketSlotConfiguration.strong_password(special=True) sets
+    // CFGFLAG_SEND_REF only together with CFGFLAG_STRONG_PW2: in static-ticket mode the
+    // pair is the "special character" option, not "send reference string (0..F)".
+    // Without STRONG_PW2 the reference string is still typed before the fixed part.
+    const STATIC_TICKET: u8 = 0x20;
+    const SEND_REF: u8 = 0x01;
+    const STRONG_PW2: u8 = 0x40;
+    let mut d = Device::new();
+    let plain = config_bytes(&PUBLIC_ID, &PRIVATE_ID, &KEY, &[0; 6], 0x10, ENTER, STATIC_TICKET);
+    configure(&mut d, cmd::CONFIG1, &plain);
+    let untransformed = d.button(Press::Short);
+    let special = config_bytes(
+        &PUBLIC_ID,
+        &PRIVATE_ID,
+        &KEY,
+        &[0; 6],
+        0x10,
+        ENTER,
+        STATIC_TICKET | STRONG_PW2 | SEND_REF,
+    );
+    configure(&mut d, cmd::CONFIG1, &special);
+    let out = d.button(Press::Short);
+    assert!(!out.starts_with("cbdefghijklnrtuv"), "{out}");
+    // The strong-password transforms themselves (upper case, digits, the special
+    // character) are deferred (docs/catalog/otp.md), so the ticket is typed
+    // untransformed; this length check pins only the absence of the reference string
+    // and must change when the transforms are modelled.
+    assert_eq!(out.len(), untransformed.len());
+    let reference = config_bytes(
+        &PUBLIC_ID,
+        &PRIVATE_ID,
+        &KEY,
+        &[0; 6],
+        0x10,
+        ENTER,
+        STATIC_TICKET | SEND_REF,
+    );
+    configure(&mut d, cmd::CONFIG1, &reference);
+    assert_eq!(
+        d.button(Press::Short),
+        format!("cbdefghijklnrtuv{untransformed}")
+    );
+}
+
+#[test]
 fn keyboard_layout_flags_tabs_delays_pacing_and_reference() {
     // TAB_FIRST | APPEND_TAB1 | APPEND_TAB2 | APPEND_DELAY1 | APPEND_CR, PACING_10MS,
     // SEND_REF.

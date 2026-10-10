@@ -164,12 +164,84 @@ fn kdf_requires_pw3_and_validates() {
     }
     assert_eq!(card.get_ok(0x00F9), vec![0x81, 0x01, 0x00]);
     assert_eq!(card.verify(0x83, b""), 0x9000);
-    // Larger than the derivation bound and without initial hashes.
-    assert_eq!(card.put(0x00F9, &kdf_do(0x08, u32::MAX, None)), 0x6A80);
-    // Fine with them.
+    // The largest count with initial hashes: nothing to derive on the card.
     let f9 = kdf_do(0x08, u32::MAX, Some((&[0x11; 32], &[0x22; 32])));
     assert_eq!(card.put(0x00F9, &f9), 0x9000);
     assert_eq!(card.verify(0x83, &[0x22; 32]), 0x9000);
+}
+
+/// The count is the raw byte count of spec §4.3.2, not capped at RFC 4880's largest coded
+/// count (65 011 712): one byte more is derived on the card when no initial hashes are
+/// given. Expected values: Python hashlib over (salt || PIN) repeated to 65 011 713 bytes.
+#[test]
+fn kdf_count_above_the_coded_maximum_is_derived() {
+    let mut card = Card::new();
+    card.admin();
+    assert_eq!(card.put(0x00F9, &kdf_do(0x08, 65_011_713, None)), 0x9000);
+    let pw1 = crate::common::hex("98e240053141b1dc877a8cf265c7632baa74641ce40ae9ee447214d067296a85");
+    let pw3 = crate::common::hex("567b07bf21fd002ab326476c1c487a6717126597700432df7175c04d6ceba2e3");
+    assert_eq!(card.verify(0x83, &pw3), 0x9000);
+    // The plain PIN is no longer the reference (hash-only state) and costs a retry.
+    assert_eq!(card.verify(0x82, b"123456"), 0x63C2);
+    assert_eq!(card.verify(0x81, &pw1), 0x9000);
+    assert_eq!(card.retries(), [3, 0, 3]);
+}
+
+/// Yubico "YubiKey 5.2.3 Enhancements to OpenPGP 3.4", Key Derived Format: "Once a key has
+/// been placed on the YubiKey any changes to the KDF settings will be prevented until the
+/// OpenPGP application has been reset" ("Conditions of use not satisfied", 6985). The
+/// factory attestation key does not count (a fresh card takes F9); a generated or an
+/// imported SIG/DEC/AUT key does, and the refusal changes nothing and saves nothing.
+/// TERMINATE DF / ACTIVATE FILE lifts the lock.
+#[test]
+fn kdf_locked_while_a_key_exists() {
+    use crate::common::{attr, crt, import_data};
+    let mut card = Card::new();
+    card.admin();
+    assert_eq!(card.key_status(), [0, 0, 0, 1]);
+    let pw3 = s2k256(&SALT_PW3, b"12345678", 64);
+    assert_eq!(card.put(0x00F9, &kdf_do(0x08, 64, None)), 0x9000);
+    assert_eq!(card.verify(0x83, &pw3), 0x9000);
+
+    // A generated AUT key locks F9, also against KDF_NONE and malformed values.
+    card.set_attributes(0x00C3, attr::ED25519);
+    card.generate(crt::AUT);
+    let f9 = card.get_ok(0x00F9);
+    let persists = card.host.persist_count();
+    for value in [kdf_do(0x0A, 64, None), vec![0x81, 0x01, 0x00], vec![0x81, 0x01, 0x07]] {
+        assert_eq!(card.put(0x00F9, &value), 0x6985, "{value:02X?}");
+    }
+    assert_eq!(card.host.persist_count(), persists);
+    assert_eq!(card.get_ok(0x00F9), f9);
+    // Nothing changed: PW3 still verified, the PINs are still the hashes.
+    assert_eq!(card.verify(0x83, b""), 0x9000);
+    assert_eq!(card.verify(0x82, &s2k256(&SALT_PW1, b"123456", 64)), 0x9000);
+    // Access is still checked first.
+    card.select();
+    assert_eq!(card.put(0x00F9, &[0x81, 0x01, 0x00]), 0x6982);
+
+    // Removing the key (attribute change, spec §4.4.3.10) lifts the lock.
+    assert_eq!(card.verify(0x83, &pw3), 0x9000);
+    card.set_attributes(0x00C3, attr::P256_ECDSA);
+    assert_eq!(card.key_status(), [0, 0, 0, 1]);
+    assert_eq!(card.put(0x00F9, &[0x81, 0x01, 0x00]), 0x9000);
+
+    // An imported DEC key locks it too.
+    card.admin();
+    card.set_attributes(0x00C2, attr::X25519);
+    assert_eq!(card.import(&import_data(crt::DEC, &[(0x92, &[0x42; 32])])), 0x9000);
+    assert_eq!(card.put(0x00F9, &kdf_do(0x08, 64, None)), 0x6985);
+    assert_eq!(card.get_ok(0x00F9), vec![0x81, 0x01, 0x00]);
+
+    // The application reset removes the user keys and unlocks F9.
+    for _ in 0..3 {
+        card.verify(0x83, b"wrongpin");
+    }
+    assert_eq!(card.send(&[0x00, 0xE6, 0x00, 0x00]).1, 0x9000);
+    assert_eq!(card.send(&[0x00, 0x44, 0x00, 0x00]).1, 0x9000);
+    card.select();
+    card.admin();
+    assert_eq!(card.put(0x00F9, &kdf_do(0x08, 64, None)), 0x9000);
 }
 
 /// A storage failure while writing F9 keeps the previous KDF and PINs.

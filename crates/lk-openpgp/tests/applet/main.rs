@@ -8,10 +8,12 @@
 mod common;
 
 mod attestation;
+mod curves;
 mod data_objects;
 mod framing;
 mod generation;
 mod import;
+mod interop;
 mod kdf;
 mod lifecycle;
 mod operations;

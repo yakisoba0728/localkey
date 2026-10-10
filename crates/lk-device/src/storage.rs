@@ -91,7 +91,7 @@ fn aad(record: Record, version: u8) -> [u8; AAD_LABEL.len() + 2] {
 ///
 /// Only if `plaintext` is longer than AES-GCM's limit of 2^36 - 32 bytes
 /// (SP 800-38D §5.2.1.1), which no application record approaches. The contract fixes the
-/// infallible signature; see the contract change request about a typed GCM API.
+/// infallible signature (`docs/CONTRACTS.md` "Phase 0 as implemented", lk-device::storage).
 pub fn seal(key: &[u8; 32], record: Record, plaintext: &[u8], entropy: &mut dyn Entropy) -> Vec<u8> {
     let mut nonce = [0; NONCE_LEN];
     entropy.fill(&mut nonce);

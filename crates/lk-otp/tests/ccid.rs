@@ -379,3 +379,176 @@ fn yubico_challenge_storage_failure_reveals_nothing() {
     let ticket = lk_otp::Ticket::from_bytes(&plain).unwrap();
     assert_eq!((ticket.use_counter, ticket.session_counter), (1, 0));
 }
+
+/// The extended form yubikit's `ExtendedApduFormatProcessor` writes for 5.x firmware
+/// (`CLA INS P1 P2 00 Lc(2) data`; no Le field from the OTP backend).
+fn extended(p1: u8, data: &[u8]) -> Vec<u8> {
+    let mut out = vec![0x00, 0x01, p1, 0x00];
+    if !data.is_empty() {
+        out.push(0x00);
+        out.extend_from_slice(&(data.len() as u16).to_be_bytes());
+        out.extend_from_slice(data);
+    }
+    out
+}
+
+#[test]
+fn yubikit_request_shapes_are_accepted() {
+    // yubikit `_YubiOtpSmartCardBackend` sends `send_apdu(0, 0x01, slot, 0, data)`;
+    // depending on its encoder that is a short or an extended APDU, and a data-less
+    // command is case 1, case 2S (`Lc = 00`) or case 2E (`00 00 00`). Every shape
+    // gives the same answer as the short reference form.
+    let config = write_payload(&hmac_config(&[0x0b; 20], false, true), None);
+    let challenge = pad_challenge(b"Hi There");
+    let mac = hex("b617318655057264e28bc0b6fb378c8ef146be00");
+    let serial = 12_345_678u32.to_be_bytes();
+
+    let (mut applet, mut host) = setup();
+    let r = done(applet.process(&extended(cmd::CONFIG1, &config), &mut host));
+    assert_eq!(r, [5, 7, 4, 1, 0x01, 0x00, 0x90, 0x00]);
+    let shapes: [(Vec<u8>, &[u8]); 9] = [
+        // Extended case 3E, no Le.
+        (extended(cmd::CHAL_HMAC1, &challenge), &mac),
+        // Extended case 4E with Le = 0000 (Ne 65 536).
+        ([extended(cmd::CHAL_HMAC1, &challenge), vec![0, 0]].concat(), &mac),
+        // Short case 3S and case 4S with Le = 00.
+        (apdu(cmd::CHAL_HMAC1, &challenge), &mac),
+        ([apdu(cmd::CHAL_HMAC1, &challenge), vec![0]].concat(), &mac),
+        // Data-less: case 1, case 2S (`Lc = 00` read as Le), case 2E (`00 00 00`).
+        (vec![0x00, 0x01, cmd::DEVICE_SERIAL, 0x00], &serial),
+        (vec![0x00, 0x01, cmd::DEVICE_SERIAL, 0x00, 0x00], &serial),
+        (vec![0x00, 0x01, cmd::DEVICE_SERIAL, 0x00, 0x00, 0x00, 0x00], &serial),
+        // Explicit Le equal to the response length.
+        (vec![0x00, 0x01, cmd::DEVICE_SERIAL, 0x00, 0x04], &serial),
+        // P2 is not interpreted.
+        (vec![0x00, 0x01, cmd::DEVICE_SERIAL, 0x5A], &serial),
+    ];
+    for (i, (command, expected)) in shapes.iter().enumerate() {
+        let r = done(applet.process(command, &mut host));
+        assert_eq!(r, [*expected, &[0x90, 0x00][..]].concat(), "shape {i}");
+    }
+    // Extended SCAN_MAP, UPDATE, SWAP and delete writes answer the status.
+    let r = done(applet.process(&extended(cmd::SCAN_MAP, &lk_otp::DEFAULT_SCAN_MAP), &mut host));
+    assert_eq!(r, [5, 7, 4, 2, 0x01, 0x00, 0x90, 0x00]);
+    let r = done(applet.process(&extended(cmd::CONFIG1, &[0; 58]), &mut host));
+    assert_eq!(r, [5, 7, 4, 0, 0x00, 0x00, 0x90, 0x00]);
+    // The extended `Lc = 0000` that ISO/IEC 7816-4 §5.1 forbids is a wrong length
+    // (model policy, lk_codec::apdu; yubikit sends no Le with OTP commands).
+    let r = done(applet.process(
+        &[0x00, 0x01, cmd::DEVICE_SERIAL, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+        &mut host,
+    ));
+    assert_eq!(r, [0x67, 0x00]);
+}
+
+#[test]
+fn class_byte_status_words_follow_the_apdu_conventions() {
+    // docs/CONTRACTS.md "APDU conventions": secure-messaging bits 6882, CLA >= 80
+    // 6E00; ISO/IEC 7816-4 §5.6: logical channel 6881, chaining 6884. Nothing runs.
+    let (mut applet, mut host) = setup();
+    let config = write_payload(&hmac_config(&[0x0b; 20], false, true), None);
+    let cases: [(u8, u16); 13] = [
+        (0x04, 0x6882),
+        (0x08, 0x6882),
+        (0x0C, 0x6882),
+        (0x1C, 0x6882),
+        (0x10, 0x6884),
+        (0x11, 0x6884),
+        (0x01, 0x6881),
+        (0x03, 0x6881),
+        (0x20, 0x6E00),
+        (0x40, 0x6E00),
+        (0x80, 0x6E00),
+        (0x90, 0x6E00),
+        (0xFF, 0x6E00),
+    ];
+    for (cla, expected) in cases {
+        let mut command = apdu(cmd::CONFIG1, &config);
+        command[0] = cla;
+        let r = done(applet.process(&command, &mut host));
+        assert_eq!(r, expected.to_be_bytes(), "CLA {cla:02X}");
+    }
+    assert!(!applet.otp().is_configured(lk_otp::Slot::One));
+    assert_eq!(applet.otp().programming_sequence(), 0);
+    assert_eq!(host.persist_attempts(), 0);
+}
+
+#[test]
+fn responses_respect_ne_and_continue_with_get_response() {
+    // docs/CONTRACTS.md "APDU conventions": at most Ne bytes, the rest with 61xx and
+    // GET RESPONSE (ISO/IEC 7816-4 §7.6.1).
+    let get_response = |le: u8| vec![0x00, 0xC0, 0x00, 0x00, le];
+    let mac = hex("b617318655057264e28bc0b6fb378c8ef146be00");
+    let (mut applet, mut host) = setup();
+    // A write with Le = 02: two status bytes, then the other four.
+    let config = write_payload(&hmac_config(&[0x0b; 20], false, true), None);
+    let r = done(applet.process(&[apdu(cmd::CONFIG1, &config), vec![0x02]].concat(), &mut host));
+    assert_eq!(r, [5, 7, 0x61, 0x04]);
+    let r = done(applet.process(&get_response(0x00), &mut host));
+    assert_eq!(r, [4, 1, 0x01, 0x00, 0x90, 0x00]);
+    // Nothing pending: 6985.
+    assert_eq!(done(applet.process(&get_response(0x00), &mut host)), [0x69, 0x85]);
+    // A read with Le = 08, fetched in two more pieces.
+    let challenge = [apdu(cmd::CHAL_HMAC1, &pad_challenge(b"Hi There")), vec![0x08]].concat();
+    let r = done(applet.process(&challenge, &mut host));
+    assert_eq!(r, [&mac[..8], &[0x61, 0x0C]].concat());
+    // P1-P2 other than 00 00: 6A86, the data stays.
+    assert_eq!(
+        done(applet.process(&[0x00, 0xC0, 0x01, 0x00, 0x00], &mut host)),
+        [0x6A, 0x86]
+    );
+    let r = done(applet.process(&get_response(0x0A), &mut host));
+    assert_eq!(r, [&mac[8..18], &[0x61, 0x02]].concat());
+    let r = done(applet.process(&get_response(0x00), &mut host));
+    assert_eq!(r, [&mac[18..], &[0x90, 0x00]].concat());
+    // Extended Le.
+    let r = done(applet.process(
+        &[extended(cmd::CHAL_HMAC1, &pad_challenge(b"Hi There")), vec![0x00, 0x05]].concat(),
+        &mut host,
+    ));
+    assert_eq!(r, [&mac[..5], &[0x61, 0x0F]].concat());
+    // Any other command, SELECT, deselect and a card power-off discard unread data.
+    let r = done(applet.process(&apdu(cmd::DEVICE_SERIAL, &[]), &mut host));
+    assert_eq!(r, [&12_345_678u32.to_be_bytes()[..], &[0x90, 0x00]].concat());
+    assert_eq!(done(applet.process(&get_response(0x00), &mut host)), [0x69, 0x85]);
+    type End = dyn Fn(&mut OtpApplet, &mut TestHost);
+    let discard: [&End; 4] = [
+        &|a, h| {
+            a.select(&[0x00, 0xA4, 0x04, 0x00, 0x07, 0xA0, 0, 0, 5, 0x27, 0x20, 1], h);
+        },
+        &|a, _| a.deselect(),
+        &|a, _| a.reset(lk_core::ResetKind::CardPowerOff),
+        &|a, h| {
+            done(a.process(&[0x00, 0x02, 0x00, 0x00], h));
+        },
+    ];
+    for (i, end) in discard.iter().enumerate() {
+        let r = done(applet.process(&challenge, &mut host));
+        assert_eq!(r[8..], [0x61, 0x0C], "case {i}");
+        end(&mut applet, &mut host);
+        assert_eq!(
+            done(applet.process(&get_response(0x00), &mut host)),
+            [0x69, 0x85],
+            "case {i}"
+        );
+    }
+}
+
+#[test]
+fn touch_response_respects_the_ne_of_its_command() {
+    let (mut applet, mut host) = setup();
+    done(applet.process(
+        &apdu(cmd::CONFIG2, &write_payload(&hmac_config(&[0x0b; 20], true, true), None)),
+        &mut host,
+    ));
+    let challenge = [apdu(cmd::CHAL_HMAC2, &pad_challenge(b"Hi There")), vec![0x05]].concat();
+    assert_eq!(
+        applet.process(&challenge, &mut host),
+        Outcome::NeedTouch { timeout_ms: 15_000 }
+    );
+    let mac = hex("b617318655057264e28bc0b6fb378c8ef146be00");
+    let r = applet.touch_resolved(true, &mut host);
+    assert_eq!(r, [&mac[..5], &[0x61, 0x0F]].concat());
+    let r = done(applet.process(&[0x00, 0xC0, 0x00, 0x00, 0x00], &mut host));
+    assert_eq!(r, [&mac[5..], &[0x90, 0x00]].concat());
+}

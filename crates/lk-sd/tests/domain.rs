@@ -125,6 +125,37 @@ fn unknown_get_data_tag() {
     assert_eq!(plain(&mut sd, &mut host, &hex("01CA006600")), hex("6881"));
 }
 
+/// Plaintext response chaining (ISO/IEC 7816-4 §5.1.3, §7.6.1): a short Le leaves the
+/// rest for GET RESPONSE (`61xx`), which must immediately follow; any other command
+/// discards it. lk-device sends handshakes straight to `SecurityDomain::handshake`, so
+/// an INITIALIZE UPDATE or PSO in between must discard it too (regression: the queued
+/// card recognition data used to be served after a handshake).
+#[test]
+fn get_response_is_discarded_by_an_intervening_command() {
+    let reference = hex(REF_RECOGNITION);
+    let (mut sd, mut host) = fresh();
+    let first = plain(&mut sd, &mut host, &hex("00CA006610"));
+    assert_eq!(first, [&reference[..16], &[0x61, 0x2F]].concat());
+    let rest = plain(&mut sd, &mut host, &hex("00C0000000"));
+    assert_eq!(rest, [&reference[16..], &[0x90, 0x00]].concat());
+    assert_eq!(plain(&mut sd, &mut host, &hex("00C0000000")), hex("6985"), "nothing left");
+
+    let interveners: [Vec<u8>; 3] = [
+        init_update_apdu(0xFF, &[7; 8]),
+        encode_apdu(0x80, 0x2A, 0x00, 0x10, &[0; 8], None, false),
+        encode_apdu(0x00, 0xCA, 0x00, 0xE0, &[], Some(0), false),
+    ];
+    for (i, intervening) in interveners.iter().enumerate() {
+        assert_eq!(status(&plain(&mut sd, &mut host, &hex("00CA006610"))), 0x612F);
+        if i < 2 {
+            sd.handshake(intervening, &mut host);
+        } else {
+            plain(&mut sd, &mut host, intervening);
+        }
+        assert_eq!(plain(&mut sd, &mut host, &hex("00C0000000")), hex("6985"), "{intervening:02X?}");
+    }
+}
+
 /// PUT KEY of a whole set: KCVs returned (GP 2.3.1 §11.8.2.3), the factory set is
 /// replaced (Yubico: "When a new key set is installed, it replaces the default key
 /// set"), the new keys authenticate.

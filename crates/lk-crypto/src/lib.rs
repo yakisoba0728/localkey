@@ -3,7 +3,9 @@
 //! It exposes the engine's own small API:
 //! - hashes, HMAC, HKDF;
 //! - AES (ECB block, CBC, GCM) and AES-CMAC; 3DES;
-//! - ECDSA/ECDH on P-256 and P-384; Ed25519; X25519; RSA.
+//! - ECDSA/ECDH on P-256, P-384, P-521, secp256k1, brainpoolP256r1 and brainpoolP384r1
+//!   (not brainpoolP512r1: no RustCrypto crate); Ed25519; X25519; RSA;
+//! - an incremental [`Hasher`] and the zeroizing [`SecretBytes`] for other crates' secrets.
 //!
 //! Protocol crates never name a third-party type, so replacing a primitive is a change
 //! to this crate alone. See `docs/DESIGN.md` §8.
@@ -20,6 +22,7 @@ mod hash;
 mod mac;
 mod rng;
 mod rsa;
+mod secret;
 
 pub use cipher::{
     aes_cbc_decrypt, aes_cbc_encrypt, aes_ecb_decrypt_block, aes_ecb_encrypt_block, aes_gcm_open,
@@ -27,9 +30,10 @@ pub use cipher::{
 };
 pub use ec::{Curve, EcPrivateKey, EcdsaSignature, ec_public_is_valid, ecdsa_verify_prehash};
 pub use edwards::{Ed25519Key, X25519Key, ed25519_verify};
-pub use hash::{HashAlg, digest, sha1, sha256, sha384, sha512};
+pub use hash::{HashAlg, Hasher, digest, sha1, sha256, sha384, sha512};
 pub use mac::{aes_cmac, ct_eq, hkdf_sha256, hmac, hmac_sha1, hmac_sha256};
 pub use rsa::{RsaPrivateKey, rsa_public_op};
+pub use secret::SecretBytes;
 
 use core::fmt;
 

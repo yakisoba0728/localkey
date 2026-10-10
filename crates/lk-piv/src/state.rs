@@ -20,11 +20,19 @@
 //! a record written by a newer version survives a round trip through this one (§7:
 //! "모르는 태그는 보존한다"). A record that is not version `0x01`, does not parse, or holds
 //! inconsistent values is unreadable, and the applet starts from its factory state.
+//!
+//! Secrets (PIN and PUK reference data, the management key, slot private keys) are held
+//! in `lk_crypto::SecretBytes`, which wipes them when dropped (`docs/DESIGN.md` §8: "비밀
+//! 버퍼는 zeroize로 처리한다"). Every commit works on a copy of the state, so the copy it
+//! replaces is wiped too. [`PivState::encode`] sizes its buffer up front so that building
+//! the record never reallocates and leaves no unwiped partial copies behind; the caller
+//! wraps the result in `SecretBytes`.
 
 use std::collections::BTreeMap;
 use std::fmt;
 
 use lk_codec::tlv;
+use lk_crypto::SecretBytes;
 
 use crate::keys::SlotKey;
 use crate::objects::{self, ObjectStore};
@@ -52,6 +60,10 @@ pub(crate) const DEFAULT_RETRIES: u8 = 3;
 
 /// Slot holding the vendor attestation key (Yubico PIV attestation documentation).
 pub(crate) const SLOT_ATTESTATION: u8 = 0xF9;
+
+/// Upper bound on the header bytes of one BER-TLV element: a tag of up to 3 bytes and a
+/// length of up to 4 (`lk_codec::tlv`).
+pub(crate) const TLV_OVERHEAD: usize = 7;
 
 const T_PIN: u32 = 0x01;
 const T_PIN_MAX: u32 = 0x02;
@@ -127,7 +139,7 @@ impl MgmtAlg {
 #[derive(Clone, PartialEq, Eq)]
 pub(crate) struct Credential {
     /// Reference data, 8 bytes padded with `FF` (SP 800-73-4 Part 2 §2.4.3).
-    pub(crate) value: [u8; 8],
+    pub(crate) value: SecretBytes,
     /// Retry limit, 1..=255 (Yubico SET PIN RETRIES; profile `retry_limits`).
     pub(crate) max: u8,
     /// Retries remaining, 0..=max; 0 means blocked.
@@ -136,7 +148,7 @@ pub(crate) struct Credential {
 
 impl Credential {
     pub(crate) fn new(value: [u8; 8], max: u8) -> Self {
-        Self { value, max, remaining: max }
+        Self { value: SecretBytes::from_slice(&value), max, remaining: max }
     }
 
     /// Whether the retry counter is exhausted.
@@ -149,7 +161,7 @@ impl Credential {
 #[derive(Clone, PartialEq, Eq)]
 pub(crate) struct MgmtKey {
     pub(crate) alg: MgmtAlg,
-    pub(crate) key: Vec<u8>,
+    pub(crate) key: SecretBytes,
     /// Touch required to complete authentication (Yubico SET MANAGEMENT KEY, P2 `FE`).
     pub(crate) touch: bool,
 }
@@ -195,7 +207,7 @@ impl PivState {
         Self {
             pin: Credential::new(DEFAULT_PIN, DEFAULT_RETRIES),
             puk: Credential::new(DEFAULT_PUK, DEFAULT_RETRIES),
-            mgmt: MgmtKey { alg: MgmtAlg::Aes192, key: DEFAULT_MGMT_KEY.to_vec(), touch: false },
+            mgmt: MgmtKey { alg: MgmtAlg::Aes192, key: SecretBytes::from_slice(&DEFAULT_MGMT_KEY), touch: false },
             objects: ObjectStore::default(),
             slots: BTreeMap::new(),
             attestation_initialized: false,
@@ -221,9 +233,11 @@ impl PivState {
         next
     }
 
-    /// Serialize to the storage format.
+    /// Serialize to the storage format. The result holds every secret of the applet; the
+    /// caller wraps it in `SecretBytes` (module documentation).
     pub(crate) fn encode(&self) -> Vec<u8> {
-        let mut out = vec![FORMAT_VERSION];
+        let mut out = Vec::with_capacity(self.encoded_len_bound());
+        out.push(FORMAT_VERSION);
         tlv::encode_into(&mut out, T_PIN, &self.pin.value);
         tlv::encode_into(&mut out, T_PIN_MAX, &[self.pin.max]);
         tlv::encode_into(&mut out, T_PIN_LEFT, &[self.pin.remaining]);
@@ -242,14 +256,27 @@ impl PivState {
             tlv::encode_into(&mut out, T_OBJECT, &entry);
         }
         for (slot, key) in &self.slots {
-            let mut entry = tlv::encode(T_ENTRY_ID, &[*slot]);
-            tlv::encode_into(&mut entry, T_ENTRY_VALUE, &key.encode());
+            let record = SecretBytes::new(key.encode());
+            let mut entry = Vec::with_capacity(record.len() + 2 * TLV_OVERHEAD + 1);
+            tlv::encode_into(&mut entry, T_ENTRY_ID, &[*slot]);
+            tlv::encode_into(&mut entry, T_ENTRY_VALUE, &record);
+            let entry = SecretBytes::new(entry);
             tlv::encode_into(&mut out, T_SLOT, &entry);
         }
         for raw in &self.unknown {
             out.extend_from_slice(raw);
         }
         out
+    }
+
+    /// An upper bound on the length of [`encode`](Self::encode)'s result, so its buffer
+    /// never reallocates: every element is counted with [`TLV_OVERHEAD`].
+    fn encoded_len_bound(&self) -> usize {
+        let fixed = 1 + 10 * TLV_OVERHEAD + 2 * 8 + 6 + 1 + self.mgmt.key.len() + 2;
+        let objects: usize = self.objects.iter().map(|(_, value)| 3 * TLV_OVERHEAD + 3 + value.len()).sum();
+        let slots: usize = self.slots.values().map(|key| 3 * TLV_OVERHEAD + 1 + key.encoded_len_bound()).sum();
+        let unknown: usize = self.unknown.iter().map(Vec::len).sum();
+        fixed + objects + slots + unknown
     }
 
     /// Parse the storage format; `None` if the bytes are unreadable.
@@ -273,14 +300,14 @@ impl PivState {
         let mut unknown = Vec::new();
         for field in tlv::parse_all(body).ok()? {
             match field.tag {
-                T_PIN => pin = Some(<[u8; 8]>::try_from(field.value).ok()?),
+                T_PIN => pin = Some(reference(field.value)?),
                 T_PIN_MAX => pin_max = Some(single(field.value)?),
                 T_PIN_LEFT => pin_left = Some(single(field.value)?),
-                T_PUK => puk = Some(<[u8; 8]>::try_from(field.value).ok()?),
+                T_PUK => puk = Some(reference(field.value)?),
                 T_PUK_MAX => puk_max = Some(single(field.value)?),
                 T_PUK_LEFT => puk_left = Some(single(field.value)?),
                 T_MGMT_ALG => alg = Some(MgmtAlg::from_byte(single(field.value)?)?),
-                T_MGMT_KEY => key = Some(field.value.to_vec()),
+                T_MGMT_KEY => key = Some(SecretBytes::from_slice(field.value)),
                 T_MGMT_TOUCH => {
                     touch = Some(match single(field.value)? {
                         0 => false,
@@ -355,7 +382,12 @@ fn entry(value: &[u8]) -> Option<(&[u8], &[u8])> {
     }
 }
 
-fn credential(value: [u8; 8], max: u8, remaining: u8) -> Option<Credential> {
+/// Stored PIN or PUK reference data: exactly 8 bytes.
+fn reference(value: &[u8]) -> Option<SecretBytes> {
+    (value.len() == 8).then(|| SecretBytes::from_slice(value))
+}
+
+fn credential(value: SecretBytes, max: u8, remaining: u8) -> Option<Credential> {
     (max >= 1 && remaining <= max).then_some(Credential { value, max, remaining })
 }
 
@@ -374,7 +406,7 @@ mod tests {
             pin: PinPolicy::Once,
             touch: TouchPolicy::Cached,
             origin: crate::keys::Origin::Imported,
-            private: Private::Bytes(vec![fill; 32]),
+            private: Private::Bytes(vec![fill; 32].into()),
             public,
         }
     }
@@ -392,7 +424,7 @@ mod tests {
         let mut state = PivState::factory();
         state.pin.remaining = 1;
         state.puk.max = 255;
-        state.mgmt = MgmtKey { alg: MgmtAlg::Aes256, key: vec![7; 32], touch: true };
+        state.mgmt = MgmtKey { alg: MgmtAlg::Aes256, key: vec![7; 32].into(), touch: true };
         state.objects.put(0x5FC102, vec![0xAA; 300]);
         state.objects.put(0x5FFF01, vec![0xBB; 3000]);
         state.slots.insert(0x9A, p256_key(1));
@@ -406,6 +438,34 @@ mod tests {
         let mut expected = state;
         expected.unknown = decoded.unknown.clone();
         assert_eq!(decoded, expected);
+    }
+
+    #[test]
+    fn encoding_fits_its_preallocated_buffer() {
+        // `encode` must never reallocate: a reallocation would leave an unwiped copy of
+        // the secrets behind (module documentation).
+        let mut state = PivState::factory();
+        assert!(state.encode().len() <= state.encoded_len_bound());
+        state.mgmt = MgmtKey { alg: MgmtAlg::Aes256, key: vec![7; 32].into(), touch: true };
+        state.objects.put(0x5FC102, vec![0xAA; 300]);
+        state.objects.put(0x5FFF01, vec![0xBB; 3000]);
+        state.objects.put(0x5FC10D, vec![0xCC; 70_000]);
+        state.attestation_initialized = true;
+        for slot in [0x9A, 0x9C, 0x9D, 0x9E, 0x82, 0x95, SLOT_ATTESTATION] {
+            state.slots.insert(slot, p256_key(slot));
+        }
+        let mut rsa = p256_key(9);
+        rsa.alg = KeyAlg::Rsa4096;
+        rsa.private = Private::Rsa { p: vec![0xD1; 256].into(), q: vec![0xD2; 256].into() };
+        rsa.public = vec![0xD3; 512];
+        assert!(rsa.encode().len() <= rsa.encoded_len_bound());
+        state.slots.insert(0x83, rsa);
+        state.unknown.push(vec![0x5F, 0x20, 0x02, 0xCA, 0xFE]);
+        let bytes = state.encode();
+        assert!(bytes.len() <= state.encoded_len_bound(), "{} > {}", bytes.len(), state.encoded_len_bound());
+        for key in state.slots.values() {
+            assert!(key.encode().len() <= key.encoded_len_bound());
+        }
     }
 
     #[test]
@@ -431,7 +491,7 @@ mod tests {
         assert!(PivState::decode(&state.encode()).is_none());
         // Key length that does not match the algorithm.
         let mut state = PivState::factory();
-        state.mgmt.key = vec![0; 16];
+        state.mgmt.key = vec![0; 16].into();
         assert!(PivState::decode(&state.encode()).is_none());
         // A slot key record with a wrong length.
         let mut state = PivState::factory();

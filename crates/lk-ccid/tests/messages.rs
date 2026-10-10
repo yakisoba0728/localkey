@@ -194,6 +194,29 @@ fn set_then_reset_parameters() {
 }
 
 #[test]
+fn gnupg_parameter_exchange_is_accepted() {
+    // GnuPG `scd/ccid-driver.c`, for a reader with automatic parameter negotiation
+    // (`dwFeatures` 0x40, set in this descriptor): GetParameters, then SetParameters
+    // with the 7-byte T=1 block it returned; without a usable reply, its default block
+    // `11 10 00 4D 00 20 00` with TA1 and the T=1 interface bytes of the ATR filled in.
+    // (libccid sends no SetParameters for such a reader: `ifdhandler.c`
+    // "Skip SetParameters".) Both must be accepted unchanged.
+    let mut ccid = powered();
+    let r = reply(ccid.message(&cmd(0x6C, 0, 0x50, [0; 3], &[])));
+    assert_eq!(r, rsp(0x82, 0x50, ACTIVE, 0x00, T1, &ATR_PARAMS));
+    let echoed = r[10..].to_vec();
+    let r = reply(ccid.message(&cmd(0x61, 0, 0x51, [T1, 0, 0], &echoed)));
+    assert_eq!(r, rsp(0x82, 0x51, ACTIVE, 0x00, T1, &echoed));
+    for block in [
+        [0x11, 0x10, 0x00, 0x4D, 0x00, 0x20, 0x00],
+        [ATR_PARAMS[0], 0x10, 0x00, ATR_PARAMS[3], 0x00, ATR_PARAMS[5], 0x00],
+    ] {
+        let r = reply(ccid.message(&cmd(0x61, 0, 0x52, [T1, 0, 0], &block)));
+        assert_eq!(r, rsp(0x82, 0x52, ACTIVE, 0x00, T1, &block), "{block:02X?}");
+    }
+}
+
+#[test]
 fn power_on_restores_atr_parameters() {
     let mut ccid = powered();
     let block = [0x11, 0x10, 0x00, 0x15, 0x00, 0xFE, 0x00];

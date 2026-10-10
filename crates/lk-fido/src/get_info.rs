@@ -28,8 +28,11 @@ pub(crate) const MAX_RPIDS_FOR_SET_MIN_PIN_LENGTH: usize = 1;
 /// empty device (`reference/legacy-v0.64-profiles.json` `discoverable_capacity`).
 pub(crate) const DISCOVERABLE_CAPACITY: usize = 100;
 
-/// `versions` (key 1). While alwaysUv is on, "U2F_V2" is left out: "The authenticator MUST
-/// NOT return "U2F_V2" in the versions array" (CTAP 2.1 §7.2.4, disabling CTAP1/U2F).
+/// `versions` (key 1). While alwaysUv is on, "U2F_V2" is left out: "Authenticators MUST
+/// disable CTAP1/U2F when the alwaysUv option ID is present and true ... unless the
+/// CTAP1/U2F authenticator is protected by a built-in user verification method" (none
+/// here), and then "The authenticator MUST NOT return "U2F_V2" in the versions array"
+/// (CTAP 2.1 §7.2.4; §7.2.3 offers the same choice).
 const VERSIONS: [&str; 4] = ["U2F_V2", "FIDO_2_0", "FIDO_2_1_PRE", "FIDO_2_1"];
 /// `extensions` (key 2), in the observed order.
 const EXTENSIONS: [&str; 5] = [
@@ -43,9 +46,10 @@ const EXTENSIONS: [&str; 5] = [
 /// The GetInfo response map (CTAP 2.1 §6.4, keys 0x01..0x10 and 0x14).
 pub(crate) fn get_info(state: &State, profile: &DeviceProfile) -> Value {
     let text_array = |items: &[&str]| Value::Array(items.iter().map(|s| Value::from(*s)).collect());
-    // §6.4 "options". Model policy: `makeCredUvNotRqd` reads false while `alwaysUv` is on,
-    // because the Always Require User Verification feature then requires UV for every
-    // makeCredential (authenticatorConfig toggleAlwaysUv, §6.11.2, switches it).
+    // §6.4 "options". `makeCredUvNotRqd` reads false while `alwaysUv` is on: "If the
+    // alwaysUv option ID is present and true the authenticator MUST set the value of
+    // makeCredUvNotRqd to false" (§6.4 options table, alwaysUv; §6.1.2 step 6.1 "Let the
+    // makeCredUvNotRqd option ID be treated as false").
     let options = MapBuilder::new()
         .insert("rk", true)
         .insert("up", true)

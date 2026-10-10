@@ -53,11 +53,27 @@ Model decisions that apply throughout (sources in the crate docs):
 - **PSO statuses.** A malformed certificate answers `6A80`. A well-formed certificate
   that fails a check answers `6982` and changes no persistent state. An unknown CA
   answers `6A88`, a non-CA KID `6A86`, and an exhausted CA `6983`.
-- **No wall clock** (`docs/DESIGN.md` §4). Certificate validity is checked for form and
-  order (notBefore <= notAfter), and notAfter against the earliest the current time can
-  be: the profile's certificate start date (`DeviceProfile::cert_not_before`,
-  2026-01-01 in both profiles). A certificate that expired before that date is refused
-  (`6982`); a notBefore in the future cannot be detected.
+- **Certificate validity and the clock.** The engine reads no clock (`docs/DESIGN.md`
+  §4); the program may lend one through `Host::unix_time` (docs/CONTRACTS.md
+  "Applications B": "for certificate validity"). Every OCE certificate is checked for
+  form and order (notBefore <= notAfter), and then:
+  - with a lent reading, the certificate must be valid at that instant, both bounds
+    inclusive (RFC 5280 §4.1.2.5, §6.1.3 (a)(2)): a notBefore in the future is refused
+    like an expired notAfter (`6982`), and the profile date below plays no part;
+  - without one, notAfter must not be before the earliest the current time can be: the
+    profile's certificate start date (`DeviceProfile::cert_not_before`, 2026-01-01 in
+    both profiles). A certificate that expired before that date is refused (`6982`); a
+    notBefore in the future cannot be detected.
+
+  The reading is taken for each PSO command, so each certificate is checked at the
+  instant it arrives. A reading after 9999-12-31T23:59:59Z (beyond GeneralizedTime)
+  saturates to that instant. A time naming a date that does not exist in the Gregorian
+  calendar (30 February, 31 April) is malformed (X.680 GeneralizedTime/UTCTime name
+  calendar dates): `6A80`, using a try of the initial CA like any malformed certificate.
+- **Plaintext response chaining.** A long plaintext answer is served in pieces of at
+  most Ne with `61xx` and GET RESPONSE `00 C0` (ISO/IEC 7816-4 §5.1.3). Any other
+  command, handshakes included, discards what is left (§7.6.1), after which GET RESPONSE
+  answers `6985` (model status).
 - **Certificate policies.** A critical certificatePolicies extension is processed as
   RFC 5280 §6.1 does with initial policy anyPolicy: any identifier is accepted and
   qualifiers are refused. GP role policy identifiers (CA-KLOC, KA-KLOC, OCE, SD) are not
@@ -70,20 +86,20 @@ Totals: 96 tested, 9 intentional differences, 15 deferred (120 bullets).
 
 ## SCP03
 
-- SDK handshake: tested: `wrapped_exchange_matches_independent_known_answers`, `init_update_response_matches_independent_known_answer`, `extended_external_authenticate_macs_the_extended_lc`, `full_handshake_at_every_security_level`, `scp03::tests::kdf_matches_independent_known_answers` (yubikit-style INITIALIZE UPDATE without Le, EXTERNAL AUTHENTICATE `33`, encrypted empty data field; expected bytes computed independently with OpenSSL; on a USB session yubikit sends everything extended and MACs the extended Lc `00 00 10` of EXTERNAL AUTHENTICATE, which is accepted, with and without an outer channel)
+- SDK handshake: tested: `wrapped_exchange_matches_independent_known_answers`, `init_update_response_matches_independent_known_answer`, `extended_external_authenticate_macs_the_extended_lc`, `full_handshake_at_every_security_level`, `yubikit_request_shapes_on_extended_and_short_sessions`, `scp03::tests::kdf_matches_independent_known_answers` (yubikit-style INITIALIZE UPDATE without Le, EXTERNAL AUTHENTICATE `33`, encrypted empty data field; expected bytes computed independently with OpenSSL; on a USB session yubikit sends everything extended and without Le and MACs the extended Lc `00 00 10` of EXTERNAL AUTHENTICATE, which is accepted, with and without an outer channel; on a short NFC session data-less commands end in `00`)
 - command encryption and MAC: tested: `wrapped_exchange_matches_independent_known_answers`, `full_handshake_at_every_security_level`, `interindustry_class_is_unwrapped_to_plain_class`
 - response encryption and MAC: tested: `wrapped_exchange_matches_independent_known_answers`, `full_handshake_at_every_security_level`, `long_responses_are_protected_whole`, `channel::tests::protected_status_words` (error statuses bare per Amd D §6.2.5)
-- long APDU: tested: `extended_length_commands_mac_the_extended_lc`, `extended_external_authenticate_macs_the_extended_lc`, `reassembled_short_chain_of_a_long_protected_command_verifies`, `long_responses_are_protected_whole`, `chained_parts_each_with_their_own_mac`, `ec_key_management` (MAC covers Lc in the form sent; whole responses wrapped before `61xx` splitting; extended certificate stores)
+- long APDU: tested: `extended_length_commands_mac_the_extended_lc`, `extended_external_authenticate_macs_the_extended_lc`, `reassembled_short_chain_of_a_long_protected_command_verifies`, `long_responses_are_protected_whole`, `chained_parts_each_with_their_own_mac`, `ec_key_management`, `yubikit_request_shapes_on_extended_and_short_sessions`, `get_response_is_discarded_by_an_intervening_command` (MAC covers Lc in the form sent; whole responses wrapped before `61xx` splitting; extended certificate stores; yubikit's short-session chaining of certificate bundles and PSO certificates and its plaintext `61xx`/GET RESPONSE on both session forms; leftover response data discarded by any other command)
 - wrong keys/MAC rejection: tested: `wrong_static_keys_are_rejected`, `wrong_host_cryptogram_with_valid_mac_is_6300`, `wrong_cmac_ends_the_session`, `tampered_or_truncated_commands_are_refused`, `replayed_handshakes_and_commands_are_refused`, `key_changes_drop_a_half_open_handshake` (C-MAC failure `6982`, host cryptogram failure `6300`, session ends; a recorded EXTERNAL AUTHENTICATE replayed after a new INITIALIZE UPDATE with the same host challenge fails, a recorded command fails in the same and in a new session; a handshake begun under a key set that is then replaced or deleted cannot be completed)
 - plaintext downgrade rejection: tested: `plaintext_commands_end_the_session_before_dispatch`, `plaintext_select_ends_the_session_and_passes_through`, `only_select_by_name_is_a_session_boundary`, `management_commands_need_a_session` (only `xx A4 04 xx` is SELECT; a plaintext YKOATH CALCULATE ALL `00 A4 00 01` is refused like any plaintext command)
 - INITIALIZE UPDATE explicit-Le guard: tested: `init_update_le_guard` (non-maximum explicit Le `6700` before the pending handshake or a try is touched; absent, short `00` and extended `0000` pass; status is a model choice)
 
 ## SCP11
 
-- SCP11a/b/c SDK handshake and receipt: tested: `scp11b_matches_independent_known_answers`, `scp11a_and_scp11c_match_independent_known_answers`, `scp11b_with_the_factory_certificate`, `scp11a_with_full_omitted_root_and_direct_chains`, `scp11a_card_ephemeral_is_fresh_for_every_handshake`, `scp11::tests::request_parsing_is_exact` (yubikit request layout; the independent OCE verifies every receipt; Python/OpenSSL known answers; a fresh card ephemeral key for every SCP11a/b handshake)
+- SCP11a/b/c SDK handshake and receipt: tested: `scp11b_matches_independent_known_answers`, `scp11a_and_scp11c_match_independent_known_answers`, `scp11b_with_the_factory_certificate`, `scp11a_with_full_omitted_root_and_direct_chains`, `scp11a_card_ephemeral_is_fresh_for_every_handshake`, `yubikit_request_shapes_on_extended_and_short_sessions`, `scp11::tests::request_parsing_is_exact` (yubikit request layout, sent extended on USB and short with command chaining on NFC; the independent OCE verifies every receipt; Python/OpenSSL known answers; a fresh card ephemeral key for every SCP11a/b handshake)
 - dual ECDH / X963KDF / AES session keys: tested: `scp11::tests::x963_kdf_matches_independent_known_answer`, `scp11::tests::x963_kdf_layout`, `scp11b_matches_independent_known_answers`, `scp11a_and_scp11c_match_independent_known_answers` (ShSee || ShSes, X9.63 SHA-256, SharedInfo `3C 88 10`, keys in the order receipt, S-ENC, S-MAC, S-RMAC, S-DEK)
 - encrypted commands and response MAC: tested: `scp11b_matches_independent_known_answers` (first wrapped command and its R-ENC/R-MAC response byte for byte, receipt as the first MAC chaining value), `protected_handoff_in_every_combination`, `scp11a_session_survives_allowlist_updates`
-- OCE certificate signatures, validity, CA constraints and serial allowlist: tested: `certificate_chain_checks`, `allowlist_rules`, `cert::tests::times_parse_and_order`, `cert::tests::expiry_is_checked_against_the_earliest_current_time` (validity: form, order, and notAfter not before the profile's certificate start date, the earliest possible current time; expired leaf and intermediate refused with `6982`; no wall clock, so a future notBefore is not detected)
+- OCE certificate signatures, validity, CA constraints and serial allowlist: tested: `certificate_chain_checks`, `allowlist_rules`, `pso_validity_follows_a_lent_wall_clock`, `cert::tests::times_parse_and_order`, `cert::tests::times_name_real_calendar_dates`, `cert::tests::unix_seconds_convert_to_utc_calendar_time`, `cert::tests::validity_is_checked_against_a_lent_wall_clock`, `cert::tests::expiry_is_checked_against_the_earliest_current_time` (validity: form, order, then the current time as far as it is known: with `Host::unix_time` the period must include that instant, so not-yet-valid and expired certificates are both refused with `6982`; without it, notAfter not before the profile's certificate start date, the earliest possible current time, and a future notBefore is not detected)
 - SCP11b cannot provision Security Domain keys: tested: `scp11b_with_the_factory_certificate` (PUT KEY, DELETE, GENERATE, STORE DATA answer `6982`)
 - SCP03/SCP11a private-key import with session DEK; c PUT KEY prohibited: tested: `scp11b_matches_independent_known_answers` (import under SCP03 with K-DEK), `scp11a_with_full_omitted_root_and_direct_chains` (an SCP11b private key and an SCP03 key set imported under SCP11a with S-DEK, both then authenticate), `scp11c_restrictions_and_replay` (`6985`)
 
@@ -107,7 +123,7 @@ Totals: 96 tested, 9 intentional differences, 15 deferred (120 bullets).
 - wildcard KVN skips blocked newer rows; SDK reset covers three custom SCP03 sets and sixteen EC rows: intentional difference: the first wildcard selection of an exhausted newer row deletes it and answers `6983` (as above; yubikit's reset needs that status), later selections use the next row (`exhausted_set_is_deleted_and_wildcard_moves_on`, `scp11_tries_last_attempt_exhaustion_and_wildcard`); the SDK reset of three SCP03 sets and sixteen EC rows is tested by `blocking_reset_over_every_key_kind`
 - full-capacity replacement/deletion/restart and immutable failures for SCP03, EC, allowlist and certificate store: tested: `three_set_capacity_replacement_and_collision`, `put_key_refusals`, `ec_key_management` (16 EC keys, 64 serials, 8 certificates, replacement without room), `persistence_failures_keep_the_previous_state`, `persistence_failures_in_scp11_commands`, `restart_keeps_scp11_material`
 - eight-certificate host/store boundary fixtures: tested: `certificate_chain_checks` (eight-certificate chain accepted, ninth refused), `ec_key_management` (nine stored certificates `6A84`; the SD reassembles ISO chaining up to 8 KiB, so no test-only MAC envelope is needed)
-- Domain reset retains independent PIV issuer and OATH secret/HOTP progression: tested: `reset_touches_only_the_security_domain_record`
+- Domain reset retains independent PIV issuer and OATH secret/HOTP progression: tested: `reset_touches_only_the_security_domain_record`, lk-device `tests/scenario_cross_app.rs::each_application_reset_keeps_the_other_applications` (through `Device`: the yubikit blocking reset, a rotated CPLC, then the next HOTP code and the same PIV `F9` certificate)
 - socket and direct native IFD SDK verification; physical retry/delete/certificate constraints and BF20 subject authorization pending: deferred: SDK runs over sockets/IFD are program phase; BF20 subject authorization is not implemented (its encoding is not in the available sources)
 - socket and direct native IFD SDK verification; critical SD subject-ID handling pending; BF20 option measured: deferred: program phase; a critical GP subject-ID extension is refused as an unknown critical extension (`6982`) rather than interpreted (the measured option bytes are returned verbatim: `card_recognition_data_matches_reference`)
 
@@ -191,15 +207,15 @@ Totals: 96 tested, 9 intentional differences, 15 deferred (120 bullets).
 
 ## SecurityDomain_incremental_pso
 
-- every nonfinal certificate prefix verified before acknowledgement: tested: `certificate_chain_checks` (signature, role, key type, validity order and expiry against the profile date, critical extensions at every prefix)
+- every nonfinal certificate prefix verified before acknowledgement: tested: `certificate_chain_checks`, `pso_validity_follows_a_lent_wall_clock` (signature, role, key type, validity against the lent clock or the profile floor, critical extensions at every prefix)
 - CA, keyCertSign and path length enforced per intermediate; no OCE from an incomplete chain: tested: `certificate_chain_checks`, `mutual_authenticate_needs_a_verified_oce`
 - later P1/P2 CA references ignored; initial anchor binding; wildcard alternatives kept: tested: `certificate_chain_checks`, `allowlist_rules`
 - failed prefix clears chain/OCE; transport preserved; state unchanged on crypto-policy denial: tested: `certificate_chain_checks`, `handoff_old_wrapper_and_nested_failures`, `allowlist_rules`
 - malformed DER uses the initial CA retry; duplicate extensions malformed: tested: `certificate_chain_checks`
 - optional-root/intermediate/direct-leaf SDK interoperability; policy-free profile preserved: tested: `scp11a_with_full_omitted_root_and_direct_chains`
-- software 6982/date/critical role/qualifier/budget model; physical statuses pending: intentional difference: there is no wall clock in the engine, so dates are checked for form, order and expiry before the profile's certificate start date (the earliest possible current time) but a notBefore in the future passes, and GP role policies are not mapped (see SecurityDomain_profile); `6982` for expired certificates, policy failures, qualifiers, critical extensions and the eight-certificate budget is tested by `certificate_chain_checks`, `cert::tests::expiry_is_checked_against_the_earliest_current_time`
-- protected PSO keeps messaging and the PIV PIN; plaintext in a channel rejected before dispatch and revokes authorization: deferred: the PIV PIN is lk-device/lk-piv state (contract change request); protected PSO keeping the session and plaintext revoking the OCE are tested by `protected_handoff_in_every_combination`, `plaintext_ends_scp11_sessions_before_dispatch`
-- PIV signatures verified after protected PSO: deferred: lk-device/lk-piv integration
+- software 6982/date/critical role/qualifier/budget model; physical statuses pending: intentional difference: GP role policies are not mapped (see SecurityDomain_profile), and dates are only fully checked when the program lends a wall clock (`Host::unix_time`): without one the engine knows only the earliest possible current time (the profile's certificate start date), so expiry before it is refused but a notBefore in the future passes; `6982` for expired and (with a clock) not-yet-valid certificates, policy failures, qualifiers, critical extensions and the eight-certificate budget is tested by `certificate_chain_checks`, `pso_validity_follows_a_lent_wall_clock`, `cert::tests::expiry_is_checked_against_the_earliest_current_time`
+- protected PSO keeps messaging and the PIV PIN; plaintext in a channel rejected before dispatch and revokes authorization: deferred: the PIV PIN is lk-device/lk-piv state, and no device test runs a protected PSO followed by PIV commands; protected PSO keeping the session and plaintext revoking the OCE are tested by `protected_handoff_in_every_combination`, `plaintext_ends_scp11_sessions_before_dispatch`
+- PIV signatures verified after protected PSO: deferred: lk-device/lk-piv integration (no device test runs SCP11 PSO and then PIV signing; SCP03-wrapped PIV signing is tested in lk-device `scenario_ccid::scp03_then_wrapped_piv_commands`)
 
 ## SecurityDomain_plaintext
 
@@ -207,12 +223,12 @@ Totals: 96 tested, 9 intentional differences, 15 deferred (120 bullets).
 - PSO/INIT UPDATE/MUT/INTERNAL, chained CLA 90, GET DATA/RESPONSE, unsupported CLA rejected before dispatch: tested: `plaintext_commands_end_the_session_before_dispatch`, `plaintext_ends_scp11_sessions_before_dispatch` (`6982`, model status)
 - no transport rejection consumes retries or rewrites persistent state: tested: `plaintext_commands_end_the_session_before_dispatch`, `plaintext_ends_scp11_sessions_before_dispatch`, `wrong_cmac_ends_the_session`
 - closed wrapper and revoked OCE verified separately; peer channel and own material preserved: tested: `plaintext_ends_scp11_sessions_before_dispatch`, `wrong_cmac_ends_the_session`
-- PIV PIN/admin and OATH access revoked: deferred: lk-device must clear applet authorizations when a channel ends (contract change request)
+- PIV PIN/admin and OATH access revoked: deferred: lk-device clears the selected applet's authorization (`CardApplet::deselect`) when a channel ends; the PIV part is tested there (`secure_channel::plaintext_command_is_rejected_and_revokes_piv_pin`), no device test checks the OATH access state after a channel ends
 - normal SDK establishment, encrypted PSO and protected handoff: tested: `protected_handoff_in_every_combination`, `wrapped_exchange_matches_independent_known_answers`, `scp11b_matches_independent_known_answers`
 - prior v21 ZIP fails first plaintext PSO rejection; 326 items: intentional difference: a legacy release-artifact regression check, not device behaviour; the rejection itself is `plaintext_ends_scp11_sessions_before_dispatch`
 - vendor prose is the source model; physical status unmeasured: tested: `plaintext_commands_end_the_session_before_dispatch`, `plaintext_ends_scp11_sessions_before_dispatch` (Yubico yk5-apps-scp wording; `6982` model status)
 - prior v21 ZIP fails first plaintext PSO rejection; 394 items: intentional difference: a legacy release-artifact regression check, not device behaviour; covered as above
-- malformed plaintext SELECT clears OCE and PIV PIN/admin before validation: deferred: the PIV PIN/admin is lk-device state; the Security Domain part (session ended and OCE revoked before the SELECT is validated; an unparsable one answers `6700`) is tested by `plaintext_ends_scp11_sessions_before_dispatch`, `plaintext_select_ends_the_session_and_passes_through`
+- malformed plaintext SELECT clears OCE and PIV PIN/admin before validation: deferred: the PIV PIN/admin is lk-device state (lk-device revokes it when a plaintext command ends a channel, `secure_channel::plaintext_command_is_rejected_and_revokes_piv_pin`; not tested for a malformed SELECT); the Security Domain part (session ended and OCE revoked before the SELECT is validated; an unparsable one answers `6700`) is tested by `plaintext_ends_scp11_sessions_before_dispatch`, `plaintext_select_ends_the_session_and_passes_through`
 
 ## SecurityDomain_allowlist
 

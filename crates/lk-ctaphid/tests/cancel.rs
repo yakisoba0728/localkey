@@ -121,8 +121,8 @@ fn cancel_with_nonzero_bcnt_still_cancels_and_never_starts_a_message() {
 
 #[test]
 fn cancel_is_not_blocked_by_a_lock_on_another_channel() {
-    // CANCEL is never answered, so no LOCK_REQUIRED either; the lock holder's own
-    // CBOR request can be cancelled.
+    // CANCEL is never answered, so no CHANNEL_BUSY for the locked-out channel either;
+    // the lock holder's own CBOR request can be cancelled.
     let mut dev = device();
     let a = allocate(&mut dev, 0);
     let b = allocate(&mut dev, 0);

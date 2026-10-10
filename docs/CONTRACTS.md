@@ -6,6 +6,13 @@ what. If a contract proves wrong while implementing, keep the crate compiling ag
 and record the proposed change under "Contract change requests" at the end of this file.
 Do not silently diverge.
 
+Status (final integration, 2026-10-10): every crate is implemented and every section
+below describes the as-built API. Sections were written in phase order; where a later
+section refines an earlier one, the later section wins. "Final integration (as built)"
+near the end lists the last additions: the new curves, `Hasher` and `SecretBytes`, the
+complete `lk-device` API and the remaining known gaps. Public APIs grow only by
+addition; nothing that another crate uses has been renamed or removed.
+
 ## Rules for every crate
 
 - Clean room: write from the specifications listed in `docs/DESIGN.md` §2.
@@ -16,8 +23,9 @@ Do not silently diverge.
 - No third-party crates outside `lk-crypto`. No `unsafe`. No threads, clocks, files or OS calls.
 - Build and test with `CARGO_BUILD_JOBS=2 nice -n 10 cargo test -p <crate>`. Other agents may be
   building at the same time; cargo serialises on its lock, so wait instead of deleting `target/`.
-- Never edit another crate's files unless the task says so. `lk-core` and `lk-crypto` are
-  frozen during application work. Request changes through "Contract change requests".
+- Never edit another crate's files unless the task says so. `lk-core` and `lk-crypto` were
+  frozen during application work; changes go through "Contract change requests". The
+  final integration extended both by addition only ("Final integration (as built)").
 - Tests:
   - Put them next to the code (`#[cfg(test)]`) or in `crates/<crate>/tests/`.
   - Cite the source of every test vector (RFC section, spec table, reference file).
@@ -31,11 +39,16 @@ Do not silently diverge.
     keeps its previous in-memory state and answers with `sw::MEMORY_FAILURE` (`0x6581`) or
     `CTAP1_ERR_OTHER` for CTAP.
   - Unknown fields are skipped when loading. Unreadable state means factory state.
-- Every application crate maintains its section of `docs/CATALOG_STATUS.md`. Each relevant
-  bullet of `reference/BEHAVIOR_CATALOG.md` becomes one of:
+- Every application crate maintains its mapping in `docs/catalog/<app>.md` (see
+  "Applications A as implemented"). Each relevant bullet of
+  `reference/BEHAVIOR_CATALOG.md` becomes one of:
   - `tested` (name the test);
   - `intentional difference` (say why);
   - `deferred` (say what is missing).
+
+  `docs/CATALOG_STATUS.md` holds the summary, counted by
+  `python3 tools/catalog_status.py --write`; `--check` fails on an unlabelled bullet or a
+  stale summary.
 
 ## lk-core (fixed)
 
@@ -43,29 +56,51 @@ Do not silently diverge.
 `yubikey_5c_nano_5_7_4`), `Version`, `Capabilities`, `UsbInterfaces`, `ProductIds`, and the
 application contract in `applet.rs`:
 
-- `Host: Entropy` with `now()`, `profile()` and `persist()`;
+- `DeviceProfile` fields as built: `firmware`, `serial`, `form_factor`, `usb_vendor_id`,
+  `usb_product_ids`, `usb_device_release`, `manufacturer`, `product`, `aaguid`,
+  `supported_usb`, `default_enabled_usb`, `attestation_common_name`,
+  `attestation_organization`, `attestation_country`, `atr`, `openpgp_manufacturer`,
+  `cert_not_before`, `cert_not_after` (see "Applications B" for the later fields);
+- `Host: Entropy` with `now()`, `profile()`, `persist()` and `unix_time()` (default
+  `None`);
 - `Outcome<T>` (`Done` / `NeedTouch { timeout_ms }`);
 - `ResetKind`;
 - `CardApplet`.
 
-## lk-crypto (fixed API, tests being added)
+## lk-crypto (as built)
 
-- Hashes: `sha1/256/384/512`, `digest(HashAlg, _)`.
+- Hashes: `sha1/256/384/512`, `digest(HashAlg, _)`, `HashAlg::output_len`, and the
+  incremental `Hasher` (`new(alg)`, `alg()`, `update(data)`, `finalize(self) -> Vec<u8>`;
+  `Clone`; its `Debug` prints only the algorithm).
+- Secrets: `SecretBytes`, a buffer that is zeroized on drop: `new(Vec<u8>)`,
+  `from_slice`, `zeroed(len)`, `as_slice`, `as_mut_slice`, `Deref`/`DerefMut` to `[u8]`,
+  `AsRef<[u8]>`, `From<Vec<u8>>`, a constant-time `PartialEq`/`Eq` and a redacted
+  `Debug`. Other crates hold their secrets in it, because they may not depend on
+  `zeroize` themselves.
 - MAC and KDF: `hmac(HashAlg, key, data)`, `hmac_sha1`, `hmac_sha256`, `aes_cmac(key16/24/32, data)`,
   `hkdf_sha256(salt, ikm, info, len)`, `ct_eq`.
 - Ciphers: `aes_ecb_{en,de}crypt_block`, `aes_cbc_{en,de}crypt(key, iv, data)` (no padding),
   `aes_gcm_seal/open(key32, nonce12, aad, data)`, `tdes_ecb_{en,de}crypt_block(key24, block8)`.
-- EC: `Curve::{P256,P384}` and `EcPrivateKey`:
-  - `generate(curve, entropy)`, `from_scalar`, `scalar`, `public_uncompressed`;
-  - `sign_prehash`, `sign_message(HashAlg, msg)`, `ecdh(peer_point)`.
+- EC: `Curve::{P256, P384, P521, Secp256k1, BrainpoolP256r1, BrainpoolP384r1}` (with
+  `Curve::ALL`, `field_len`, `point_len` and `nonce_hash`) and `EcPrivateKey`:
+  - `generate(curve, entropy)`, `from_scalar`, `curve`, `scalar`, `public_uncompressed`;
+  - `sign_prehash`, `sign_message(HashAlg, msg)`, `sign_prehash_hedged`,
+    `sign_message_hedged`, and `ecdh(peer_point) -> Result<SecretBytes>`. The return type
+    was `Vec<u8>` before the final integration; every caller compiles unchanged through
+    `Deref`.
   - Signatures are `EcdsaSignature { r, s }` with `to_der()` and `to_raw()`.
   - `ec_public_is_valid`, `ecdsa_verify_prehash(curve, point, digest, der_or_raw)`.
+  - brainpoolP512r1 is absent: RustCrypto publishes no crate for it.
 - Edwards:
-  - `Ed25519Key`: `generate`, `from_seed`, `public`, `sign`; plus `ed25519_verify`.
-  - `X25519Key`: `generate`, `from_bytes`, `public`, `dh`.
+  - `Ed25519Key`: `generate`, `from_seed`, `seed`, `public`, `sign`; plus `ed25519_verify`.
+  - `X25519Key`: `generate`, `from_bytes`, `secret`, `public`, `dh`.
 - RSA: `RsaPrivateKey` with `generate(bits, entropy)`, `from_primes(p, q, e)`, `size`, `modulus`,
   `public_exponent`, `primes`, and `raw_private(input, entropy)` (blinded, no padding). Also
   `rsa_public_op(n, e, input)`.
+- `RsaPrivateKey::primes` and `X25519Key::dh` return `zeroize::Zeroizing` values. Callers
+  use them through `Deref` and never name the type.
+- Errors: `CryptoError::{InvalidKey, InvalidInput, VerificationFailed}` and
+  `lk_crypto::Result<T>`.
 
 ## lk-codec
 
@@ -116,9 +151,10 @@ application contract in `applet.rs`:
 - `x509::TbsCertificate` builder:
   - serial, issuer and subject names (CN, O, OU, C);
   - validity (GeneralizedTime strings);
-  - SubjectPublicKeyInfo for EC P-256/P-384, Ed25519, X25519 and RSA;
+  - SubjectPublicKeyInfo for EC P-256/P-384/P-521, secp256k1, brainpoolP256r1/P384r1,
+    Ed25519, X25519 and RSA;
   - extensions (raw OID plus DER value, critical flag);
-  - signature algorithm (ecdsa-with-SHA256/384, Ed25519, sha256WithRSAEncryption).
+  - signature algorithm (ecdsa-with-SHA256/384/512, Ed25519, sha256WithRSAEncryption).
 - `x509::assemble(tbs_der, sig_alg, signature) -> Vec<u8>`. Signing is the caller's job via
   `lk-crypto`.
 
@@ -141,6 +177,9 @@ application contract in `applet.rs`:
 - `fn keepalive(&self, cid: u32, status: u8) -> [u8; 64]` (PROCESSING 1, UPNEEDED 2).
 - `fn tick(&mut self, now) -> Vec<Event>` expires partial messages with `ERR_MSG_TIMEOUT` and
   expires locks.
+- While one channel holds a `CTAPHID_LOCK`, every other channel (broadcast INIT included)
+  gets `ERR_CHANNEL_BUSY` (`0x06`), not `ERR_LOCK_REQUIRED` (as built, see "Final
+  integration").
 - `fn next_deadline(&self) -> Option<Millis>`, `fn reset(&mut self)` for USB reset.
 
 ## lk-ccid (CCID Rev 1.1)
@@ -222,7 +261,8 @@ It owns the applets, `Ctaphid`, `Ccid`, the OTP HID state, touch arbitration and
 - sealed layout `version || nonce || ciphertext||tag`.
 
 Public API: `Device::open(profile, store, entropy, storage_key) -> Device`, `handle`,
-`next_deadline` (see `crates/lk-device/src/lib.rs`).
+`next_deadline` (see `crates/lk-device/src/lib.rs`). The complete as-built API is listed
+under "Final integration (as built)".
 
 ## Phase 0 as implemented (binding for later phases)
 
@@ -273,7 +313,10 @@ The frozen crates' sources are the authority; these are the points other crates 
     `decode_unsigned`, `decode_bit_string`.
   - `x509::TbsCertificate` is a struct literal plus `to_der()`. It uses `Name` (builder),
     `Validity::rfc5280(..)` (UTCTime through 2049, GeneralizedTime after),
-    `PublicKey::{EcP256, EcP384, Ed25519, X25519, Rsa}` and `SignatureAlgorithm`.
+    `PublicKey::{EcP256, EcP384, Ed25519, X25519, Rsa}` and `SignatureAlgorithm`. The final
+    integration added `PublicKey::{EcP521, EcSecp256k1, EcBrainpoolP256r1, EcBrainpoolP384r1}`,
+    `PublicKey::named_curve()`, `SignatureAlgorithm::EcdsaWithSha512` and
+    `oid::{SECP521R1, SECP256K1, BRAINPOOL_P256R1, BRAINPOOL_P384R1, ECDSA_WITH_SHA512}`.
   - `x509::assemble(tbs_der, sig_alg, signature)`. ECDSA signatures are passed DER-encoded.
 - **lk-ctaphid**
   - Command codes in `Event::Request.cmd` are 7-bit (`0x10` CBOR, `0x03` MSG); `respond`
@@ -326,7 +369,10 @@ The frozen crates' sources are the authority; these are the points other crates 
   - `cbor()` while a command waits answers `CTAP1_ERR_CHANNEL_BUSY` and keeps the waiting
     command.
   - `presence_resolved()` with nothing waiting returns an error status. `RESET_WINDOW_MS = 10000`.
-  - The attestation O/C are constants ("localkey", "ZZ") until `DeviceProfile` gains fields.
+  - The attestation subject comes from `DeviceProfile::attestation_common_name`,
+    `attestation_organization` and `attestation_country`. A value that RFC 5280
+    Appendix A.1 does not allow falls back to the own-profile value, or is cut to 64
+    characters (final review).
 - **lk-otp**
   - CCID APDUs to the OTP AID must use `OtpApplet::process_with(apdu, Option<&mut dyn MgmtBridge>, host)`.
   - HID: `OtpHid::set_feature(..)`, `OtpHid::get_feature_at(otp, now)` (the countdown needs
@@ -346,8 +392,10 @@ The frozen crates' sources are the authority; these are the points other crates 
   - CCID: call `MgmtApplet::take_effect()` right after sending the WRITE CONFIG response.
   - CTAPHID vendor commands go through `ctaphid_vendor(..)`, which returns a ready `VendorReply`.
   - Read-only entry points take `&dyn Host`.
-- **lk-oath**: the factory salt (device id) is persisted only at the first mutating command.
-  Until then it changes per power cycle. This is a known gap for the final review.
+- **lk-oath**: `Oath::new(None, host)` persists the factory state at construction, so the
+  device id (SELECT tag `71`) is stable across restarts (final review; a rejected save is
+  retried by lk-device and any later commit stores the whole state). An existing record
+  that does not decode still gives factory state and is not overwritten at open.
 
 ## Applications B and orchestrator changes (binding)
 
@@ -367,6 +415,11 @@ The frozen crates' sources are the authority; these are the points other crates 
     accepted where an explicit Le is otherwise rejected.
   - Applets answer `6882` for secure-messaging CLA bits and `6E00` for CLA >= `0x80`.
     lk-device must deliver unwrapped commands with those bits cleared.
+  - As built, every card applet also answers `6881` for a logical-channel number in the
+    CLA (ISO/IEC 7816-4 §5.1.1); the order of the checks is in each crate's docs.
+  - lk-piv also accepts Le `00` after command data (yubico-piv-tool on T=1 sends it).
+    Other applets keep their own rules for an explicit Le, recorded in their catalog
+    files.
 - **lk-device duties raised by the applets**:
   - A SELECT of the already selected AID goes to `select()` without `deselect()`. SP 800-73-4
     §3.1.1 keeps the PIV security status.
@@ -376,17 +429,141 @@ The frozen crates' sources are the authority; these are the points other crates 
   - Touch timeouts: OATH, PIV, OpenPGP and HSM Auth use 15000 ms; FIDO uses 30000 ms.
 - **lk-core additions**:
   - `DeviceProfile` has `attestation_organization`, `attestation_country`, `atr` and
-    `openpgp_manufacturer`. lk-fido and lk-openpgp should use them instead of constants or
-    manufacturer-string inference (final review).
+    `openpgp_manufacturer`. As built, lk-fido takes its attestation subject from them and
+    lk-openpgp takes the AID manufacturer bytes from `openpgp_manufacturer` (own profile
+    `FF00`, YubiKey profile `0006`).
   - `Host::unix_time() -> Option<u64>` (default `None`) for certificate validity. lk-device
-    exposes a way for the program to set it.
-- **Known gaps for the final phase**:
-  - lk-crypto lacks P-521, secp256k1 and brainpoolP256r1/P384r1 (crates `p521`, `k256`,
-    `bp256`, `bp384` exist; no `bp512`). This leaves 20 OpenPGP algorithm variants
-    unusable.
-  - No incremental hasher, which caps the OpenPGP KDF.
-  - Secrets in lk-fido are not zeroized.
+    exposes it as `Device::set_unix_time`; lk-sd checks OCE certificate validity against
+    it when it is `Some`, and against the profile start date otherwise.
+- **Known gaps for the final phase** (status after the final integration):
+  - Closed: lk-crypto has P-521, secp256k1, brainpoolP256r1 and brainpoolP384r1. Only the
+    4 brainpoolP512r1 OpenPGP variants remain unusable (`6A81`), because RustCrypto has no
+    crate for that curve.
+  - Closed: `lk_crypto::Hasher` streams the OpenPGP KDF, so its count is no longer capped.
+  - Closed: lk-fido secrets (wrapping secret, attestation scalar, PIN/UV secrets and
+    tokens, PIN hash, credBlob, largeBlobKey) are held in `SecretBytes`. Remaining
+    zeroization gaps are listed under "Final integration (as built)".
+
+## Final integration (as built, binding)
+
+The last additions, and the rules that the parallel reviews fixed. All of them are
+additions; existing callers compile unchanged.
+
+- **lk-crypto**
+  - Curves: `Curve::{P521, Secp256k1, BrainpoolP256r1, BrainpoolP384r1}` next to P-256 and
+    P-384. One code path serves all six curves. Also `Curve::ALL` and
+    `Curve::nonce_hash`; `Hasher`, `SecretBytes`, and `EcPrivateKey::ecdh` returning
+    `SecretBytes` (see "lk-crypto (as built)").
+  - Signing: secp256k1 signatures are low-S (k256, BIP 62). Verification accepts `s` and
+    `n - s` on every curve, as SEC 1 §4.1.4 defines ECDSA.
+  - Key generation: P-521 draws exactly 521 bits before the range check (FIPS 186-5
+    A.2.2).
+  - P-521 digests of 66 bytes or more: the RFC 6979 nonce uses the full digest and z is
+    its leftmost 521 bits (FIPS 186-5 §6.4.1). This works around ecdsa 0.17, whose
+    `bytes2scalar` keeps the low bits; that disagreement would reveal the key through
+    repeated nonces.
+  - Dependencies: `p521`, `k256`, `bp256`, `bp384`, plus direct `ecdsa`, `elliptic-curve`
+    and `rfc6979` (all three were already in the graph). `cargo tree -d` lists no crate
+    twice. `python3 tools/license_check.py` reports 68 linked and 10 build-time-only
+    third-party crates and no problems.
+- **lk-codec x509**: `PublicKey::{EcP521, EcSecp256k1, EcBrainpoolP256r1,
+  EcBrainpoolP384r1}`, `PublicKey::named_curve()`, `SignatureAlgorithm::EcdsaWithSha512`,
+  and `oid::{SECP521R1, SECP256K1, BRAINPOOL_P256R1, BRAINPOOL_P384R1, ECDSA_WITH_SHA512}`.
+  EC attestation issuers (OpenPGP) still sign with ecdsa-with-SHA256 on every curve
+  (catalog: "SHA256 RSA/EC signatures").
+- **lk-ctaphid**: a channel kept out by another channel's `CTAPHID_LOCK` gets
+  `ERR_CHANNEL_BUSY` (`0x06`), the only code Chromium and python-fido2 retry on (CTAP 2.1
+  §11.2.9.1.6). `err::LOCK_REQUIRED` stays for source compatibility and is never sent.
+- **lk-mgmt**: CCID responses honour Ne with `61xx` and GET RESPONSE (`ins::GET_RESPONSE`
+  = `C0`), like every other applet. Under a secure channel lk-device collects a `61xx`
+  response with `00 C0 00 00 00`, so every applet that can answer `61xx` implements
+  `C0`. OATH continues with its own SEND REMAINING `A5` instead.
+- **lk-oath**: the constructor persists the factory state (see "Applications A").
+- **lk-otp**: the CCID applet follows the APDU conventions above (CLA checks, Ne with
+  `61xx` and GET RESPONSE).
+- **lk-sd**: `SecurityDomain::handshake` discards plaintext response data still waiting
+  for GET RESPONSE (ISO/IEC 7816-4 §7.6.1). lk-device also sends unwrapped commands for the
+  selected Security Domain to `process_secure`, the only path that authorizes PUT KEY,
+  DELETE KEY, GENERATE EC KEY and STORE DATA (GP 2.3.1 §11.8.1, §11.2.1, §11.11.1). It
+  calls `end_session` on SELECT, power-off and reset. `SecureChannel::is_open` tells lk-device when to drop a channel.
+- **lk-device public API** (`crates/lk-device/src/lib.rs`):
+  - Opening:
+    - `Device::open(profile, store, entropy, storage_key)` is a power-up at time 0, and
+      `Device::open_at(now, ...)` a power-up at another time of the program's clock.
+    - Every record is loaded and opened. A record that cannot be read gives that
+      application its factory state; `Device::unreadable_records()` names such records.
+    - Constructor saves never overwrite a record that exists but cannot be read. When
+      no record opens and at least one is unreadable, the storage key is unconfirmed
+      and nothing at all is written at open.
+    - A constructor save that the store rejects is retried before every later input
+      until the store takes it.
+  - Running:
+    - `Device::handle(now, Input) -> Vec<Output>`: a `now` smaller than one seen before is
+      treated as that earlier value, expired deadlines run before the input, and outputs
+      come in order.
+    - `Device::next_deadline() -> Option<Millis>` is the latest time for the next
+      `Input::Tick`.
+  - Inputs: `Input::{FidoReport(&[u8; 64]), OtpSetFeature(&[u8; 8]), OtpGetFeature,
+    Ccid(&[u8]), CcidControlAbort { slot, seq }, Touch(TouchEdge), Tick, Bus(BusEvent)}`.
+    `CcidControlAbort` was added because the CCID class request ABORT (USB CCID Rev 1.1
+    §5.3.1) travels on the control pipe, which `Input::Ccid` cannot carry.
+  - Bus events: `BusEvent::{Reset, Suspend, Resume, PowerCycle}`. `Resume` ends the card
+    session and sends one `50 03` slot change.
+  - Outputs: `Output::{FidoReport, OtpFeature, OtpKeyboard, Ccid, CcidInterrupt,
+    PresenceIndicator(bool), Reenumerate(UsbInterfaces)}`.
+  - Inspecting the device:
+    - `Device::usb_identity() -> UsbIdentity` gives `vendor_id`, `product_id`,
+      `device_release`, `manufacturer`, `product`, `serial` (`None` unless an OTP slot
+      sets `EXTFLAG_SERIAL_USB_VISIBLE`), `interfaces`, `fido_report_descriptor`,
+      `otp_report_descriptor` and `ccid_class_descriptor`.
+    - `UsbIdentity::device_descriptor()` returns the 18-byte device descriptor, and
+      `UsbIdentity::configuration_descriptor()` the full configuration descriptor for the
+      enabled interfaces. For FIDO+CCID it is byte for byte the reference observation.
+    - `Device::interfaces()`, `Device::profile()`, and `Device::presence_pending()` (the
+      last `PresenceIndicator` state).
+    - `Device::set_unix_time(Option<u64>)` backs `Host::unix_time`. The device never
+      advances it.
+  - Constants: `KEEPALIVE_INTERVAL_MS` (100), `WTX_INTERVAL_MS` (500),
+    `U2F_REQUEST_WINDOW_MS` and `U2F_LATCH_MS` (3000), `FIDO_REPORT_DESCRIPTOR`,
+    `OTP_REPORT_DESCRIPTOR`.
+  - `lk_device::storage`: `seal`, `open`, `record_id`, `SealError`, `FORMAT_VERSION`,
+    `NONCE_LEN`, `TAG_LEN`, `OVERHEAD` (layout in "Phase 0 as implemented").
+  - `Device` is `!Send`, because it holds `Box<dyn Store>` and `Box<dyn Entropy>` without
+    `+ Send`. A program builds it inside the thread that drives it. Making it `Send`
+    would mean tightening the `open`/`open_at` bounds; every store and entropy in the
+    workspace is already `Send`. This is open for the program phase.
+- **Program duties** (stated in the lk-device docs, binding on the program):
+  - After open, check `unreadable_records()`. An application's first mutating command
+    replaces an unreadable record, so a device opened with a wrong key loses what it
+    replaces.
+  - Call `set_unix_time` again whenever the program's trusted clock moves.
+  - Queue or drop the outputs produced while the bus is suspended (keepalives, time
+    extensions, timeout answers, keyboard reports).
+  - Build the USB string descriptors (LANGID, UTF-16LE) from `UsbIdentity`.
+- **Open model-policy question**: when a Management write without `REBOOT` changes the
+  enabled interface set, lk-device re-enumerates at once (`settle_management`). The
+  Management review reads ykman and yubikit as implying the firmware does not: ykman
+  `config usb` asks for `REBOOT` exactly when the set changes, and yubikit `set_mode`
+  tells the user to re-insert the key. The engine keeps the immediate re-enumeration
+  until the physical behaviour is measured (`docs/catalog/mgmt.md`, `device.md`).
+- **Remaining known gaps** (also in `docs/STATUS.md`):
+  - brainpoolP512r1 (4 OpenPGP variants, 5 deferred catalog lines).
+  - Zeroization is partial (DESIGN §8):
+    - lk-fido, lk-piv and lk-openpgp's S2K hold their secrets in `SecretBytes`.
+    - lk-hsmauth, lk-sd, lk-device and lk-openpgp's key material wipe their own
+      buffers in `Drop`, as a best effort.
+    - lk-oath (credential and access keys), lk-otp (slot secrets and access codes) and
+      lk-mgmt (lock code) keep plain buffers.
+    - lk-codec's `Command`, `CommandChain` and `ResponseQueue`, which carry PINs and key
+      material, are not wiped.
+    - Copies the compiler makes of fixed-size values returned by lk-crypto cannot be
+      wiped without `zeroize`, which only lk-crypto may use.
+  - Every status word, timing and cadence that no public source fixes is a model policy,
+    recorded in the crate's catalog file and unmeasured against a physical 5.7.4.
 
 ## Contract change requests
 
-Phase 0 requests are resolved in the section above.
+Phase 0 requests are resolved in "Phase 0 as implemented". The requests raised by the
+application reviews (lk-device clearing applet authorization when a secure channel ends,
+the extra `DeviceProfile` fields, `Host::unix_time`, the new curves, `Hasher`) are
+resolved in the sections above. None is open.

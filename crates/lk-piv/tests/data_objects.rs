@@ -1,5 +1,5 @@
 //! SELECT, GET DATA, PUT DATA, capacity limits and chaining
-//! (SP 800-73-4 Part 2 §3.1.1, §3.1.2, §3.3.2; ISO/IEC 7816-4 §5.1.1.1, §7.6.1).
+//! (SP 800-73-4 Part 2 §3.1.1, §3.1.2, §3.3.1; ISO/IEC 7816-4 §5.1.1.1, §7.6.1).
 
 #![allow(clippy::unwrap_used)]
 
@@ -104,7 +104,7 @@ fn put_then_get_round_trip_and_delete() {
     let (data, sw) = card.get_object(CHUID);
     assert_eq!(sw, 0x9000);
     assert_eq!(data, tlv::encode(0x53, &chuid));
-    // An empty 53 deletes the object (SP 800-73-4 Part 2 §3.3.2).
+    // An empty 53 deletes the object (python yubikit put_object(object_id, None)).
     assert_eq!(card.send("00DB3FFF075C035FC1025300").1, 0x9000);
     assert_eq!(card.get_object(CHUID).1, 0x6A82);
     // Deleting an absent object succeeds too.
@@ -117,8 +117,9 @@ fn put_data_header_and_layout_validation() {
     let before = card.host.persisted(Record::Piv);
     card.auth_default();
     assert_eq!(card.send("00DB3FFE095C035FC1025302AABB").1, 0x6A86);
-    // Explicit Le is rejected before any change (catalog: PUT DATA absent-Le guard).
-    assert_eq!(card.send("00DB3FFF095C035FC1025302AABB00").1, 0x6700);
+    // A non-zero Le is rejected before any change (catalog: PUT DATA absent-Le guard);
+    // Le 00 (yubico-piv-tool on T=1) is accepted (tests/interop.rs).
+    assert_eq!(card.send("00DB3FFF095C035FC1025302AABB01").1, 0x6700);
     for data in [
         "5C035FC102",             // no 53
         "5C035FC1025302AA",       // truncated 53
@@ -157,8 +158,15 @@ fn pin_protected_objects_need_verified_pin() {
     assert_eq!(card.put_object(PRINTED, &hex("8803AABBCC")), 0x9000);
     assert_eq!(card.put_object(CHUID, &[0x30, 0x00]), 0x9000);
     for tag in [PRINTED, FACIAL, 0x5FC103, 0x5FC121, 0x5FC123] {
+        assert_eq!(card.put_object(tag, &[0x01]), 0x9000);
         assert_eq!(card.get_object(tag).1, 0x6982, "{tag:06X} without PIN");
+        assert_eq!(card.put_object(tag, &[]), 0x9000);
+        // OpenSC card-piv.c CI_LEAKS_FILE_NOT_FOUND: a YubiKey answers 6A82 for an empty
+        // object even without the PIN.
+        assert_eq!(card.get_object(tag).1, 0x6A82, "{tag:06X} empty, without PIN");
     }
+    assert_eq!(card.put_object(PRINTED, &hex("8803AABBCC")), 0x9000);
+    assert_eq!(card.get_object(PRINTED).1, 0x6982, "stored again");
     assert_eq!(card.object_value(CHUID), Some(vec![0x30, 0x00]), "always readable");
     card.verify_default_pin();
     assert_eq!(card.object_value(PRINTED), Some(hex("8803AABBCC")));

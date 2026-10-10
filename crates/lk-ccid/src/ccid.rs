@@ -205,8 +205,8 @@ impl Ccid {
     /// `PC_to_RDR_Abort` with the same `bSeq` arrives, other bulk messages fail with
     /// `CMD_ABORTED`. If that bulk message already arrived (it was the latest bulk
     /// Abort, whatever came after it), this is a no-op: a request delivered late must
-    /// not stop newer activity or block later messages.
-    /// Not yet part of `docs/CONTRACTS.md` (see the crate's change request).
+    /// not stop newer activity or block later messages (`docs/CONTRACTS.md` "Phase 0 as
+    /// implemented", lk-ccid).
     pub fn control_abort(&mut self, slot: u8, seq: u8) -> Option<Vec<u8>> {
         if slot != SLOT {
             return None;

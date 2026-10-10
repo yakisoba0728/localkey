@@ -8,7 +8,7 @@
 //! - SELECT with the application property template of the profile (SP 800-73-4 Part 2
 //!   §3.1.1).
 //! - GET DATA / PUT DATA with the data object model and capacity limits of
-//!   the `objects` module (Part 2 §3.1.2, §3.3.2).
+//!   the `objects` module (Part 2 §3.1.2, §3.3.1).
 //! - VERIFY, CHANGE REFERENCE DATA, RESET RETRY COUNTER (Part 2 §3.2.1-§3.2.3).
 //! - Management key authentication by GENERAL AUTHENTICATE with 3DES and AES-128/192/256
 //!   (Part 2 §3.2.4, Appendix A; SP 800-78-4 Table 6-1).
@@ -39,11 +39,25 @@
 //! its security status unchanged). The cached-touch time survives selection changes and
 //! is dropped by every reset.
 //!
+//! # Secrets
+//!
+//! PIN and PUK reference data, the management key, slot private keys, the mutual
+//! authentication witness and the serialized record live in `lk_crypto::SecretBytes` and
+//! are wiped when dropped (`docs/DESIGN.md` §8); they are compared with `lk_crypto::ct_eq`.
+//! Command and response buffers owned by `lk_codec` (the chain buffer, the APDU data) are
+//! outside this crate's reach.
+//!
+//! # PIN always
+//!
 //! The PIN-always authorization follows SP 800-73-4 Part 1 §3.2.1 ("the PIN ... must be
 //! submitted and verified every time immediately before a digital signature key
 //! operation"): a successful VERIFY arms it, and any later command clears it except a
 //! VERIFY status query (no data), GET RESPONSE, an intermediate part of a command chain,
-//! and a GENERAL AUTHENTICATE rejected before its PIN check.
+//! and a GENERAL AUTHENTICATE rejected before its PIN check. The host software is written
+//! for this: OpenSC (`card-piv.c`, `context_specific`) keeps the card locked from the
+//! context-specific VERIFY to the signature, libykpiv does not reselect the application
+//! before a private key operation "to avoid problems with PIN_ALWAYS", and ykman verifies
+//! the PIN again and retries when a signature answers `6982` (`_verify_pin_if_needed`).
 
 #![forbid(unsafe_code)]
 
@@ -61,6 +75,7 @@ use std::fmt;
 
 use lk_codec::apdu::{self, Command, CommandChain, ResponseQueue, sw};
 use lk_core::{CardApplet, Host, Millis, Outcome, Record, ResetKind};
+use lk_crypto::SecretBytes;
 
 use crate::admin::{Challenge, PendingTouch};
 use crate::objects::MAX_APDU_DATA;
@@ -198,7 +213,7 @@ impl Piv {
     pub fn new(stored: Option<&[u8]>, host: &mut dyn Host) -> Self {
         let mut state = stored.and_then(PivState::decode).unwrap_or_else(PivState::factory);
         if attest::initialize(&mut state, host) {
-            let _ = host.persist(Record::Piv, &state.encode());
+            let _ = host.persist(Record::Piv, &SecretBytes::new(state.encode()));
         }
         Self { state, session: Session::new(), touch_cache: None }
     }
@@ -206,7 +221,9 @@ impl Piv {
     /// Persist `next` and make it current; on failure keep the current state and answer
     /// `6581` (`lk_core::Host::persist`).
     pub(crate) fn commit(&mut self, host: &mut dyn Host, next: PivState) -> Result<(), u16> {
-        host.persist(Record::Piv, &next.encode()).map_err(|_| sw::MEMORY_FAILURE)?;
+        // The plaintext record holds every secret; it is wiped once handed over.
+        let record = SecretBytes::new(next.encode());
+        host.persist(Record::Piv, &record).map_err(|_| sw::MEMORY_FAILURE)?;
         self.state = next;
         Ok(())
     }
@@ -306,21 +323,25 @@ fn check_cla(cla: u8) -> Result<(), u16> {
 }
 
 /// Whether `cmd` carries an Le field that a command without response data must not
-/// have. Two data-less encodings of a case 1 command are not counted:
+/// have: a non-zero Le, which asks for a number of response bytes the command never
+/// returns. An Le of `00` (short) or `0000` (extended) means "Ne = the maximum"
+/// (ISO/IEC 7816-4 §5.1) and is accepted like an absent Le, with or without command
+/// data. Hosts add it by habit:
 ///
-/// - `CLA INS P1 P2 00`, the T=0 form of case 1 with P3 = `00` (ISO/IEC 7816-3
-///   §12.2.2), which yubico-piv-tool sends over T=1 as well;
-/// - `CLA INS P1 P2 00 00 00`, an extended "Lc = 0" that ISO/IEC 7816-4 §5.1 does not
-///   allow and that therefore parses as case 2E with Le = `0000`; the python yubikit
-///   encoder emits it for data-less commands once it uses extended APDUs.
+/// - yubico-piv-tool (`lib/ykpiv.c`, `_ykpiv_transfer_data`, "Add Le for T=1") appends
+///   `00` to every command that carries data when the protocol is T=1, which the
+///   YubiKey CCID interface is, so VERIFY, CHANGE REFERENCE DATA, RESET RETRY COUNTER,
+///   PUT DATA, IMPORT and SET MANAGEMENT KEY all arrive as case 4 with Le `00`; it sends
+///   data-less commands as `CLA INS P1 P2 00`, the T=0 form of case 1 (ISO/IEC 7816-3
+///   §12.2.2);
+/// - older python yubikit extended encoders emit `CLA INS P1 P2 00 00 00`, an extended
+///   "Lc = 0" that ISO/IEC 7816-4 §5.1 does not allow and that parses as case 2E with
+///   Le `0000`.
 ///
-/// Any non-zero Le, and any Le together with command data, is explicit.
+/// The catalog's "explicit Le" guards (VERIFY/CHANGE/RESET RETRY, PUT DATA, IMPORT, SET
+/// PIN RETRIES, SET MANAGEMENT KEY, RESET, MOVE/DELETE KEY) apply to a non-zero Le.
 pub(crate) fn explicit_le(cmd: &Command) -> bool {
-    match cmd.le {
-        None => false,
-        Some(0) => !cmd.data.is_empty(),
-        Some(_) => true,
-    }
+    matches!(cmd.le, Some(le) if le != 0)
 }
 
 /// The largest response piece for `cmd`: Ne (ISO/IEC 7816-4 §5.1: "Ne ... the maximum

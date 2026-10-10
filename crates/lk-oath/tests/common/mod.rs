@@ -24,6 +24,10 @@ pub const RFC_SECRET: &[u8] = b"12345678901234567890";
 pub struct Card {
     pub oath: Oath,
     pub host: TestHost,
+    /// `persist_attempts` right after the first construction: `Oath::new(None, ..)`
+    /// stores the factory state (the device id must survive restarts), so commands are
+    /// counted from here.
+    pub opened: usize,
 }
 
 impl Default for Card {
@@ -39,7 +43,13 @@ impl Card {
 
     pub fn with_host(mut host: TestHost) -> Self {
         let oath = Oath::new(host.persisted(Record::Oath).as_deref(), &mut host);
-        Self { oath, host }
+        let opened = host.persist_attempts();
+        Self { oath, host, opened }
+    }
+
+    /// Save attempts made since the card was first constructed.
+    pub fn writes(&self) -> usize {
+        self.host.persist_attempts() - self.opened
     }
 
     /// Rebuild the applet from what it last persisted (a power cycle).

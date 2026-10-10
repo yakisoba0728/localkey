@@ -29,6 +29,13 @@ lk-testkit = { path = "crates/lk-testkit" }
 # Third-party crates are allowed only inside lk-crypto (docs/DESIGN.md §8).
 p256 = { version = "0.14", default-features = false, features = ["ecdsa", "ecdh", "arithmetic"] }
 p384 = { version = "0.14", default-features = false, features = ["ecdsa", "ecdh", "arithmetic"] }
+p521 = { version = "0.14", default-features = false, features = ["ecdsa", "ecdh", "arithmetic"] }
+k256 = { version = "0.14", default-features = false, features = ["ecdsa", "ecdh", "arithmetic"] }
+bp256 = { version = "0.14", default-features = false, features = ["arithmetic", "sha256"] }
+bp384 = { version = "0.14", default-features = false, features = ["arithmetic", "sha384"] }
+ecdsa = { version = "0.17", default-features = false, features = ["algorithm", "der"] }
+elliptic-curve = { version = "0.14", default-features = false, features = ["arithmetic", "ecdh", "sec1"] }
+rfc6979 = "0.6"
 ed25519-dalek = { version = "3", default-features = false, features = ["zeroize"] }
 x25519-dalek = { version = "3", default-features = false, features = ["static_secrets", "zeroize"] }
 aes = "0.9"

@@ -1,4 +1,11 @@
-//! Deterministic ECDSA (RFC 6979 A.2.5 / A.2.6), verification, and signature encodings.
+//! Deterministic ECDSA (RFC 6979 A.2.5 / A.2.6 / A.2.7), verification, and signature
+//! encodings.
+//!
+//! RFC 6979 has no secp256k1 or brainpool vectors. For those curves the key pairs are
+//! published ones (the brainpool dA of RFC 7027 Appendix A.1 / A.2, the secp256k1 private
+//! key of Wycheproof `ecdh_secp256k1_test.json` tcId 1), so the public-key derivation is
+//! still a known answer; signing is checked by round trips and, for secp256k1, by the
+//! Wycheproof `ecdsa_secp256k1_sha256_p1363_test.json` signatures.
 
 use lk_crypto::{CryptoError, Curve, EcPrivateKey, EcdsaSignature, HashAlg, digest, ecdsa_verify_prehash};
 
@@ -33,6 +40,52 @@ const P384: Key = Key {
          288B231C3AE0D4FE7344FD2533264720",
 };
 
+// RFC 6979 A.2.7 key pair (P-521); values are printed with 521 bits and are left-padded
+// here to the 66-byte field length.
+const P521: Key = Key {
+    curve: Curve::P521,
+    hash: HashAlg::Sha512,
+    x: "00FAD06DAA62BA3B25D2FB40133DA757205DE67F5BB0018FEE8C86E1B68C7E75C
+        AA896EB32F1F47C70855836A6D16FCC1466F6D8FBEC67DB89EC0C08B0E996B83538",
+    ux: "01894550D0785932E00EAA23B694F213F8C3121F86DC97A04E5A7167DB4E5BCD3
+         71123D46E45DB6B5D5370A7F20FB633155D38FFA16D2BD761DCAC474B9A2F5023A4",
+    uy: "00493101C962CD4D2FDDF782285E64584139C2F91B47F87FF82354D6630F746A2
+         8A0DB25741B5B34A828008B22ACC23F924FAAFBD4D33F81EA66956DFEAA2BFDFCF5",
+};
+
+// secp256k1: d = 1, whose public key is the generator G published in SEC 2 v2 §2.4.1.
+const SECP256K1: Key = Key {
+    curve: Curve::Secp256k1,
+    hash: HashAlg::Sha256,
+    x: "0000000000000000000000000000000000000000000000000000000000000001",
+    ux: "79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798",
+    uy: "483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8",
+};
+
+// RFC 7027 Appendix A.1 dA, x_qA, y_qA (brainpoolP256r1).
+const BP256: Key = Key {
+    curve: Curve::BrainpoolP256r1,
+    hash: HashAlg::Sha256,
+    x: "81DB1EE100150FF2EA338D708271BE38300CB54241D79950F77B063039804F1D",
+    ux: "44106E913F92BC02A1705D9953A8414DB95E1AAA49E81D9E85F929A8E3100BE5",
+    uy: "8AB4846F11CACCB73CE49CBDD120F5A900A69FD32C272223F789EF10EB089BDC",
+};
+
+// RFC 7027 Appendix A.2 dA, x_qA, y_qA (brainpoolP384r1).
+const BP384: Key = Key {
+    curve: Curve::BrainpoolP384r1,
+    hash: HashAlg::Sha384,
+    x: "1E20F5E048A5886F1F157C74E91BDE2B98C8B52D58E5003D57053FC4B0BD65D6
+        F15EB5D1EE1610DF870795143627D042",
+    ux: "68B665DD91C195800650CDD363C625F4E742E8134667B767B1B476793588F885
+         AB698C852D4A6E77A252D6380FCAF068",
+    uy: "55BC91A39C9EC01DEE36017B7D673A931236D2F1F5C83942D049E3FA20607493
+         E0D038FF2FD30C2AB67D15C85F7FAA59",
+};
+
+/// One key per curve, in `Curve::ALL` order.
+const KEYS: [&Key; 6] = [&P256, &P384, &P521, &SECP256K1, &BP256, &BP384];
+
 struct Vector {
     name: &'static str,
     key: &'static Key,
@@ -41,7 +94,7 @@ struct Vector {
     s: &'static str,
 }
 
-const VECTORS: [Vector; 4] = [
+const VECTORS: [Vector; 6] = [
     Vector {
         name: "A.2.5 SHA-256 \"sample\"",
         key: &P256,
@@ -74,6 +127,24 @@ const VECTORS: [Vector; 4] = [
         s: "DDD0760448D42D8A43AF45AF836FCE4DE8BE06B485E9B61B827C2F13173923E0
             6A739F040649A667BF3B828246BAA5A5",
     },
+    Vector {
+        name: "A.2.7 SHA-512 \"sample\"",
+        key: &P521,
+        message: b"sample",
+        r: "00C328FAFCBD79DD77850370C46325D987CB525569FB63C5D3BC53950E6D4C5F1
+            74E25A1EE9017B5D450606ADD152B534931D7D4E8455CC91F9B15BF05EC36E377FA",
+        s: "00617CCE7CF5064806C467F678D3B4080D6F1CC50AF26CA209417308281B68AF2
+            82623EAA63E5B5C0723D8B8C37FF0777B1A20F8CCB1DCCC43997F1EE0E44DA4A67A",
+    },
+    Vector {
+        name: "A.2.7 SHA-512 \"test\"",
+        key: &P521,
+        message: b"test",
+        r: "013E99020ABF5CEE7525D16B69B229652AB6BDF2AFFCAEF38773B4B7D08725F10
+            CDB93482FDCC54EDCEE91ECA4166B2A7C6265EF0CE2BD7051B7CEF945BABD47EE6D",
+        s: "01FBD0013C674AA79CB39849527916CE301C66EA7CE8B80682786AD60F98F7E78
+            A19CA69EFF5C57400E3B3A0AD66CE0978214D13BAF4E9AC60752F7B155E2DE4DCE3",
+    },
 ];
 
 fn private(key: &Key) -> EcPrivateKey {
@@ -89,9 +160,13 @@ fn expected(vector: &Vector) -> EcdsaSignature {
 }
 
 #[test]
-fn rfc6979_public_keys() {
-    for key in [&P256, &P384] {
-        assert_eq!(private(key).public_uncompressed(), public(key), "{:?}", key.curve);
+fn published_public_keys() {
+    // RFC 6979 A.2.5-A.2.7, SEC 2 v2 §2.4.1 (G for d = 1), RFC 7027 A.1 / A.2.
+    for (key, curve) in KEYS.iter().zip(Curve::ALL) {
+        assert_eq!(key.curve, curve);
+        assert_eq!(key.hash, curve.nonce_hash(), "{curve:?}");
+        assert_eq!(private(key).public_uncompressed(), public(key), "{curve:?}");
+        assert!(lk_crypto::ec_public_is_valid(curve, &public(key)), "{curve:?}");
     }
 }
 
@@ -178,7 +253,7 @@ fn other_hash_curve_pairings_sign_and_verify() {
     // FIPS 186-5 §6.4.1: the digest is truncated to the order length, or used as an
     // integer when shorter. RFC 6979 publishes these pairings too, but our nonce uses
     // the curve's own hash for HMAC_DRBG, so only validity is checked here.
-    for key in [&P256, &P384] {
+    for key in KEYS {
         for alg in [HashAlg::Sha1, HashAlg::Sha256, HashAlg::Sha384, HashAlg::Sha512] {
             let signature = private(key).sign_message(alg, b"sample").unwrap();
             assert_eq!(signature.r.len(), key.curve.field_len());
@@ -194,7 +269,7 @@ fn other_hash_curve_pairings_sign_and_verify() {
 #[test]
 fn sign_prehash_rejects_an_empty_digest() {
     // RFC 6979 §2.3.2 bits2int is undefined for an empty string (and panicked before).
-    for key in [&P256, &P384] {
+    for key in KEYS {
         assert_eq!(private(key).sign_prehash(&[]).unwrap_err(), CryptoError::InvalidInput, "{:?}", key.curve);
     }
 }
@@ -353,10 +428,11 @@ fn rfc6979_other_hash_signatures_verify() {
 #[test]
 fn long_digests_are_truncated_before_signing() {
     // FIPS 186-5 §6.4.1 step 4 and RFC 6979 §2.3.2 (bits2int) both keep the leftmost
-    // order-length bits, so z and the nonce match those of the truncated digest.
-    for key in [&P256, &P384] {
+    // order-length bits, so z and the nonce match those of the truncated digest. For
+    // P-521 the leftmost 521 bits of the 66-byte prefix are those of the whole input.
+    for key in KEYS {
         let len = key.curve.field_len();
-        let prehash = digest(HashAlg::Sha512, b"sample");
+        let prehash = [digest(HashAlg::Sha512, b"sample"), digest(HashAlg::Sha512, b"test")].concat();
         let signature = private(key).sign_prehash(&prehash).unwrap();
         assert_eq!(private(key).sign_prehash(&prehash[..len]).unwrap(), signature, "{:?}", key.curve);
         assert!(ecdsa_verify_prehash(key.curve, &public(key), &prehash, &signature.to_der()), "{:?}", key.curve);
@@ -365,9 +441,9 @@ fn long_digests_are_truncated_before_signing() {
 
 #[test]
 fn any_nonempty_digest_length_signs_and_verifies() {
-    // Lengths around both field sizes, SHA-1's 20 bytes, and far beyond SHA-512's 64.
-    for key in [&P256, &P384] {
-        for len in [1, 2, 16, 20, 31, 32, 33, 47, 48, 49, 64, 65, 128] {
+    // Lengths around every field size, SHA-1's 20 bytes, and far beyond SHA-512's 64.
+    for key in KEYS {
+        for len in [1, 2, 16, 20, 31, 32, 33, 47, 48, 49, 64, 65, 66, 67, 128] {
             let prehash: Vec<u8> = (0..len).map(|i| (i as u8).wrapping_mul(37).wrapping_add(0x5a)).collect();
             let signature = private(key).sign_prehash(&prehash).unwrap();
             assert!(ecdsa_verify_prehash(key.curve, &public(key), &prehash, &signature.to_der()), "{:?} {len}", key.curve);
@@ -432,5 +508,234 @@ fn hedged_signatures_verify_and_vary() {
         assert!(lk_crypto::ecdsa_verify_prehash(curve, &point, &digest, &a.to_der()));
         assert!(lk_crypto::ecdsa_verify_prehash(curve, &point, &digest, &b.to_raw()));
         assert!(key.sign_prehash_hedged(&[], &mut entropy).is_err());
+    }
+}
+
+/// RFC 6979 A.2.7 signatures with the other hashes; as for `OTHER_HASH_VECTORS`, only
+/// verification is checked because `sign_prehash` uses SHA-512 for P-521's nonce.
+const P521_OTHER_HASH_VECTORS: [(HashAlg, &[u8], &str, &str); 6] = [
+    (HashAlg::Sha1, b"sample",
+     "00343B6EC45728975EA5CBA6659BBB6062A5FF89EEA58BE3C80B619F322C87910FE092F7D45BB0F8EEE01ED3F20BABEC079D202AE677B243AB40B5431D497C55D75D",
+     "00E7B0E675A9B24413D448B8CC119D2BF7B2D2DF032741C096634D6D65D0DBE3D5694625FB9E8104D3B842C1B0E2D0B98BEA19341E8676AEF66AE4EBA3D5475D5D16"),
+    (HashAlg::Sha256, b"sample",
+     "01511BB4D675114FE266FC4372B87682BAECC01D3CC62CF2303C92B3526012659D16876E25C7C1E57648F23B73564D67F61C6F14D527D54972810421E7D87589E1A7",
+     "004A171143A83163D6DF460AAF61522695F207A58B95C0644D87E52AA1A347916E4F7A72930B1BC06DBE22CE3F58264AFD23704CBB63B29B931F7DE6C9D949A7ECFC"),
+    (HashAlg::Sha384, b"sample",
+     "01EA842A0E17D2DE4F92C15315C63DDF72685C18195C2BB95E572B9C5136CA4B4B576AD712A52BE9730627D16054BA40CC0B8D3FF035B12AE75168397F5D50C67451",
+     "01F21A3CEE066E1961025FB048BD5FE2B7924D0CD797BABE0A83B66F1E35EEAF5FDE143FA85DC394A7DEE766523393784484BDF3E00114A1C857CDE1AA203DB65D61"),
+    (HashAlg::Sha1, b"test",
+     "013BAD9F29ABE20DE37EBEB823C252CA0F63361284015A3BF430A46AAA80B87B0693F0694BD88AFE4E661FC33B094CD3B7963BED5A727ED8BD6A3A202ABE009D0367",
+     "01E9BB81FF7944CA409AD138DBBEE228E1AFCC0C890FC78EC8604639CB0DBDC90F717A99EAD9D272855D00162EE9527567DD6A92CBD629805C0445282BBC916797FF"),
+    (HashAlg::Sha256, b"test",
+     "000E871C4A14F993C6C7369501900C4BC1E9C7B0B4BA44E04868B30B41D8071042EB28C4C250411D0CE08CD197E4188EA4876F279F90B3D8D74A3C76E6F1E4656AA8",
+     "00CD52DBAA33B063C3A6CD8058A1FB0A46A4754B034FCC644766CA14DA8CA5CA9FDE00E88C1AD60CCBA759025299079D7A427EC3CC5B619BFBC828E7769BCD694E86"),
+    (HashAlg::Sha384, b"test",
+     "014BEE21A18B6D8B3C93FAB08D43E739707953244FDBE924FA926D76669E7AC8C89DF62ED8975C2D8397A65A49DCC09F6B0AC62272741924D479354D74FF6075578C",
+     "0133330865C067A0EAF72362A65E2D7BC4E461E8C8995C3B6226A21BD1AA78F0ED94FE536A0DCA35534F0CD1510C41525D163FE9D74D134881E35141ED5E8E95B979"),
+];
+
+#[test]
+fn rfc6979_p521_other_hash_signatures_verify_with_bit_level_truncation() {
+    // FIPS 186-5 §6.4.2 step 3: the digest is cut to the leftmost 521 bits, not bytes.
+    // Zero bytes in front keep the integer while the input stays within 65 bytes (520
+    // bits); at 66 bytes (528 bits) the value is shifted right by 7 and no longer verifies.
+    let point = public(&P521);
+    for (alg, message, r, s) in P521_OTHER_HASH_VECTORS {
+        let name = format!("{alg:?} {:?}", String::from_utf8_lossy(message));
+        let signature = EcdsaSignature { r: hex(r), s: hex(s) };
+        let prehash = digest(alg, message);
+        assert!(ecdsa_verify_prehash(Curve::P521, &point, &prehash, &signature.to_der()), "{name} DER");
+        assert!(ecdsa_verify_prehash(Curve::P521, &point, &prehash, &signature.to_raw()), "{name} raw");
+        let to_65 = [vec![0; 65 - prehash.len()], prehash.clone()].concat();
+        let to_66 = [vec![0; 66 - prehash.len()], prehash.clone()].concat();
+        assert!(ecdsa_verify_prehash(Curve::P521, &point, &to_65, &signature.to_raw()), "{name} 65 bytes");
+        assert!(!ecdsa_verify_prehash(Curve::P521, &point, &to_66, &signature.to_raw()), "{name} 66 bytes");
+    }
+    // The SHA-512 vector likewise, and a signature of the shifted value is a different one.
+    let key = private(&P521);
+    let sha512 = digest(HashAlg::Sha512, b"sample");
+    let to_66 = [vec![0, 0], sha512.clone()].concat();
+    assert_ne!(key.sign_prehash(&to_66).unwrap(), key.sign_prehash(&sha512).unwrap());
+    assert_eq!(key.sign_prehash(&sha512).unwrap(), expected(&VECTORS[4]));
+}
+
+/// Project Wycheproof `testvectors_v1/ecdsa_secp256k1_sha256_p1363_test.json`, test
+/// group 0 (raw `r || s`, SHA-256 of `msg`).
+const WYCHEPROOF_K1_PUBLIC: &str = "04b838ff44e5bc177bf21189d0766082fc9d843226887fc9760371100b7ee20a6f
+                                      f0c9d75bfba7b31a6bca1974496eeb56de357071955d83c4b1badaa0b21832e9";
+
+const WYCHEPROOF_K1: [(u32, &str, &str, bool); 4] = [
+    // "signature malleability": s > n/2, valid ECDSA (Wycheproof result "valid").
+    (1, "313233343030",
+     "813ef79ccefa9a56f7ba805f0e478584fe5f0dd5f567bc09b5123ccbc9832365900e75ad233fcc908509dbff5922647db37c21f4afd3203ae8dc4ae7794b0f87",
+     true),
+    // "Edge case for Shamir multiplication": low s, valid.
+    (60, "3235353835",
+     "dd1b7d09a7bd8218961034a39a87fecf5314f00c4d25eb58a07ac85e85eab51635138c401ef8d3493d65c9002fe62b43aee568731b744548358996d9cc427e06",
+     true),
+    // "replaced r by n - r": invalid.
+    (4, "313233343030",
+     "7ec10863310565a908457fa0f1b87a79bc4fcf10b9e0e4320ac021c106b31ddc6ff18a52dcc0336f7af62400a6dd9b810732baf1ff758000d6f613a556eb31ba",
+     false),
+    // "r=0 and s=n - 1": invalid.
+    (14, "313233343030",
+     "0000000000000000000000000000000000000000000000000000000000000000fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140",
+     false),
+];
+
+#[test]
+fn wycheproof_secp256k1_signatures() {
+    // SEC 1 v2 §4.1.4 has no low-S rule, so the high-S case 1 is accepted like case 60.
+    let point = hex(WYCHEPROOF_K1_PUBLIC);
+    assert!(lk_crypto::ec_public_is_valid(Curve::Secp256k1, &point));
+    for (tc_id, msg, sig, valid) in WYCHEPROOF_K1 {
+        let prehash = digest(HashAlg::Sha256, &hex(msg));
+        let raw = hex(sig);
+        assert_eq!(ecdsa_verify_prehash(Curve::Secp256k1, &point, &prehash, &raw), valid, "tcId {tc_id} raw");
+        let (r, s) = raw.split_at(32);
+        let der = EcdsaSignature { r: r.to_vec(), s: s.to_vec() }.to_der();
+        assert_eq!(ecdsa_verify_prehash(Curve::Secp256k1, &point, &prehash, &der), valid, "tcId {tc_id} DER");
+    }
+}
+
+#[test]
+fn secp256k1_signatures_are_low_s() {
+    // k256 normalises s to at most n/2 (model policy, see `EcPrivateKey::sign_prehash`).
+    const HALF_N: &str = "7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0";
+    let half = hex(HALF_N);
+    let key = private(&SECP256K1);
+    let mut entropy = crate::common::CounterEntropy::new(b"low s");
+    for counter in 0u32..64 {
+        let message = counter.to_be_bytes();
+        let deterministic = key.sign_message(HashAlg::Sha256, &message).unwrap();
+        let hedged = key.sign_message_hedged(HashAlg::Sha256, &message, &mut entropy).unwrap();
+        for signature in [deterministic, hedged] {
+            assert!(signature.s.as_slice() <= half.as_slice(), "counter {counter}");
+            let prehash = digest(HashAlg::Sha256, &message);
+            assert!(ecdsa_verify_prehash(Curve::Secp256k1, &public(&SECP256K1), &prehash, &signature.to_raw()));
+        }
+    }
+}
+
+#[test]
+fn high_and_low_s_verify_on_every_curve() {
+    // (r, s) and (r, n - s) are both valid SEC 1 signatures; verification accepts both
+    // whichever form the signer produced.
+    let orders = [
+        "FFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551",
+        "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFC7634D81F4372DDF581A0DB248B0A77AECEC196ACCC52973",
+        "01FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFA51868783BF2F966B7FCC0148F709A5D03BB5C9B8899C47AEBB6FB71E91386409",
+        "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141",
+        "A9FB57DBA1EEA9BC3E660A909D838D718C397AA3B561A6F7901E0E82974856A7",
+        "8CB91E82A3386D280F5D6F7E50E641DF152F7109ED5456B31F166E6CAC0425A7CF3AB6AF6B7FC3103B883202E9046565",
+    ];
+    for (key, order) in KEYS.iter().zip(orders) {
+        let prehash = digest(key.hash, b"negate s");
+        let signature = private(key).sign_prehash(&prehash).unwrap();
+        let negated = EcdsaSignature { r: signature.r.clone(), s: sub(&hex(order), &signature.s) };
+        for form in [&signature, &negated] {
+            assert!(ecdsa_verify_prehash(key.curve, &public(key), &prehash, &form.to_raw()), "{:?}", key.curve);
+            assert!(ecdsa_verify_prehash(key.curve, &public(key), &prehash, &form.to_der()), "{:?}", key.curve);
+        }
+    }
+}
+
+/// `a - b` for big-endian values of the same length, `a >= b`.
+fn sub(a: &[u8], b: &[u8]) -> Vec<u8> {
+    let mut out = vec![0; a.len()];
+    let mut borrow = 0i16;
+    for i in (0..a.len()).rev() {
+        let diff = i16::from(a[i]) - i16::from(b[i]) - borrow;
+        out[i] = diff.rem_euclid(256) as u8;
+        borrow = i16::from(diff < 0);
+    }
+    out
+}
+
+#[test]
+fn hedged_signatures_verify_and_vary_on_every_curve() {
+    let mut entropy = crate::common::CounterEntropy::new(b"hedged");
+    for curve in Curve::ALL {
+        let key = EcPrivateKey::generate(curve, &mut entropy);
+        let prehash = digest(curve.nonce_hash(), b"hedged");
+        let a = key.sign_prehash_hedged(&prehash, &mut entropy).unwrap();
+        let b = key.sign_prehash_hedged(&prehash, &mut entropy).unwrap();
+        assert_ne!(a, b, "{curve:?}");
+        assert_eq!(a.r.len(), curve.field_len());
+        assert_eq!(a.s.len(), curve.field_len());
+        let point = key.public_uncompressed();
+        assert!(ecdsa_verify_prehash(curve, &point, &prehash, &a.to_der()), "{curve:?}");
+        assert!(ecdsa_verify_prehash(curve, &point, &prehash, &b.to_raw()), "{curve:?}");
+        // A signature from one curve's key does not verify under another curve's key.
+        for other in Curve::ALL {
+            if other != curve && other.field_len() == curve.field_len() {
+                let other_key = EcPrivateKey::generate(other, &mut entropy);
+                assert!(!ecdsa_verify_prehash(other, &other_key.public_uncompressed(), &prehash, &a.to_raw()));
+            }
+        }
+    }
+}
+
+/// The leftmost 521 bits of `bytes` (at least 66 bytes) as a 66-byte big-endian integer,
+/// computed test-side with plain shifts (FIPS 186-5 §6.4.1 step 4).
+fn leftmost_521_bits(bytes: &[u8]) -> Vec<u8> {
+    let head = &bytes[..66];
+    (0..66).map(|i| (if i == 0 { 0 } else { head[i - 1] << 1 }) | (head[i] >> 7)).collect()
+}
+
+#[test]
+fn p521_long_digests_truncate_to_521_bits() {
+    // A 128-byte digest whose first bit is clear: its leftmost 521 bits fit in 65 bytes,
+    // an input that needs no truncation. FIPS 186-5 §6.4.1 gives both the same z and
+    // RFC 6979 §2.3.4 (bits2octets) the same nonce, so the signatures are identical.
+    let key = private(&P521);
+    let point = public(&P521);
+    let long: Vec<u8> = [vec![0x3C], digest(HashAlg::Sha512, b"long"), digest(HashAlg::Sha512, b"digest")]
+        .concat()[..128]
+        .to_vec();
+    let truncated = leftmost_521_bits(&long);
+    assert_eq!(truncated[0], 0);
+    let short = &truncated[1..];
+    let signature = key.sign_prehash(&long).unwrap();
+    assert_eq!(key.sign_prehash(short).unwrap(), signature);
+    assert_eq!(key.sign_prehash(&long[..66]).unwrap(), signature);
+    for input in [&long[..], short, &long[..66], &long[..100]] {
+        assert!(ecdsa_verify_prehash(Curve::P521, &point, input, &signature.to_raw()), "{}", input.len());
+        assert!(ecdsa_verify_prehash(Curve::P521, &point, input, &signature.to_der()), "{}", input.len());
+    }
+    // The low-bits reading of the first 66 bytes (what `ecdsa` 0.17 alone would use) is
+    // a different integer and must not verify.
+    let mut low_bits = long[..66].to_vec();
+    low_bits[0] &= 0x01;
+    assert!(!ecdsa_verify_prehash(Curve::P521, &point, &low_bits, &signature.to_raw()));
+    // The hedged path draws the same 66 bytes of k' for both inputs and agrees as well.
+    let script = || crate::common::ScriptedEntropy::new(vec![vec![0xA5; 66]]);
+    let hedged_long = key.sign_prehash_hedged(&long, &mut script()).unwrap();
+    let hedged_short = key.sign_prehash_hedged(short, &mut script()).unwrap();
+    assert_eq!(hedged_long, hedged_short);
+    assert_ne!(hedged_long, signature);
+    assert!(ecdsa_verify_prehash(Curve::P521, &point, &long, &hedged_long.to_raw()));
+}
+
+#[test]
+fn p521_digests_differing_beyond_bit_521_sign_identically() {
+    // Bits after the 521st are discarded, so they cannot change the signature. (With
+    // `z` from the low 521 bits but the nonce from the high 521 bits, these inputs would
+    // share a nonce and differ in z, which reveals the private key.)
+    let key = private(&P521);
+    let point = public(&P521);
+    for seed in [b"one".as_slice(), b"two", b"three"] {
+        let base = [digest(HashAlg::Sha512, seed), digest(HashAlg::Sha256, seed)].concat()[..66].to_vec();
+        let mut beyond = base.clone();
+        beyond[65] ^= 0x7F;
+        let mut inside = base.clone();
+        inside[65] ^= 0x80;
+        let signature = key.sign_prehash(&base).unwrap();
+        assert_eq!(key.sign_prehash(&beyond).unwrap(), signature);
+        let other = key.sign_prehash(&inside).unwrap();
+        assert_ne!(other.r, signature.r);
+        assert!(ecdsa_verify_prehash(Curve::P521, &point, &beyond, &signature.to_raw()));
+        assert!(!ecdsa_verify_prehash(Curve::P521, &point, &inside, &signature.to_raw()));
+        assert!(ecdsa_verify_prehash(Curve::P521, &point, &inside, &other.to_raw()));
     }
 }

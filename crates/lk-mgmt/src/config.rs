@@ -278,9 +278,13 @@ impl Management {
 
     /// Capabilities enabled over USB (DeviceInfo tag `03`), limited to the supported set.
     ///
-    /// This is the configured value: a WRITE CONFIG changes it at once, and
-    /// `lk-device` applies it to the USB interfaces when the device next enumerates (a
-    /// [`ConfigEffect::Reboot`] or a power cycle).
+    /// This is the configured value: a WRITE CONFIG changes it at once, and DeviceInfo
+    /// reports it from then on. The USB interfaces follow it when the device next
+    /// enumerates: after a [`ConfigEffect::Reboot`], a power cycle, or (`lk-device`'s
+    /// choice, `settle_management`) right after a write that changes the interface
+    /// set. yubikit-python writes such changes with `REBOOT` (ykman `config usb` sets
+    /// `reboot` exactly when the interface set changes), except `set_mode`, which
+    /// writes without it and has ykman tell the user to re-insert the key.
     pub fn enabled_usb(&self, host: &dyn Host) -> Capabilities {
         let profile = host.profile();
         Capabilities(match self.config.usb_enabled & supported(profile) {

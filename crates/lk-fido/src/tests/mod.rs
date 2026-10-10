@@ -13,6 +13,7 @@ mod fuzz;
 mod get_assertion;
 mod get_info;
 mod hmac_secret;
+mod interop;
 mod json;
 mod large_blobs;
 mod make_credential;
@@ -23,7 +24,7 @@ mod u2f;
 use lk_codec::cbor::{self, MapBuilder, Value};
 use lk_codec::der;
 use lk_core::{DeviceProfile, Host, Outcome, Record};
-use lk_crypto::{Curve, ecdsa_verify_prehash, ed25519_verify, sha256, sha384};
+use lk_crypto::{Curve, SecretBytes, ecdsa_verify_prehash, ed25519_verify, sha256, sha384};
 use lk_testkit::TestHost;
 
 use crate::state::State;
@@ -153,6 +154,8 @@ pub(super) fn descriptor(id: &[u8]) -> Value {
 #[derive(Clone, Debug)]
 pub(super) struct Mc {
     pub rp_id: String,
+    /// `rp.name`; `None` leaves the member out.
+    pub rp_name: Option<String>,
     pub user_id: Vec<u8>,
     pub user_name: Option<String>,
     pub algs: Vec<i64>,
@@ -167,6 +170,7 @@ impl Mc {
     pub fn new() -> Self {
         Self {
             rp_id: RP.into(),
+            rp_name: Some("Example".into()),
             user_id: vec![0x01; 16],
             user_name: Some("alice".into()),
             algs: vec![-7],
@@ -207,6 +211,11 @@ impl Mc {
         self
     }
 
+    pub fn rp_name(mut self, name: Option<&str>) -> Self {
+        self.rp_name = name.map(str::to_owned);
+        self
+    }
+
     pub fn exclude(mut self, ids: Vec<Vec<u8>>) -> Self {
         self.exclude = Some(ids);
         self
@@ -236,15 +245,13 @@ impl Mc {
                     .build()
             })
             .collect::<Vec<_>>();
+        let mut rp = MapBuilder::new().insert("id", self.rp_id.as_str());
+        if let Some(name) = &self.rp_name {
+            rp.set("name", name.as_str());
+        }
         let mut m = MapBuilder::new()
             .insert(1, CDH.to_vec())
-            .insert(
-                2,
-                MapBuilder::new()
-                    .insert("id", self.rp_id.as_str())
-                    .insert("name", "Example")
-                    .build(),
-            )
+            .insert(2, rp.build())
             .insert(3, user.build())
             .insert(4, Value::Array(algs));
         if let Some(ids) = &self.exclude {

@@ -31,9 +31,10 @@ use lk_codec::apdu::sw;
 use lk_codec::tlv::{self, Tlv};
 use lk_codec::x509::PublicKey;
 use lk_core::Entropy;
-use lk_crypto::{Curve, EcPrivateKey, Ed25519Key, RsaPrivateKey, X25519Key, ec_public_is_valid};
+use lk_crypto::{Curve, EcPrivateKey, Ed25519Key, RsaPrivateKey, SecretBytes, X25519Key, ec_public_is_valid};
 
 use crate::bignum;
+use crate::state::TLV_OVERHEAD;
 
 /// The only RSA public exponent the model supports (65537).
 pub(crate) const RSA_EXPONENT: [u8; 3] = [0x01, 0x00, 0x01];
@@ -246,13 +247,14 @@ impl TouchPolicy {
     }
 }
 
-/// Private key material as persisted.
+/// Private key material as persisted, wiped when dropped (`lk_crypto::SecretBytes`;
+/// `docs/DESIGN.md` §8).
 #[derive(Clone, PartialEq, Eq)]
 pub(crate) enum Private {
     /// RSA primes, big-endian; the exponent is [`RSA_EXPONENT`].
-    Rsa { p: Vec<u8>, q: Vec<u8> },
+    Rsa { p: SecretBytes, q: SecretBytes },
     /// ECC private scalar (field length), Ed25519 seed or X25519 private key (32 bytes).
-    Bytes(Vec<u8>),
+    Bytes(SecretBytes),
 }
 
 /// A key held in a slot.
@@ -323,16 +325,17 @@ impl SlotKey {
                 return Err(sw::UNKNOWN);
             }
             let primes = key.primes();
-            (Private::Rsa { p: primes.0.clone(), q: primes.1.clone() }, key.modulus())
+            let private = Private::Rsa { p: SecretBytes::from_slice(&primes.0), q: SecretBytes::from_slice(&primes.1) };
+            (private, key.modulus())
         } else if let Some(curve) = alg.curve() {
             let key = EcPrivateKey::generate(curve, entropy);
-            (Private::Bytes(key.scalar().to_vec()), key.public_uncompressed())
+            (Private::Bytes(SecretBytes::from_slice(key.scalar())), key.public_uncompressed())
         } else if alg == KeyAlg::Ed25519 {
             let key = Ed25519Key::generate(entropy);
-            (Private::Bytes(key.seed().to_vec()), key.public().to_vec())
+            (Private::Bytes(SecretBytes::from_slice(key.seed())), key.public().to_vec())
         } else {
             let key = X25519Key::generate(entropy);
-            (Private::Bytes(key.secret().to_vec()), key.public().to_vec())
+            (Private::Bytes(SecretBytes::from_slice(key.secret())), key.public().to_vec())
         };
         Ok(Self { alg, pin, touch, origin: Origin::Generated, private, public })
     }
@@ -373,16 +376,16 @@ impl SlotKey {
             if !bignum::crt_consistent(p, q, &RSA_EXPONENT, get(TAG_RSA_DP)?, get(TAG_RSA_DQ)?, get(TAG_RSA_QINV)?) {
                 return Err(sw::INCORRECT_DATA);
             }
-            (Private::Rsa { p: p.to_vec(), q: q.to_vec() }, key.modulus())
+            (Private::Rsa { p: SecretBytes::from_slice(p), q: SecretBytes::from_slice(q) }, key.modulus())
         } else if let Some(curve) = alg.curve() {
             let key = EcPrivateKey::from_scalar(curve, get(TAG_EC_SCALAR)?).map_err(|_| sw::INCORRECT_DATA)?;
-            (Private::Bytes(key.scalar().to_vec()), key.public_uncompressed())
+            (Private::Bytes(SecretBytes::from_slice(key.scalar())), key.public_uncompressed())
         } else if alg == KeyAlg::Ed25519 {
             let key = Ed25519Key::from_seed(get(TAG_ED25519_SEED)?).map_err(|_| sw::INCORRECT_DATA)?;
-            (Private::Bytes(key.seed().to_vec()), key.public().to_vec())
+            (Private::Bytes(SecretBytes::from_slice(key.seed())), key.public().to_vec())
         } else {
             let key = X25519Key::from_bytes(get(TAG_X25519_SECRET)?).map_err(|_| sw::INCORRECT_DATA)?;
-            (Private::Bytes(key.secret().to_vec()), key.public().to_vec())
+            (Private::Bytes(SecretBytes::from_slice(key.secret())), key.public().to_vec())
         };
         Ok(Self { alg, pin, touch, origin: Origin::Imported, private, public })
     }
@@ -427,7 +430,7 @@ impl SlotKey {
 
     fn secret_bytes(&self) -> Result<&[u8], u16> {
         match &self.private {
-            Private::Bytes(bytes) => Ok(bytes),
+            Private::Bytes(bytes) => Ok(bytes.as_slice()),
             Private::Rsa { .. } => Err(sw::UNKNOWN),
         }
     }
@@ -442,8 +445,16 @@ impl SlotKey {
     /// - ECC, `85`: an uncompressed point on the curve (SEC 1 §2.3.4; the documented
     ///   `04 || X || Y` form).
     /// - Ed25519, `81`: any message (RFC 8032 §5.1.6).
-    /// - X25519, `85`: a 32-byte public key (RFC 7748 §5).
+    /// - X25519, `85`: a 32-byte public key (RFC 7748 §5) that gives a non-zero shared
+    ///   secret. RFC 7748 §6.1 lets a party "check ... whether K is the all-zero value and
+    ///   abort if so"; a low-order peer key gives the all-zero value for every private
+    ///   key, so it is a property of the request and is refused here, before the PIN
+    ///   policy or a touch, like any other malformed request (crate documentation: a
+    ///   rejected request keeps the PIN-always authorization).
     /// - Any other combination (RSA or Ed25519 with `85`, X25519 with `81`) is `6A80`.
+    ///
+    /// Every request that passes is one [`compute`](Self::compute) completes, so no
+    /// authorization or touch is spent on a request that then fails.
     pub(crate) fn check_request(&self, op: Operation, input: &[u8]) -> Result<(), u16> {
         let ok = match (self.alg, op) {
             (_, Operation::Challenge) if self.alg.rsa_bits().is_some() => {
@@ -456,10 +467,21 @@ impl SlotKey {
             (KeyAlg::P256, Operation::Exponentiation) => ec_public_is_valid(Curve::P256, input),
             (KeyAlg::P384, Operation::Exponentiation) => ec_public_is_valid(Curve::P384, input),
             (KeyAlg::Ed25519, Operation::Challenge) => true,
-            (KeyAlg::X25519, Operation::Exponentiation) => input.len() == 32,
+            (KeyAlg::X25519, Operation::Exponentiation) => self.x25519_contributory(input),
             _ => false,
         };
         if ok { Ok(()) } else { Err(sw::INCORRECT_DATA) }
+    }
+
+    /// Whether X25519 with `peer` (32 bytes) gives a non-zero shared secret (RFC 7748
+    /// §6.1). The secret is computed and dropped at once (`X25519Key::dh` zeroizes it).
+    fn x25519_contributory(&self, peer: &[u8]) -> bool {
+        peer.len() == 32
+            && self
+                .secret_bytes()
+                .ok()
+                .and_then(|secret| X25519Key::from_bytes(secret).ok())
+                .is_some_and(|key| key.dh(peer).is_ok())
     }
 
     /// Perform a request that passed [`check_request`](Self::check_request):
@@ -502,9 +524,13 @@ impl SlotKey {
         }
     }
 
-    /// Serialize for the persisted slot entry (BER-TLV, ISO/IEC 7816-4 §5.2.2).
+    /// Serialize for the persisted slot entry (BER-TLV, ISO/IEC 7816-4 §5.2.2). The
+    /// result holds the private key; the caller wraps it in `SecretBytes`. The buffer is
+    /// sized up front ([`encoded_len_bound`](Self::encoded_len_bound)) so it never
+    /// reallocates and leaves no unwiped copies.
     pub(crate) fn encode(&self) -> Vec<u8> {
-        let mut out = tlv::encode(R_ALG, &[self.alg.byte()]);
+        let mut out = Vec::with_capacity(self.encoded_len_bound());
+        tlv::encode_into(&mut out, R_ALG, &[self.alg.byte()]);
         tlv::encode_into(&mut out, R_PIN, &[self.pin.byte()]);
         tlv::encode_into(&mut out, R_TOUCH, &[self.touch.byte()]);
         tlv::encode_into(&mut out, R_ORIGIN, &[self.origin.byte()]);
@@ -517,6 +543,15 @@ impl SlotKey {
         }
         tlv::encode_into(&mut out, R_PUBLIC, &self.public);
         out
+    }
+
+    /// An upper bound on the length of [`encode`](Self::encode)'s result.
+    pub(crate) fn encoded_len_bound(&self) -> usize {
+        let private = match &self.private {
+            Private::Rsa { p, q } => 2 * TLV_OVERHEAD + p.len() + q.len(),
+            Private::Bytes(bytes) => TLV_OVERHEAD + bytes.len(),
+        };
+        4 * (TLV_OVERHEAD + 1) + private + TLV_OVERHEAD + self.public.len()
     }
 
     /// Parse a persisted slot entry. Only lengths are checked (the material was validated
@@ -540,7 +575,7 @@ impl SlotKey {
             if !sizes_ok || public.len() != bits / 8 {
                 return None;
             }
-            Private::Rsa { p: p.to_vec(), q: q.to_vec() }
+            Private::Rsa { p: SecretBytes::from_slice(p), q: SecretBytes::from_slice(q) }
         } else {
             let secret = value(R_SECRET)?;
             let (secret_len, public_len) = match alg.curve() {
@@ -550,7 +585,7 @@ impl SlotKey {
             if secret.len() != secret_len || public.len() != public_len {
                 return None;
             }
-            Private::Bytes(secret.to_vec())
+            Private::Bytes(SecretBytes::from_slice(secret))
         };
         Some(Self { alg, pin, touch, origin, private, public })
     }
@@ -616,7 +651,7 @@ mod tests {
         bad.public.pop();
         assert!(SlotKey::decode(&bad.encode()).is_none());
         let mut bad = key;
-        bad.private = Private::Bytes(vec![1; 31]);
+        bad.private = Private::Bytes(vec![1; 31].into());
         assert!(SlotKey::decode(&bad.encode()).is_none());
         assert!(SlotKey::decode(&[0x01, 0x01, 0x11]).is_none(), "missing fields");
     }

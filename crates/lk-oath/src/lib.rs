@@ -22,8 +22,15 @@
 //! Persistence follows `docs/DESIGN.md` §7: every mutation, including each HOTP counter
 //! step and each "only increasing" challenge, is persisted through [`Host::persist`]
 //! before the response that reveals it. On a storage failure the previous state is
-//! kept and the command answers `6581`. The record layout is documented in the
-//! private `state` module (version byte `01`, then BER-TLV).
+//! kept and the command answers `6581`. When nothing is stored yet, [`Oath::new`]
+//! persists the factory state so that the device id (the SELECT salt) is stable
+//! across restarts. The record layout is documented in the private `state` module
+//! (version byte `01`, then BER-TLV).
+//!
+//! YKOATH has no retry counter: VALIDATE may be repeated without limit, as on the
+//! device, and the proofs of VALIDATE and SET CODE are compared in constant time
+//! ([`lk_crypto::ct_eq`]). The "spend and persist the try before comparing" rule of
+//! `docs/CONTRACTS.md` therefore has nothing to apply to here.
 //!
 //! # Status words
 //!
@@ -243,11 +250,36 @@ impl fmt::Debug for Oath {
 impl Oath {
     /// Restore the application from the plaintext it last persisted. Missing or
     /// unreadable state means factory state with a fresh salt from host entropy
-    /// (`docs/CONTRACTS.md`, "Persisted state"). Factory state is not written here, so
-    /// a transient load failure can never overwrite stored credentials; it is
-    /// persisted with the first mutating command.
+    /// (`docs/CONTRACTS.md`, "Persisted state").
+    ///
+    /// The factory salt is the device id of YKOATH §SELECT (tag `71`). Hosts key
+    /// remembered passwords and cached accounts by it (yubikit and yubikit-android:
+    /// `device_id = base64(SHA-256(salt)[..16])`; ykman `oath access remember`, Yubico
+    /// Authenticator), so it has to stay the same across restarts even before the first
+    /// mutating command. When nothing is stored (`stored` is `None`), the new factory
+    /// state is therefore persisted right here (`docs/CONTRACTS.md` "Constructors may
+    /// persist"). A rejected save is not reported: the state stays in memory, the
+    /// device saves a rejected constructor state again before its next input
+    /// (lk-device `DeviceHost::retry_deferred`), and every later commit writes the
+    /// whole state, salt included.
+    ///
+    /// A record that exists but does not decode (`Some` but unreadable, for example one
+    /// written in a newer format) also gives factory state, but it is *not* overwritten
+    /// here: opening never destroys a record, and only a mutating OATH command replaces
+    /// it (`docs/DESIGN.md` §7). Until then the salt is drawn again at each start.
+    /// lk-device passes `None` for a record it cannot open and shields that record from
+    /// constructor saves, so the save above never overwrites one either.
     pub fn new(stored: Option<&[u8]>, host: &mut dyn Host) -> Self {
-        let state = stored.and_then(State::decode).unwrap_or_else(|| State::factory(host));
+        let state = match stored {
+            Some(bytes) => State::decode(bytes).unwrap_or_else(|| State::factory(host)),
+            None => {
+                let state = State::factory(host);
+                // Not reported (see above): the in-memory state is still the factory
+                // state, and the host or the next commit stores it.
+                let _ = host.persist(Record::Oath, &state.encode());
+                state
+            }
+        };
         Self {
             state,
             revision: 0,
@@ -385,7 +417,10 @@ impl Oath {
     /// `6984` (`oath_profile.set_code_mismatch_status`). An empty key (`73 00`)
     /// removes authentication. Only the algorithm nibble of the first key byte is
     /// interpreted (clients send `21`, TOTP|SHA-1). The session that set the key stays
-    /// authorized under the new revision, since it just proved the key.
+    /// authorized under the new revision, since it just proved the key. Hosts rely on
+    /// this: yubikit `OathSession.set_key` re-selects and validates only for the NEO
+    /// (firmware below 3.0, its "NEO unlock workaround"), and Yubico Authenticator keeps
+    /// using the same session after setting a password.
     fn set_code(&mut self, cmd: &Command, host: &mut dyn Host) -> Handled {
         expect_p1p2(cmd, 0x00, 0x00)?;
         self.require_auth()?;

@@ -10,7 +10,9 @@
 //! PSO:COMPUTE DIGITAL SIGNATURE, PSO:DECIPHER, INTERNAL AUTHENTICATE, and the Yubico GET
 //! VERSION (F1), SET RETRIES (F2) and GET ATTESTATION (80 FB). Key algorithms are those of
 //! the algorithm information FA that lk-crypto implements: RSA 2048/3072/4096, ECDSA and
-//! ECDH on P-256 and P-384, Ed25519 and X25519 (operations.rs, keys.rs). The user
+//! ECDH on P-256, P-384, P-521, secp256k1, brainpoolP256r1 and brainpoolP384r1, Ed25519
+//! and X25519 (operations.rs, keys.rs); brainpoolP512r1 is advertised but answers `6A81`
+//! (no lk-crypto arithmetic). The user
 //! interaction flags D6-D9 make operations wait for a touch (`Outcome::NeedTouch`).
 //!
 //! On first start (no readable stored state) the application provisions its own RSA 2048
@@ -20,11 +22,14 @@
 //! `reference/yubikey-5c-nano-5.7.4/openpgp-reference-observation.json`.
 //!
 //! Framing rules (ISO/IEC 7816-4 §5.1 and the behaviour catalog's OpenPGP section):
-//! - CLA must be interindustry on the basic channel (`6E00` / `6881` otherwise), except GET
-//!   ATTESTATION, which takes the proprietary CLA 80 only. The secure-messaging bits are
-//!   ignored: `lk-device` unwraps secure messaging before an applet sees the command. A
-//!   command rejected for its CLA or INS leaves a pending response and a pending command
-//!   chain untouched.
+//! - CLA must be interindustry on the basic channel without secure messaging (`6E00` for
+//!   other classes, `6882` for the secure-messaging bits, `6881` for a logical channel),
+//!   except GET ATTESTATION, which takes the proprietary CLA 80 only (`84`, its
+//!   secure-messaging form, is `6882`). `lk-device` unwraps a secure channel and clears
+//!   those bits before the applet sees the command, so a command that still carries them
+//!   was never verified; C0 announces no secure messaging either (docs/CONTRACTS.md
+//!   "APDU conventions"; ISO 7816-4 §5.1.1, the order of lk-piv). A command rejected for
+//!   its CLA or INS leaves a pending response and a pending command chain untouched.
 //! - Command chaining (CLA bit `10`, ISO 7816-4 §5.1.1.1) is accepted only for commands
 //!   that carry data; GET DATA and the other data-less commands answer `6E00` to it.
 //! - GET RESPONSE (`C0`) serves the rest of a long response; any other command discards
@@ -96,6 +101,8 @@ mod ins {
 
 /// The proprietary class of the Yubico GET ATTESTATION command.
 const CLA_PROPRIETARY: u8 = 0x80;
+/// The same class with the secure-messaging bit b3 set (GP 2.3.1 §11.1.4).
+const CLA_PROPRIETARY_SM: u8 = 0x84;
 
 /// Volatile access state: dropped by SELECT, deselection and every reset (spec §4.3:
 /// the verification status lasts until the application is reselected or the card reset).
@@ -139,8 +146,8 @@ pub struct OpenPgp {
     responses: ResponseQueue,
     /// The operation waiting for a touch, if any.
     pending: Option<Pending>,
-    /// Time of the last touch per key for the cached UIF policies; kept until power is
-    /// removed (operations.rs).
+    /// Time of the last touch per key for the cached UIF policies; volatile, it ends with
+    /// the OpenPGP session like the PIN verifications (operations.rs).
     touch_cache: [Option<Millis>; SLOTS],
 }
 
@@ -172,11 +179,17 @@ impl OpenPgp {
         }
     }
 
+    /// End the OpenPGP session: verifications, SELECT DATA / MSE choices, chains, pending
+    /// responses and touches, and the cached touches. Yubico documents that a cached touch
+    /// lasts "up to 15 seconds or until the OpenPGP session ends" (YubiKey 5.2.3
+    /// Enhancements to OpenPGP 3.4, "Touch Cache"), so it goes with every SELECT,
+    /// deselection, reset kind, TERMINATE DF and ACTIVATE FILE.
     fn clear_volatile(&mut self) {
         self.session = Session::default();
         self.chain.clear();
         self.responses.clear();
         self.pending = None;
+        self.touch_cache = [None; SLOTS];
     }
 
     /// Persist `next` and make it current; on a storage failure keep the current state and
@@ -331,9 +344,8 @@ impl OpenPgp {
     /// operational state it succeeds without any change (catalog: operational ACTIVATE is a
     /// no-op and creates nothing lazily).
     ///
-    /// The reset also forgets cached touches: a touch given before the factory reset must
-    /// not stand in for one after it (model policy; the cache is otherwise kept until power
-    /// is removed).
+    /// The reset ends the session ([`Self::clear_volatile`]), so a touch given before the
+    /// factory reset never stands in for one after it.
     fn activate(&mut self, cmd: &Command, host: &mut dyn Host) -> Reply {
         check_no_data_header(cmd)?;
         if !self.state.terminated {
@@ -342,7 +354,6 @@ impl OpenPgp {
         let next = self.state.after_reset();
         self.commit(host, next)?;
         self.clear_volatile();
-        self.touch_cache = [None; SLOTS];
         Ok(Vec::new())
     }
 }
@@ -400,13 +411,10 @@ impl CardApplet for OpenPgp {
         self.clear_volatile();
     }
 
-    fn reset(&mut self, kind: ResetKind) {
-        // Every reset kind ends the card session, so all volatile state goes. Cached
-        // touches last until power is removed (operations.rs).
+    fn reset(&mut self, _kind: ResetKind) {
+        // Every reset kind ends the card session, so all volatile state goes, cached
+        // touches included (clear_volatile).
         self.clear_volatile();
-        if kind == ResetKind::PowerCycle {
-            self.touch_cache = [None; SLOTS];
-        }
     }
 }
 
@@ -428,15 +436,24 @@ fn get_challenge(cmd: &Command, host: &mut dyn Host) -> Reply {
     Ok(out)
 }
 
-/// ISO 7816-4 §5.4.1: interindustry class on the basic logical channel; the Yubico GET
-/// ATTESTATION uses the proprietary class 80 and only that (catalog: "proprietary CLA/header
-/// validation").
+/// ISO 7816-4 §5.1.1 / §5.4.1: interindustry class on the basic logical channel without
+/// secure messaging; the Yubico GET ATTESTATION uses the proprietary class 80 and only that
+/// (catalog: "proprietary CLA/header validation"). Secure-messaging bits that reach the
+/// applet are `6882` (module documentation; docs/CONTRACTS.md "APDU conventions").
 fn check_class(cmd: &Command) -> Result<(), u16> {
     if cmd.ins == ins::GET_ATTESTATION {
-        return if cmd.cla == CLA_PROPRIETARY { Ok(()) } else { Err(sw::CLA_NOT_SUPPORTED) };
+        return match cmd.cla {
+            CLA_PROPRIETARY => Ok(()),
+            // GlobalPlatform proprietary class with secure messaging (GP 2.3.1 §11.1.4).
+            CLA_PROPRIETARY_SM => Err(sw::SM_NOT_SUPPORTED),
+            _ => Err(sw::CLA_NOT_SUPPORTED),
+        };
     }
     if cmd.cla & 0xE0 != 0 {
         return Err(sw::CLA_NOT_SUPPORTED);
+    }
+    if cmd.cla & 0x0C != 0 {
+        return Err(sw::SM_NOT_SUPPORTED);
     }
     if cmd.cla & 0x03 != 0 {
         return Err(sw::LOGICAL_CHANNEL_NOT_SUPPORTED);
@@ -528,6 +545,8 @@ mod tests {
     const P384_ECDH: &[u8] = &[0x12, 0x2b, 0x81, 0x04, 0x00, 0x22];
     const ED25519: &[u8] = &[0x16, 0x2b, 0x06, 0x01, 0x04, 0x01, 0xda, 0x47, 0x0f, 0x01];
     const X25519: &[u8] = &[0x12, 0x2b, 0x06, 0x01, 0x04, 0x01, 0x97, 0x55, 0x01, 0x05, 0x01];
+    const P521_ECDSA: &[u8] = &[0x13, 0x2b, 0x81, 0x04, 0x00, 0x23];
+    const BP384_ECDH: &[u8] = &[0x12, 0x2b, 0x24, 0x03, 0x03, 0x02, 0x08, 0x01, 0x01, 0x0b];
 
     fn applet_with(state: &State) -> (OpenPgp, TestHost) {
         let mut host = TestHost::new();
@@ -559,6 +578,11 @@ mod tests {
             KeyMaterial::Rsa { p: vec![0xC5; 128], q: vec![0xC5; 128], e: vec![1, 0, 1] },
             KeyMaterial::Ec { curve: lk_crypto::Curve::P256, scalar: vec![0; 32] },
             KeyMaterial::Ec { curve: lk_crypto::Curve::P384, scalar: vec![0xFF; 48] },
+            // A P-521 scalar with bits above 521 set, and others at or above n.
+            KeyMaterial::Ec { curve: lk_crypto::Curve::P521, scalar: vec![0xFF; 66] },
+            KeyMaterial::Ec { curve: lk_crypto::Curve::Secp256k1, scalar: vec![0xFF; 32] },
+            KeyMaterial::Ec { curve: lk_crypto::Curve::BrainpoolP256r1, scalar: vec![0; 32] },
+            KeyMaterial::Ec { curve: lk_crypto::Curve::BrainpoolP384r1, scalar: vec![0xFF; 48] },
             KeyMaterial::Ed25519 { seed: vec![1; 32] },
             KeyMaterial::X25519 { secret: vec![2; 32] },
         ];
@@ -585,7 +609,7 @@ mod tests {
             vec![0x00, 0xCA, 0x00, 0x6E, 0x00],
         ];
         for material in &materials {
-            for attributes in [RSA2048, P256_ECDSA, P384_ECDH, ED25519, X25519] {
+            for attributes in [RSA2048, P256_ECDSA, P384_ECDH, ED25519, X25519, P521_ECDSA, BP384_ECDH] {
                 let mut state = State::factory();
                 for slot in Slot::ALL {
                     let data = state.slot_mut(slot);

@@ -188,7 +188,7 @@ fn client_pin_option_and_remaining_credentials_follow_state() {
     register(&mut auth, &mut host, &Mc::new().rk().user(&[1]));
     register(&mut auth, &mut host, &Mc::new().rk().user(&[2]));
     let mut auth = with_state(&mut host, |s| {
-        s.pin.hash = Some([1; 16]);
+        s.pin.hash = Some(SecretBytes::from_slice(&[1; 16]));
         s.pin.force_change = true;
         s.pin.min_length = 6;
     });

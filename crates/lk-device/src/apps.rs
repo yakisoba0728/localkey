@@ -11,7 +11,7 @@ use lk_otp::{MgmtBridge, OtpApplet};
 use lk_piv::Piv;
 use lk_sd::SecurityDomain;
 
-use crate::host::{DeviceHost, Loaded, RECORDS};
+use crate::host::{DeviceHost, Loaded, RECORDS, wipe};
 
 /// Every application, each built from its own record (`docs/DESIGN.md` §7: one record
 /// per application, so a failed write in one never rolls back another).
@@ -31,36 +31,40 @@ impl Apps {
     /// (`docs/CONTRACTS.md` "Application crates"). Returns the applications and the
     /// records that existed but could not be read; each of those applications starts
     /// from its factory state, the others from their stored state.
+    ///
+    /// Constructor saves (`DeviceHost::begin_construction`) never overwrite an unreadable
+    /// record. When no record opened but at least one was unreadable, the storage key is
+    /// unconfirmed and no constructor save is written at all (see
+    /// [`protected_at_open`]). Every loaded plaintext is wiped once its application has
+    /// been built.
     pub(crate) fn open(host: &mut DeviceHost) -> (Self, Vec<Record>) {
         let mut unreadable = Vec::new();
+        let mut opened = 0usize;
         let mut stored = RECORDS.map(|record| match host.load(record) {
-            Loaded::Opened(plaintext) => Some(plaintext),
+            Loaded::Opened(plaintext) => {
+                opened += 1;
+                Some(plaintext)
+            }
             Loaded::Absent => None,
             Loaded::Unreadable => {
                 unreadable.push(record);
                 None
             }
         });
-        let mut take = |record: Record| {
-            RECORDS
-                .iter()
-                .position(|&r| r == record)
-                .and_then(|i| stored.get_mut(i))
-                .and_then(Option::take)
-        };
         // Construction order follows `RECORDS`, which fixes the entropy each
         // constructor draws (SD and PIV/OpenPGP create their own keys on first start).
-        // Constructors never overwrite an unreadable record, and a constructor save the
-        // store rejects is retried later (`DeviceHost::begin_construction`).
-        host.begin_construction(&unreadable);
-        let mgmt = MgmtApplet::new(take(Record::Device).as_deref(), host);
-        let fido = Authenticator::new(take(Record::Fido).as_deref(), host);
-        let oath = Oath::new(take(Record::Oath).as_deref(), host);
-        let otp = OtpApplet::new(take(Record::Otp).as_deref(), host);
-        let piv = Piv::new(take(Record::Piv).as_deref(), host);
-        let openpgp = OpenPgp::new(take(Record::OpenPgp).as_deref(), host);
-        let hsmauth = HsmAuth::new(take(Record::HsmAuth).as_deref(), host);
-        let sd = SecurityDomain::new(take(Record::SecurityDomain).as_deref(), host);
+        // Constructors never overwrite an unreadable record, nothing at all is written
+        // while the key is unconfirmed, and a constructor save the store rejects is
+        // retried later (`DeviceHost::begin_construction`).
+        host.begin_construction(&protected_at_open(opened, &unreadable));
+        let mgmt = build(&mut stored, Record::Device, |state| MgmtApplet::new(state, host));
+        let fido = build(&mut stored, Record::Fido, |state| Authenticator::new(state, host));
+        let oath = build(&mut stored, Record::Oath, |state| Oath::new(state, host));
+        let otp = build(&mut stored, Record::Otp, |state| OtpApplet::new(state, host));
+        let piv = build(&mut stored, Record::Piv, |state| Piv::new(state, host));
+        let openpgp = build(&mut stored, Record::OpenPgp, |state| OpenPgp::new(state, host));
+        let hsmauth = build(&mut stored, Record::HsmAuth, |state| HsmAuth::new(state, host));
+        let sd = build(&mut stored, Record::SecurityDomain, |state| SecurityDomain::new(state, host));
         host.end_construction();
         let apps = Self {
             fido,
@@ -87,6 +91,44 @@ impl Apps {
             AppId::SecurityDomain => &mut self.sd,
         }
     }
+}
+
+/// The records whose constructor saves are skipped while the applications are built at
+/// open (`DeviceHost::begin_construction`), given how many records `opened` and which
+/// were `unreadable`.
+///
+/// - A record that exists but cannot be read is never overwritten by a constructor.
+/// - If no record opened and at least one was unreadable, every record is protected.
+///   AES-GCM authenticates the key (`crate::storage::open`), so a single record that
+///   opens proves the storage key right, and the unreadable ones are then individually
+///   damaged. With none opened, the key is most likely wrong (or the store fails every
+///   load): a constructor identity (Security Domain, PIV, OpenPGP) written for an
+///   absent record would be sealed under that wrong key, become unreadable once the
+///   program supplies the right key, and so keep that application from ever saving its
+///   identity at open again. Decision of the second device review; the application's
+///   own first mutating command still persists its whole state (`docs/DESIGN.md` §7).
+pub(crate) fn protected_at_open(opened: usize, unreadable: &[Record]) -> Vec<Record> {
+    if opened == 0 && !unreadable.is_empty() {
+        RECORDS.to_vec()
+    } else {
+        unreadable.to_vec()
+    }
+}
+
+/// Construct the application of `record` from its loaded plaintext, then wipe the
+/// plaintext (`docs/DESIGN.md` §8: secret buffers are cleared; the record holds the
+/// application's keys).
+fn build<T>(stored: &mut [Option<Vec<u8>>; 8], record: Record, construct: impl FnOnce(Option<&[u8]>) -> T) -> T {
+    let mut plaintext = RECORDS
+        .iter()
+        .position(|&r| r == record)
+        .and_then(|i| stored.get_mut(i))
+        .and_then(Option::take);
+    let app = construct(plaintext.as_deref());
+    if let Some(bytes) = plaintext.as_mut() {
+        wipe(bytes);
+    }
+    app
 }
 
 /// The applications reachable on the CCID interface.

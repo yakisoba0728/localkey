@@ -194,3 +194,17 @@ fn periodic_messages_follow_the_grid() {
     assert_eq!(next_on_grid(1_000, 100, 1_107), 1_200, "7 ms late: the grid does not move");
     assert_eq!(next_on_grid(1_000, 500, 5_050), 5_500, "several intervals late: one step past now");
 }
+
+/// `apps::protected_at_open` (second device review): unreadable records are always
+/// protected at open; every record is when none opened (the storage key is
+/// unconfirmed); a fresh store protects nothing.
+#[test]
+fn records_protected_at_open() {
+    use crate::apps::protected_at_open;
+    use crate::host::RECORDS;
+    assert_eq!(protected_at_open(0, &[]), Vec::<Record>::new(), "fresh store");
+    assert_eq!(protected_at_open(0, &[Record::Oath]), RECORDS.to_vec(), "key unconfirmed");
+    assert_eq!(protected_at_open(0, &RECORDS), RECORDS.to_vec());
+    assert_eq!(protected_at_open(1, &[Record::Oath]), vec![Record::Oath], "key confirmed by one record");
+    assert_eq!(protected_at_open(3, &[]), Vec::<Record>::new());
+}

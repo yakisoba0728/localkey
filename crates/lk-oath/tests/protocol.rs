@@ -153,7 +153,7 @@ fn put_rejects_malformed_data_before_writing() {
     for (what, data) in cases {
         assert_eq!(card.put(&data), 0x6A80, "{what}");
     }
-    assert_eq!(card.host.persist_attempts(), 0);
+    assert_eq!(card.writes(), 0);
     assert!(card.list().is_empty());
 }
 
@@ -163,7 +163,7 @@ fn put_rejects_malformed_data_before_writing() {
 fn put_secret_minimum_is_14_wire_bytes() {
     let mut card = Card::new();
     assert_eq!(card.put(&put_data(b"n", TOTP | SHA1, 6, &[0x42; 13], None, None)), 0x6A80);
-    assert_eq!(card.host.persist_attempts(), 0);
+    assert_eq!(card.writes(), 0);
     assert_eq!(card.put(&put_data(b"n", TOTP | SHA1, 6, &[0x42; 14], None, None)), OK);
     // A one-byte secret padded by the client with zeros to 14 bytes computes exactly
     // HMAC with the one-byte key (RFC 2104 §2 zero-pads keys to the block size).
@@ -338,7 +338,7 @@ fn header_and_body_validation() {
     assert_eq!(card.sw(&[0x0C, 0xA1, 0x00, 0x00]), 0x6882);
     assert_eq!(card.sw(&apdu(0x0C, 0x01, 0, 0, &totp(b"sm"))), 0x6882);
     assert_eq!(card.sw(&apdu(0x1C, 0x01, 0, 0, &totp(b"sm"))), 0x6882);
-    assert_eq!(card.host.persist_attempts(), 1);
+    assert_eq!(card.writes(), 1);
     assert_eq!(card.sw(&[0x00, 0xA1, 0x00]), 0x6700);
     assert_eq!(card.sw(&[0x00, 0xA1, 0x00, 0x00, 0x05, 0x01]), 0x6700);
     // The credential survived all of it.
@@ -355,7 +355,7 @@ fn command_chaining_assembles_put() {
     let (first_a, first_b) = first.split_at(4);
     assert_eq!(card.sw(&apdu(0x10, 0x01, 0, 0, first_a)), OK);
     assert_eq!(card.sw(&apdu(0x10, 0x01, 0, 0, first_b)), OK);
-    assert_eq!(card.host.persist_attempts(), 0);
+    assert_eq!(card.writes(), 0);
     assert_eq!(card.sw(&apdu(0x00, 0x01, 0, 0, second)), OK);
     assert_eq!(card.names(), vec![b"chained".to_vec()]);
     // A different command in the middle of a chain is refused and drops the chain.
@@ -687,7 +687,7 @@ fn set_code_boundaries() {
     let mut wrong = proof(&[1; 8]);
     wrong[0] ^= 1;
     assert_eq!(card.sw(&set(&key_field, &[1; 8], &wrong)), 0x6984);
-    assert_eq!(card.host.persist_attempts(), 0);
+    assert_eq!(card.writes(), 0);
     assert_eq!(card.select_fields().len(), 2);
     assert_eq!(card.sw(&set(&key_field, &[1; 8], &proof(&[1; 8]))), OK);
     assert_eq!(card.select_fields().len(), 4);
@@ -900,15 +900,30 @@ fn storage_failures_keep_the_previous_state() {
     assert_eq!(card.code(b"h", &[]), 287_082);
 }
 
-/// `new(stored)` restores everything; unreadable or missing state is factory state and
-/// `new` itself writes nothing (`docs/CONTRACTS.md` "Persisted state").
+/// `new(stored)` restores everything. Missing state is factory state, and `new` stores
+/// it at once so that the device id (YKOATH §SELECT tag `71`, the PBKDF2 salt) is the
+/// same after a restart even before the first mutating command: yubikit and
+/// yubikit-android derive `device_id = base64(SHA-256(salt)[..16])` from it, and ykman
+/// and Yubico Authenticator key remembered passwords by that id (`docs/CONTRACTS.md`
+/// "Constructors may persist"; requirement of the final review). A stored record that
+/// does not decode is factory state too, but opening never overwrites it
+/// (`docs/DESIGN.md` §7: only a commit of an OATH command replaces the record).
 #[test]
 fn restart_and_unreadable_state() {
     let mut card = Card::new();
-    assert_eq!(card.host.persist_attempts(), 0);
+    // Construction stored the factory state: exactly one save, nothing else.
+    assert_eq!(card.host.persist_attempts(), 1);
+    assert_eq!(card.host.persist_count(), 1);
+    assert!(card.host.persisted(Record::Oath).is_some());
     let salt = card.salt();
-    // Factory state is not persisted until the first mutation.
-    assert_eq!(card.host.persisted(Record::Oath), None);
+    // The device id survives restarts without any command that changes state, and a
+    // restart from the stored record writes nothing.
+    for _ in 0..3 {
+        card.restart();
+        assert_eq!(card.salt(), salt);
+        assert!(card.list().is_empty());
+    }
+    assert_eq!(card.host.persist_attempts(), 1);
     assert_eq!(card.put(&totp(b"t")), OK);
     let key = lock(&mut card, b"pw");
     card.restart();
@@ -925,6 +940,25 @@ fn restart_and_unreadable_state() {
         assert_eq!(card.host.persist_attempts(), 0);
         assert_eq!(card.host.persisted(Record::Oath), Some(garbage.to_vec()));
     }
+}
+
+/// The factory save of `Oath::new` may be rejected by the store. The applet still
+/// works from the factory state in memory, and the first commit stores that state,
+/// salt included, so the device id the host already saw is the one a restart finds
+/// (`docs/DESIGN.md` §7: every commit writes the whole state).
+#[test]
+fn rejected_factory_save_is_stored_by_the_first_commit() {
+    let mut host = TestHost::new();
+    host.fail_next_saves(1);
+    let mut card = Card::with_host(host);
+    assert_eq!(card.host.persist_attempts(), 1);
+    assert_eq!(card.host.persisted(Record::Oath), None);
+    let salt = card.salt();
+    assert!(card.list().is_empty());
+    assert_eq!(card.put(&totp(b"t")), OK);
+    card.restart();
+    assert_eq!(card.salt(), salt);
+    assert_eq!(card.names(), vec![b"t".to_vec()]);
 }
 
 // --- review additions -----------------------------------------------------------------
@@ -1131,6 +1165,6 @@ fn send_remaining_in_the_middle_of_a_chain() {
     assert_eq!(card.sw(&apdu(0x10, 0x01, 0, 0, first)), OK);
     assert_eq!(card.send(&SEND_REMAINING), vec![0x68, 0x83]);
     assert_eq!(card.sw(&apdu(0x00, 0x01, 0, 0, second)), 0x6A80);
-    assert_eq!(card.host.persist_attempts(), 0);
+    assert_eq!(card.writes(), 0);
     assert!(card.list().is_empty());
 }

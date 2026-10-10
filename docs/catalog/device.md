@@ -19,7 +19,9 @@ GetInfo against the reference observation), `scenario_ccid` (CCID, every card ap
 SCP03, touch time extensions), `scenario_otp` (OTP HID programming and the button),
 `scenario_mgmt` (Management over all three transports), `scenario_persistence`
 (storage and sealing), `scenario_bus` (reset and power semantics),
-`scenario_determinism`, `scenario_fuzz` (seeded inputs on every interface).
+`scenario_determinism`, `scenario_fuzz` (seeded inputs on every interface),
+`scenario_cross_app` (each application's reset leaves the others' records alone, the
+PIV/OpenPGP/Security Domain/OATH bullets in their own files).
 
 Adversarial review files: `verify_timing` (periodic-message cadence under a late or
 jittery host, deadlines that coincide with inputs, four-way touch races, late replies
@@ -105,13 +107,15 @@ named after it.
 - mode0600 — deferred: program phase (file permissions of the state file).
 - process lock — deferred: program phase (the engine is one value owned by one program).
 - failure rollback — tested: `persistence::failed_save_rolls_back_only_that_command`, `ccid::storage_failure_reaches_the_applet`, `scenario_persistence::store_failure_leaves_state_unchanged`, `verify_persistence::every_failed_save_leaves_memory_and_store_in_agreement`, `verify_persistence::constructor_state_is_saved_once_the_store_recovers`, `tests::constructor_saves_are_protected_or_retried`.
-- restart persistence — tested: `persistence::state_survives_restart`, `persistence::restart_does_not_rewrite_records`, `persistence::one_corrupt_record_gives_factory_state_for_that_application_only`, `persistence::wrong_storage_key_gives_factory_state`, `scenario_persistence::every_application_survives_a_restart`, `scenario_persistence::wrong_storage_key_gives_factory_state_without_destroying_records`.
+- restart persistence — tested: `persistence::state_survives_restart`, `persistence::restart_does_not_rewrite_records`, `persistence::one_corrupt_record_gives_factory_state_for_that_application_only`, `persistence::wrong_storage_key_gives_factory_state`, `persistence::unconfirmed_key_writes_no_identity_for_absent_records`, `persistence::confirmed_key_saves_absent_identities_next_to_a_damaged_record`, `tests::records_protected_at_open`, `scenario_persistence::every_application_survives_a_restart`, `scenario_persistence::wrong_storage_key_gives_factory_state_without_destroying_records`.
 
-Section count: appendix A 55 bullets and storage 6 bullets.
+Section count: appendix A 55 bullets and storage 6 bullets. Over every mapping section of
+this file, `tools/catalog_status.py` counts 98 lines (70 tested, 4 intentional differences,
+24 deferred) plus the 3 appendix A bullets owned by lk-piv, lk-oath and lk-openpgp.
 
 ## FIDO bullets left to lk-device by `docs/catalog/fido.md`
 
-- CTAPHID — tested: `fido::init_reports_profile_version_and_cbor_wink`, `fido::waiting_command_sends_keepalives_and_resolves_on_touch` (KEEPALIVE `STATUS_UPNEEDED` at once and every 100 ms, CTAP 2.1 §11.2.9.1.7), `verify_timing::keepalive_cadence_stays_on_the_grid_with_a_late_host`, `verify_timing::keepalive_cadence_survives_jitter`, `fido::late_tick_sends_one_keepalive`, `fido::presence_timeout_answers_the_command`, `fido::cancel_ends_the_waiting_command`, `fido::ctaphid_message_timeout_is_a_device_deadline`.
+- CTAPHID — tested: `fido::init_reports_profile_version_and_cbor_wink`, `fido::waiting_command_sends_keepalives_and_resolves_on_touch` (KEEPALIVE `STATUS_UPNEEDED` at once and every 100 ms, CTAP 2.1 §11.2.9.1.7), `verify_timing::keepalive_cadence_stays_on_the_grid_with_a_late_host`, `verify_timing::keepalive_cadence_survives_jitter`, `fido::late_tick_sends_one_keepalive`, `fido::presence_timeout_answers_the_command`, `fido::cancel_ends_the_waiting_command`, `fido::ctaphid_message_timeout_is_a_device_deadline`, `scenario_fido::ctaphid_lock_reserves_the_device_until_it_expires` (CTAPHID_LOCK, `ERR_CHANNEL_BUSY` for other channels; lk-ctaphid `tests/lock.rs::locked_out_client_retrying_on_busy_gets_through_when_the_lock_lapses`).
 - CTAPHID final legal sequence 127 completes a maximum 7609-byte PING; … — tested in lk-ctaphid: `tests/framing.rs::maximum_ping_ends_on_sequence_127`, `length_7550_ends_on_sequence_126_with_a_full_packet`, `length_7551_needs_sequence_127_for_one_byte`.
 - Allocated CTAPHID INIT now discards late replies from an aborted same-CID operation. … — tested: `fido::init_resynchronisation_drops_the_late_reply`, `verify_timing::ended_requests_never_answer_late`.
 - CTAPHID WINK rejects nonzero BCNT with ERR_INVALID_LEN … — tested in lk-ctaphid: `tests/commands.rs::wink_with_payload_is_invalid_len_and_the_channel_recovers`; device indication: `fido::wink_pulses_the_indicator`, `verify_timing::wink_pulses_after_a_request_ends_in_the_same_input`.
@@ -128,7 +132,7 @@ Section count: appendix A 55 bullets and storage 6 bullets.
 - OTP "private touch_down/touch_up events return single-slot 1 FAST_TRIG reports at modeled contact, defer two-slot selection to release" — tested: `touch::single_slot_types_at_contact`, `touch::button_windows_select_the_slot_on_release`.
 - OTP "device-shared touch ownership prevents … duplicate OTP reports" — tested: `touch::hid_challenge_response_waits_for_touch` (a touch that satisfies a request never types), `touch::idle_press_without_slots_is_silent` (repeated edges are ignored), `verify_timing::four_pending_requests_get_touches_in_start_order`, `verify_timing::an_expired_request_drops_out_of_the_race`, `verify_timing::touch_at_the_earliest_requests_timeout_goes_to_the_next_one`, `verify_timing::touch_exactly_at_the_otp_hid_timeout_is_a_button_press`.
 - OTP "OTP volatile session rollback and committed device-reboot behavior" — tested (device part): a Management reboot is a power cycle (`management::ccid_write_config_with_reboot`; `Device::restart` calls `CardApplet::reset(PowerCycle)` for the OTP applet).
-- Management "fail-closed behavior when shared backend unavailable" — the device owns one in-process `Management` for CCID, OTP HID and CTAPHID (`touch::otp_hid_reads_device_info_through_the_bridge`, `fido::vendor_commands`, `ccid::select_management`).
+- Management "fail-closed behavior when shared backend unavailable" — tested: the device owns one in-process `Management` for CCID, OTP HID and CTAPHID (`touch::otp_hid_reads_device_info_through_the_bridge`, `fido::vendor_commands`, `ccid::select_management`).
 - Management appendix B `usb_management_reboot_reenumeration` ("deferred: the actual USB re-enumeration on `ConfigEffect::Reboot` is done by `lk-device`") — tested: `management::ccid_write_config_with_reboot`, `management::ctaphid_write_config_with_reboot`, `management::otp_hid_write_config_with_reboot`, `management::rejected_write_does_not_reboot`.
 - Management SET MODE over CTAPHID `0x40` ("left to `lk-device`") — tested: `fido::vendor_commands` (`ERR_INVALID_CMD`, the CTAPHID form of `6D00`).
 - Security Domain "PIV PIN/admin and OATH access revoked" and "malformed plaintext SELECT clears OCE and PIV PIN/admin before validation" (`docs/catalog/sd.md`: "lk-device must clear applet authorizations when a channel ends") — tested: `secure_channel::plaintext_command_is_rejected_and_revokes_piv_pin`; the device calls `CardApplet::deselect` on the selected applet when a channel ends on a rejected or plaintext command.
@@ -169,10 +173,11 @@ Section count: appendix A 55 bullets and storage 6 bullets.
 - No application selected: `6D00`. Unknown or disabled AID: `6A82`, selection unchanged. SELECT matches when the applet AID is a prefix of the DF name (longest match); truncated DF names are not supported. The FIDO AID is not offered on CCID.
 - Application gating: a SELECT of an application whose Management capability is disabled answers `6A82`; capability changes apply at the next enumeration (reboot or power cycle). A change of the enabled interface set re-enumerates at once, with or without `REBOOT`.
 - CTAPHID capabilities: `WINK`, plus `CBOR` while FIDO2 is enabled and `NMSG` while U2F is disabled.
+- CTAPHID_LOCK: while one channel holds a lock, every other channel (broadcast INIT included) gets `ERR_CHANNEL_BUSY` (`06`), not `ERR_LOCK_REQUIRED` (`0A`). CTAP 2.1 §11.2.9.2.2 names no code; §11.2.9.1.6 defines `CHANNEL_BUSY` as "busy for the requesting channel. The client SHOULD retry the request after a short delay" and `LOCK_REQUIRED` as "Command requires channel lock"; §11.2.6 makes the lock a busy state like §11.2.5.1. Chromium (`fido_hid_device.cc`) and python-fido2 (`CtapHidDevice.call`) retry only `CHANNEL_BUSY` (every 100 ms) and fail on any other error; Google OpenSK answers `ChannelBusy` under a lock; libfido2 never sends LOCK and treats every error alike. The reference device was not measured. INIT resynchronisation of the holder keeps its lock.
 - USB serial string only while a configured OTP slot sets `EXTFLAG_SERIAL_USB_VISIBLE`.
 - OTP HID report descriptor: HID 1.11 Appendix E.6 boot keyboard plus an 8-byte vendor-page feature report (no OTP-interface bytes were measured).
 - Configuration descriptor (`UsbIdentity::configuration_descriptor`): interfaces numbered from 0 in the order OTP, FIDO, CCID; FIDO and CCID keep the measured endpoints (`04`/`84`, `02`/`82`/`83`) and bytes in every combination; the OTP interface is a boot keyboard (class `03`, subclass `01`, protocol `01`) with interrupt IN endpoint `81`, 8 bytes, `bInterval` 10; `bmAttributes` `80` and `bMaxPower` `0F` in every combination. Device descriptor string indices: manufacturer 1, product 2, serial 3 (0 while no serial is shown).
-- Storage at open: a constructor save the store rejects (Security Domain, PIV and OpenPGP generate their identity in their constructors) is saved again before every later input until the store takes it; records that exist but cannot be read are never written at open.
+- Storage at open: a constructor save the store rejects (Security Domain, PIV and OpenPGP generate their identity in their constructors) is saved again before every later input until the store takes it; records that exist but cannot be read are never written at open. When no record opens and at least one is unreadable, the storage key is unconfirmed (AES-GCM authenticates the key, so one record that opens proves it right) and no constructor writes anything at open: an identity sealed under a wrong key would be unreadable once the right key is given, and that application could then never save its identity at open again. Those applications keep their factory identity in memory until their own first mutating command persists it. The program should check `Device::unreadable_records` after open: an application's first mutating command replaces an unreadable record (`docs/DESIGN.md` §7), so serving a device opened with a wrong key loses the records it replaces.
 - Resume after suspend ends the card session (card power-off) and sends one `50 03` slot-change; FIDO and OTP state are kept. A bus reset ends a suspend.
 - Under a secure channel the device collects the applet's whole response (following `61xx` with GET RESPONSE, or SEND REMAINING for OATH), wraps it once and splits it into Ne-sized `61xx` pieces itself; plaintext `00 C0` (and `00 A5` with OATH) fetch them. A channel that ends on a rejected or plaintext command drops the selected applet's selection-scoped authorization with `deselect()`.
 
@@ -209,3 +214,62 @@ and warm IccPowerOn refused while a card command waits, the secure channel after
 warnings, errors, an aborted wrapped command and a SELECT of an unknown AID, what a
 reboot resets on each interface, disabled interfaces, keyboard press/release pairs, and
 extra early Ticks. Remaining model questions are listed under "Model policies" above.
+
+## Second review (device:verify-2)
+
+Interop lens: the request shapes of libfido2 (Linux hidraw), python-fido2, Chromium and
+macOS IOHID clients on CTAPHID; pcscd with libccid, GnuPG's internal CCID driver and the
+macOS CCID driver on CCID; and the program that will wrap `Device`.
+
+Findings fixed:
+
+- CTAPHID_LOCK kept other channels out with `ERR_LOCK_REQUIRED`. Chromium treats any
+  error but `CHANNEL_BUSY` as a device error and python-fido2 raises it, so a WebAuthn
+  ceremony that would have succeeded once the lock lapsed (at most 10 s) failed. Now
+  `ERR_CHANNEL_BUSY` (sources under "Model policies"; `lk-ctaphid` `framer.rs`):
+  lk-ctaphid `tests/lock.rs::locked_out_client_retrying_on_busy_gets_through_when_the_lock_lapses`,
+  the lock tests and fuzz oracle of lk-ctaphid, and
+  `scenario_fido::ctaphid_lock_reserves_the_device_until_it_expires`.
+- Opening with a wrong storage key wrote the constructor identities (Security Domain,
+  PIV, OpenPGP) of applications whose record was absent, sealed under the wrong key; with
+  the right key those records were then unreadable and the identities changed at every
+  start. Decision: when no record opens and some are unreadable, nothing is written at
+  open (`apps::protected_at_open`); one record that opens confirms the key, and absent
+  identities are then saved as before. `persistence::unconfirmed_key_writes_no_identity_for_absent_records`,
+  `persistence::confirmed_key_saves_absent_identities_next_to_a_damaged_record`,
+  `tests::records_protected_at_open`.
+- Hardening (`docs/DESIGN.md` §8): the plaintext records loaded at open (every
+  application's keys) and the deferred constructor copies are wiped when they are
+  released, not only when the device is dropped (`host::wipe`).
+- Documentation: the time-extension cadence rationale (`presence.rs`) cited a "3 s read
+  timeout" that libccid does not use for this ATR; `Device::set_unix_time` now says the
+  device never advances the value; stale "change request" notes on lk-ccid
+  `control_abort` and `storage::seal` point at `docs/CONTRACTS.md` "Phase 0 as
+  implemented".
+
+Checked and found correct, against the host sources read for this review: libfido2
+`src/io.c` (it filters other CIDs and KEEPALIVE only before the first packet of a reply,
+and the device never interleaves another channel's report inside a response; every
+CTAPHID_ERROR fails the call) and `src/u2f.c` (`U2F_PACE_MS` 100: U2F requests repeat
+every 100 ms while they answer `6985`, inside the 3 s request window); python-fido2
+`CtapHidDevice.call` and Chromium `FidoHidDevice` (retry on `CHANNEL_BUSY` only); CTAP 2.1
+§11.2.5 (busy and INIT resynchronisation) and §11.2.9.1.5 (CANCEL never answered);
+libccid `ifdhandler.c` (no SetParameters for this descriptor, whose `dwFeatures` has
+automatic parameter negotiation `0x40`; T=1 read timeout `T1_card_timeout`, the card's
+waiting times plus 1000 ms, about 1.5 to 2.5 s for the profile ATR, so the 500 ms
+time-extension cadence keeps reads alive); GnuPG `scd/ccid-driver.c` (GetParameters then
+SetParameters echoing the returned block, or its default block with ATR bytes:
+lk-ccid `tests/messages.rs::gnupg_parameter_exchange_is_accepted`; command parts with
+`wLevelParameter` 1, 3, 2 and response parts fetched with `0010`; a time extension
+re-reads with `bError` times its timeout, 1 here).
+
+Public API beyond `docs/CONTRACTS.md` (which names only `Device::open`, `handle`,
+`next_deadline`): `Device::open_at`, `set_unix_time` (the contract asks for "a way"),
+`usb_identity` with `UsbIdentity` (fields plus `device_descriptor` and
+`configuration_descriptor`), `interfaces`, `profile`, `unreadable_records`,
+`presence_pending`; `Input::CcidControlAbort`; the constants `KEEPALIVE_INTERVAL_MS`,
+`WTX_INTERVAL_MS`, `U2F_REQUEST_WINDOW_MS`, `U2F_LATCH_MS`, `FIDO_REPORT_DESCRIPTOR`,
+`OTP_REPORT_DESCRIPTOR`; the `storage` module (`seal`, `open`, `record_id`,
+`SealError`, `FORMAT_VERSION`, `NONCE_LEN`, `TAG_LEN`, `OVERHEAD`); and the
+constructor-save retry before each input.
+

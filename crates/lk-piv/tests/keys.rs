@@ -413,7 +413,7 @@ fn import_header_and_element_validation() {
     assert_eq!(card.import(0x9A, ED25519, &seed), 0x6982, "needs the management key");
     card.auth_default();
     let before = card.host.persisted(Record::Piv);
-    assert_eq!(card.cmd(0xFE, ED25519, 0x9A, &seed, Some(0)).1, 0x6700, "explicit Le");
+    assert_eq!(card.cmd(0xFE, ED25519, 0x9A, &seed, Some(1)).1, 0x6700, "non-zero Le");
     assert_eq!(card.cmd(0xFE, 0x0A, 0x9A, &seed, None).1, 0x6A86, "unknown algorithm");
     assert_eq!(card.cmd(0xFE, ED25519, 0x9B, &seed, None).1, 0x6A86, "not a key slot");
     for bad in ["0720" , "071F0707070707070707070707070707070707070707070707070707070707070707", "0820 0707070707070707070707070707070707070707070707070707070707070707", "", "AA0101"] {

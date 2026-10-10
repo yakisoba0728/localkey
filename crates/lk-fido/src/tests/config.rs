@@ -291,7 +291,7 @@ fn a_pin_requires_a_token_with_the_acfg_permission() {
 fn a_new_minimum_above_the_pin_length_forces_a_pin_change() {
     // CTAP 2.1 §6.11.4: forceChangePin, or newMinPINLength above the current PIN length,
     // sets forcePINChange (GetInfo 0x0C); then token requests answer
-    // PIN_POLICY_VIOLATION until changePIN (§6.5.5.7 step 10).
+    // PIN_POLICY_VIOLATION until changePIN (§6.5.5.7.2 step 11).
     let (mut auth, mut host) = device();
     set_pin(&mut auth, &mut host, 2, "ab€d");
     let t = token_with(&mut auth, &mut host, "ab€d", perm::ACFG);
@@ -590,4 +590,44 @@ fn reset_clears_the_configuration() {
     assert_eq!(send(&mut auth, &mut host, &[0x07]), vec![status::OK]);
     let pin = persisted_state(&host).pin;
     assert_eq!(pin, crate::state::PinState::default());
+}
+
+#[test]
+fn with_always_uv_and_no_pin_a_presented_token_is_pin_auth_invalid() {
+    // Regression: verification answered CTAP2_ERR_PIN_NOT_SET when no PIN was set. CTAP 2.1
+    // §6.11 step 4 applies when alwaysUv is on even without a PIN (except toggleAlwaysUv,
+    // step 3): no pinUvAuthParam is CTAP2_ERR_PUAT_REQUIRED (step 4.1) and a failed
+    // verify() is CTAP2_ERR_PIN_AUTH_INVALID (step 4.4.1); without a PIN no token is in use,
+    // so verify() fails (§6.5.6).
+    let (mut auth, mut host) = device();
+    assert_eq!(
+        config(&mut auth, &mut host, TOGGLE_ALWAYS_UV, None, None),
+        vec![0]
+    );
+    let forged = Token {
+        protocol: 1,
+        value: vec![0x42; 32],
+    };
+    let params = min_pin(Some(6), None, None);
+    assert_eq!(
+        config(
+            &mut auth,
+            &mut host,
+            SET_MIN_PIN_LENGTH,
+            Some(params.clone()),
+            None
+        ),
+        vec![status::PUAT_REQUIRED]
+    );
+    assert_eq!(
+        config(
+            &mut auth,
+            &mut host,
+            SET_MIN_PIN_LENGTH,
+            Some(params),
+            Some(&forged)
+        ),
+        vec![status::PIN_AUTH_INVALID]
+    );
+    assert_eq!(persisted_state(&host).pin.min_length, 4, "nothing changed");
 }

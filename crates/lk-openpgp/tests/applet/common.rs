@@ -66,10 +66,15 @@ pub mod attr {
     pub const ED25519: &str = "16 2b06010401da470f01";
     pub const X25519: &str = "12 2b060104019755010501";
     pub const P521_ECDSA: &str = "13 2b81040023";
+    pub const P521_ECDH: &str = "12 2b81040023";
     pub const SECP256K1_ECDSA: &str = "13 2b8104000a";
+    pub const SECP256K1_ECDH: &str = "12 2b8104000a";
+    pub const BP256_ECDSA: &str = "13 2b2403030208010107";
     pub const BP256_ECDH: &str = "12 2b2403030208010107";
     pub const BP384_ECDSA: &str = "13 2b240303020801010b";
+    pub const BP384_ECDH: &str = "12 2b240303020801010b";
     pub const BP512_ECDSA: &str = "13 2b240303020801010d";
+    pub const BP512_ECDH: &str = "12 2b240303020801010d";
 }
 
 /// Control reference templates (spec §7.2.14; Yubico attestation `B6 03 84 01 81`).
@@ -394,9 +399,12 @@ impl Card {
     }
 }
 
+/// Which cached factory snapshot fits the host: the compatibility profile announces
+/// Yubico's OpenPGP manufacturer ID `0006` (the snapshot only differs in the issuer's
+/// names, so any other profile can start from the own snapshot).
 fn host_is_yubikey(host: &TestHost) -> bool {
     use lk_core::Host;
-    host.profile().manufacturer == "Yubico"
+    host.profile().openpgp_manufacturer == 0x0006
 }
 
 /// RSA CRT components `(1/q mod p, d mod (p-1), d mod (q-1))` for `e = 65537`, computed

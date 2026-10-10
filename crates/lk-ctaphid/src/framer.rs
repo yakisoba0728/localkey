@@ -11,7 +11,9 @@
 //! 2. Channel: channel 0, an identifier never allocated (or allocated before the last
 //!    USB reset), and the broadcast channel with any command but INIT are answered
 //!    `ERR_INVALID_CHANNEL`.
-//! 3. Lock: while another channel holds a `CTAPHID_LOCK`, `ERR_LOCK_REQUIRED`.
+//! 3. Lock: while another channel holds a `CTAPHID_LOCK`, `ERR_CHANNEL_BUSY`, the
+//!    same answer as a transaction in progress (sources on the lock check in
+//!    `Ctaphid::admit`).
 //! 4. Busy: while a transaction is active on another channel, `ERR_CHANNEL_BUSY`
 //!    (§11.2.5.1). On the transaction's own channel, `CTAPHID_INIT` resynchronises
 //!    (§11.2.5.3). Any other command gets `ERR_CHANNEL_BUSY` while the request is with
@@ -211,8 +213,20 @@ impl Ctaphid {
         if !valid {
             return Err(err::INVALID_CHANNEL);
         }
+        // CTAP 2.1 names no error for a channel kept out by another channel's lock
+        // (§11.2.9.2.2: "any other channel trying to send a message will fail").
+        // `ERR_LOCK_REQUIRED` means "Command requires channel lock" (§11.2.9.1.6), a
+        // command the requester could only run after locking itself, which it cannot
+        // do here. `ERR_CHANNEL_BUSY` ("The device is busy for the requesting channel.
+        // The client SHOULD retry the request after a short delay") is the state the
+        // lock creates (§11.2.6, like §11.2.5.1's busy device), and the lock lapses
+        // within 10 s. Interop: Chromium (`fido_hid_device.cc`) and python-fido2
+        // (`CtapHidDevice.call`) retry `CHANNEL_BUSY` every 100 ms but fail on any other
+        // error; Google OpenSK answers `ChannelBusy` under a lock and never sends
+        // `LockRequired`; libfido2 treats every error the same. The reference device
+        // was not measured.
         if self.lock.is_some_and(|lock| lock.excludes(cid)) {
-            return Err(err::LOCK_REQUIRED);
+            return Err(err::CHANNEL_BUSY);
         }
         match &self.active {
             None => Ok(()),

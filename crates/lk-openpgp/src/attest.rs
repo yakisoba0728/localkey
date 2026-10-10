@@ -19,7 +19,9 @@
 //!   left as it is (catalog: malformed issuers are not repaired);
 //! - serial: 16 bytes of host entropy as a positive INTEGER;
 //! - subject `CN=<product> OPGP Attestation <SIG|DEC|AUT>`;
-//! - signature sha256WithRSAEncryption (PKCS #1 v1.5) or ecdsa-with-SHA256;
+//! - signature sha256WithRSAEncryption (PKCS #1 v1.5) or ecdsa-with-SHA256, whatever the
+//!   issuer's curve (P-256 through P-521, secp256k1, brainpool): the catalog names SHA-256
+//!   for EC issuers, and RFC 5758 §3.2 allows any curve with it;
 //! - non-critical extensions under 1.3.6.1.4.1.41482.5 (Yubico documentation; the
 //!   encodings are a public-document model, catalog "generated leaf extensions ... are
 //!   public-document models"):

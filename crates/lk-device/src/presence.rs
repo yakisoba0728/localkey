@@ -47,10 +47,12 @@ pub const KEEPALIVE_INTERVAL_MS: Millis = 100;
 /// CCID time-extension cadence while a card command waits for a touch: one
 /// `RDR_to_PC_DataBlock` with `bStatus` `80` (USB CCID Rev 1.1 §6.2.6,
 /// `lk_ccid::Ccid::time_extension`) every 500 ms on a grid from the command's arrival
-/// (`start + k * 500 ms`, k ≥ 1; module documentation). Model policy: the reference timing is unmeasured (catalog appendix B
-/// `ccid_extended_chaining_wtx_and_eof`: "reference_timing_unverified"); 500 ms keeps
-/// well inside the 3 s read timeout CCID host drivers commonly use while sending few
-/// messages.
+/// (`start + k * 500 ms`, k ≥ 1; module documentation). Model policy: the reference
+/// timing is unmeasured (catalog appendix B `ccid_extended_chaining_wtx_and_eof`:
+/// "reference_timing_unverified"). 500 ms keeps well inside libccid's T=1 read timeout
+/// for the profile ATR (`ifdhandler.c` `T1_card_timeout`: the card's waiting times from
+/// the ATR plus 1000 ms, about 1.5 to 2.5 s), which every time extension restarts, while
+/// sending few messages.
 pub const WTX_INTERVAL_MS: Millis = 500;
 
 /// How long a U2F request window stays open after the last `6985` reply that asked for

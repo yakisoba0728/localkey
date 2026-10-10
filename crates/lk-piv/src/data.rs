@@ -1,4 +1,4 @@
-//! GET DATA and PUT DATA (SP 800-73-4 Part 2 §3.1.2 and §3.3.2).
+//! GET DATA and PUT DATA (SP 800-73-4 Part 2 §3.1.2 and §3.3.1).
 
 use lk_codec::apdu::{Command, sw};
 use lk_codec::tlv;
@@ -7,7 +7,7 @@ use lk_core::Host;
 use crate::objects::{self, DISCOVERY, ObjectId, TAG_DATA, TAG_TAG_LIST};
 use crate::{Piv, Reply, explicit_le};
 
-/// P1-P2 of GET DATA and PUT DATA (SP 800-73-4 Part 2 §3.1.2, §3.3.2).
+/// P1-P2 of GET DATA and PUT DATA (SP 800-73-4 Part 2 §3.1.2, §3.3.1).
 const P1P2_DATA: (u8, u8) = (0x3F, 0xFF);
 
 /// Parse the leading `5C` tag list of a GET/PUT DATA data field and return the named
@@ -29,9 +29,12 @@ impl Piv {
     ///   (`6A80`). Le may be present or absent.
     /// - `7E` returns the fixed Discovery Object as is; `7F61` (BIT group template) is not
     ///   supported and returns `6A82`.
-    /// - A container returns `53 L value`, or `6A82` when nothing is stored. Containers
-    ///   whose read access rule is PIN (Part 1 Table 3) answer `6982` until the PIN is
-    ///   verified, whether or not they hold data.
+    /// - A container returns `53 L value`, or `6A82` when nothing is stored. A stored
+    ///   container whose read access rule is PIN (Part 1 Table 3) answers `6982` until
+    ///   the PIN is verified. An empty one answers `6A82` with or without the PIN: OpenSC
+    ///   (`card-piv.c`, `CI_LEAKS_FILE_NOT_FOUND`, set for every YubiKey 4 and 5 PIV
+    ///   applet) records that YubiKeys answer "GET DATA of empty object ... 6A 82 even if
+    ///   PIN not verified". Part 2 §3.1.2 lists both status words without an order.
     pub(crate) fn get_data(&self, cmd: &Command) -> Reply {
         if (cmd.p1, cmd.p2) != P1P2_DATA {
             return Err(sw::INCORRECT_P1P2);
@@ -44,22 +47,24 @@ impl Piv {
             ObjectId::Discovery => Ok(DISCOVERY.to_vec()),
             ObjectId::Bitgt => Err(sw::FILE_NOT_FOUND),
             ObjectId::Container(tag) => {
+                let value = self.state.objects.get(tag).ok_or(sw::FILE_NOT_FOUND)?;
                 if objects::read_requires_pin(tag) && !self.session.pin_verified {
                     return Err(sw::SECURITY_STATUS);
                 }
-                let value = self.state.objects.get(tag).ok_or(sw::FILE_NOT_FOUND)?;
                 Ok(tlv::encode(TAG_DATA, value))
             }
         }
     }
 
-    /// PUT DATA (`INS DB`, SP 800-73-4 Part 2 §3.3.2).
+    /// PUT DATA (`INS DB`, SP 800-73-4 Part 2 §3.3.1).
     ///
     /// Checks, in order, each leaving the stored state untouched:
     ///
-    /// 1. P1-P2 `3FFF` (`6A86`); Le absent (`6700`; Part 2 §3.3.2 lists Le as empty;
-    ///    catalog "PIV generate/import/PUT DATA absent-Le guards").
-    /// 2. Card management key authenticated (`6982`; Part 2 §3.3.2 access rule).
+    /// 1. P1-P2 `3FFF` (`6A86`); no non-zero Le (`6700`; Part 2 §3.3.1 lists Le as
+    ///    empty; catalog "PIV generate/import/PUT DATA absent-Le guards", in the device
+    ///    section). Le `00`, which yubico-piv-tool appends on T=1, is accepted
+    ///    (`crate::explicit_le`).
+    /// 2. Card management key authenticated (`6982`; Part 2 §3.3.1 access rule).
     /// 3. Data `5C L tag || 53 L value` with nothing after it (`6A80`). `7E` and `7F61`
     ///    are read-only (`6A80`; profile `readonly_objects`, catalog "read-only object PUT
     ///    rejection with unchanged persistent state").
@@ -70,10 +75,12 @@ impl Piv {
     ///    releasing the old value (`6A84`; catalog "atomic out-of-space
     ///    replacement/deletion and restart accounting").
     ///
-    /// An empty `53` deletes the object. The Printed Information container `5FC109` is
-    /// writable: `reference/piv-printed-source-conflict.md` records conflicting Yubico
-    /// statements, and this model follows the low-level GET/PUT DATA page, which says
-    /// the raw command is accepted. Persist failure: `6581`, state unchanged.
+    /// An empty `53` deletes the object (python yubikit `put_object(object_id, None)` and
+    /// yubico-piv-tool `ykpiv_save_object` with no data delete this way). The Printed
+    /// Information container `5FC109` is writable: `reference/piv-printed-source-conflict.md`
+    /// records conflicting Yubico statements, and this model follows the low-level
+    /// GET/PUT DATA page, which says the raw command is accepted. Persist failure: `6581`,
+    /// state unchanged.
     pub(crate) fn put_data(&mut self, cmd: &Command, host: &mut dyn Host) -> Reply {
         if (cmd.p1, cmd.p2) != P1P2_DATA {
             return Err(sw::INCORRECT_P1P2);

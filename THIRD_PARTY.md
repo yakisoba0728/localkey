@@ -6,7 +6,7 @@ binaries; "build-time only" crates run in the compiler (procedural macros and bu
 scripts) and are not shipped. Distributing binaries requires including the license
 texts of the linked crates, which are permissive (MIT, Apache-2.0, BSD).
 
-Linked: 66. Build-time only: 10.
+Linked: 68. Build-time only: 10.
 
 | Crate | Version | License | Use | Source |
 | --- | --- | --- | --- | --- |
@@ -18,6 +18,8 @@ Linked: 66. Build-time only: 10.
 | base64ct | 1.8.3 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/formats |
 | block-buffer | 0.12.1 | MIT OR Apache-2.0 | linked | https://github.com/RustCrypto/utils |
 | block-padding | 0.4.2 | MIT OR Apache-2.0 | linked | https://github.com/RustCrypto/utils |
+| bp256 | 0.14.0 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/elliptic-curves |
+| bp384 | 0.14.0 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/elliptic-curves |
 | cbc | 0.2.1 | MIT OR Apache-2.0 | linked | https://github.com/RustCrypto/block-modes |
 | cfg-if | 1.0.5 | MIT OR Apache-2.0 | linked | https://github.com/rust-lang/cfg-if |
 | cipher | 0.5.2 | MIT OR Apache-2.0 | linked | https://github.com/RustCrypto/traits |
@@ -43,17 +45,18 @@ Linked: 66. Build-time only: 10.
 | elliptic-curve | 0.14.1 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/traits |
 | ff | 0.14.0 | MIT/Apache-2.0 | linked | https://github.com/zkcrypto/ff |
 | fiat-crypto | 0.3.0 | MIT OR Apache-2.0 OR BSD-1-Clause | linked | https://github.com/mit-plv/fiat-crypto |
-| getrandom | 0.4.3 | MIT OR Apache-2.0 | linked | https://github.com/rust-random/getrandom |
 | ghash | 0.6.0 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/universal-hashes |
 | group | 0.14.0 | MIT/Apache-2.0 | linked | https://github.com/zkcrypto/group |
 | hkdf | 0.13.0 | MIT OR Apache-2.0 | linked | https://github.com/RustCrypto/KDFs/ |
 | hmac | 0.13.0 | MIT OR Apache-2.0 | linked | https://github.com/RustCrypto/MACs |
 | hybrid-array | 0.4.15 | MIT OR Apache-2.0 | linked | https://github.com/RustCrypto/hybrid-array |
 | inout | 0.2.2 | MIT OR Apache-2.0 | linked | https://github.com/RustCrypto/utils |
+| k256 | 0.14.0 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/elliptic-curves |
 | libc | 0.2.190 | MIT OR Apache-2.0 | linked | https://github.com/rust-lang/libc |
 | num-traits | 0.2.19 | MIT OR Apache-2.0 | linked | https://github.com/rust-num/num-traits |
 | p256 | 0.14.0 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/elliptic-curves |
 | p384 | 0.14.0 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/elliptic-curves |
+| p521 | 0.14.0 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/elliptic-curves |
 | pem-rfc7468 | 1.0.0 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/formats |
 | pkcs1 | 0.8.0-rc.5 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/formats |
 | pkcs8 | 0.11.0 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/formats |
@@ -62,7 +65,6 @@ Linked: 66. Build-time only: 10.
 | primeorder | 0.14.0 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/elliptic-curves |
 | proc-macro2 | 1.0.107 | MIT OR Apache-2.0 | build-time only | https://github.com/dtolnay/proc-macro2 |
 | quote | 1.0.47 | MIT OR Apache-2.0 | build-time only | https://github.com/dtolnay/quote |
-| r-efi | 6.0.0 | MIT OR Apache-2.0 OR LGPL-2.1-or-later | linked | https://github.com/r-efi/r-efi |
 | rand_core | 0.10.1 | MIT OR Apache-2.0 | linked | https://github.com/rust-random/rand_core |
 | rfc6979 | 0.6.0 | Apache-2.0 OR MIT | linked | https://github.com/RustCrypto/signatures |
 | rsa | 0.10.0-rc.19 | MIT OR Apache-2.0 | linked | https://github.com/RustCrypto/RSA |

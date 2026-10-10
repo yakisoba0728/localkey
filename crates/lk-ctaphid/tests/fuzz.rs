@@ -171,6 +171,8 @@ struct Partial {
 #[derive(Debug)]
 enum Expect {
     Error(u8),
+    /// Another channel holds the lock: `ERR_CHANNEL_BUSY` (lock check in `src/framer.rs`).
+    LockedOut,
     Started,
     Request(Vec<u8>),
     Ping(Vec<u8>),
@@ -189,6 +191,7 @@ struct Coverage {
     cancels: usize,
     allocations: usize,
     locks: usize,
+    locked_out: usize,
     responses: usize,
     resets: usize,
 }
@@ -381,7 +384,7 @@ impl Harness {
             return Expect::Error(ERR_INVALID_CHANNEL);
         }
         if self.lock.is_some_and(|(holder, _)| holder != cid) {
-            return Expect::Error(ERR_LOCK_REQUIRED);
+            return Expect::LockedOut;
         }
         let active = match (&self.partial, self.outstanding) {
             (Some(partial), _) => Some((partial.cid, true)),
@@ -532,6 +535,15 @@ impl Harness {
                     events,
                     error_events(cid, code),
                     "{ctx}: command {cmd:#x} BCNT {bcnt} on {cid:#x}"
+                );
+            }
+            Expect::LockedOut => {
+                self.coverage.locked_out += 1;
+                self.coverage.error(ERR_CHANNEL_BUSY);
+                assert_eq!(
+                    events,
+                    error_events(cid, ERR_CHANNEL_BUSY),
+                    "{ctx}: command {cmd:#x} on {cid:#x} under another channel's lock"
                 );
             }
             Expect::Started => {
@@ -819,7 +831,6 @@ fn assert_covered(coverage: &Coverage) {
         ERR_INVALID_SEQ,
         ERR_MSG_TIMEOUT,
         ERR_CHANNEL_BUSY,
-        ERR_LOCK_REQUIRED,
         ERR_INVALID_CHANNEL,
     ] {
         assert!(
@@ -834,6 +845,12 @@ fn assert_covered(coverage: &Coverage) {
     assert!(coverage.cancels > 0, "{coverage:?}");
     assert!(coverage.allocations > 5, "{coverage:?}");
     assert!(coverage.locks > 0, "{coverage:?}");
+    assert!(coverage.locked_out > 0, "{coverage:?}");
+    assert_eq!(
+        coverage.count(ERR_LOCK_REQUIRED),
+        0,
+        "no command requires a lock: {coverage:?}"
+    );
     assert!(coverage.responses > 20, "{coverage:?}");
     assert!(coverage.resets > 0, "{coverage:?}");
 }

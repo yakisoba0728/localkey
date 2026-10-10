@@ -316,7 +316,7 @@ fn mutated_authorized_requests_never_panic() {
     let rp_id_hash = sha256(RP.as_bytes());
     for round in 0..12 {
         let mut auth_now = with_state(&mut host, |s| {
-            s.pin.hash = Some(sha256(PIN.as_bytes())[..16].try_into().unwrap());
+            s.pin.hash = Some(SecretBytes::from_slice(&sha256(PIN.as_bytes())[..16]));
             s.pin.code_points = 4;
             s.pin.retries = 8;
             s.pin.force_change = false;

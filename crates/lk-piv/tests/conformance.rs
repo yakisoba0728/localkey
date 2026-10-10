@@ -191,15 +191,18 @@ fn reset_retry_counter_and_the_pin_security_status() {
 }
 
 #[test]
-fn malformed_pin_data_is_refused_without_consuming_a_retry() {
+fn pin_data_of_the_wrong_length_is_refused_without_consuming_a_retry() {
     // SP 800-73-4 Part 2 §3.2.1.1: PIN data that does not satisfy §2.4.3 fails with
-    // 6A80 (security status and retry counter unchanged) or 63CX; footnote 7 recommends
-    // not comparing it. §3.2.2 likewise for the current PIN of CHANGE REFERENCE DATA.
+    // 6A80 (security status and retry counter unchanged) or 63CX. Data that is not
+    // 8 bytes long is 6A80 and spends nothing, for VERIFY and for the `current || new`
+    // pair of CHANGE REFERENCE DATA.
     let mut card = Card::new();
     card.verify_default_pin();
     let base = card.host.persist_count();
-    for bad in ["3132333435FFFFFF", "FFFFFFFFFFFFFFFF", "313233343536FF37", "31FF323334353637"] {
-        assert_eq!(card.verify_pin(&hex(bad)), 0x6A80, "VERIFY {bad}");
+    for bad in ["", "31", "313233343536", "313233343536FF", "313233343536FFFFFF"] {
+        if !bad.is_empty() {
+            assert_eq!(card.verify_pin(&hex(bad)), 0x6A80, "VERIFY {bad}");
+        }
         let mut data = hex(bad);
         data.extend_from_slice(&pad(b"654321"));
         assert_eq!(card.cmd(0x24, 0x00, 0x80, &data, None).1, 0x6A80, "CHANGE {bad}");
@@ -207,10 +210,34 @@ fn malformed_pin_data_is_refused_without_consuming_a_retry() {
     assert_eq!(card.host.persist_count(), base, "nothing consumed");
     assert_eq!(card.pin_status(), 0x9000, "security status unchanged");
     assert_eq!(card.metadata(0x80).0, hex("0101FF 050101 06020303"));
+}
+
+#[test]
+fn eight_bytes_of_pin_data_are_compared_whatever_their_format() {
+    // The 63CX branch of SP 800-73-4 Part 2 §3.2.1.1 and §3.2.2: eight bytes outside the
+    // §2.4.3 format are compared like any wrong PIN. python yubikit's PivSession.reset()
+    // verifies eight FF bytes until the PIN blocks and fails on any status other than
+    // 63CX or 6983 (tests/interop.rs `yubikit_reset_sequence_completes`).
+    let mut card = Card::new();
+    card.verify_default_pin();
+    assert_eq!(card.verify_pin(&hex("FFFFFFFFFFFFFFFF")), 0x63C2, "VERIFY FF*8");
+    assert_eq!(card.pin_status(), 0x63C2, "a failed comparison clears the status");
+    card.verify_default_pin();
+    for (bad, left) in [("3132333435FFFFFF", 0x63C2), ("313233343536FF37", 0x63C1)] {
+        assert_eq!(card.verify_pin(&hex(bad)), left, "VERIFY {bad}");
+    }
+    card.verify_default_pin();
+    // The current PIN of CHANGE REFERENCE DATA is compared the same way.
+    let mut data = hex("31FF323334353637");
+    data.extend_from_slice(&pad(b"654321"));
+    assert_eq!(card.cmd(0x24, 0x00, 0x80, &data, None).1, 0x63C2, "CHANGE");
+    assert_eq!(card.metadata(0x80).0, hex("0101FF 050101 06020302"));
     // The PUK may be any 8-byte value (§2.4.3), so it is compared and counted.
     let mut data = hex("0000000000000000");
     data.extend_from_slice(&pad(b"87654321"));
     assert_eq!(card.cmd(0x24, 0x00, 0x81, &data, None).1, 0x63C2);
+    // The stored PIN never has the malformed shapes, so none of them can verify.
+    assert_eq!(card.verify_pin(&hex(DEFAULT_PIN)), 0x9000);
 }
 
 #[test]
@@ -243,14 +270,17 @@ fn generate_accepts_the_rsa_exponent_parameter() {
 
 #[test]
 fn touch_cache_is_filled_only_by_a_successful_operation() {
-    // Yubico: "Touch is cached for 15s after use". A touched operation that then fails
-    // (an X25519 peer key giving the all-zero secret, RFC 7748 §6.1) does not count.
+    // Yubico: "Touch is cached for 15s after use". An operation that fails does not
+    // count. An X25519 peer key giving the all-zero secret (RFC 7748 §6.1) used to be
+    // refused only after its touch; since the second review it is refused before any
+    // touch request (`x25519_low_order_peer_is_refused_before_pin_and_touch`), and the
+    // case of an operation failing after its touch is covered by the unit test
+    // `asym::tests::a_touched_operation_that_fails_does_not_fill_the_touch_cache`.
     let mut card = Card::new();
     card.auth_default();
     card.generate(0x9A, X25519, Some(PIN_NEVER), Some(TOUCH_ALWAYS));
     let cached = card.generate(0x9E, P256, Some(PIN_NEVER), Some(TOUCH_CACHED));
-    assert!(matches!(card.ga_outcome(0x9A, X25519, 0x85, &[0; 32]), Outcome::NeedTouch { .. }));
-    assert_eq!(card.touch(true).1, 0x6A80);
+    assert_eq!(card.ga_outcome(0x9A, X25519, 0x85, &[0; 32]), Outcome::Done(hex("6A80")));
     assert!(matches!(card.ga_outcome(0x9E, P256, 0x81, &DIGEST), Outcome::NeedTouch { .. }), "not cached");
     let (sig, sw) = card.touch(true);
     assert_eq!(sw, 0x9000);

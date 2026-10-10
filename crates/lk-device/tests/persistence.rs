@@ -164,3 +164,82 @@ fn failed_save_rolls_back_only_that_command() {
     assert_eq!(&list[3..8], b"first");
     assert_eq!(list.len(), 2 + 3 + 5);
 }
+
+/// The records whose application creates its own identity at first start
+/// (docs/CONTRACTS.md "Constructors may persist").
+const IDENTITY_RECORDS: [Record; 3] = [Record::Piv, Record::OpenPgp, Record::SecurityDomain];
+
+/// Second device review, regression: opening with a wrong storage key wrote the
+/// constructor identities of applications whose record was absent (here PIV, OpenPGP and
+/// the Security Domain, as for a store whose identity records were never taken or an
+/// application newer than the store), sealed under the wrong key. Once the program
+/// supplied the right key those records were unreadable, so the identities could never
+/// again be saved at open and changed at every start. Now a key that no record confirms
+/// (none opened, some unreadable) writes nothing at open, and the right key later
+/// creates and keeps the identities (`apps::protected_at_open`).
+#[test]
+fn unconfirmed_key_writes_no_identity_for_absent_records() {
+    let mut rig = Rig::new();
+    rig.power_on();
+    rig.select(AID_OATH);
+    rig.apdu(&oath_put(b"kept", false));
+    for record in IDENTITY_RECORDS {
+        rig.store.remove(record);
+    }
+    let saves = rig.store.save_count();
+    let profile = DeviceProfile::yubikey_5c_nano_5_7_4(SERIAL);
+    let mut wrong = Device::open(profile, Box::new(rig.store.clone()), Box::new(SeededEntropy::new(40)), [0x11; 32]);
+    assert_eq!(wrong.unreadable_records(), &[Record::Oath]);
+    // Inputs retry deferred constructor saves; skipped ones are not deferred.
+    wrong.handle(10, lk_device::Input::Tick);
+    wrong.handle(20, lk_device::Input::Tick);
+    assert_eq!(rig.store.save_count(), saves, "nothing sealed under an unconfirmed key");
+    for record in IDENTITY_RECORDS {
+        assert_eq!(rig.store.get(record), None, "{record:?} still absent");
+    }
+    drop(wrong);
+
+    rig.restart();
+    assert!(rig.dev.unreadable_records().is_empty());
+    for record in IDENTITY_RECORDS {
+        let sealed = rig.store.get(record).unwrap_or_else(|| panic!("{record:?} created under the right key"));
+        assert!(storage::open(&KEY, record, &sealed).is_ok(), "{record:?} sealed under the right key");
+    }
+    rig.power_on();
+    rig.select(AID_OATH);
+    assert_eq!(&rig.apdu(&OATH_LIST)[3..7], b"kept");
+    rig.select(AID_SD);
+    let cplc = rig.apdu(&SD_CPLC);
+    assert_eq!(sw(&cplc), 0x9000);
+    rig.restart();
+    rig.power_on();
+    rig.select(AID_SD);
+    assert_eq!(rig.apdu(&SD_CPLC), cplc, "the identity created then is kept");
+}
+
+/// The mirror case of `unconfirmed_key_writes_no_identity_for_absent_records`: one
+/// record that opens proves the key right (AES-GCM authenticates it), so a damaged
+/// record is protected but the absent identities are created and saved at open, and stay
+/// the same at the next start.
+#[test]
+fn confirmed_key_saves_absent_identities_next_to_a_damaged_record() {
+    let mut rig = Rig::new();
+    rig.power_on();
+    rig.select(AID_OATH);
+    rig.apdu(&oath_put(b"damaged", false));
+    let mut damaged = rig.store.get(Record::Oath).unwrap();
+    let last = damaged.len() - 1;
+    damaged[last] ^= 0x01;
+    rig.store.insert(Record::Oath, &damaged);
+    rig.store.remove(Record::Piv);
+    rig.store.remove(Record::OpenPgp);
+    assert!(rig.store.get(Record::SecurityDomain).is_some(), "a record that opens");
+    rig.restart();
+    assert_eq!(rig.dev.unreadable_records(), &[Record::Oath]);
+    assert_eq!(rig.store.get(Record::Oath), Some(damaged), "the damaged record is not overwritten");
+    let piv = rig.store.get(Record::Piv).expect("PIV identity saved at open");
+    let openpgp = rig.store.get(Record::OpenPgp).expect("OpenPGP identity saved at open");
+    rig.restart();
+    assert_eq!(rig.store.get(Record::Piv), Some(piv), "PIV identity kept");
+    assert_eq!(rig.store.get(Record::OpenPgp), Some(openpgp), "OpenPGP identity kept");
+}

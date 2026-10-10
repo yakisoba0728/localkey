@@ -7,10 +7,20 @@
 //! documentation for the PUK); any byte other than `FF` may appear in it (Yubico: the PIN
 //! "supports any type of alphanumeric characters", relaxing the §2.4.3 digits-only rule).
 //!
-//! PIN data presented to VERIFY or as the current PIN of CHANGE REFERENCE DATA that does
-//! not have this format can never match and is refused with `6A80` without consuming a
-//! retry (§3.2.1.1 and §3.2.2 allow `6A80` or `63CX`; footnotes 7 and 9 recommend not
-//! comparing such data). The current PUK may be any 8 bytes (§2.4.3) and is compared.
+//! A presented current value (the PIN of VERIFY and CHANGE REFERENCE DATA, the PUK of
+//! CHANGE REFERENCE DATA and RESET RETRY COUNTER) must be exactly 8 bytes (`6A80`, nothing
+//! spent), and any 8 bytes are compared, with a retry spent first. SP 800-73-4 Part 2
+//! §3.2.1.1 and §3.2.2 allow `6A80` or `63CX` for PIN data outside the §2.4.3 format;
+//! this model answers `63CX` because python yubikit's `PivSession.reset()` (`ykman piv
+//! reset`) blocks the PIN with `verify_pin("")`, eight `FF` bytes, and fails unless every
+//! answer is `63CX` or `6983`. A stored PIN always has the §2.4.3 format, so such data
+//! never matches.
+//!
+//! Order of the checks for `current || new`: CHANGE REFERENCE DATA checks the new value's
+//! format before comparing (`6A80`, nothing spent). RESET RETRY COUNTER compares the PUK
+//! first, because `reset()` blocks the PUK with `FF*8 || FF*8` and needs `63CX` for it; a
+//! matching PUK with a malformed new PIN is `6A80` and leaves the PIN, the PUK retry
+//! counter (restored to its value before the command) and the security status unchanged.
 //!
 //! Security status (SP 800-73-4 Part 2): a successful VERIFY or CHANGE REFERENCE DATA of
 //! the PIN sets the PIN's security status (§3.2.1.1, §3.2.2); a failed comparison clears
@@ -26,7 +36,7 @@
 
 use lk_codec::apdu::{Command, sw};
 use lk_core::Host;
-use lk_crypto::ct_eq;
+use lk_crypto::{SecretBytes, ct_eq};
 
 use crate::state::{Credential, PivState};
 use crate::{Piv, Reply, explicit_le};
@@ -97,17 +107,20 @@ impl Piv {
     /// persisted first. Mismatch: `63Cx` with the retries left (`63C0` on the attempt that
     /// blocks; SP 800-73-4 Part 2 §3.2.1) and, for the PIN, the verified status is reset.
     /// Match: the counter is restored to its limit and `on_match` is applied in the same
-    /// commit. Storage failure: `6581`.
+    /// commit. If `on_match` refuses the request instead (a matching PUK with a malformed
+    /// new PIN), the counter is put back to its value before the command and that status
+    /// is returned. Storage failure: `6581`.
     pub(crate) fn check_reference(
         &mut self,
         which: CredRef,
         candidate: &[u8],
         host: &mut dyn Host,
-        on_match: impl FnOnce(&mut PivState),
+        on_match: impl FnOnce(&mut PivState) -> Result<(), u16>,
     ) -> Result<(), u16> {
         if self.state.cred(which).blocked() {
             return Err(sw::AUTH_BLOCKED);
         }
+        let before = self.state.cred(which).remaining;
         self.modify(host, |s| {
             let cred = s.cred_mut(which);
             cred.remaining = cred.remaining.saturating_sub(1);
@@ -118,11 +131,16 @@ impl Piv {
             }
             return Err(sw::retries(self.state.cred(which).remaining));
         }
-        self.modify(host, |s| {
-            let cred = s.cred_mut(which);
-            cred.remaining = cred.max;
-            on_match(s);
-        })
+        let mut next = self.state.clone();
+        let cred = next.cred_mut(which);
+        cred.remaining = cred.max;
+        match on_match(&mut next) {
+            Ok(()) => self.commit(host, next),
+            Err(status) => {
+                self.modify(host, |s| s.cred_mut(which).remaining = before)?;
+                Err(status)
+            }
+        }
     }
 
     /// VERIFY (`INS 20`, SP 800-73-4 Part 2 §3.2.1).
@@ -130,12 +148,14 @@ impl Piv {
     /// - P1 `00` with the 8-byte PIN: verify; P1 `00` without data: report the status
     ///   (`9000` if verified, else `63Cx`, or `6983` when blocked); P1 `FF` without data:
     ///   reset the PIN's security status.
-    /// - P1 other than `00`/`FF` is `6A86`; P2 other than `80` is `6A88` (§3.2.1). An
-    ///   explicit Le is `6700` (§3.2.1 lists Le as absent; catalog "VERIFY/CHANGE/RESET
-    ///   RETRY PIN-command P1/P2/Le guards before state changes"); the five-byte T=0 form
-    ///   of the status query is not an explicit Le (`crate::explicit_le`).
-    /// - PIN data that is not 8 bytes in the §2.4.3 format is `6A80` and does not consume
-    ///   a retry (§3.2.1.1, footnote 7).
+    /// - P1 other than `00`/`FF` is `6A86`; P2 other than `80` is `6A88` (§3.2.1). A
+    ///   non-zero Le is `6700` (§3.2.1 lists Le as absent; catalog "VERIFY/CHANGE/RESET
+    ///   RETRY PIN-command P1/P2/Le guards before state changes"); Le `00`, which
+    ///   yubico-piv-tool appends on T=1, and the five-byte T=0 form of the status query are
+    ///   accepted (`crate::explicit_le`).
+    /// - PIN data that is not 8 bytes is `6A80` and does not consume a retry (§3.2.1.1).
+    ///   Any 8 bytes are compared (module documentation: python yubikit verifies eight
+    ///   `FF` bytes to block the PIN and needs `63CX`).
     ///
     /// `armed` is the PIN-always authorization from before this command: the status query
     /// keeps it, a successful verification arms it, anything else clears it.
@@ -165,10 +185,10 @@ impl Piv {
                 Err(sw::retries(self.state.pin.remaining))
             };
         }
-        if !valid_reference(&cmd.data) {
+        if cmd.data.len() != REFERENCE_LEN {
             return Err(sw::INCORRECT_DATA);
         }
-        self.check_reference(CredRef::Pin, &cmd.data, host, |_| {})?;
+        self.check_reference(CredRef::Pin, &cmd.data, host, |_| Ok(()))?;
         self.session.pin_verified = true;
         // Arms one operation with PIN policy "always" (`asym::slot_authenticate`).
         self.session.pin_always = true;
@@ -176,14 +196,15 @@ impl Piv {
     }
 
     /// CHANGE REFERENCE DATA (`INS 24`, SP 800-73-4 Part 2 §3.2.2): P1 `00`, P2 `80`
-    /// (PIN) or `81` (PUK), data = current value (8) || new value (8), Le absent.
+    /// (PIN) or `81` (PUK), data = current value (8) || new value (8), Le absent or `00`.
     ///
-    /// The new value's format, and for the PIN the current value's format, are checked
-    /// before the current value is compared, so a malformed request is `6A80` and never
-    /// consumes a retry (§3.2.2: "If status word '6A 80' is returned, the security status
-    /// and retry counter ... shall remain unchanged"). A wrong current value consumes one
-    /// and clears the PIN's security status; success sets it ("the security status of the
-    /// key reference shall be set to TRUE"). Other key references are `6A88`.
+    /// The length and the new value's format are checked before the current value is
+    /// compared, so a malformed request is `6A80` and never consumes a retry (§3.2.2: "If
+    /// status word '6A 80' is returned, the security status and retry counter ... shall
+    /// remain unchanged"). The current value may be any 8 bytes and is compared (module
+    /// documentation). A wrong current value consumes one retry and clears the PIN's
+    /// security status; success sets it ("the security status of the key reference shall
+    /// be set to TRUE"). Other key references are `6A88`.
     pub(crate) fn change_reference(&mut self, cmd: &Command, host: &mut dyn Host) -> Reply {
         if cmd.p1 != 0x00 {
             return Err(sw::INCORRECT_P1P2);
@@ -194,10 +215,11 @@ impl Piv {
         }
         let which = if cmd.p2 == KEY_PIN { CredRef::Pin } else { CredRef::Puk };
         let (current, new) = split_pair(&cmd.data)?;
-        if which == CredRef::Pin && !valid_reference(current) {
-            return Err(sw::INCORRECT_DATA);
-        }
-        self.check_reference(which, current, host, |s| s.cred_mut(which).value = new)?;
+        let new = new_reference(new)?;
+        self.check_reference(which, current, host, |s| {
+            s.cred_mut(which).value = new;
+            Ok(())
+        })?;
         if which == CredRef::Pin {
             self.session.pin_verified = true;
         }
@@ -205,12 +227,15 @@ impl Piv {
     }
 
     /// RESET RETRY COUNTER (`INS 2C`, SP 800-73-4 Part 2 §3.2.3): P1 `00`, P2 `80`
-    /// (anything else `6A88`), data = PUK (8) || new PIN (8), Le absent. A malformed new
-    /// PIN is `6A80` before the PUK is compared. A correct PUK sets the new PIN, restores
-    /// both retry counters and leaves the PIN's security status unchanged ("The security
-    /// status of the PIN's key reference shall not be changed"); a wrong one consumes a
-    /// PUK retry and clears the PIN's security status (§3.2.3: on '63 CX' "the security
-    /// status of the PIN's key reference shall be set to FALSE").
+    /// (anything else `6A88`), data = PUK (8) || new PIN (8), Le absent or `00`. Data that
+    /// is not 16 bytes is `6A80` and spends nothing. The PUK is compared before the new
+    /// PIN's format is checked (python yubikit blocks the PUK with `FF*8 || FF*8` and
+    /// needs `63CX`; module documentation). A correct PUK with a well-formed new PIN sets
+    /// it, restores both retry counters and leaves the PIN's security status unchanged
+    /// ("The security status of the PIN's key reference shall not be changed"); with a
+    /// malformed new PIN it is `6A80` and nothing changes. A wrong PUK consumes a PUK retry
+    /// and clears the PIN's security status (§3.2.3: on '63 CX' "the security status of
+    /// the PIN's key reference shall be set to FALSE").
     pub(crate) fn reset_retry_counter(&mut self, cmd: &Command, host: &mut dyn Host) -> Reply {
         if cmd.p1 != 0x00 {
             return Err(sw::INCORRECT_P1P2);
@@ -221,8 +246,9 @@ impl Piv {
         }
         let (puk, new_pin) = split_pair(&cmd.data)?;
         self.check_reference(CredRef::Puk, puk, host, |s| {
-            s.pin.value = new_pin;
+            s.pin.value = new_reference(new_pin)?;
             s.pin.remaining = s.pin.max;
+            Ok(())
         })
         .inspect_err(|&status| {
             if is_retry_status(status) {
@@ -233,17 +259,20 @@ impl Piv {
     }
 }
 
-/// Split `current || new` (8 + 8 bytes) and check the new value's format (`6A80`).
-fn split_pair(data: &[u8]) -> Result<(&[u8], [u8; 8]), u16> {
+/// Split `current || new` (8 + 8 bytes; `6A80` otherwise).
+fn split_pair(data: &[u8]) -> Result<(&[u8], &[u8]), u16> {
     if data.len() != 2 * REFERENCE_LEN {
         return Err(sw::INCORRECT_DATA);
     }
-    let (current, new) = data.split_at_checked(REFERENCE_LEN).ok_or(sw::INCORRECT_DATA)?;
+    data.split_at_checked(REFERENCE_LEN).ok_or(sw::INCORRECT_DATA)
+}
+
+/// A new PIN or PUK in the §2.4.3 format (`6A80` otherwise).
+fn new_reference(new: &[u8]) -> Result<SecretBytes, u16> {
     if !valid_reference(new) {
         return Err(sw::INCORRECT_DATA);
     }
-    let new = <[u8; 8]>::try_from(new).map_err(|_| sw::INCORRECT_DATA)?;
-    Ok((current, new))
+    Ok(SecretBytes::from_slice(new))
 }
 
 #[cfg(test)]

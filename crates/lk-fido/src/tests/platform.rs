@@ -52,7 +52,7 @@ pub(super) struct Platform {
 }
 
 impl Platform {
-    /// getKeyAgreement (§6.5.5.3) and `encapsulate()` against the authenticator's key.
+    /// getKeyAgreement (§6.5.5.4) and `encapsulate()` against the authenticator's key.
     pub fn connect(auth: &mut Authenticator, host: &mut TestHost, protocol: u8) -> Self {
         let response = send_untouched(
             auth,
@@ -184,7 +184,7 @@ impl Platform {
             .request()
     }
 
-    /// A getPinToken request (§6.5.5.4).
+    /// A getPinToken request (§6.5.5.7.1).
     pub fn pin_token_request(&mut self, pin: &str) -> Vec<u8> {
         let enc = self.pin_hash_enc(pin);
         client_pin(Some(self.protocol), sub::GET_PIN_TOKEN)
@@ -193,7 +193,7 @@ impl Platform {
             .request()
     }
 
-    /// A getPinUvAuthTokenUsingPinWithPermissions request (§6.5.5.7).
+    /// A getPinUvAuthTokenUsingPinWithPermissions request (§6.5.5.7.2).
     pub fn token_request(&mut self, pin: &str, permissions: u8, rp_id: Option<&str>) -> Vec<u8> {
         let enc = self.pin_hash_enc(pin);
         let mut req = client_pin(Some(self.protocol), sub::GET_TOKEN_WITH_PERMISSIONS)

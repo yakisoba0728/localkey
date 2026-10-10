@@ -161,8 +161,9 @@ impl Piv {
     /// IMPORT ASYMMETRIC KEY (`INS FE`, Yubico extension): P1 the algorithm, P2 the slot,
     /// data the key elements (`keys::SlotKey::import`) plus optional `AA`/`AB` policies.
     ///
-    /// Checks, in order: no explicit Le (`6700`; the command returns no data, catalog "PIV
-    /// generate/import/PUT DATA absent-Le guards"); P1 a known algorithm and P2 a key slot
+    /// Checks, in order: no non-zero Le (`6700`; the command returns no data; catalog "PIV
+    /// generate/import/PUT DATA absent-Le guards"; Le `00` is accepted,
+    /// `crate::explicit_le`); P1 a known algorithm and P2 a key slot
     /// (`6A86`); management key authenticated (`6982`); `F9` takes only the issuer
     /// algorithms, the elements must be well formed, complete and consistent (`6A80`).
     /// The key replaces any key in the slot; persist failure `6581`.
@@ -374,5 +375,33 @@ impl Piv {
         }
         let profile = host.profile().clone();
         attest::attestation_certificate(&self.state, slot, &profile, host)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use lk_testkit::TestHost;
+
+    #[test]
+    fn a_touched_operation_that_fails_does_not_fill_the_touch_cache() {
+        // Yubico: "Touch is cached for 15s after use"; only a completed operation counts
+        // (docs/catalog/piv.md model policy). `check_request` now refuses every request
+        // that `compute` would fail on, so a failure after the touch cannot be produced
+        // with APDUs; here the touched operation finds its slot empty.
+        let mut host = TestHost::new();
+        let mut piv = Piv::new(None, &mut host);
+        let resp = piv.finish_slot_operation(0x9A, Operation::Challenge, &[0x11; 32], 256, true, &mut host);
+        assert_eq!(resp, lk_codec::apdu::status(sw::REF_NOT_FOUND));
+        assert_eq!(piv.touch_cache, None);
+        // A declined touch neither runs the operation nor fills the cache.
+        let resp = piv.finish_slot_operation(0xF9, Operation::Challenge, &[0x11; 32], 256, false, &mut host);
+        assert_eq!(resp, lk_codec::apdu::status(sw::SECURITY_STATUS));
+        assert_eq!(piv.touch_cache, None);
+        // A completed one does (the F9 key exists and signs a digest).
+        host.set_now(5_000);
+        let resp = piv.finish_slot_operation(0xF9, Operation::Challenge, &[0x11; 32], 256, true, &mut host);
+        assert_eq!(resp.get(resp.len() - 2..), Some(&[0x90, 0x00][..]));
+        assert_eq!(piv.touch_cache, Some(5_000));
     }
 }

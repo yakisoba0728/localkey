@@ -36,7 +36,7 @@ fn vectors() -> Vec<Vector> {
 }
 
 fn authenticated(card: &mut Card) -> bool {
-    // PUT DATA needs the management key (SP 800-73-4 Part 2 §3.3.2); deleting an absent
+    // PUT DATA needs the management key (SP 800-73-4 Part 2 §3.3.1); deleting an absent
     // object changes nothing.
     match card.send("00DB3FFF075C035FFF0F5300").1 {
         0x9000 => true,
@@ -246,7 +246,7 @@ fn set_management_key_guards_leave_key_unchanged() {
     card.auth_default();
     assert_eq!(card.cmd(0xFF, 0xFE, 0xFF, &data, None).1, 0x6A86, "P1");
     assert_eq!(card.cmd(0xFF, 0xFF, 0xFD, &data, None).1, 0x6A86, "P2");
-    assert_eq!(card.cmd(0xFF, 0xFF, 0xFF, &data, Some(0)).1, 0x6700, "Le");
+    assert_eq!(card.cmd(0xFF, 0xFF, 0xFF, &data, Some(1)).1, 0x6700, "non-zero Le");
     for bad in [
         "07 9B10 11111111111111111111111111111111",         // unknown algorithm
         "08 9B18 111111111111111111111111111111111111111111111111", // length for AES-192

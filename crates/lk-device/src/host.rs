@@ -89,16 +89,18 @@ impl DeviceHost {
     /// Start constructing the applications at open; [`DeviceHost::end_construction`]
     /// ends it. Two rules apply meanwhile:
     ///
-    /// - Saves of `unreadable` records are skipped: `persist` reports success without
+    /// - Saves of `protected` records are skipped: `persist` reports success without
     ///   touching the store. A record that exists but cannot be read (wrong storage key,
     ///   failing store, modified bytes) gives its application factory state, and a
     ///   constructor that persists its new identity (Security Domain, PIV, OpenPGP;
     ///   `docs/CONTRACTS.md` "Constructors may persist") must not overwrite the unreadable
-    ///   record with it. Opening the device is then never destructive: the program can
-    ///   fix its key or store and reopen without losing state (`docs/DESIGN.md` §7: a
-    ///   record only changes through a commit of its application's own command). The
-    ///   factory identity of such an application lives in memory until its first
-    ///   mutating command saves the whole state.
+    ///   record with it. When the storage key is unconfirmed (no record opened, at least
+    ///   one unreadable) every record is protected, so nothing is sealed under a key that
+    ///   may be wrong (`crate::apps::protected_at_open`). Opening the device is then
+    ///   never destructive: the program can fix its key or store and reopen without
+    ///   losing state (`docs/DESIGN.md` §7: a record only changes through a commit of its
+    ///   application's own command). The factory identity of such an application lives
+    ///   in memory until its first mutating command saves the whole state.
     /// - A constructor save that the store rejects is kept and retried
     ///   ([`DeviceHost::retry_deferred`]). Those constructors ignore the failure ("the
     ///   next successful mutation persists the whole state again", lk-sd) and keep the
@@ -106,8 +108,8 @@ impl DeviceHost {
     ///   (a Security Domain CPLC or certificate, the PIV attestation certificate) and
     ///   find another one after the next open: memory and store would disagree in a way
     ///   the host sees (`docs/DESIGN.md` §7 commit rule).
-    pub(crate) fn begin_construction(&mut self, unreadable: &[Record]) {
-        self.protected = unreadable.to_vec();
+    pub(crate) fn begin_construction(&mut self, protected: &[Record]) {
+        self.protected = protected.to_vec();
         self.constructing = true;
     }
 
@@ -128,10 +130,12 @@ impl DeviceHost {
             return;
         }
         let pending = std::mem::take(&mut self.deferred);
-        for (record, plaintext) in pending {
+        for (record, mut plaintext) in pending {
             let sealed = storage::seal(&self.storage_key, record, &plaintext, self.entropy.as_mut());
             if self.store.save(record, &sealed).is_err() {
                 self.deferred.push((record, plaintext));
+            } else {
+                wipe(&mut plaintext);
             }
         }
     }
@@ -186,7 +190,13 @@ impl Host for DeviceHost {
         let sealed = storage::seal(&self.storage_key, record, plaintext, self.entropy.as_mut());
         let result = self.store.save(record, &sealed);
         if result.is_ok() || self.constructing {
-            self.deferred.retain(|(deferred, _)| *deferred != record);
+            self.deferred.retain_mut(|(deferred, plaintext)| {
+                let superseded = *deferred == record;
+                if superseded {
+                    wipe(plaintext);
+                }
+                !superseded
+            });
         }
         if result.is_err() && self.constructing {
             self.deferred.push((record, plaintext.to_vec()));
@@ -214,8 +224,14 @@ impl Drop for DeviceHost {
         self.storage_key = [0; 32];
         std::hint::black_box(&mut self.storage_key);
         for (_, plaintext) in &mut self.deferred {
-            plaintext.fill(0);
-            std::hint::black_box(plaintext);
+            wipe(plaintext);
         }
     }
+}
+
+/// Best-effort wipe of a plaintext record before its memory is released (`docs/DESIGN.md`
+/// §8: secret buffers are cleared; `zeroize` is only available inside `lk-crypto`).
+pub(crate) fn wipe(bytes: &mut [u8]) {
+    bytes.fill(0);
+    std::hint::black_box(bytes);
 }

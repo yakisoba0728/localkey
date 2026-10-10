@@ -272,7 +272,13 @@ impl SecurityDomain {
     /// AUTHENTICATE, the new channel. Works whichever applet is selected. ISO command
     /// chaining (CLA b5) is reassembled, so a certificate for PERFORM SECURITY OPERATION
     /// may arrive in short pieces as well as in one extended APDU.
+    ///
+    /// A handshake is a command like any other for response chaining: plaintext
+    /// response data still waiting for GET RESPONSE is discarded (ISO/IEC 7816-4
+    /// §7.6.1: GET RESPONSE must immediately follow the command that left the data),
+    /// so a later GET RESPONSE answers `6985`.
     pub fn handshake(&mut self, apdu: &[u8], host: &mut dyn Host) -> (Vec<u8>, Option<SecureChannel>) {
+        self.responses.clear();
         let cmd = match Command::parse(apdu) {
             Ok(cmd) => cmd,
             Err(e) => {

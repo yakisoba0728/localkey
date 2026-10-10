@@ -1,23 +1,113 @@
 # Behaviour catalog status
 
-One line per relevant bullet of `reference/BEHAVIOR_CATALOG.md`:
-`tested: <test name>`, `intentional difference: <why>` or `deferred: <what is missing>`.
-Each application crate owns its section.
+Every relevant bullet of `reference/BEHAVIOR_CATALOG.md` (the behaviour list recorded by
+the legacy v0.64 implementation) is mapped, in the file of the crate that owns it, to one
+label:
 
-## FIDO
+- `tested`: the named tests pass and exercise what the engine can show of the bullet;
+- `intentional difference`: the engine deliberately behaves or verifies differently, and
+  the line says why;
+- `deferred`: something the bullet needs is missing, and the line says what.
 
-## OTP
+"Tested" means tested against the specifications, published vectors and the public bytes
+in `reference/yubikey-5c-nano-5.7.4/`. It does not mean the engine was compared with a
+physical YubiKey: no command-by-command comparison with a real device has been made, and
+every status word or timing that no public source fixes is a model policy recorded in the
+crate's file (`docs/DESIGN.md` §2, §13).
 
-## OATH
+## Summary
 
-## Management
+Counted by `python3 tools/catalog_status.py --write`; `--check` fails when a bullet has no
+label or this table is stale. The rule is the same for every file:
 
-## PIV
+- every `## ` section that maps catalog bullets counts, including "related rows",
+  "appendix B rows" and bullets of other sections a crate took over; note sections
+  (model policies or decisions, review notes, interop notes) do not;
+- each top-level bullet is one line with one label: the first `tested`,
+  `intentional difference` or `deferred` after `—` or `:`;
+- "of which partly deferred or different" counts `tested` lines that name a part still
+  deferred or deliberately different (usually a program-phase transport);
+- "not a ... item" lines in `device.md` (bullets of the device section that another
+  crate owns) are not counted.
 
-## OpenPGP
+<!-- BEGIN tools/catalog_status.py -->
+| Area | Crate | Tested | of which partly deferred or different | Intentional difference | Deferred | Lines | Mapping |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| FIDO2 / U2F | `lk-fido` | 43 | 0 | 2 | 0 | 45 | [catalog/fido.md](catalog/fido.md) |
+| OTP | `lk-otp` | 37 | 0 | 5 | 2 | 44 | [catalog/otp.md](catalog/otp.md) |
+| OATH | `lk-oath` | 22 | 1 | 3 | 0 | 25 | [catalog/oath.md](catalog/oath.md) |
+| Management | `lk-mgmt` | 8 | 1 | 2 | 0 | 10 | [catalog/mgmt.md](catalog/mgmt.md) |
+| PIV | `lk-piv` | 29 | 1 | 3 | 0 | 32 | [catalog/piv.md](catalog/piv.md) |
+| OpenPGP | `lk-openpgp` | 52 | 0 | 3 | 5 | 60 | [catalog/openpgp.md](catalog/openpgp.md) |
+| YubiHSM Auth | `lk-hsmauth` | 17 | 3 | 0 | 0 | 17 | [catalog/hsmauth.md](catalog/hsmauth.md) |
+| Security Domain / SCP03 / SCP11 | `lk-sd` | 96 | 0 | 9 | 15 | 120 | [catalog/sd.md](catalog/sd.md) |
+| Device / transports / storage | `lk-device` | 70 | 2 | 4 | 24 | 98 | [catalog/device.md](catalog/device.md) |
+| **All files** | | **374** | **8** | **31** | **46** | **451** | |
 
-## YubiHSM Auth
+Bullets owned by another crate's file (not counted above): 3. Unlabelled bullets: 0.
+<!-- END tools/catalog_status.py -->
 
-## Security Domain / SCP03 / SCP11
+Reading the totals:
 
-## Device / transports
+- They count mapping lines across files, not distinct catalog bullets. A few bullets
+  appear in two files, once for each crate's part. For example the FIDO CTAPHID bullets
+  are in `fido.md` and in `device.md`, which own the CTAP and the framing and
+  integration parts. Appendix B `usb_management_reboot_reenumeration` is in `mgmt.md` and
+  in `device.md`. The YubiHSM Auth bullet filed under the catalog's FIDO section is in
+  `hsmauth.md` and in `otp.md`, because of its FunctionFS half.
+- Some files quote the totals of their primary section only (`oath.md`, `mgmt.md`,
+  `piv.md`, `device.md`); each now also states the count above.
+- The counts come from the files as they are, not from the reviewers' reports. Some
+  reviewers counted a secondary label inside a `tested` line separately. The YubiHSM
+  Auth review reported 17 / 2 / 1, while its file has 17 `tested` lines, 3 of them
+  partly deferred or different.
+
+## What is deferred
+
+Grouped from the `deferred` lines at the final integration (`python3 tools/catalog_status.py
+--list deferred` gives the current list):
+
+- **brainpoolP512r1** (OpenPGP, 5 lines): no RustCrypto crate exists for the curve, so
+  its 4 algorithm-attribute variants answer `6A81`. The other 39 advertised variants are
+  generated, imported and used.
+- **OTP static-ticket details** (2 lines): the `STRONG_PW1`/`STRONG_PW2` character
+  transforms are stored but not applied, because the public sources do not give the
+  character positions. `MAN_UPDATE` manual regeneration is not implemented.
+- **Security Domain** (15 lines):
+  - GP elements that are not in the available sources: the role policy identifiers, the
+    `BF20` element and the subject-ID extension;
+  - device-level checks not yet written: the OATH access state after a channel ends, an
+    SCP11 PSO followed by PIV commands, and a malformed plaintext SELECT revoking the
+    PIV PIN;
+  - socket and IFD runs, which are program phase.
+- **Device** (24 lines): items that only exist in an OS program, such as UHID,
+  FunctionFS, IOUSBHost, the IFD handler, browsers, kernel power management, file modes
+  and process locks (`docs/DESIGN.md` §13), plus the catalog's "all firmware edge cases
+  and timing" row: every device timing is model policy until measured on hardware.
+
+The intentional differences are mostly the same kind of program-phase or legacy item:
+legacy state migration, legacy release-artifact checks, SDK socket and IFD fixtures, and
+the separate legacy backend process. The rest are behaviour choices, each with its
+source in the crate's file:
+
+- OATH accepts an only-increasing challenge equal to the last one;
+- PIV rejects an explicit Le on GENERAL AUTHENTICATE;
+- the Security Domain deletes a key at zero tries;
+- `Input::FidoReport` is exactly 64 bytes.
+
+## Per-crate mapping
+
+| Area | File | Owner |
+| --- | --- | --- |
+| FIDO2 / U2F (CTAP 2.1, U2F) | [catalog/fido.md](catalog/fido.md) | `lk-fido` |
+| OTP (slots, HID frames, CCID) | [catalog/otp.md](catalog/otp.md) | `lk-otp` |
+| OATH (YKOATH) | [catalog/oath.md](catalog/oath.md) | `lk-oath` |
+| Management | [catalog/mgmt.md](catalog/mgmt.md) | `lk-mgmt` |
+| PIV | [catalog/piv.md](catalog/piv.md) | `lk-piv` |
+| OpenPGP card 3.4 | [catalog/openpgp.md](catalog/openpgp.md) | `lk-openpgp` |
+| YubiHSM Auth | [catalog/hsmauth.md](catalog/hsmauth.md) | `lk-hsmauth` |
+| Security Domain, SCP03, SCP11 | [catalog/sd.md](catalog/sd.md) | `lk-sd` |
+| Device, transports, storage | [catalog/device.md](catalog/device.md) | `lk-device` (with `lk-ctaphid`, `lk-ccid`) |
+
+Each file also records the model policies of its crate (status words, timings and other
+choices no public source fixes) and the findings of its reviews.

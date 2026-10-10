@@ -341,3 +341,123 @@ fn random_stored_records_never_panic() {
         }
     }
 }
+
+/// A well-formed command that changes persistent state when authorized (or spends a
+/// retry), with random parameters, so the persistence checks see many commits.
+fn random_mutation(rng: &mut Rng) -> Vec<u8> {
+    let slot = rng.pick(&[0x9A, 0x9C, 0x9D, 0x9E, 0x82, 0x95, 0xF9]);
+    let other = rng.pick(&[0x9A, 0x9C, 0x9D, 0x9E, 0x82, 0x95, 0xF9, 0xFF]);
+    let pin = rng.pick(&[0x00, 0x01, 0x02, 0x03]);
+    let touch = rng.pick(&[0x00, 0x01, 0x02, 0x03]);
+    let (ins, p1, p2, data) = match rng.below(9) {
+        0 => {
+            let tag = rng.pick(&[0x5FC102u32, 0x5FC105, 0x5FFF01]);
+            let n = rng.below(300);
+            (0xDB, 0x3F, 0xFF, Card::put_payload(tag, &rng.bytes(n)))
+        }
+        1 => (0x47, 0x00, slot, generate_template(rng.pick(&[P256, P384, ED25519, X25519]), Some(pin), Some(touch))),
+        2 => {
+            let mut data = tlv::encode(0x07, &rng.bytes(32));
+            data.extend([0xAA, 0x01, pin, 0xAB, 0x01, touch]);
+            (0xFE, ED25519, slot, data)
+        }
+        3 => (0xF6, other, slot, Vec::new()),
+        4 => {
+            let pin = if rng.below(2) == 0 { hex(DEFAULT_PIN) } else { pad(b"999999") };
+            (0x20, 0x00, 0x80, pin)
+        }
+        5 => {
+            let mut data = if rng.below(2) == 0 { hex(DEFAULT_PIN) } else { pad(b"999999") };
+            data.extend_from_slice(&hex(DEFAULT_PIN));
+            (0x24, 0x00, 0x80, data)
+        }
+        6 => {
+            let mut data = if rng.below(2) == 0 { hex(DEFAULT_PUK) } else { pad(b"99999999") };
+            data.extend_from_slice(&hex(DEFAULT_PIN));
+            (0x2C, 0x00, 0x80, data)
+        }
+        7 => (0xFA, 1 + rng.below(5) as u8, 1 + rng.below(5) as u8, Vec::new()),
+        _ => {
+            let mut data = vec![ALG_AES192];
+            tlv::encode_into(&mut data, 0x9B, &hex(DEFAULT_MGMT_KEY));
+            if rng.below(4) == 0 {
+                (0xFB, 0x00, 0x00, Vec::new())
+            } else {
+                (0xFF, 0xFF, 0xFF, data)
+            }
+        }
+    };
+    apdu(0x00, ins, p1, p2, &data, None)
+}
+
+/// Everything persistent that the card shows without the PIN, read with extended APDUs
+/// (Le `0000`, so each answer comes whole): PIN, PUK and management key metadata, every
+/// key slot's metadata and the always-readable objects the random traffic writes.
+fn observe(piv: &mut Piv, host: &mut TestHost) -> Vec<Vec<u8>> {
+    let read = |piv: &mut Piv, host: &mut TestHost, ins: u8, p1: u8, p2: u8, data: &[u8]| {
+        let mut cmd = Command::new(0x00, ins, p1, p2).with_data(data.to_vec());
+        cmd.le = Some(0);
+        cmd.extended = true;
+        match piv.process(&cmd.to_bytes(), host) {
+            Outcome::Done(resp) => resp,
+            Outcome::NeedTouch { .. } => panic!("a read asked for a touch"),
+        }
+    };
+    // A chain left open by the traffic ends with 6883 on the first command of another
+    // header (docs/CONTRACTS.md "lk-codec::apdu"); this one is not observed.
+    let _ = read(piv, host, 0xFD, 0x00, 0x00, &[]);
+    let mut seen = Vec::new();
+    let references = [0x80u8, 0x81, 0x9B, 0x9A, 0x9C, 0x9D, 0x9E, 0xF9].into_iter().chain(0x82..=0x95);
+    for reference in references {
+        seen.push(read(piv, host, 0xF7, 0x00, reference, &[]));
+    }
+    for tag in [[0x5F, 0xC1, 0x02], [0x5F, 0xC1, 0x05], [0x5F, 0xFF, 0x01]] {
+        seen.push(read(piv, host, 0xCB, 0x3F, 0xFF, &tlv::encode(0x5C, &tag)));
+    }
+    seen
+}
+
+#[test]
+fn memory_always_matches_storage() {
+    // docs/DESIGN.md §7 commit rule and docs/CONTRACTS.md: a change is persisted before
+    // it is answered, and a failed save leaves the previous state in memory. So at every
+    // point the running applet and one rebuilt from the last persisted record must show
+    // the same persistent state, through random traffic with injected save failures.
+    let mut rng = Rng(SeededEntropy::new(0x5049_5633));
+    let mut card = Card::new();
+    let mut refused_saves = 0;
+    for round in 0..6_000u32 {
+        if round % 10 == 0 {
+            // Keep the authorizations up so the mutating paths run (the traffic may have
+            // changed or blocked the credentials; failures are fine).
+            try_default_auth(&mut card, round % 20 == 0);
+            let _ = card.verify_pin(&hex(DEFAULT_PIN));
+        }
+        let injected = rng.below(6) == 0;
+        if injected {
+            card.host.fail_next_saves(1 + rng.below(2));
+        }
+        let bytes = if rng.below(2) == 0 { random_mutation(&mut rng) } else { random_apdu(&mut rng) };
+        let touched = rng.below(2) == 0;
+        let outcome = card.piv.process(&bytes, &mut card.host);
+        let resp = answer(outcome, &mut card.piv, &mut card.host, touched);
+        assert!(resp.len() >= 2);
+        if injected {
+            refused_saves += usize::from(resp.ends_with(&[0x65, 0x81]));
+            // An unused injected failure must not hit the reads below.
+            card.host.fail_next_saves(0);
+        }
+        if injected || round % 20 == 0 {
+            let live = observe(&mut card.piv, &mut card.host);
+            let stored = card.host.persisted(Record::Piv);
+            let mut fresh_host = TestHost::new();
+            let mut reloaded = Piv::new(stored.as_deref(), &mut fresh_host);
+            assert_eq!(fresh_host.persist_count(), 0, "round {round}: the stored record was complete");
+            let from_storage = observe(&mut reloaded, &mut fresh_host);
+            assert_eq!(live, from_storage, "round {round} after {bytes:02X?} -> {resp:02X?}");
+        }
+    }
+    // The traffic changed the record many times and hit commits with failing saves.
+    assert!(card.host.persist_count() > 1_000, "{} saves", card.host.persist_count());
+    assert!(refused_saves > 100, "{refused_saves} refused saves");
+}

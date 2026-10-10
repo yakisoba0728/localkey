@@ -6,7 +6,9 @@
 //! values and removes the resetting code (spec §4.3.2, and Yubico's documented behaviour
 //! of `set_kdf`): with `KDF_NONE` these are `123456` / `12345678`; with
 //! `KDF_ITERSALTED_S2K` they are the initial hashes 87 / 88 when the host supplies them,
-//! otherwise the card derives them itself from the default PINs.
+//! otherwise the card derives them itself from the default PINs. F9 cannot change while
+//! the SIG, DEC or AUT slot holds a key (`6985`; Yubico "YubiKey 5.2.3 Enhancements to
+//! OpenPGP 3.4", Key Derived Format; data.rs).
 //!
 //! Layout of the DO contents (spec §4.3.2 table; GET/PUT DATA F9 carry the contents
 //! without the F9 tag, as GnuPG and YubiKit read them):
@@ -21,10 +23,18 @@
 //! | 86 | 8 | salt for PW3 (optional; PW1's salt is used when absent) |
 //! | 87 | hash | initial PW1 hash (optional) |
 //! | 88 | hash | initial PW3 hash (optional) |
+//!
+//! The count is honoured as written, any non-zero 32-bit value: tag 83 carries the number
+//! of bytes to hash directly (spec §4.3.2), not RFC 4880's one-byte coded count, so values
+//! above the largest coded count (65 011 712) are legal. The derivation streams through
+//! `lk_crypto::Hasher` and holds only a few kilobytes, whatever the count. The cost is
+//! time: the largest count hashes about 4 GiB, seconds in an optimised build, and the
+//! command waits for it. Only the administrator (PW3) can write F9, and a host that sends
+//! both initial hashes is never made to wait (nothing is derived on the card).
 
 use lk_codec::apdu::sw;
 use lk_codec::tlv;
-use lk_crypto::HashAlg;
+use lk_crypto::{HashAlg, Hasher, SecretBytes};
 
 use crate::objects::MAX_SPECIAL_DO;
 use crate::state::{DEFAULT_PW1, DEFAULT_PW3};
@@ -38,12 +48,8 @@ const HASH_SHA256: u8 = 0x08;
 const HASH_SHA512: u8 = 0x0A;
 const SALT_LEN: usize = 8;
 
-/// The largest count the card derives itself: the largest count an RFC 4880 §3.7.1.3
-/// coded count can express, `(16 + 15) << (15 + 6)` = 65 011 712 bytes. lk-crypto only
-/// offers one-shot digests, so the derivation buffers `count` bytes; this bound keeps that
-/// buffer finite. A KDF-DO with a larger count is accepted when it carries both initial
-/// hashes (nothing is derived on the card).
-pub(crate) const MAX_ON_CARD_COUNT: u32 = 65_011_712;
+/// How many bytes of repeated `salt || pin` are hashed per `Hasher::update` call.
+const S2K_CHUNK: usize = 8192;
 
 /// A parsed KDF-DO.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -141,10 +147,8 @@ impl Kdf {
             Kdf::None => Ok((DEFAULT_PW1.to_vec(), DEFAULT_PW3.to_vec())),
             Kdf::IterSaltedS2k(s2k) => {
                 let derive = |pin: &[u8], salt: &[u8]| -> Result<Vec<u8>, u16> {
-                    if s2k.count > MAX_ON_CARD_COUNT {
-                        return Err(sw::INCORRECT_DATA);
-                    }
-                    Ok(iterated_salted_s2k(s2k.hash, salt, pin, s2k.count as usize))
+                    let count = usize::try_from(s2k.count).map_err(|_| sw::INCORRECT_DATA)?;
+                    Ok(iterated_salted_s2k(s2k.hash, salt, pin, count))
                 };
                 let pw1 = match &s2k.initial_pw1 {
                     Some(hash) => hash.clone(),
@@ -165,20 +169,31 @@ impl Kdf {
 /// bytes have been hashed. When `count` is smaller than one `salt || pin` block, the whole
 /// block is hashed once ("the full salt plus passphrase will be hashed even though that is
 /// greater than the octet count"); this is the catalog's low-count rule.
+///
+/// The input is streamed: a buffer of whole `salt || pin` blocks is fed repeatedly and the
+/// tail is a prefix of it (the buffer starts on a block boundary and each full feed is a
+/// whole number of blocks, so the stream stays aligned). The buffers hold the PIN and are
+/// wiped afterwards.
 pub(crate) fn iterated_salted_s2k(hash: HashAlg, salt: &[u8], pin: &[u8], count: usize) -> Vec<u8> {
-    let mut block = Vec::with_capacity(salt.len() + pin.len());
-    block.extend_from_slice(salt);
-    block.extend_from_slice(pin);
-    if block.is_empty() {
+    let block_len = salt.len() + pin.len();
+    if block_len == 0 {
         return lk_crypto::digest(hash, &[]);
     }
-    let total = count.max(block.len());
-    let mut input = Vec::with_capacity(total);
-    while input.len() < total {
-        let take = (total - input.len()).min(block.len());
-        input.extend_from_slice(block.get(..take).unwrap_or(&block));
+    let blocks = (S2K_CHUNK / block_len).max(1);
+    let mut chunk = SecretBytes::zeroed(blocks * block_len);
+    for block in chunk.chunks_exact_mut(block_len) {
+        let (salt_part, pin_part) = block.split_at_mut(salt.len());
+        salt_part.copy_from_slice(salt);
+        pin_part.copy_from_slice(pin);
     }
-    lk_crypto::digest(hash, &input)
+    let mut hasher = Hasher::new(hash);
+    let mut remaining = count.max(block_len);
+    while remaining >= chunk.len() {
+        hasher.update(&chunk);
+        remaining -= chunk.len();
+    }
+    hasher.update(chunk.get(..remaining).unwrap_or_default());
+    hasher.finalize()
 }
 
 #[cfg(test)]
@@ -299,14 +314,78 @@ mod tests {
     }
 
     #[test]
-    fn large_count_needs_initial_hashes() {
-        let mut data = hex("8101038201088304ffffffff");
+    fn counts_above_the_coded_maximum_are_derived_on_the_card() {
+        // Spec §4.3.2 carries the byte count itself, so one more than RFC 4880 §3.7.1.3's
+        // largest coded count (65 011 712) is derived like any other. Expected digests:
+        // Python hashlib over (salt || pin) repeated to exactly 65 011 713 bytes.
+        let mut data = hex("8101038201088304");
+        data.extend_from_slice(&65_011_713u32.to_be_bytes());
         data.extend_from_slice(&tlv::encode(0x84, &SALT));
         let kdf = Kdf::parse(&data).unwrap();
-        assert_eq!(kdf.initial_references(), Err(sw::INCORRECT_DATA));
+        let (pw1, pw3) = kdf.initial_references().unwrap();
+        assert_eq!(pw1, hex("98e240053141b1dc877a8cf265c7632baa74641ce40ae9ee447214d067296a85"));
+        assert_eq!(pw3, hex("26a53ad3619bfe9652f300de56b09fa15ab47a0311a3b25d299eff6ef3f77039"));
+        data[5] = HASH_SHA512;
+        let kdf = Kdf::parse(&data).unwrap();
+        let (pw1, pw3) = kdf.initial_references().unwrap();
+        assert_eq!(
+            pw1,
+            hex(concat!(
+                "6ecf5a071bf81efbca7c348b2396fa059c064fef7cc0d3665a98963a6bed71a2",
+                "a4e44ca16768ebcd57e93051592000bc1df991d53ab1937edbbf3de38c80821e"
+            ))
+        );
+        assert_eq!(
+            pw3,
+            hex(concat!(
+                "0df0f967d4df70867df6654b5a9a6f4cd7b087558c1cffbfc137be74807307124",
+                "da64ff97ae3d0fba69350c4c09d0b3096ed7ec4d8e33235f7a4455a1720afb8"
+            ))
+        );
+    }
+
+    #[test]
+    fn initial_hashes_avoid_any_derivation() {
+        // The largest count with both initial hashes: accepted, nothing is hashed.
+        let mut data = hex("8101038201088304ffffffff");
+        data.extend_from_slice(&tlv::encode(0x84, &SALT));
         data.extend_from_slice(&tlv::encode(0x87, &[0x11; 32]));
         data.extend_from_slice(&tlv::encode(0x88, &[0x22; 32]));
         let kdf = Kdf::parse(&data).unwrap();
         assert_eq!(kdf.initial_references(), Ok((vec![0x11; 32], vec![0x22; 32])));
+    }
+
+    #[test]
+    fn streaming_matches_a_buffered_derivation_at_every_alignment() {
+        // Counts around the 8192-byte feed size and block multiples, odd block lengths
+        // (salt 8 + PIN 1..=9), and a block longer than the feed buffer: compared with a
+        // test-side buffered implementation of RFC 4880 §3.7.1.3.
+        fn buffered(hash: HashAlg, salt: &[u8], pin: &[u8], count: usize) -> Vec<u8> {
+            let block = [salt, pin].concat();
+            let total = count.max(block.len());
+            let input: Vec<u8> = block.iter().copied().cycle().take(total).collect();
+            lk_crypto::digest(hash, &input)
+        }
+        for hash in [HashAlg::Sha256, HashAlg::Sha512] {
+            for pin_len in 1..=9 {
+                let pin: Vec<u8> = (0..pin_len).map(|i| b'1' + i as u8).collect();
+                for count in [1, 9, 16, 17, 8191, 8192, 8193, 8196, 16_384, 16_385, 20_000] {
+                    assert_eq!(
+                        iterated_salted_s2k(hash, &SALT, &pin, count),
+                        buffered(hash, &SALT, &pin, count),
+                        "{hash:?} pin {pin_len} count {count}"
+                    );
+                }
+            }
+            let long_pin = vec![b'7'; 9000];
+            for count in [1, 9008, 9009, 18_016, 30_000] {
+                assert_eq!(
+                    iterated_salted_s2k(hash, &SALT, &long_pin, count),
+                    buffered(hash, &SALT, &long_pin, count),
+                    "{hash:?} long pin count {count}"
+                );
+            }
+            assert_eq!(iterated_salted_s2k(hash, &[], &[], 100), lk_crypto::digest(hash, &[]));
+        }
     }
 }

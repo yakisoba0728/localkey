@@ -4,7 +4,7 @@
 //! # PIN attempt ordering
 //!
 //! changePIN, getPinToken and getPinUvAuthTokenUsingPinWithPermissions check, in order
-//! (§6.5.5.6, §6.5.5.4, §6.5.5.7, with the orderings `reference/BEHAVIOR_CATALOG.md` FIDO
+//! (§6.5.5.6, §6.5.5.7.1, §6.5.5.7.2, with the orderings `reference/BEHAVIOR_CATALOG.md` FIDO
 //! decided):
 //!
 //! 1. mandatory parameters (`CTAP2_ERR_MISSING_PARAMETER`), then pinUvAuthProtocol
@@ -21,7 +21,7 @@
 //!    malformed proof also costs a retry ("Malformed encrypted PIN proofs now decrement
 //!    durable retries before decryption and participate in the three-attempt soft block");
 //! 7. a decryption error, a plaintext that is not 16 bytes, or a hash mismatch is a
-//!    mismatch: the key-agreement keys are regenerated and the answer is
+//!    mismatch: the request protocol's key-agreement key is regenerated and the answer is
 //!    `CTAP2_ERR_PIN_BLOCKED` at zero retries, `CTAP2_ERR_PIN_AUTH_BLOCKED` on the third
 //!    consecutive mismatch, else `CTAP2_ERR_PIN_INVALID`;
 //! 8. on a match pinRetries returns to 8, and only then does forcePINChange apply:
@@ -34,18 +34,37 @@
 //!
 //! Each protocol has its own key-agreement key, created on first use after power-up (which
 //! is indistinguishable from creating it at power-up, §6.5.6 `initialize()`) and dropped on
-//! power cycle, on every PIN mismatch ("regenerates its keyAgreement key") and on
-//! authenticatorReset. Issuing a token does not regenerate it; §6.5.5 does not ask for that.
+//! power cycle, on authenticatorReset and, for the protocol of the request only, on every
+//! PIN mismatch ("Calls regenerate for the selected pinUvAuthProtocol", §6.5.5.6 step 7,
+//! §6.5.5.7.1, §6.5.5.7.2 step 9). Issuing a token does not regenerate it; §6.5.5 does not
+//! ask for that.
 //!
 //! One pinUvAuthToken is in use at a time: issuing a new one replaces it
 //! (`resetPinUvAuthToken()` for all protocols), changePIN, power cycle and reset discard it.
 //! It is only valid under the protocol it was issued with.
+//!
+//! # The userPresent flag
+//!
+//! A token carries no userPresent state because here it is always false: both issuing
+//! subcommands call `beginUsingPinUvAuthToken(userIsPresent: false)` (§6.5.5.7.1 getPinToken,
+//! §6.5.5.7.2 getPinUvAuthTokenUsingPinWithPermissions), and only
+//! getPinUvAuthTokenUsingUvWithPermissions (§6.5.5.7.3), which needs built-in user
+//! verification this authenticator lacks, can pass true. `getUserPresentFlagValue()`
+//! (§6.5.3.2) is therefore false for every token, so makeCredential and getAssertion with a
+//! pinUvAuthParam request a touch whenever "up" is true (§6.1.2 step 14.1.1, §6.2.2 step
+//! 9.1.1) and before answering `CTAP2_ERR_CREDENTIAL_EXCLUDED` (§6.1.2 step 12.1.4); a token
+//! never stands in for a touch. `clearUserPresentFlag()` is consequently a no-op and only
+//! the userVerified flag and the permissions are cleared after presence
+//! (`Authenticator::consume_token_after_presence`).
+//!
+//! The token value, like the shared secrets and decrypted PIN material, is held in
+//! [`SecretBytes`] and wiped when dropped.
 
 use lk_codec::cbor::{MapBuilder, Value};
 use lk_core::{Host, Millis};
-use lk_crypto::{ct_eq, sha256};
+use lk_crypto::{SecretBytes, ct_eq, sha256};
 
-use crate::pin_protocol::{KeyAgreement, PinProtocol};
+use crate::pin_protocol::{KeyAgreement, PinProtocol, secret_from};
 use crate::request::{CtapResult, Params, bytes, map, required, text, unsigned};
 use crate::state::{DEFAULT_PIN_RETRIES, State};
 use crate::{Authenticator, ok, status};
@@ -89,9 +108,9 @@ pub(crate) const INITIAL_USAGE_TIME_LIMIT_MS: Millis = 30_000;
 /// "max usage time period": no token is usable longer than this after issuance
 /// (§6.5.2.1; the 10-minute default).
 pub(crate) const MAX_USAGE_TIME_PERIOD_MS: Millis = 600_000;
-/// Consecutive mismatches after which a power cycle is needed (§6.5.5.4 step 7:
-/// "If the authenticator sees 3 consecutive mismatches, it returns
-/// CTAP2_ERR_PIN_AUTH_BLOCKED").
+/// Consecutive mismatches after which a power cycle is needed (§6.5.5.6 step 7,
+/// §6.5.5.7.1, §6.5.5.7.2 step 9: "If the authenticator sees 3 consecutive mismatches, it
+/// returns CTAP2_ERR_PIN_AUTH_BLOCKED").
 const MAX_CONSECUTIVE_MISMATCHES: u8 = 3;
 /// `paddedNewPin` is exactly 64 bytes (§6.5.5.5 step 7).
 const PADDED_PIN_LEN: usize = 64;
@@ -102,7 +121,8 @@ const TOKEN_LEN: usize = 32;
 
 /// The pinUvAuthToken and its state (§6.5.2.1).
 pub(crate) struct PinToken {
-    value: [u8; TOKEN_LEN],
+    /// The token itself (§6.5.6 / §6.5.7 `resetPinUvAuthToken()`), wiped when dropped.
+    value: SecretBytes,
     protocol: PinProtocol,
     /// Permissions bit field (§6.5.5.7).
     pub permissions: u8,
@@ -112,9 +132,10 @@ pub(crate) struct PinToken {
     /// Whether the token was used since issuance (initial usage time limit).
     used: bool,
     /// The "user verified" flag: set at issuance, cleared by a makeCredential or
-    /// getAssertion that collected user presence (§6.1.2 step 14, §6.2.2 step 9).
+    /// getAssertion that collected user presence (§6.1.2 step 14, §6.2.2 step 9). There is
+    /// no userPresent flag: it would always be false (module documentation).
     pub user_verified: bool,
-    /// Issued by the superseded getPinToken (§6.5.5.4), whose token the FIDO_2_1_PRE
+    /// Issued by the superseded getPinToken (§6.5.5.7.1), whose token the FIDO_2_1_PRE
     /// credentialManagement command 0x41 accepts (cred_mgmt model policy). Like the
     /// permissions it stands in for, this is cleared when user presence consumes the
     /// token (§6.1.2 step 14.4, §6.2.2 step 9), so a consumed token gains nothing on 0x41.
@@ -164,9 +185,9 @@ impl PinSession {
         }
     }
 
-    fn drop_key_agreements(&mut self) {
-        self.key_agreement_v1 = None;
-        self.key_agreement_v2 = None;
+    /// `regenerate()` for `protocol` (§6.5.6): the next use creates a fresh key.
+    fn regenerate(&mut self, protocol: PinProtocol) {
+        *self.slot(protocol) = None;
     }
 
     /// The serial of the in-use pinUvAuthToken, recorded by a state initializing command
@@ -230,12 +251,10 @@ pub(crate) fn supported_protocol(value: u64) -> CtapResult<PinProtocol> {
     PinProtocol::from_u64(value).ok_or(status::INVALID_PARAMETER)
 }
 
-/// `LEFT(SHA-256(pin), 16)` (§6.5.5.5 step 11).
-fn pin_hash(pin: &[u8]) -> [u8; 16] {
-    let digest = sha256(pin);
-    let mut out = [0u8; 16];
-    out.copy_from_slice(&digest[..16]);
-    out
+/// `LEFT(SHA-256(pin), 16)`, the CurrentStoredPIN (§6.5.5.5 step 12).
+fn pin_hash(pin: &[u8]) -> SecretBytes {
+    let digest = secret_from(sha256(pin));
+    SecretBytes::from_slice(digest.get(..16).unwrap_or_default())
 }
 
 impl Authenticator {
@@ -262,7 +281,7 @@ impl Authenticator {
                 self.get_pin_uv_auth_token_using_pin(&req, host)
             }
             // No built-in user verification: GetInfo has no "uv" option, so the UV
-            // subcommands are not supported (§6.5.5.8, §6.5.5.3).
+            // subcommands are not supported (§6.5.5.7.3, §6.5.5.3).
             subcommand::GET_PIN_UV_AUTH_TOKEN_USING_UV_WITH_PERMISSIONS
             | subcommand::GET_UV_RETRIES => Err(status::INVALID_SUBCOMMAND),
             _ => Err(status::INVALID_SUBCOMMAND),
@@ -291,7 +310,7 @@ impl Authenticator {
         protocol: PinProtocol,
         peer: &[(Value, Value)],
         host: &mut dyn Host,
-    ) -> CtapResult<Vec<u8>> {
+    ) -> CtapResult<SecretBytes> {
         self.key_agreement(protocol, host)
             .decapsulate(protocol, peer)
     }
@@ -306,7 +325,7 @@ impl Authenticator {
         protocol: PinProtocol,
         shared: &[u8],
         new_pin_enc: &[u8],
-    ) -> CtapResult<([u8; 16], u8)> {
+    ) -> CtapResult<(SecretBytes, u8)> {
         let padded = protocol
             .decrypt(shared, new_pin_enc)
             .ok_or(status::PIN_AUTH_INVALID)?;
@@ -390,7 +409,7 @@ impl Authenticator {
             _ => false,
         };
         if !matches {
-            self.pin.drop_key_agreements();
+            self.pin.regenerate(protocol);
             self.pin.consecutive_mismatches = self.pin.consecutive_mismatches.saturating_add(1);
             return Err(if self.state.pin.retries == 0 {
                 status::PIN_BLOCKED
@@ -443,7 +462,13 @@ impl Authenticator {
                 return Err(code);
             }
         };
-        if next.pin.force_change && next.pin.hash.is_some_and(|stored| ct_eq(&stored, &hash)) {
+        if next.pin.force_change
+            && next
+                .pin
+                .hash
+                .as_ref()
+                .is_some_and(|stored| ct_eq(stored, &hash))
+        {
             self.commit_if_changed(next, host)?;
             return Err(status::PIN_POLICY_VIOLATION);
         }
@@ -455,7 +480,7 @@ impl Authenticator {
         Ok(vec![status::OK])
     }
 
-    /// getPinToken (§6.5.5.4, superseded). The token has the default permissions mc and
+    /// getPinToken (§6.5.5.7.1, superseded). The token has the default permissions mc and
     /// ga; `permissions` or `rpId` in the request are `CTAP1_ERR_INVALID_PARAMETER`.
     fn get_pin_token(&mut self, req: &Request, host: &mut dyn Host) -> CtapResult<Vec<u8>> {
         let (Some(protocol), Some(peer), Some(pin_hash_enc)) =
@@ -484,7 +509,7 @@ impl Authenticator {
         )
     }
 
-    /// getPinUvAuthTokenUsingPinWithPermissions (§6.5.5.7). `rpId` is optional; without
+    /// getPinUvAuthTokenUsingPinWithPermissions (§6.5.5.7.2). `rpId` is optional; without
     /// it the token binds to the first RP it is used with for mc/ga (§6.1.2 step 11.5).
     fn get_pin_uv_auth_token_using_pin(
         &mut self,
@@ -532,7 +557,7 @@ impl Authenticator {
     }
 
     /// `resetPinUvAuthToken()` and `beginUsingPinUvAuthToken(userIsPresent: false)`, then
-    /// `{2: encrypt(shared secret, pinUvAuthToken)}` (§6.5.5.7 steps 10-13).
+    /// `{2: encrypt(shared secret, pinUvAuthToken)}` (§6.5.5.7.2 steps 12-16).
     fn issue_token(
         &mut self,
         protocol: PinProtocol,
@@ -542,7 +567,7 @@ impl Authenticator {
         legacy: bool,
         host: &mut dyn Host,
     ) -> CtapResult<Vec<u8>> {
-        let mut value = [0u8; TOKEN_LEN];
+        let mut value = SecretBytes::zeroed(TOKEN_LEN);
         host.fill(&mut value);
         let encrypted = protocol.encrypt(shared, &value, host)?;
         self.pin.issued = self.pin.issued.wrapping_add(1);
@@ -561,14 +586,13 @@ impl Authenticator {
     }
 
     /// Verify `pinUvAuthParam` over `message` with the in-use pinUvAuthToken (`verify()`,
-    /// §6.5.6 / §6.5.7) and return it. Without a PIN no token can exist:
-    /// `CTAP2_ERR_PIN_NOT_SET` (model policy: §6.1.2 step 11 / §6.2.2 step 6 run only on an
-    /// authenticator protected by user verification and give no status for a non-empty
-    /// pinUvAuthParam without a PIN, nor does CTAP 2.0 §5.1 / §5.2; answering an error
-    /// fails closed instead of silently dropping the requested UV, and PIN_NOT_SET is the
-    /// status §6.1.2 step 1.3 gives the zero-length probe in the same state). A token past its
-    /// usage limits is discarded first (`stopUsingPinUvAuthToken()`, §6.5.2.1). A missing
-    /// token, another protocol or a wrong signature is `CTAP2_ERR_PIN_AUTH_INVALID`.
+    /// §6.5.6 / §6.5.7) and return it. A token past its usage limits is discarded first
+    /// (`stopUsingPinUvAuthToken()`, §6.5.2.1). No token in use (always the case without a
+    /// PIN: "If the key parameter value is the current pinUvAuthToken and it is not in use,
+    /// then return error", §6.5.6 `verify()` step 1), another protocol or a wrong signature
+    /// is `CTAP2_ERR_PIN_AUTH_INVALID`, the status credentialManagement (§6.8.2 to §6.8.6),
+    /// largeBlobs (§6.10.2 step 5.4.1) and authenticatorConfig (§6.11 step 4.4.1) give for a
+    /// failed verification.
     pub(crate) fn verified_token(
         &mut self,
         protocol: PinProtocol,
@@ -576,9 +600,6 @@ impl Authenticator {
         param: &[u8],
         now: Millis,
     ) -> CtapResult<&mut PinToken> {
-        if !self.state.pin_is_set() {
-            return Err(status::PIN_NOT_SET);
-        }
         if self.pin.token.as_ref().is_some_and(|t| !t.live(now)) {
             self.pin.token = None;
         }
@@ -594,6 +615,14 @@ impl Authenticator {
     /// §6.2.2 step 6): signature over clientDataHash, the `mc` / `ga` permission, the
     /// permissions RP ID (bound now if unbound) and the user verified flag; each failure
     /// is `CTAP2_ERR_PIN_AUTH_INVALID`. Returns the UV flag value (true).
+    ///
+    /// Without a PIN the answer is `CTAP2_ERR_PIN_NOT_SET` (model policy: these steps run
+    /// only on an authenticator "protected by some form of user verification" and give no
+    /// status for a non-empty pinUvAuthParam without a PIN, nor does CTAP 2.0 §5.1 / §5.2;
+    /// answering an error fails closed instead of silently dropping the requested UV, and
+    /// PIN_NOT_SET is the status §6.1.2 step 1.3 gives the zero-length probe in the same
+    /// state). Commands whose steps name a status for a failed verification use
+    /// [`Authenticator::verified_token`] directly.
     pub(crate) fn verify_for_rp(
         &mut self,
         protocol: Option<u64>,
@@ -604,6 +633,9 @@ impl Authenticator {
         now: Millis,
     ) -> CtapResult<bool> {
         let protocol = supported_protocol(required(protocol)?)?;
+        if !self.state.pin_is_set() {
+            return Err(status::PIN_NOT_SET);
+        }
         let token = self.verified_token(protocol, client_data_hash, param, now)?;
         if token.permissions & needed == 0
             || token.rp_id.as_deref().is_some_and(|bound| bound != rp_id)

@@ -5,7 +5,8 @@ use lk_core::Millis;
 /// A channel's exclusive claim on the device until `until`.
 ///
 /// While it holds, every other channel (the broadcast channel included) is answered
-/// `ERR_LOCK_REQUIRED`. `CTAPHID_CANCEL` is never answered, so it is unaffected.
+/// `ERR_CHANNEL_BUSY` (the reasons are on the check in `framer.rs`). `CTAPHID_CANCEL`
+/// is never answered, so it is unaffected.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) struct ChannelLock {
     cid: u32,

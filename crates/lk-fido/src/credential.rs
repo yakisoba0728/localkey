@@ -30,13 +30,17 @@
 //! - Non-discoverable registration therefore stores nothing on the device
 //!   (`reference/BEHAVIOR_CATALOG.md` FIDO: "initialized store remains constant across
 //!   ... nonresident registrations").
+//! - The wrapping key, the plaintext payload (it holds the private key), credRandom and
+//!   the derived hmac-secret keys are held in [`SecretBytes`] and wiped when dropped.
 
 use lk_codec::cbor::{MapBuilder, Value};
 use lk_core::Entropy;
 use lk_crypto::{
-    Curve, EcPrivateKey, Ed25519Key, HashAlg, aes_gcm_open, aes_gcm_seal, hkdf_sha256, hmac_sha256,
+    Curve, EcPrivateKey, Ed25519Key, HashAlg, SecretBytes, aes_gcm_open, aes_gcm_seal, hkdf_sha256,
+    hmac_sha256,
 };
 
+use crate::pin_protocol::secret_from;
 use crate::request::CtapResult;
 use crate::status;
 
@@ -113,8 +117,8 @@ pub(crate) struct CredSecret {
     pub discoverable: bool,
     /// Whether the credential was created with `"hmac-secret": true` (CTAP 2.1 §12.5).
     pub hmac_secret: bool,
-    /// Seed for the hmac-secret CredRandom values (CTAP 2.1 §12.5).
-    cred_random: [u8; RANDOM_LEN],
+    /// Seed for the hmac-secret CredRandom values (CTAP 2.1 §12.5), 32 bytes.
+    cred_random: SecretBytes,
 }
 
 impl core::fmt::Debug for CredSecret {
@@ -141,7 +145,7 @@ impl CredSecret {
             Alg::Es384 => Key::Ec(EcPrivateKey::generate(Curve::P384, entropy)),
             Alg::EdDsa => Key::Ed(Ed25519Key::generate(entropy)),
         };
-        let mut cred_random = [0; RANDOM_LEN];
+        let mut cred_random = SecretBytes::zeroed(RANDOM_LEN);
         entropy.fill(&mut cred_random);
         Self {
             alg,
@@ -160,13 +164,13 @@ impl CredSecret {
     /// CredRandomWithUV or CredRandomWithoutUV (CTAP 2.1 §12.5): two independent 32-byte
     /// values derived from the credential's credRandom with HMAC-SHA-256 under distinct
     /// labels, so the output with UV never equals the output without it.
-    pub(crate) fn hmac_secret_key(&self, uv: bool) -> [u8; 32] {
+    pub(crate) fn hmac_secret_key(&self, uv: bool) -> SecretBytes {
         let label = if uv {
             CRED_RANDOM_WITH_UV
         } else {
             CRED_RANDOM_WITHOUT_UV
         };
-        hmac_sha256(&self.cred_random, label)
+        secret_from(hmac_sha256(&self.cred_random, label))
     }
 
     /// The credential public key as a COSE_Key (RFC 9052 §7, RFC 9053 §7; CTAP 2.1 §6.1
@@ -232,11 +236,11 @@ impl CredSecret {
     /// Seal into a credential ID bound to `rp_id_hash` (see the module documentation).
     pub(crate) fn wrap(
         &self,
-        secret: &[u8; 32],
+        secret: &[u8],
         rp_id_hash: &[u8; 32],
         entropy: &mut dyn Entropy,
     ) -> CtapResult<Vec<u8>> {
-        let mut payload = [0u8; PAYLOAD_LEN];
+        let mut payload = SecretBytes::zeroed(PAYLOAD_LEN);
         payload[0] = self.alg.code();
         payload[1] = self.cred_protect;
         payload[2] = (if self.discoverable {
@@ -270,18 +274,15 @@ impl CredSecret {
 
     /// Open a credential ID issued by this authenticator for `rp_id_hash`; `None` for any
     /// other ID (wrong length, other RP, other device secret, tampered).
-    pub(crate) fn unwrap(
-        id: &[u8],
-        secret: &[u8; 32],
-        rp_id_hash: &[u8; 32],
-    ) -> Option<CredSecret> {
+    pub(crate) fn unwrap(id: &[u8], secret: &[u8], rp_id_hash: &[u8; 32]) -> Option<CredSecret> {
         if id.len() != ID_LEN || id.first() != Some(&ID_VERSION) {
             return None;
         }
         let nonce = id.get(1..1 + NONCE_LEN)?;
         let sealed = id.get(1 + NONCE_LEN..)?;
-        let payload =
-            aes_gcm_open(&wrap_key(secret).ok()?, nonce, &aad(rp_id_hash), sealed).ok()?;
+        let payload = SecretBytes::new(
+            aes_gcm_open(&wrap_key(secret).ok()?, nonce, &aad(rp_id_hash), sealed).ok()?,
+        );
         let alg = Alg::from_code(*payload.first()?)?;
         let cred_protect = *payload.get(1)?;
         if !(1..=3).contains(&cred_protect) {
@@ -298,10 +299,8 @@ impl CredSecret {
             Alg::Es384 => Key::Ec(EcPrivateKey::from_scalar(Curve::P384, material).ok()?),
             Alg::EdDsa => Key::Ed(Ed25519Key::from_seed(material.get(..32)?).ok()?),
         };
-        let cred_random = payload
-            .get(OFFSET_RANDOM..OFFSET_RANDOM + RANDOM_LEN)?
-            .try_into()
-            .ok()?;
+        let cred_random =
+            SecretBytes::from_slice(payload.get(OFFSET_RANDOM..OFFSET_RANDOM + RANDOM_LEN)?);
         Some(CredSecret {
             alg,
             key,
@@ -313,8 +312,10 @@ impl CredSecret {
     }
 }
 
-fn wrap_key(secret: &[u8; 32]) -> CtapResult<Vec<u8>> {
-    hkdf_sha256(None, secret, WRAP_INFO, 32).map_err(|_| status::OTHER)
+fn wrap_key(secret: &[u8]) -> CtapResult<SecretBytes> {
+    hkdf_sha256(None, secret, WRAP_INFO, 32)
+        .map(SecretBytes::new)
+        .map_err(|_| status::OTHER)
 }
 
 fn aad(rp_id_hash: &[u8; 32]) -> Vec<u8> {

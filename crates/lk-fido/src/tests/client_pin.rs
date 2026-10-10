@@ -26,7 +26,7 @@ fn token_status(auth: &mut Authenticator, host: &mut TestHost, pin: &str) -> u8 
 
 #[test]
 fn pin_flows_round_trip_with_an_independent_platform_for_both_protocols() {
-    // CTAP 2.1 §6.5.5.5 setPIN, §6.5.5.4 getPinToken, §6.5.5.7 getPinUvAuthToken...;
+    // CTAP 2.1 §6.5.5.5 setPIN, §6.5.5.7.1 getPinToken, §6.5.5.7.2 getPinUvAuthToken...;
     // the token then verifies in makeCredential / getAssertion and sets the UV flag
     // (WebAuthn L2 §6.1 flags bit 2).
     for protocol in PROTOCOLS {
@@ -62,7 +62,7 @@ fn pin_flows_round_trip_with_an_independent_platform_for_both_protocols() {
 
 #[test]
 fn get_key_agreement_returns_a_cose_key_per_power_cycle() {
-    // CTAP 2.1 §6.5.5.3 getKeyAgreement: COSE_Key {1: 2, 3: -25, -1: 1, -2, -3}
+    // CTAP 2.1 §6.5.5.4 getKeyAgreement: COSE_Key {1: 2, 3: -25, -1: 1, -2, -3}
     // (§6.5.6 getPublicKey); the key is generated at power-up (§6.5.6 initialize()).
     let (mut auth, mut host) = device();
     let get = |auth: &mut Authenticator, host: &mut TestHost, p: u8| {
@@ -269,7 +269,7 @@ fn persisted_state_or_default(host: &TestHost) -> crate::state::State {
 fn three_wrong_pins_soft_block_until_a_power_cycle() {
     // BEHAVIOR_CATALOG FIDO: "Three wrong PINs now return PIN_AUTH_BLOCKED with
     // powerCycleState true; further PIN attempts consume no durable retry until a power
-    // cycle" (CTAP 2.1 §6.5.5.4 step 7).
+    // cycle" (CTAP 2.1 §6.5.5.7.2 step 9).
     let (mut auth, mut host) = device_with_pin(2);
     assert_eq!(
         token_status(&mut auth, &mut host, "0000"),
@@ -316,7 +316,7 @@ fn three_wrong_pins_soft_block_until_a_power_cycle() {
 
 #[test]
 fn a_correct_pin_resets_the_consecutive_mismatch_count() {
-    // CTAP 2.1 §6.5.5.4 step 7: the soft block counts *consecutive* mismatches.
+    // CTAP 2.1 §6.5.5.7.2 step 9: the soft block counts *consecutive* mismatches.
     let (mut auth, mut host) = device_with_pin(2);
     for _ in 0..2 {
         assert_eq!(
@@ -336,8 +336,9 @@ fn a_correct_pin_resets_the_consecutive_mismatch_count() {
 
 #[test]
 fn eight_failures_across_power_cycles_hard_block() {
-    // BEHAVIOR_CATALOG FIDO: "eight failures across cycles hard-block"; CTAP 2.1 §6.5.5.4
-    // step 4 (pinRetries 0 → CTAP2_ERR_PIN_BLOCKED) takes precedence over the soft block.
+    // BEHAVIOR_CATALOG FIDO: "eight failures across cycles hard-block"; CTAP 2.1 §6.5.5.7.2
+    // steps 5 and 9 (pinRetries 0 → CTAP2_ERR_PIN_BLOCKED) take precedence over the soft
+    // block.
     let (mut auth, mut host) = device_with_pin(1);
     let mut statuses = Vec::new();
     for round in 0..3 {
@@ -375,8 +376,8 @@ fn eight_failures_across_power_cycles_hard_block() {
 
 #[test]
 fn the_retry_decrement_is_persisted_before_the_pin_is_checked() {
-    // docs/DESIGN.md §7 (retry counters persisted before the response); CTAP 2.1 §6.5.5.7
-    // step 7 decrements before comparing. A storage failure answers CTAP1_ERR_OTHER
+    // docs/DESIGN.md §7 (retry counters persisted before the response); CTAP 2.1 §6.5.5.7.2
+    // step 8 decrements before step 9 compares. A storage failure answers CTAP1_ERR_OTHER
     // without checking the PIN or counting a mismatch.
     let (mut auth, mut host) = device_with_pin(2);
     host.fail_next_saves(1);
@@ -437,8 +438,8 @@ fn malformed_pin_proofs_cost_a_retry_and_count_toward_the_soft_block() {
 
 #[test]
 fn a_mismatch_regenerates_the_key_agreement() {
-    // CTAP 2.1 §6.5.5.4 step 7: "the authenticator regenerates its keyAgreement key", so a
-    // platform must run getKeyAgreement again.
+    // CTAP 2.1 §6.5.5.7.2 step 9: on a mismatch the authenticator "Calls regenerate for the
+    // selected pinUvAuthProtocol", so a platform must run getKeyAgreement again.
     let (mut auth, mut host) = device_with_pin(2);
     let mut platform = Platform::connect(&mut auth, &mut host, 2);
     let before = platform.cose_key();
@@ -466,8 +467,31 @@ fn a_mismatch_regenerates_the_key_agreement() {
 }
 
 #[test]
+fn a_mismatch_regenerates_only_the_key_agreement_of_its_protocol() {
+    // Regression: a mismatch dropped the key-agreement keys of both protocols. CTAP 2.1
+    // §6.5.5.7.2 step 9 (likewise §6.5.5.6 step 7 and §6.5.5.7.1) "Calls regenerate for the
+    // selected pinUvAuthProtocol" only, so a platform holding a shared secret for the other
+    // protocol (for example for hmac-secret) keeps it.
+    let (mut auth, mut host) = device_with_pin(2);
+    let mut v1 = Platform::connect(&mut auth, &mut host, 1);
+    let mut v2 = Platform::connect(&mut auth, &mut host, 2);
+    let r = send_untouched(
+        &mut auth,
+        &mut host,
+        &v2.token_request("0000", perm::GA, None),
+    );
+    assert_eq!(r, vec![status::PIN_INVALID]);
+    let r = send_untouched(&mut auth, &mut host, &v1.token_request(PIN, perm::GA, None));
+    assert_eq!(status_of(&r), status::OK, "protocol 1 key kept");
+    let r = send_untouched(&mut auth, &mut host, &v2.token_request(PIN, perm::GA, None));
+    assert_eq!(r, vec![status::PIN_INVALID], "protocol 2 key regenerated");
+    let fresh = Platform::connect(&mut auth, &mut host, 2);
+    assert_ne!(fresh.shared, v2.shared);
+}
+
+#[test]
 fn issuing_a_token_keeps_the_key_agreement() {
-    // CTAP 2.1 §6.5.5.7 does not regenerate the key-agreement key on success.
+    // CTAP 2.1 §6.5.5.7.2 does not regenerate the key-agreement key on success.
     let (mut auth, mut host) = device_with_pin(1);
     let mut platform = Platform::connect(&mut auth, &mut host, 1);
     for _ in 0..2 {
@@ -484,8 +508,8 @@ fn issuing_a_token_keeps_the_key_agreement() {
 fn forced_pin_change_verifies_the_pin_before_the_policy_status() {
     // BEHAVIOR_CATALOG FIDO: "Forced-PIN-change token commands now verify the supplied old
     // PIN and update retries before policy status; legacy token returns PIN_INVALID for a
-    // correct PIN under forced change." CTAP 2.1 §6.5.5.7 step 10 (PIN_POLICY_VIOLATION),
-    // §6.5.5.4 step 9 (PIN_INVALID), §6.5.5.6 (same PIN refused, flag cleared).
+    // correct PIN under forced change." CTAP 2.1 §6.5.5.7.2 step 11 (PIN_POLICY_VIOLATION),
+    // §6.5.5.7.1 (PIN_INVALID), §6.5.5.6 steps 13 and 16 (same PIN refused, flag cleared).
     let (_, mut host) = device_with_pin(2);
     let mut auth = with_state(&mut host, |s| s.pin.force_change = true);
     assert_eq!(
@@ -953,4 +977,64 @@ fn reset_clears_the_pin_and_the_token() {
     set_pin(&mut auth, &mut host, 2, PIN);
     let r = send(&mut auth, &mut host, &Mc::new().with_token(&t).encode());
     assert_eq!(r, vec![status::PIN_AUTH_INVALID]);
+}
+
+/// A way to obtain a pinUvAuthToken.
+type IssueToken<'a> = dyn Fn(&mut Authenticator, &mut TestHost) -> Token + 'a;
+
+#[test]
+fn a_pin_issued_token_never_stands_in_for_a_touch() {
+    // CTAP 2.1 §6.5.5.7.1 and §6.5.5.7.2 call beginUsingPinUvAuthToken(userIsPresent:
+    // false), so getUserPresentFlagValue() (§6.5.3.2) is false for every token here:
+    // makeCredential (§6.1.2 step 14.1.1), getAssertion (§6.2.2 step 9.1.1) and an
+    // excludeList hit (§6.1.2 step 12.1.4) must all wait for a touch even with a fresh
+    // token, whichever subcommand issued it.
+    for protocol in PROTOCOLS {
+        let (mut auth, mut host) = device_with_pin(protocol);
+        let reg = register(&mut auth, &mut host, &Mc::new());
+        let legacy = |auth: &mut Authenticator, host: &mut TestHost| {
+            let mut platform = Platform::connect(auth, host, protocol);
+            let r = send_untouched(auth, host, &platform.pin_token_request(PIN));
+            platform.token_from(&r)
+        };
+        let with_permissions = |auth: &mut Authenticator, host: &mut TestHost| {
+            token(auth, host, protocol, perm::MC | perm::GA, Some(RP))
+        };
+        let issuers: [&IssueToken<'_>; 2] = [&legacy, &with_permissions];
+        for issue in issuers {
+            let t = issue(&mut auth, &mut host);
+            let mc = Mc::new().with_token(&t).encode();
+            assert!(
+                matches!(auth.cbor(&mc, &mut host), Outcome::NeedTouch { .. }),
+                "makeCredential"
+            );
+            assert_eq!(
+                status_of(&auth.presence_resolved(true, &mut host)),
+                status::OK
+            );
+
+            let t = issue(&mut auth, &mut host);
+            let ga = Ga::new().allow(vec![reg.id()]).with_token(&t).encode();
+            assert!(
+                matches!(auth.cbor(&ga, &mut host), Outcome::NeedTouch { .. }),
+                "getAssertion"
+            );
+            let a = parse_assertion(&auth.presence_resolved(true, &mut host));
+            assert_eq!(
+                a.auth_data.flags, 0x05,
+                "UP from the touch, UV from the token"
+            );
+
+            let t = issue(&mut auth, &mut host);
+            let excluded = Mc::new().exclude(vec![reg.id()]).with_token(&t).encode();
+            assert!(
+                matches!(auth.cbor(&excluded, &mut host), Outcome::NeedTouch { .. }),
+                "excludeList hit"
+            );
+            assert_eq!(
+                auth.presence_resolved(true, &mut host),
+                vec![status::CREDENTIAL_EXCLUDED]
+            );
+        }
+    }
 }

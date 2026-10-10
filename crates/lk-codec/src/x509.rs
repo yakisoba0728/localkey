@@ -9,7 +9,8 @@
 //! ```
 //!
 //! Every certificate is version 3. The supported keys and algorithms are those the device
-//! uses for FIDO, PIV, OpenPGP and Security Domain certificates: EC P-256/P-384 (RFC 5480),
+//! uses for FIDO, PIV, OpenPGP and Security Domain certificates: EC keys on P-256, P-384,
+//! P-521 (RFC 5480), secp256k1 (SEC 2 v2 §A.2) and brainpoolP256r1/P384r1 (RFC 5639 §4.1),
 //! Ed25519/X25519 (RFC 8410) and RSA (RFC 8017, RFC 4055).
 
 use core::fmt;
@@ -24,6 +25,14 @@ pub mod oid {
     pub const SECP256R1: &[u64] = &[1, 2, 840, 10045, 3, 1, 7];
     /// `secp384r1` / P-384 (RFC 5480 §2.1.1.1).
     pub const SECP384R1: &[u64] = &[1, 3, 132, 0, 34];
+    /// `secp521r1` / P-521 (RFC 5480 §2.1.1.1).
+    pub const SECP521R1: &[u64] = &[1, 3, 132, 0, 35];
+    /// `secp256k1` (SEC 2 v2 §A.2.1).
+    pub const SECP256K1: &[u64] = &[1, 3, 132, 0, 10];
+    /// `brainpoolP256r1` (RFC 5639 §4.1).
+    pub const BRAINPOOL_P256R1: &[u64] = &[1, 3, 36, 3, 3, 2, 8, 1, 1, 7];
+    /// `brainpoolP384r1` (RFC 5639 §4.1).
+    pub const BRAINPOOL_P384R1: &[u64] = &[1, 3, 36, 3, 3, 2, 8, 1, 1, 11];
     /// `id-X25519` (RFC 8410 §3).
     pub const X25519: &[u64] = &[1, 3, 101, 110];
     /// `id-Ed25519` (RFC 8410 §3), both key and signature algorithm.
@@ -34,6 +43,8 @@ pub mod oid {
     pub const ECDSA_WITH_SHA256: &[u64] = &[1, 2, 840, 10045, 4, 3, 2];
     /// `ecdsa-with-SHA384` (RFC 5758 §3.2).
     pub const ECDSA_WITH_SHA384: &[u64] = &[1, 2, 840, 10045, 4, 3, 3];
+    /// `ecdsa-with-SHA512` (RFC 5758 §3.2).
+    pub const ECDSA_WITH_SHA512: &[u64] = &[1, 2, 840, 10045, 4, 3, 4];
     /// `sha256WithRSAEncryption` (RFC 4055 §5).
     pub const SHA256_WITH_RSA_ENCRYPTION: &[u64] = &[1, 2, 840, 113549, 1, 1, 11];
     /// `id-at-commonName` (RFC 5280 §4.1.2.4, Appendix A.1).
@@ -103,6 +114,8 @@ pub enum SignatureAlgorithm {
     EcdsaWithSha256,
     /// `ecdsa-with-SHA384`, parameters absent (RFC 5758 §3.2).
     EcdsaWithSha384,
+    /// `ecdsa-with-SHA512`, parameters absent (RFC 5758 §3.2).
+    EcdsaWithSha512,
     /// `id-Ed25519`, parameters absent (RFC 8410 §3, §6). The signature is the raw 64 bytes.
     Ed25519,
     /// `sha256WithRSAEncryption` with NULL parameters (RFC 4055 §5): PKCS #1 v1.5 signature.
@@ -110,9 +123,10 @@ pub enum SignatureAlgorithm {
 }
 
 impl SignatureAlgorithm {
-    const ALL: [Self; 4] = [
+    const ALL: [Self; 5] = [
         Self::EcdsaWithSha256,
         Self::EcdsaWithSha384,
+        Self::EcdsaWithSha512,
         Self::Ed25519,
         Self::Sha256WithRsaEncryption,
     ];
@@ -122,6 +136,7 @@ impl SignatureAlgorithm {
         match self {
             Self::EcdsaWithSha256 => oid::ECDSA_WITH_SHA256,
             Self::EcdsaWithSha384 => oid::ECDSA_WITH_SHA384,
+            Self::EcdsaWithSha512 => oid::ECDSA_WITH_SHA512,
             Self::Ed25519 => oid::ED25519,
             Self::Sha256WithRsaEncryption => oid::SHA256_WITH_RSA_ENCRYPTION,
         }
@@ -164,6 +179,14 @@ pub enum PublicKey {
     EcP256(Vec<u8>),
     /// P-384 uncompressed SEC1 point `04 || X || Y` (97 bytes, RFC 5480 §2.2).
     EcP384(Vec<u8>),
+    /// P-521 uncompressed SEC1 point `04 || X || Y` (133 bytes, RFC 5480 §2.2).
+    EcP521(Vec<u8>),
+    /// secp256k1 uncompressed SEC1 point (65 bytes; RFC 5480 §2.2 encoding, SEC 2 OID).
+    EcSecp256k1(Vec<u8>),
+    /// brainpoolP256r1 uncompressed SEC1 point (65 bytes; RFC 5639 §4.1 OID).
+    EcBrainpoolP256r1(Vec<u8>),
+    /// brainpoolP384r1 uncompressed SEC1 point (97 bytes; RFC 5639 §4.1 OID).
+    EcBrainpoolP384r1(Vec<u8>),
     /// Ed25519 public key, 32 bytes (RFC 8410 §4).
     Ed25519(Vec<u8>),
     /// X25519 public key, 32 bytes (RFC 8410 §4).
@@ -183,12 +206,12 @@ impl PublicKey {
     /// without parameters (RFC 8410 §3), or `rsaEncryption` with NULL (RFC 3279 §2.3.1).
     pub fn algorithm_identifier(&self) -> Vec<u8> {
         match self {
-            Self::EcP256(_) => {
-                der::sequence([der::oid(oid::EC_PUBLIC_KEY), der::oid(oid::SECP256R1)])
-            }
-            Self::EcP384(_) => {
-                der::sequence([der::oid(oid::EC_PUBLIC_KEY), der::oid(oid::SECP384R1)])
-            }
+            Self::EcP256(_) => ec_public_key(oid::SECP256R1),
+            Self::EcP384(_) => ec_public_key(oid::SECP384R1),
+            Self::EcP521(_) => ec_public_key(oid::SECP521R1),
+            Self::EcSecp256k1(_) => ec_public_key(oid::SECP256K1),
+            Self::EcBrainpoolP256r1(_) => ec_public_key(oid::BRAINPOOL_P256R1),
+            Self::EcBrainpoolP384r1(_) => ec_public_key(oid::BRAINPOOL_P384R1),
             Self::Ed25519(_) => der::sequence([der::oid(oid::ED25519)]),
             Self::X25519(_) => der::sequence([der::oid(oid::X25519)]),
             Self::Rsa { .. } => der::sequence([der::oid(oid::RSA_ENCRYPTION), der::null()]),
@@ -201,12 +224,31 @@ impl PublicKey {
     /// RFC 5280 §4.2.1.2 method (1) derives a key identifier as SHA-1 of these bytes.
     pub fn subject_public_key(&self) -> Vec<u8> {
         match self {
-            Self::EcP256(key) | Self::EcP384(key) | Self::Ed25519(key) | Self::X25519(key) => {
-                key.clone()
-            }
+            Self::EcP256(key)
+            | Self::EcP384(key)
+            | Self::EcP521(key)
+            | Self::EcSecp256k1(key)
+            | Self::EcBrainpoolP256r1(key)
+            | Self::EcBrainpoolP384r1(key)
+            | Self::Ed25519(key)
+            | Self::X25519(key) => key.clone(),
             Self::Rsa { modulus, exponent } => {
                 der::sequence([der::integer(modulus), der::integer(exponent)])
             }
+        }
+    }
+
+    /// The `namedCurve` OID of an `id-ecPublicKey` key (RFC 5480 §2.1.1), `None` for the
+    /// other key types.
+    pub fn named_curve(&self) -> Option<&'static [u64]> {
+        match self {
+            Self::EcP256(_) => Some(oid::SECP256R1),
+            Self::EcP384(_) => Some(oid::SECP384R1),
+            Self::EcP521(_) => Some(oid::SECP521R1),
+            Self::EcSecp256k1(_) => Some(oid::SECP256K1),
+            Self::EcBrainpoolP256r1(_) => Some(oid::BRAINPOOL_P256R1),
+            Self::EcBrainpoolP384r1(_) => Some(oid::BRAINPOOL_P384R1),
+            Self::Ed25519(_) | Self::X25519(_) | Self::Rsa { .. } => None,
         }
     }
 
@@ -217,6 +259,11 @@ impl PublicKey {
             der::bit_string(&self.subject_public_key()),
         ])
     }
+}
+
+/// `id-ecPublicKey` with `namedCurve` parameters (RFC 5480 §2.1.1).
+fn ec_public_key(curve: &[u64]) -> Vec<u8> {
+    der::sequence([der::oid(oid::EC_PUBLIC_KEY), der::oid(curve)])
 }
 
 /// A distinguished name built as an `RDNSequence` (RFC 5280 §4.1.2.4).
@@ -665,6 +712,13 @@ mod tests {
             SignatureAlgorithm::EcdsaWithSha384.algorithm_identifier(),
             hex("30 0A 06 08 2A 86 48 CE 3D 04 03 03")
         );
+        // RFC 5758 §3.2: ecdsa-with-SHA512 is 1.2.840.10045.4.3.4.
+        assert_eq!(
+            SignatureAlgorithm::EcdsaWithSha512.algorithm_identifier(),
+            hex("30 0A 06 08 2A 86 48 CE 3D 04 03 04")
+        );
+        let sha512_null = der::sequence([der::oid(oid::ECDSA_WITH_SHA512), der::null()]);
+        assert_eq!(SignatureAlgorithm::from_algorithm_identifier(&sha512_null), None);
         // RFC 8410 §3: "30 05 06 03 2B 65 70".
         assert_eq!(
             SignatureAlgorithm::Ed25519.algorithm_identifier(),
@@ -748,6 +802,68 @@ mod tests {
             rsa.subject_public_key(),
             hex("30 0A 02 03 00 C1 02 02 03 01 00 01")
         );
+    }
+
+    /// A `PublicKey` EC variant used as a constructor.
+    type EcKeyVariant = fn(Vec<u8>) -> PublicKey;
+
+    #[test]
+    fn subject_public_key_info_for_the_other_named_curves() {
+        // Project Wycheproof testvectors_v1, tcId 1 ("normal case") `public` of
+        // ecdh_secp521r1_test.json, ecdh_secp256k1_test.json, ecdh_brainpoolP256r1_test.json
+        // and ecdh_brainpoolP384r1_test.json: complete SubjectPublicKeyInfo values with
+        // the RFC 5480 / SEC 2 / RFC 5639 named-curve OIDs.
+        let cases: [(EcKeyVariant, &[u64], &str); 4] = [
+            (
+                PublicKey::EcP521,
+                &[1, 3, 132, 0, 35],
+                "30819b301006072a8648ce3d020106052b8104002303818600040064da3e94733db536a74a0d8a5cb226
+                 5a31c54a1da6529a198377fbd38575d9d79769ca2bdf2d4c972642926d444891a652e7f492337251adf1
+                 613cf3077999b5ce00e04ad19cf9fd4722b0c824c069f70c3c0e7ebc5288940dfa92422152ae4a4f7918
+                 3ced375afb54db1409ddf338b85bb6dbfc5950163346bb63a90a70c5aba098f7",
+            ),
+            (
+                PublicKey::EcSecp256k1,
+                &[1, 3, 132, 0, 10],
+                "3056301006072a8648ce3d020106052b8104000a03420004d8096af8a11e0b80037e1ee68246b5dcbb0a
+                 eb1cf1244fd767db80f3fa27da2b396812ea1686e7472e9692eaf3e958e50e9500d3b4c77243db1f2acd
+                 67ba9cc4",
+            ),
+            (
+                PublicKey::EcBrainpoolP256r1,
+                &[1, 3, 36, 3, 3, 2, 8, 1, 1, 7],
+                "305a301406072a8648ce3d020106092b2403030208010107034200044cee5e1072b30d64f70bf01958e2
+                 2c044a2127ddd744ce3060c15990ff0fe1148c6ee56559829a5a84dd5c8646ee0c43d0b7c50181f234ec
+                 09eba43bc86b169e",
+            ),
+            (
+                PublicKey::EcBrainpoolP384r1,
+                &[1, 3, 36, 3, 3, 2, 8, 1, 1, 11],
+                "307a301406072a8648ce3d020106092b240303020801010b0362000470ffb350173256eb437b14036584
+                 2397ebaf3611b6389596c1f17c5ff5ce5201f24f6985b8fe0890dcae54b2603dfb4087242aaf7b2d95b3
+                 199bfa03e8fce54ef680b57109847274db3b3a65512b7f832248e70b1030e95db6429589775c3346",
+            ),
+        ];
+        for (variant, curve, spki) in cases {
+            let spki = hex(spki);
+            let content = der::expect_only(&spki, tag::SEQUENCE).expect("SubjectPublicKeyInfo");
+            let (algorithm, bits) = parse_spki(content);
+            let key = variant(bits.to_vec());
+            assert_eq!(key.to_der(), spki, "{curve:?}");
+            assert_eq!(key.algorithm_identifier(), algorithm, "{curve:?}");
+            assert_eq!(key.named_curve(), Some(curve));
+            assert_eq!(key.subject_public_key(), bits);
+        }
+        assert_eq!(oid::SECP521R1, &[1, 3, 132, 0, 35]);
+        assert_eq!(oid::SECP256K1, &[1, 3, 132, 0, 10]);
+        assert_eq!(oid::BRAINPOOL_P256R1, &[1, 3, 36, 3, 3, 2, 8, 1, 1, 7]);
+        assert_eq!(oid::BRAINPOOL_P384R1, &[1, 3, 36, 3, 3, 2, 8, 1, 1, 11]);
+        // The two NIST curves keep their OIDs; non-EC keys have no named curve.
+        assert_eq!(PublicKey::EcP256(vec![]).named_curve(), Some(oid::SECP256R1));
+        assert_eq!(PublicKey::EcP384(vec![]).named_curve(), Some(oid::SECP384R1));
+        assert_eq!(PublicKey::Ed25519(vec![]).named_curve(), None);
+        assert_eq!(PublicKey::X25519(vec![]).named_curve(), None);
+        assert_eq!(PublicKey::Rsa { modulus: vec![1], exponent: vec![3] }.named_curve(), None);
     }
 
     // ---- names, validity, extensions ---------------------------------------------------
@@ -1233,6 +1349,50 @@ mod tests {
         // Validity::generalized keeps GeneralizedTime as given, even for 2024.
         let times = der::parse_all(parsed.tbs_fields[4].1).expect("validity");
         assert_eq!(times[0], (tag::GENERALIZED_TIME, &b"20240101000000Z"[..]));
+    }
+
+    #[test]
+    fn certificates_on_the_other_named_curves() {
+        // P-521 with ecdsa-with-SHA512 (RFC 5758 §3.2), and SHA-256 signatures by
+        // secp256k1 and brainpool keys: the SPKI names the curve, the signature verifies.
+        let mut entropy = TestEntropy::new("x509 other curves");
+        let cases: [(Curve, EcKeyVariant, SignatureAlgorithm); 4] = [
+            (Curve::P521, PublicKey::EcP521, SignatureAlgorithm::EcdsaWithSha512),
+            (Curve::Secp256k1, PublicKey::EcSecp256k1, SignatureAlgorithm::EcdsaWithSha256),
+            (Curve::BrainpoolP256r1, PublicKey::EcBrainpoolP256r1, SignatureAlgorithm::EcdsaWithSha256),
+            (Curve::BrainpoolP384r1, PublicKey::EcBrainpoolP384r1, SignatureAlgorithm::EcdsaWithSha384),
+        ];
+        for (curve, variant, algorithm) in cases {
+            let key = EcPrivateKey::generate(curve, &mut entropy);
+            let name = Name::new().common_name("localkey other curve");
+            let tbs = TbsCertificate {
+                serial: vec![0x02],
+                signature: algorithm,
+                issuer: name.clone(),
+                validity: Validity::generalized("20240101000000Z", "20500101000000Z"),
+                subject: name,
+                public_key: variant(key.public_uncompressed()),
+                extensions: vec![Extension::key_usage(key_usage::DIGITAL_SIGNATURE)],
+            };
+            let tbs_der = tbs.to_der();
+            let hash = match algorithm {
+                SignatureAlgorithm::EcdsaWithSha512 => lk_crypto::HashAlg::Sha512,
+                SignatureAlgorithm::EcdsaWithSha384 => lk_crypto::HashAlg::Sha384,
+                _ => lk_crypto::HashAlg::Sha256,
+            };
+            let signature = key.sign_message(hash, &tbs_der).expect("sign");
+            let cert = assemble(&tbs_der, algorithm, &signature.to_der());
+            let parsed = check_structure(&cert, &tbs);
+            assert_eq!(
+                SignatureAlgorithm::from_algorithm_identifier(parsed.signature_algorithm),
+                Some(algorithm)
+            );
+            let (spki_algorithm, point) = parse_spki(parsed.tbs_fields[6].1);
+            assert_eq!(spki_algorithm, variant(Vec::new()).algorithm_identifier().as_slice());
+            assert_eq!(point, key.public_uncompressed().as_slice());
+            let digest = lk_crypto::digest(hash, parsed.tbs_raw);
+            assert!(lk_crypto::ecdsa_verify_prehash(curve, point, &digest, parsed.signature), "{curve:?}");
+        }
     }
 
     #[test]

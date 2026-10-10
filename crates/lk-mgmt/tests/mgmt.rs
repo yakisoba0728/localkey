@@ -166,12 +166,17 @@ fn device_info_yubikey_profile_matches_expected_bytes() {
 fn read_config_is_length_prefixed_device_info() {
     let mut host = TestHost::new();
     let mut a = applet(&mut host);
-    // With and without Le, short and extended: the whole page comes back.
+    // Every form whose Ne holds the page gets the whole page with 9000. yubikit-python
+    // `yubikit/core/smartcard/__init__.py`: `ShortApduFormatter` sends a data-less,
+    // Le-less command as `00 1D 00 00 00` (explicit Lc 0, parsed as Le = 00); after
+    // `configure()` on USB, `ExtendedApduFormatter` sends it as the case 1
+    // `00 1D 00 00`. Le = 0x33 is exactly the 51-byte page; an extended Le of 0000.
     for apdu in [
         read_apdu(0),
+        vec![0x00, 0x1D, 0x00, 0x00, 0x00],
         Command::new(0x00, 0x1D, 0x00, 0x00).with_le(0).to_bytes(),
         Command::new(0x00, 0x1D, 0x00, 0x00)
-            .with_le(0x10)
+            .with_le(0x33)
             .to_bytes(),
         vec![0x00, 0x1D, 0x00, 0x00, 0x00, 0x00, 0x00],
     ] {
@@ -1070,14 +1075,37 @@ fn apdu_header_errors() {
         )),
         sw::WRONG_LENGTH
     );
-    for cla in [0x80u8, 0x84, 0x0C, 0x01, 0x40, 0xFF] {
+    // docs/CONTRACTS.md "Applications B and orchestrator changes", APDU conventions
+    // (binding): "Applets answer 6882 for secure-messaging CLA bits and 6E00 for CLA
+    // >= 0x80". A logical channel number is 6881 and the RFU / further interindustry
+    // classes are 6E00, as in lk-piv and lk-oath (ISO/IEC 7816-4 §5.1.1, §5.6).
+    for cla in [0x80u8, 0x84, 0x90, 0x40, 0x60, 0x20, 0xFF] {
         assert_eq!(
             status(&run(&mut a, &[cla, 0x1D, 0x00, 0x00], &mut host)),
             sw::CLA_NOT_SUPPORTED,
             "{cla:#x}"
         );
     }
-    for ins in [0x16u8, 0x1F, 0x00, 0xC0, 0xCA, 0x01] {
+    for cla in [0x04u8, 0x08, 0x0C, 0x1C, 0x0D] {
+        assert_eq!(
+            status(&run(&mut a, &[cla, 0x1D, 0x00, 0x00], &mut host)),
+            sw::SM_NOT_SUPPORTED,
+            "{cla:#x}"
+        );
+    }
+    for cla in [0x01u8, 0x02, 0x03, 0x11] {
+        assert_eq!(
+            status(&run(&mut a, &[cla, 0x1D, 0x00, 0x00], &mut host)),
+            sw::LOGICAL_CHANNEL_NOT_SUPPORTED,
+            "{cla:#x}"
+        );
+    }
+    // GET RESPONSE (C0) exists; with nothing pending it is 6985.
+    assert_eq!(
+        status(&run(&mut a, &[0x00, 0xC0, 0x00, 0x00], &mut host)),
+        sw::CONDITIONS
+    );
+    for ins in [0x16u8, 0x1F, 0x00, 0xCA, 0x01] {
         assert_eq!(
             status(&run(&mut a, &[0x00, ins, 0x00, 0x00], &mut host)),
             sw::INS_NOT_SUPPORTED,
@@ -1649,4 +1677,780 @@ fn set_mode_is_not_implemented_on_any_transport() {
     );
     assert_eq!(host.persist_attempts(), 0);
     assert_eq!(a.management().device_info(&host), OWN_INFO.to_vec());
+}
+
+// ---------------------------------------------------------------------------
+// Second review: Ne and GET RESPONSE, yubikit DeviceInfo decoding, ykman flows
+// ---------------------------------------------------------------------------
+
+/// `len || OWN_INFO`, the READ CONFIG page 0 of a factory own-profile device.
+fn own_page() -> Vec<u8> {
+    let mut page = vec![OWN_INFO.len() as u8];
+    page.extend_from_slice(&OWN_INFO);
+    page
+}
+
+#[test]
+fn read_config_serves_at_most_ne_with_get_response() {
+    // docs/CONTRACTS.md "Applications B", APDU conventions (binding): "Applets serve at
+    // most Ne bytes, using 61xx with GET RESPONSE (or their own continuation command)
+    // for the rest." ISO/IEC 7816-4 §5.1.3 (61xx), §7.6.1 (GET RESPONSE). yubikit
+    // `ResponseChainingProcessor` follows 61xx with `INS_SEND_REMAINING 0xC0`.
+    let mut host = TestHost::new();
+    let mut a = applet(&mut host);
+    let page = own_page();
+    assert_eq!(page.len(), 51);
+
+    // Le = 0x10: 16 bytes, 35 (0x23) left.
+    let r = run(&mut a, &[0x00, 0x1D, 0x00, 0x00, 0x10], &mut host);
+    assert_eq!(status(&r), 0x6123);
+    let mut got = data(&r);
+    assert_eq!(got, page[..16].to_vec());
+    // GET RESPONSE with Le = 0x10: 16 more, 19 (0x13) left.
+    let r = run(&mut a, &[0x00, 0xC0, 0x00, 0x00, 0x10], &mut host);
+    assert_eq!(status(&r), 0x6113);
+    got.extend_from_slice(&data(&r));
+    // GET RESPONSE in yubikit's extended case 1 form (no Le: up to 256): the rest.
+    let r = run(&mut a, &[0x00, 0xC0, 0x00, 0x00], &mut host);
+    assert_eq!(status(&r), sw::OK);
+    got.extend_from_slice(&data(&r));
+    assert_eq!(got, page);
+    // Nothing left.
+    assert_eq!(
+        status(&run(&mut a, &[0x00, 0xC0, 0x00, 0x00, 0x00], &mut host)),
+        sw::CONDITIONS
+    );
+
+    // One byte short of the page: 50 bytes and 6101.
+    let r = run(&mut a, &[0x00, 0x1D, 0x00, 0x00, 0x32], &mut host);
+    assert_eq!((data(&r).len(), status(&r)), (50, 0x6101));
+    // GET RESPONSE P1/P2 must be zero (6A86) and does not drop the pending byte.
+    assert_eq!(
+        status(&run(&mut a, &[0x00, 0xC0, 0x01, 0x00], &mut host)),
+        sw::INCORRECT_P1P2
+    );
+    let r = run(&mut a, &[0x00, 0xC0, 0x00, 0x00, 0x00], &mut host);
+    assert_eq!(r, vec![page[50], 0x90, 0x00]);
+
+    // An extended Le smaller than the page is honoured too.
+    let r = run(
+        &mut a,
+        &[0x00, 0x1D, 0x00, 0x00, 0x00, 0x00, 0x20],
+        &mut host,
+    );
+    assert_eq!((data(&r).len(), status(&r)), (32, 0x6113));
+    let r = run(
+        &mut a,
+        &[0x00, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00],
+        &mut host,
+    );
+    assert_eq!(data(&r), page[32..].to_vec());
+    assert_eq!(status(&r), sw::OK);
+    assert_eq!(host.persist_attempts(), 0);
+}
+
+#[test]
+fn secure_channel_collection_reaches_the_whole_page() {
+    // lk-device `card.rs` (`collect`): under a secure channel the device follows the
+    // applet's 61xx with `00 C0 00 00 00` (`AppId::continuation_ins`, C0 for
+    // Management) until a final status, then wraps the whole response.
+    let mut host = TestHost::new();
+    let mut a = applet(&mut host);
+    let mut response = run(&mut a, &[0x00, 0x1D, 0x00, 0x00, 0x08], &mut host);
+    let mut collected = Vec::new();
+    for _ in 0..16 {
+        let (part, s) = split_response(&response).expect("status word");
+        collected.extend_from_slice(part);
+        if s >> 8 != 0x61 {
+            assert_eq!(s, sw::OK);
+            break;
+        }
+        response = run(&mut a, &[0x00, 0xC0, 0x00, 0x00, 0x00], &mut host);
+    }
+    assert_eq!(collected, own_page());
+}
+
+#[test]
+fn unread_response_data_is_discarded_by_other_commands() {
+    // ISO/IEC 7816-4 §7.6.1: a command other than GET RESPONSE discards unread
+    // response data; so do SELECT, deselect, reset and a rejected class or APDU.
+    let mut host = TestHost::new();
+    let mut a = applet(&mut host);
+    let partial = [0x00u8, 0x1D, 0x00, 0x00, 0x04];
+    let get = [0x00u8, 0xC0, 0x00, 0x00, 0x00];
+    let select = Command::new(0x00, 0xA4, 0x04, 0x00)
+        .with_data(AID)
+        .to_bytes();
+    type Step<'a> = &'a dyn Fn(&mut MgmtApplet, &mut TestHost);
+    let discards: [Step; 7] = [
+        &|a, h| {
+            let req = write_apdu(&tlv::encode(tag::CHALRESP_TIMEOUT, &[0x05]));
+            assert_eq!(status(&run(a, &req, h)), sw::OK);
+        },
+        &|a, h| {
+            assert_eq!(
+                status(&run(a, &[0x00, 0xCA, 0x00, 0x00], h)),
+                sw::INS_NOT_SUPPORTED
+            )
+        },
+        &|a, h| {
+            assert_eq!(
+                status(&run(a, &[0x0C, 0x1D, 0x00, 0x00], h)),
+                sw::SM_NOT_SUPPORTED
+            )
+        },
+        &|a, h| assert_eq!(status(&run(a, &[0x00, 0x1D], h)), sw::WRONG_LENGTH),
+        &|a, h| assert_eq!(a.select(&select, h), b"5.7.4\x90\x00".to_vec()),
+        &|a, _| a.deselect(),
+        &|a, _| a.reset(ResetKind::CardPowerOff),
+    ];
+    for (i, discard) in discards.iter().enumerate() {
+        assert_eq!(
+            status(&run(&mut a, &partial, &mut host)),
+            0x612F,
+            "case {i}"
+        );
+        discard(&mut a, &mut host);
+        assert_eq!(
+            status(&run(&mut a, &get, &mut host)),
+            sw::CONDITIONS,
+            "case {i}"
+        );
+    }
+    // A new READ CONFIG replaces the pending data with its own.
+    assert_eq!(status(&run(&mut a, &partial, &mut host)), 0x612F);
+    let r = run(&mut a, &read_apdu(0), &mut host);
+    assert_eq!(status(&r), sw::OK);
+    assert_eq!(data(&r).len(), 51);
+    assert_eq!(status(&run(&mut a, &get, &mut host)), sw::CONDITIONS);
+    // While a command chain is open, C0 is part of the chain check (6883), as in
+    // lk-piv and lk-hsmauth, and the chain is dropped.
+    let first = Command::new(0x10, 0x1C, 0x00, 0x00)
+        .with_data(vec![0x03])
+        .to_bytes();
+    assert_eq!(status(&run(&mut a, &first, &mut host)), sw::OK);
+    assert_eq!(
+        status(&run(&mut a, &get, &mut host)),
+        sw::LAST_COMMAND_EXPECTED
+    );
+}
+
+#[test]
+fn select_serves_at_most_ne() {
+    // The SELECT response follows the same Ne rule; lk-device treats 61xx as a
+    // successful selection (`card.rs`, `selection_succeeded`).
+    let mut host = TestHost::new();
+    let mut a = applet(&mut host);
+    let select = Command::new(0x00, 0xA4, 0x04, 0x00)
+        .with_data(AID)
+        .with_le(2)
+        .to_bytes();
+    assert_eq!(a.select(&select, &mut host), b"5.\x61\x03".to_vec());
+    assert_eq!(
+        run(&mut a, &[0x00, 0xC0, 0x00, 0x00, 0x00], &mut host),
+        b"7.4\x90\x00".to_vec()
+    );
+    // yubikit `SmartCardProtocol.select` sends `00 A4 04 00 08 <AID>` (no Le).
+    let plain = Command::new(0x00, 0xA4, 0x04, 0x00)
+        .with_data(AID)
+        .to_bytes();
+    assert_eq!(a.select(&plain, &mut host), b"5.7.4\x90\x00".to_vec());
+    // A re-SELECT through process uses the same rule.
+    assert_eq!(run(&mut a, &select, &mut host), b"5.\x61\x03".to_vec());
+}
+
+/// What yubikit-python derives from a DeviceInfo (`yubikit/management.py`,
+/// `ManagementSession._do_read_device_info` and `DeviceInfo.parse_tlvs`), field by
+/// field, with the defaults it uses for absent tags.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct YubikitInfo {
+    /// `data.get(TAG_CONFIG_LOCK) == b"\1"`.
+    is_locked: bool,
+    /// `bytes2int(data.get(TAG_SERIAL, b"\0")) or None`.
+    serial: Option<u64>,
+    /// `FORM_FACTOR.from_code(ff)`: `ff & 0xF` if a known code (0..=7), else UNKNOWN 0.
+    form_factor: u64,
+    /// `bool(ff & 0x80)`, `bool(ff & 0x40)`.
+    is_fips: bool,
+    is_sky: bool,
+    /// `Version.from_bytes(data[TAG_VERSION])` (exactly three bytes), else the
+    /// session version (SELECT text / CTAPHID INIT / OTP status).
+    version: Vec<u8>,
+    auto_eject_timeout: u64,
+    challenge_response_timeout: u64,
+    device_flags: u64,
+    /// `CAPABILITY(bytes2int(data[TAG_USB_SUPPORTED]))`: required (KeyError).
+    usb_supported: u64,
+    /// Only when `TAG_USB_ENABLED` is present (and not firmware 4.x).
+    usb_enabled: Option<u64>,
+    /// `TAG_NFC_SUPPORTED` present: an NFC transport with `data[TAG_NFC_ENABLED]`.
+    nfc: Option<(u64, u64)>,
+    /// `data.get(TAG_NFC_RESTRICTED, b"\0") == b"\1"`.
+    nfc_restricted: bool,
+    /// `data.get(TAG_PART_NUMBER, b"").decode() or None`.
+    part_number: Option<String>,
+    /// `CAPABILITY._from_fips(bytes2int(data.get(TAG_FIPS_*, b"\0")))`.
+    fips_capable: u64,
+    fips_approved: u64,
+    /// `data.get(TAG_PIN_COMPLEXITY, b"\0") == b"\1"`.
+    pin_complexity: bool,
+    /// `CAPABILITY(bytes2int(data.get(TAG_RESET_BLOCKED, b"\0")))`.
+    reset_blocked: u64,
+    /// `data.get(TAG_VERSION_QUALIFIER)`: absent or empty means a FINAL release.
+    version_qualifier: Option<Vec<u8>>,
+    /// `Version.from_bytes(data.get(TAG_FPS_VERSION / TAG_STM_VERSION, b"\0\0\0"))
+    /// or None` (`Version.__bool__` is `any(self)`).
+    fps_version: Option<Vec<u8>>,
+    stm_version: Option<Vec<u8>>,
+}
+
+fn bytes2int(value: &[u8]) -> u64 {
+    value.iter().fold(0u64, |acc, &b| acc << 8 | u64::from(b))
+}
+
+/// `Tlv.parse_dict`: tag -> value, a later duplicate replacing an earlier one.
+fn parse_dict(bytes: &[u8]) -> std::collections::BTreeMap<u32, Vec<u8>> {
+    tlv::parse_all(bytes)
+        .expect("yubikit parses the page")
+        .into_iter()
+        .map(|t| (t.tag, t.value.to_vec()))
+        .collect()
+}
+
+/// `ManagementSession._do_read_device_info`: read pages while `MORE_DATA` (popped from
+/// each page, `int.from_bytes`) says more follow; check `len(encoded) - 1 ==
+/// encoded[0]`; merge the pages. Returns the merged map and the page count.
+fn yubikit_read_pages(
+    mut read_config: impl FnMut(u8) -> Vec<u8>,
+) -> (std::collections::BTreeMap<u32, Vec<u8>>, usize) {
+    let mut tlvs = std::collections::BTreeMap::new();
+    let mut more_data = 1u64;
+    let mut page = 0u8;
+    while more_data > 0 {
+        more_data -= 1;
+        let encoded = read_config(page);
+        let (&len, body) = encoded.split_first().expect("length byte");
+        assert_eq!(usize::from(len), body.len(), "Invalid length");
+        let mut data = parse_dict(body);
+        if let Some(more) = data.remove(&tag::MORE_DATA) {
+            more_data = bytes2int(&more);
+        }
+        tlvs.extend(data);
+        page += 1;
+    }
+    (tlvs, usize::from(page))
+}
+
+fn from_fips(fips: u64) -> u64 {
+    let map = [
+        Capabilities::FIDO2,
+        Capabilities::PIV,
+        Capabilities::OPENPGP,
+        Capabilities::OATH,
+        Capabilities::HSMAUTH,
+    ];
+    map.iter()
+        .enumerate()
+        .filter(|(i, _)| fips & (1 << i) != 0)
+        .fold(0u64, |acc, (_, &c)| acc | u64::from(c))
+}
+
+fn yubikit_parse_tlvs(
+    data: &std::collections::BTreeMap<u32, Vec<u8>>,
+    default_version: &[u8],
+) -> YubikitInfo {
+    let get = |t: u32, default: &[u8]| data.get(&t).cloned().unwrap_or(default.to_vec());
+    let ff = bytes2int(&get(tag::FORM_FACTOR, &[0]));
+    let version = data
+        .get(&tag::VERSION)
+        .cloned()
+        .unwrap_or(default_version.to_vec());
+    assert_eq!(version.len(), 3, "Version.from_bytes takes three bytes");
+    let is_4x = version.first() == Some(&4);
+    let opt_version = |t: u32| {
+        let v = get(t, &[0, 0, 0]);
+        v.iter().any(|&b| b != 0).then_some(v)
+    };
+    YubikitInfo {
+        is_locked: data.get(&tag::CONFIG_LOCK).map(Vec::as_slice) == Some(&[1][..]),
+        serial: Some(bytes2int(&get(tag::SERIAL, &[0]))).filter(|&s| s != 0),
+        form_factor: if ff & 0xF <= 7 { ff & 0xF } else { 0 },
+        is_fips: ff & 0x80 != 0,
+        is_sky: ff & 0x40 != 0,
+        version,
+        auto_eject_timeout: bytes2int(&get(tag::AUTO_EJECT_TIMEOUT, &[0])),
+        challenge_response_timeout: bytes2int(&get(tag::CHALRESP_TIMEOUT, &[0])),
+        device_flags: bytes2int(&get(tag::DEVICE_FLAGS, &[0])),
+        usb_supported: bytes2int(data.get(&tag::USB_SUPPORTED).expect("KeyError otherwise")),
+        usb_enabled: data
+            .get(&tag::USB_ENABLED)
+            .filter(|_| !is_4x)
+            .map(|v| bytes2int(v)),
+        nfc: data.get(&tag::NFC_SUPPORTED).map(|s| {
+            let e = data.get(&tag::NFC_ENABLED).expect("KeyError otherwise");
+            (bytes2int(s), bytes2int(e))
+        }),
+        nfc_restricted: get(tag::NFC_RESTRICTED, &[0]) == [1],
+        part_number: String::from_utf8(get(tag::PART_NUMBER, &[]))
+            .ok()
+            .filter(|s| !s.is_empty()),
+        fips_capable: from_fips(bytes2int(&get(tag::FIPS_CAPABLE, &[0]))),
+        fips_approved: from_fips(bytes2int(&get(tag::FIPS_APPROVED, &[0]))),
+        pin_complexity: get(tag::PIN_COMPLEXITY, &[0]) == [1],
+        reset_blocked: bytes2int(&get(tag::RESET_BLOCKED, &[0])),
+        version_qualifier: data
+            .get(&tag::VERSION_QUALIFIER)
+            .filter(|v| !v.is_empty())
+            .cloned(),
+        fps_version: opt_version(0x20),
+        stm_version: opt_version(0x21),
+    }
+}
+
+/// yubikit's view of a factory 5C Nano 5.7.4 (USB-only, all seven applications).
+fn factory_view(serial: u64) -> YubikitInfo {
+    YubikitInfo {
+        is_locked: false,
+        serial: Some(serial),
+        form_factor: 0x04, // FORM_FACTOR.USB_C_NANO
+        is_fips: false,
+        is_sky: false,
+        version: vec![5, 7, 4],
+        auto_eject_timeout: 0,
+        challenge_response_timeout: 0,
+        device_flags: 0,
+        usb_supported: 0x033B,
+        usb_enabled: Some(0x033B),
+        nfc: None,
+        nfc_restricted: false,
+        part_number: None,
+        fips_capable: 0,
+        fips_approved: 0,
+        pin_complexity: false,
+        reset_blocked: 0,
+        version_qualifier: None,
+        fps_version: None,
+        stm_version: None,
+    }
+}
+
+/// Read DeviceInfo over CCID the way yubikit does: SELECT (version from the text),
+/// then READ CONFIG pages in its extended case 1 form `00 1D pp 00`.
+fn yubikit_ccid_info(a: &mut MgmtApplet, host: &mut TestHost) -> YubikitInfo {
+    let select = Command::new(0x00, 0xA4, 0x04, 0x00)
+        .with_data(AID)
+        .to_bytes();
+    let text = data(&a.select(&select, host));
+    let text = String::from_utf8(text).expect("SELECT text is UTF-8");
+    let version: Vec<u8> = text
+        .split('.')
+        .map(|p| p.parse::<u8>().expect("decimal"))
+        .collect();
+    let (map, pages) = yubikit_read_pages(|page| {
+        let r = run(a, &[0x00, 0x1D, page, 0x00], host);
+        assert_eq!(status(&r), sw::OK);
+        data(&r)
+    });
+    assert_eq!(pages, 1);
+    yubikit_parse_tlvs(&map, &version)
+}
+
+#[test]
+fn yubikit_parse_tlvs_decodes_every_field() {
+    // Every tag yubikit-python `DeviceInfo.parse_tlvs` reads, over the three backends
+    // (`_ManagementSmartCardBackend.read_config`: `00 1D page 00`;
+    // `_ManagementCtapBackend.read_config`: `ctap.call(0x42, int2bytes(page))`;
+    // `_ManagementOtpBackend.read_config`: slot 0x13 with `int2bytes(page)`, CRC over
+    // `len || TLVs`).
+    for (profile, serial) in [
+        (DeviceProfile::own(12_345_678), 12_345_678u64),
+        (DeviceProfile::yubikey_5c_nano_5_7_4(31_415_926), 31_415_926),
+    ] {
+        let mut host = TestHost::with_profile(profile);
+        let mut a = applet(&mut host);
+        let want = factory_view(serial);
+        assert_eq!(yubikit_ccid_info(&mut a, &mut host), want);
+
+        // CTAPHID: the session version comes from CTAPHID INIT (5.7.4 here).
+        let (map, pages) = yubikit_read_pages(|page| {
+            let reply = a
+                .management_mut()
+                .ctaphid_vendor(0xC2, &[page], &mut host)
+                .expect("management command");
+            assert_eq!(reply.cmd, ctaphid::READ_CONFIG);
+            reply.payload
+        });
+        assert_eq!(pages, 1);
+        assert_eq!(yubikit_parse_tlvs(&map, &[5, 7, 4]), want);
+
+        // OTP HID: `send_and_receive` pads `int2bytes(page)` to 64 bytes.
+        let (map, pages) = yubikit_read_pages(|page| {
+            let mut slot = [0u8; 64];
+            slot[0] = page;
+            let frame = a
+                .management()
+                .otp_read_config_frame(&slot, &host)
+                .expect("page");
+            let r_len = usize::from(frame[0]);
+            assert_eq!(otp_crc16(&frame[..r_len + 3]), 0xF0B8, "check_crc");
+            frame[..=r_len].to_vec()
+        });
+        assert_eq!(pages, 1);
+        assert_eq!(yubikit_parse_tlvs(&map, &[5, 7, 4]), want);
+
+        // ykman `config usb` refuses to toggle applications while `reset_blocked` is
+        // non-zero ("must be in a newly reset state", `_configure_applications`), and
+        // `config reset` needs reset_blocked or a Bio form factor: neither applies.
+        assert_eq!(want.reset_blocked, 0);
+    }
+
+    // Every configurable field changes the decoded view as written.
+    let mut host = TestHost::new();
+    let mut a = applet(&mut host);
+    let req = tlvs(&[
+        (tag::USB_ENABLED, &0x0212u16.to_be_bytes()),
+        (tag::AUTO_EJECT_TIMEOUT, &0x012Cu16.to_be_bytes()),
+        (tag::CHALRESP_TIMEOUT, &[0x2D]),
+        (tag::DEVICE_FLAGS, &[0xC0]),
+        (tag::CONFIG_LOCK, &LOCK),
+    ]);
+    assert_eq!(status(&run(&mut a, &write_apdu(&req), &mut host)), sw::OK);
+    let want = YubikitInfo {
+        is_locked: true,
+        usb_enabled: Some(0x0212),
+        auto_eject_timeout: 300,
+        challenge_response_timeout: 45,
+        device_flags: 0xC0,
+        ..factory_view(12_345_678)
+    };
+    assert_eq!(yubikit_ccid_info(&mut a, &mut host), want);
+}
+
+/// yubikit `DeviceConfig` (the fields a USB-only device uses).
+#[derive(Default)]
+struct YkDeviceConfig {
+    usb_enabled: Option<u16>,
+    auto_eject_timeout: Option<u16>,
+    challenge_response_timeout: Option<u8>,
+    device_flags: Option<u8>,
+}
+
+/// yubikit `DeviceConfig.get_bytes(reboot, cur_lock_code, new_lock_code)`.
+fn get_bytes(
+    c: &YkDeviceConfig,
+    reboot: bool,
+    cur: Option<&[u8; 16]>,
+    new: Option<&[u8; 16]>,
+) -> Vec<u8> {
+    let mut buf = Vec::new();
+    if reboot {
+        buf.extend_from_slice(&tlv::encode(tag::REBOOT, &[]));
+    }
+    if let Some(code) = cur {
+        buf.extend_from_slice(&tlv::encode(tag::UNLOCK, code));
+    }
+    if let Some(v) = c.usb_enabled {
+        buf.extend_from_slice(&tlv::encode(tag::USB_ENABLED, &v.to_be_bytes()));
+    }
+    if let Some(v) = c.auto_eject_timeout {
+        buf.extend_from_slice(&tlv::encode(tag::AUTO_EJECT_TIMEOUT, &v.to_be_bytes()));
+    }
+    if let Some(v) = c.challenge_response_timeout {
+        buf.extend_from_slice(&tlv::encode(tag::CHALRESP_TIMEOUT, &[v]));
+    }
+    if let Some(v) = c.device_flags {
+        buf.extend_from_slice(&tlv::encode(tag::DEVICE_FLAGS, &[v]));
+    }
+    if let Some(code) = new {
+        buf.extend_from_slice(&tlv::encode(tag::CONFIG_LOCK, code));
+    }
+    config(&buf)
+}
+
+/// `CAPABILITY.usb_interfaces` (yubikit-python): OTP, FIDO (U2F|FIDO2) and CCID
+/// (0x04 | 0x400 | OATH | PIV | OPENPGP | HSMAUTH).
+fn yk_interfaces(caps: u64) -> (bool, bool, bool) {
+    (
+        caps & 0x01 != 0,
+        caps & 0x0202 != 0,
+        caps & 0x0538 != 0 || caps & 0x04 != 0,
+    )
+}
+
+/// ykman `config usb` (`ykman/_cli/config.py`, `usb` and `_configure_applications`):
+/// the `DeviceConfig` and `reboot` it passes to `write_device_config`.
+fn ykman_config_usb(
+    info: &YubikitInfo,
+    enable: u16,
+    disable: u16,
+    touch_eject: Option<bool>,
+    autoeject_timeout: Option<u16>,
+    chalresp_timeout: Option<u8>,
+) -> (YkDeviceConfig, bool) {
+    let enabled = info.usb_enabled.expect("5.x reports USB_ENABLED");
+    let new_enabled = (enabled | u64::from(enable)) & !u64::from(disable);
+    assert_ne!(new_enabled & 0x033B, 0, "Can not disable all applications");
+    assert_eq!(info.reset_blocked, 0);
+    let reboot = yk_interfaces(enabled) != yk_interfaces(new_enabled);
+    let flags = info.device_flags as u8;
+    let device_flags = touch_eject.map(|on| if on { flags | 0x80 } else { flags & !0x80 });
+    let config = YkDeviceConfig {
+        usb_enabled: Some(u16::try_from(new_enabled).expect("16 bits")),
+        auto_eject_timeout: autoeject_timeout,
+        challenge_response_timeout: chalresp_timeout,
+        device_flags,
+    };
+    (config, reboot)
+}
+
+/// yubikit `ManagementSession.set_mode` on firmware 5.0.0 and later (ykman `config
+/// mode`): interfaces -> capabilities (CCID adds `0x400`), masked with USB_SUPPORTED,
+/// written without REBOOT or lock code ("N.B: reboot=False").
+fn yubikit_set_mode(
+    info: &YubikitInfo,
+    otp: bool,
+    fido: bool,
+    ccid: bool,
+    chalresp_timeout: u8,
+    auto_eject_timeout: Option<u16>,
+) -> Vec<u8> {
+    let mut usb = 0u64;
+    if otp {
+        usb |= 0x01;
+    }
+    if ccid {
+        usb |= 0x20 | 0x10 | 0x08 | 0x100 | 0x400;
+    }
+    if fido {
+        usb |= 0x02 | 0x200;
+    }
+    let config = YkDeviceConfig {
+        usb_enabled: Some(u16::try_from(usb & info.usb_supported).expect("16 bits")),
+        auto_eject_timeout,
+        challenge_response_timeout: Some(chalresp_timeout),
+        device_flags: None,
+    };
+    get_bytes(&config, false, None, None)
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Transport {
+    /// yubikit `ExtendedApduFormatter` (after `configure()` on USB):
+    /// `00 1C 00 00 00 Lc(2) <config>`.
+    Ccid,
+    /// `_ManagementCtapBackend.write_config`: `ctap.call(0x43, config)`.
+    Ctaphid,
+    /// `_ManagementOtpBackend.write_config`: slot 0x15, config zero-padded to 64.
+    Otp,
+}
+
+/// Send one yubikit WRITE CONFIG; `Err` carries the status word (CCID, OTP) or the
+/// CTAPHID error code.
+fn send_config(
+    t: Transport,
+    a: &mut MgmtApplet,
+    config: &[u8],
+    host: &mut TestHost,
+) -> Result<ConfigEffect, u16> {
+    match t {
+        Transport::Ccid => {
+            let mut apdu = vec![0x00, 0x1C, 0x00, 0x00, 0x00];
+            apdu.extend_from_slice(&u16::try_from(config.len()).expect("fits").to_be_bytes());
+            apdu.extend_from_slice(config);
+            let r = run(a, &apdu, host);
+            let effect = a.take_effect();
+            match status(&r) {
+                sw::OK => {
+                    assert!(data(&r).is_empty());
+                    Ok(effect)
+                }
+                s => {
+                    assert_eq!(effect, ConfigEffect::None);
+                    Err(s)
+                }
+            }
+        }
+        Transport::Ctaphid => {
+            let reply = a
+                .management_mut()
+                .ctaphid_vendor(0xC3, config, host)
+                .expect("management command");
+            if reply.cmd == ctaphid::WRITE_CONFIG {
+                assert!(reply.payload.is_empty());
+                Ok(reply.effect)
+            } else {
+                assert_eq!(reply.effect, ConfigEffect::None);
+                Err(u16::from(reply.payload[0]))
+            }
+        }
+        Transport::Otp => {
+            let mut slot = [0u8; 64];
+            slot[..config.len()].copy_from_slice(config);
+            a.management_mut().otp_write_config(&slot, host)
+        }
+    }
+}
+
+#[test]
+fn ykman_config_usb_mode_and_lock_flows_byte_exact() {
+    // ykman `config usb`, `config set-lock-code` and `config mode` against firmware
+    // 5.7.4, each request computed from the DeviceInfo yubikit just read, over every
+    // transport yubikit can use for Management.
+    for t in [Transport::Ccid, Transport::Ctaphid, Transport::Otp] {
+        let mut host = TestHost::new();
+        let mut a = applet(&mut host);
+        let lock_rejected = match t {
+            Transport::Ctaphid => u16::from(ctaphid::ERR_OTHER),
+            _ => sw::SECURITY_STATUS,
+        };
+
+        // `config usb -d PIV`: the interfaces stay, so no reboot.
+        let info = yubikit_ccid_info(&mut a, &mut host);
+        let (cfg, reboot) = ykman_config_usb(&info, 0, Capabilities::PIV, None, None, None);
+        let req = get_bytes(&cfg, reboot, None, None);
+        assert_eq!(req, vec![0x04, 0x03, 0x02, 0x03, 0x2B], "{t:?}");
+        assert_eq!(
+            send_config(t, &mut a, &req, &mut host),
+            Ok(ConfigEffect::None)
+        );
+
+        // `config usb --touch-eject --autoeject-timeout 60 --chalresp-timeout 30`.
+        let info = yubikit_ccid_info(&mut a, &mut host);
+        let (cfg, reboot) = ykman_config_usb(&info, 0, 0, Some(true), Some(60), Some(30));
+        let req = get_bytes(&cfg, reboot, None, None);
+        assert_eq!(
+            req,
+            vec![
+                0x0E, 0x03, 0x02, 0x03, 0x2B, 0x06, 0x02, 0x00, 0x3C, 0x07, 0x01, 0x1E, 0x08, 0x01,
+                0x80
+            ]
+        );
+        assert_eq!(
+            send_config(t, &mut a, &req, &mut host),
+            Ok(ConfigEffect::None)
+        );
+        let info = yubikit_ccid_info(&mut a, &mut host);
+        assert_eq!(
+            (
+                info.device_flags,
+                info.auto_eject_timeout,
+                info.challenge_response_timeout
+            ),
+            (0x80, 60, 30)
+        );
+
+        // `config set-lock-code -n LOCK` (not locked: no current code is sent).
+        let req = get_bytes(&YkDeviceConfig::default(), false, None, Some(&LOCK));
+        assert_eq!(req.get(..3), Some(&[0x12, 0x0A, 0x10][..]));
+        assert_eq!(
+            send_config(t, &mut a, &req, &mut host),
+            Ok(ConfigEffect::None)
+        );
+        let info = yubikit_ccid_info(&mut a, &mut host);
+        assert!(info.is_locked);
+
+        // `config usb -d OTP -L LOCK`: OTP's interface goes away, so ykman reboots.
+        let (cfg, reboot) = ykman_config_usb(&info, 0, Capabilities::OTP, None, None, None);
+        assert!(reboot);
+        let req = get_bytes(&cfg, reboot, Some(&LOCK), None);
+        assert_eq!(req.get(..5), Some(&[0x18, 0x0C, 0x00, 0x0B, 0x10][..]));
+        assert_eq!(
+            send_config(t, &mut a, &req, &mut host),
+            Ok(ConfigEffect::Reboot)
+        );
+        // The same with a wrong code (ykman: "Failed to configure USB applications").
+        let req = get_bytes(&cfg, reboot, Some(&OTHER_LOCK), None);
+        assert_eq!(send_config(t, &mut a, &req, &mut host), Err(lock_rejected));
+
+        // `config mode CCID --touch-eject` while locked: set_mode sends no lock code,
+        // so it is refused ("Failed to switch mode ... access code") and changes
+        // nothing.
+        let info = yubikit_ccid_info(&mut a, &mut host);
+        let before = info.clone();
+        let req = yubikit_set_mode(&info, false, false, true, 0, Some(0));
+        assert_eq!(
+            req,
+            vec![
+                0x0B, 0x03, 0x02, 0x01, 0x38, 0x06, 0x02, 0x00, 0x00, 0x07, 0x01, 0x00
+            ]
+        );
+        assert_eq!(send_config(t, &mut a, &req, &mut host), Err(lock_rejected));
+        assert_eq!(yubikit_ccid_info(&mut a, &mut host), before);
+
+        // `config set-lock-code -l LOCK --clear`: CLEAR_LOCK_CODE = 16 zero bytes.
+        let req = get_bytes(
+            &YkDeviceConfig::default(),
+            false,
+            Some(&LOCK),
+            Some(&[0; 16]),
+        );
+        assert_eq!(
+            send_config(t, &mut a, &req, &mut host),
+            Ok(ConfigEffect::None)
+        );
+        assert!(!yubikit_ccid_info(&mut a, &mut host).is_locked);
+
+        // `config mode CCID --touch-eject`: CCID applications only (0x400 masked off
+        // by USB_SUPPORTED), auto-eject 0, chalresp 0, no reboot.
+        let info = yubikit_ccid_info(&mut a, &mut host);
+        let req = yubikit_set_mode(&info, false, false, true, 0, Some(0));
+        assert_eq!(
+            send_config(t, &mut a, &req, &mut host),
+            Ok(ConfigEffect::None)
+        );
+        let info = yubikit_ccid_info(&mut a, &mut host);
+        assert_eq!(info.usb_enabled, Some(0x0138));
+        assert_eq!(
+            (info.auto_eject_timeout, info.challenge_response_timeout),
+            (0, 0)
+        );
+        // The touch-eject flag written by `config usb` stays: set_mode sends no 08.
+        assert_eq!(info.device_flags, 0x80);
+
+        // `config mode OTP+FIDO+CCID`: no auto-eject (None), chalresp 0.
+        let req = yubikit_set_mode(&info, true, true, true, 0, None);
+        assert_eq!(req, vec![0x07, 0x03, 0x02, 0x03, 0x3B, 0x07, 0x01, 0x00]);
+        assert_eq!(
+            send_config(t, &mut a, &req, &mut host),
+            Ok(ConfigEffect::None)
+        );
+        assert_eq!(
+            yubikit_ccid_info(&mut a, &mut host).usb_enabled,
+            Some(0x033B)
+        );
+    }
+}
+
+#[test]
+fn storage_failure_is_rejected_on_every_transport() {
+    // docs/CONTRACTS.md "Persisted state": persist before reporting success; on error
+    // keep the previous in-memory state and answer 6581 (CTAPHID: ERR_OTHER). A
+    // rejected write owes no reboot on any transport.
+    for t in [Transport::Ccid, Transport::Ctaphid, Transport::Otp] {
+        let mut host = TestHost::new();
+        let mut a = applet(&mut host);
+        let before = yubikit_ccid_info(&mut a, &mut host);
+        let cfg = YkDeviceConfig {
+            usb_enabled: Some(0x0202),
+            ..YkDeviceConfig::default()
+        };
+        let req = get_bytes(&cfg, true, None, Some(&LOCK));
+        host.fail_next_saves(1);
+        let want = match t {
+            Transport::Ctaphid => u16::from(ctaphid::ERR_OTHER),
+            _ => sw::MEMORY_FAILURE,
+        };
+        assert_eq!(send_config(t, &mut a, &req, &mut host), Err(want), "{t:?}");
+        assert_eq!(yubikit_ccid_info(&mut a, &mut host), before, "{t:?}");
+        assert_eq!(host.persisted(Record::Device), None, "{t:?}");
+        assert_eq!(host.persist_attempts(), 1, "{t:?}");
+        // The retry succeeds and is what the store holds.
+        assert_eq!(
+            send_config(t, &mut a, &req, &mut host),
+            Ok(ConfigEffect::Reboot)
+        );
+        let stored = host.persisted(Record::Device).expect("persisted");
+        assert_eq!(stored, a.management().to_record());
+        assert!(Management::new(Some(&stored), &mut host).is_locked());
+    }
 }

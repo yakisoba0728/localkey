@@ -302,6 +302,11 @@ impl Device {
     /// Set the wall-clock time (seconds since the Unix epoch) that backs
     /// `lk_core::Host::unix_time`, used only for certificate validity checks; `None`
     /// when the program has no trusted clock.
+    ///
+    /// The device never advances this value with `now` (`docs/DESIGN.md` §4: the engine
+    /// reads no clock), so a program with a trusted clock sets it again whenever it
+    /// moves, for example before each [`Device::handle`]. It starts as `None` at
+    /// [`Device::open`].
     pub fn set_unix_time(&mut self, seconds: Option<u64>) {
         self.host.unix_time = seconds;
     }

@@ -11,8 +11,8 @@ mod common;
 
 use common::*;
 use lk_codec::apdu::sw;
-use lk_core::{CardApplet, Outcome, Record, ResetKind};
-use lk_hsmauth::{TOUCH_TIMEOUT_MS, ins, tag};
+use lk_core::{CardApplet, DeviceProfile, Entropy, Host, Millis, Outcome, Record, ResetKind, StoreError};
+use lk_hsmauth::{MAX_CREDENTIALS, TOUCH_TIMEOUT_MS, ins, tag};
 use lk_testkit::TestHost;
 
 fn sym_calc(label: &str, password: [u8; 16]) -> Vec<u8> {
@@ -254,14 +254,18 @@ fn reset_requires_dead_p1p2_and_rejects_data_or_le() {
     let mut card = Card::new();
     assert_eq!(card.put_symmetric("keep", [1; 16], [2; 16], pw("p")), sw::OK);
     let saves_after_put = card.host.persist_count();
-    let rejected: [(&[u8], u16); 7] = [
+    let rejected: [(&[u8], u16); 9] = [
         (&[0x00, 0x06, 0x00, 0x00], sw::INCORRECT_P1P2),
         (&[0x00, 0x06, 0xDE, 0xAE], sw::INCORRECT_P1P2),
         (&[0x00, 0x06, 0xDE, 0xAD, 0x01, 0x00], sw::WRONG_LENGTH),
         (&[0x00, 0x06, 0xDE, 0xAD, 0x02, 0xDE, 0xAD], sw::WRONG_LENGTH),
         (&[0x00, 0x06, 0xDE, 0xAD, 0x10], sw::WRONG_LENGTH),
-        (&[0x00, 0x06, 0xDE, 0xAD, 0x00, 0x00, 0x00], sw::WRONG_LENGTH),
+        // Extended explicit Le (256, 1).
+        (&[0x00, 0x06, 0xDE, 0xAD, 0x00, 0x01, 0x00], sw::WRONG_LENGTH),
+        (&[0x00, 0x06, 0xDE, 0xAD, 0x00, 0x00, 0x01], sw::WRONG_LENGTH),
+        // Extended data (one zero byte) with Le.
         (&[0x00, 0x06, 0xDE, 0xAD, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00], sw::WRONG_LENGTH),
+        (&[0x00, 0x06, 0xDE, 0xAD, 0x00, 0x00, 0x01, 0x00], sw::WRONG_LENGTH),
     ];
     for (apdu, expected) in rejected {
         assert_eq!(card.send_raw(apdu).1, expected, "{apdu:02x?}");
@@ -270,11 +274,19 @@ fn reset_requires_dead_p1p2_and_rejects_data_or_le() {
     assert_eq!(card.host.persist_count(), saves_after_put, "rejected RESETs store nothing");
 }
 
-/// Catalog `hsmauth_reset_apdu_shape`: the normal SDK form `00 06 DE AD` and the
-/// ambiguous short-zero form `00 06 DE AD 00` both reset.
+/// Catalog `hsmauth_reset_apdu_shape`: the normal SDK forms reset — `00 06 DE AD`
+/// (YESDK, current yubikit extended), the ambiguous short-zero form `00 06 DE AD 00`
+/// (ykhsmauth `send_data` always writes Lc; current yubikit `ShortApduFormatter` adds an
+/// "explicit Lc" `00`) and its extended counterpart `00 06 DE AD 00 00 00`, which
+/// yubikit 5.0's `_encode_extended_apdu` (`">BBBBBH", cla, ins, p1, p2, 0, len(data)`)
+/// produces for `ykman hsmauth reset` over USB (`docs/CONTRACTS.md` "APDU conventions":
+/// the extended data-less form is accepted where an explicit Le is rejected). Before
+/// the review fix the extended form answered `6700`.
 #[test]
 fn reset_accepts_sdk_and_ambiguous_short_zero_forms() {
-    for form in [&[0x00u8, 0x06, 0xDE, 0xAD][..], &[0x00, 0x06, 0xDE, 0xAD, 0x00][..]] {
+    let forms: [&[u8]; 3] =
+        [&[0x00, 0x06, 0xDE, 0xAD], &[0x00, 0x06, 0xDE, 0xAD, 0x00], &[0x00, 0x06, 0xDE, 0xAD, 0x00, 0x00, 0x00]];
+    for form in forms {
         let mut card = Card::new();
         assert_eq!(card.put_symmetric("x", [1; 16], [2; 16], pw("p")), sw::OK);
         assert_eq!(card.send_raw(form), (vec![], sw::OK), "{form:02x?}");
@@ -787,4 +799,282 @@ fn touch_is_requested_by_calculate_only() {
     assert_eq!(card.send_raw(&apdu(ins::CALCULATE, 0, 0, &data)).1, sw::DATA_INVALID, "challenge already used");
     assert_eq!(card.delete(&DEFAULT_KEY, "g"), sw::OK);
     assert_eq!(card.send_raw(&[0x00, ins::RESET, 0xDE, 0xAD]).1, sw::OK);
+}
+
+// ----- Zero tries on disk (second review) -----
+
+/// A host that fails exactly one save, `skip` saves from now, and passes everything
+/// else to `inner` (`TestHost::fail_next_saves` can only fail the very next saves).
+struct FailOneSave<'a> {
+    inner: &'a mut TestHost,
+    skip: Option<usize>,
+}
+
+impl Entropy for FailOneSave<'_> {
+    fn fill(&mut self, out: &mut [u8]) {
+        self.inner.fill(out);
+    }
+}
+
+impl Host for FailOneSave<'_> {
+    fn now(&self) -> Millis {
+        self.inner.now()
+    }
+
+    fn profile(&self) -> &DeviceProfile {
+        self.inner.profile()
+    }
+
+    fn persist(&mut self, record: Record, plaintext: &[u8]) -> Result<(), StoreError> {
+        match self.skip {
+            Some(0) => {
+                self.skip = None;
+                Err(StoreError("injected failure".into()))
+            }
+            Some(n) => {
+                self.skip = Some(n - 1);
+                self.inner.persist(record, plaintext)
+            }
+            None => self.inner.persist(record, plaintext),
+        }
+    }
+}
+
+const OTHER_KEY: [u8; 16] = [0x5A; 16];
+
+/// A card with a non-default management key, a bystander credential "other" and a
+/// credential "t" (touch as given) with one password try left.
+fn last_try_card(touch: bool) -> Card {
+    let mut card = Card::new();
+    assert_eq!(card.put_management_key(&DEFAULT_KEY, &OTHER_KEY), sw::OK);
+    let mut other = Put::symmetric("other", [7; 16], [8; 16], pw("other"));
+    other.management_key = OTHER_KEY;
+    assert_eq!(card.put(&other), sw::OK);
+    let mut t = Put::symmetric("t", [1; 16], [2; 16], pw("right")).touch(touch);
+    t.management_key = OTHER_KEY;
+    assert_eq!(card.put(&t), sw::OK);
+    for left in (1..8).rev() {
+        assert_eq!(card.send_raw(&sym_calc("t", pw("wrong"))).1, sw::retries(left));
+    }
+    assert_eq!(card.retries_of("t"), Some(1));
+    card
+}
+
+/// What a power cycle right now would load: the bystander and the management key are
+/// intact, and "t" is present with `t_tries` or gone (`None`).
+fn assert_record_loads(host: &TestHost, t_tries: Option<u8>) {
+    let mut peek = Card::with_host(host.clone());
+    let mut expected = vec![(b"other".to_vec(), 8u8)];
+    if let Some(tries) = t_tries {
+        expected.push((b"t".to_vec(), tries));
+    }
+    let got: Vec<(Vec<u8>, u8)> = peek.list().into_iter().map(|e| (e.label, e.retries)).collect();
+    assert_eq!(got, expected, "not factory state");
+    assert_eq!(peek.management_retries(), 8);
+    assert_eq!(peek.put_management_key(&OTHER_KEY, &OTHER_KEY), sw::OK, "management key kept");
+}
+
+/// Second review: spending the last try persists a credential with zero tries
+/// (`docs/CONTRACTS.md` "Retry counters": spend and persist before comparing). The
+/// loader used to reject such a record as a whole — factory state, every credential
+/// gone and the management key back to sixteen zero bytes — so a power loss while a
+/// touch-required CALCULATE waited on the last try wiped the application. Now the
+/// record loads with only that credential deleted (it had no tries left), and the
+/// running card completes normally.
+#[test]
+fn last_try_spent_before_touch_does_not_wipe_the_record() {
+    let mut card = last_try_card(true);
+    assert!(matches!(card.raw(&sym_calc("t", pw("right"))), Outcome::NeedTouch { .. }));
+    // Power lost now: the record holds "t" at zero tries.
+    assert_record_loads(&card.host, None);
+    // Not lost: the touch completes and the tries come back.
+    let (keys, status) = split(&card.app.touch_resolved(true, &mut card.host));
+    assert_eq!((keys.len(), status), (48, sw::OK));
+    assert_eq!(card.retries_of("t"), Some(8));
+    assert_record_loads(&card.host, Some(8));
+}
+
+/// A touch on the last try that is declined or abandoned gives the try back before the
+/// zero-tries cleanup runs (`HsmAuth::settle` restores first, then deletes what is still
+/// at zero), so the credential stays with its one try — in memory and in the record.
+#[test]
+fn abandoned_or_declined_last_try_touch_keeps_the_credential() {
+    // Declined.
+    let mut card = last_try_card(true);
+    assert!(matches!(card.raw(&sym_calc("t", pw("right"))), Outcome::NeedTouch { .. }));
+    assert_eq!(card.app.touch_resolved(false, &mut card.host), hex("6982"));
+    assert_eq!(card.retries_of("t"), Some(1));
+    assert_record_loads(&card.host, Some(1));
+    // Abandoned by another command.
+    assert!(matches!(card.raw(&sym_calc("t", pw("right"))), Outcome::NeedTouch { .. }));
+    assert_eq!(card.cmd(ins::GET_VERSION, &[]).1, sw::OK);
+    assert_eq!(card.retries_of("t"), Some(1));
+    assert_record_loads(&card.host, Some(1));
+    // Abandoned by a deselect or a session reset, then any command.
+    for end in [None, Some(ResetKind::CardPowerOff), Some(ResetKind::UsbReset)] {
+        assert!(matches!(card.raw(&sym_calc("t", pw("right"))), Outcome::NeedTouch { .. }));
+        match end {
+            None => card.app.deselect(),
+            Some(kind) => card.app.reset(kind),
+        }
+        let resp = card.app.select(&select_apdu(), &mut card.host);
+        assert_eq!(split(&resp).1, sw::OK);
+        assert_eq!(card.retries_of("t"), Some(1), "{end:?}");
+        assert_record_loads(&card.host, Some(1));
+    }
+    // And the try still works.
+    assert!(matches!(card.raw(&sym_calc("t", pw("right"))), Outcome::NeedTouch { .. }));
+    assert_eq!(split(&card.app.touch_resolved(true, &mut card.host)).1, sw::OK);
+    assert_eq!(card.retries_of("t"), Some(8));
+}
+
+/// Second review: a correct password on the last try whose return to eight tries cannot
+/// be stored (`6581`, the try stays spent) leaves "t" at zero tries. The running card
+/// deletes it at the next command and a restart loads it deleted; nothing else is lost.
+#[test]
+fn failed_restore_of_the_last_try_deletes_only_that_credential() {
+    // After a touch.
+    let mut card = last_try_card(true);
+    assert!(matches!(card.raw(&sym_calc("t", pw("right"))), Outcome::NeedTouch { .. }));
+    card.host.fail_next_saves(1);
+    assert_eq!(card.app.touch_resolved(true, &mut card.host), hex("6581"));
+    assert_record_loads(&card.host, None);
+    assert_eq!(card.labels(), vec![b"other".to_vec()], "the running card finished the deletion");
+    let mut card = card.restart();
+    assert_eq!(card.labels(), vec![b"other".to_vec()]);
+    assert_eq!(card.put_symmetric("t", [1; 16], [2; 16], pw("right")), sw::retries(7), "default key refused");
+
+    // Without touch: the spend is stored, the restore is not.
+    let mut card = last_try_card(false);
+    let mut host = FailOneSave { inner: &mut card.host, skip: Some(1) };
+    let resp = card.app.process(&sym_calc("t", pw("right")), &mut host);
+    assert_eq!(resp, Outcome::Done(hex("6581")), "no keys without the stored restore");
+    assert_record_loads(&card.host, None);
+    assert_eq!(card.labels(), vec![b"other".to_vec()]);
+}
+
+/// Second review: the eighth wrong password whose deletion cannot be stored (the
+/// spent try was) answers `6581`. The record loads with only that credential gone;
+/// while the store keeps failing the running card reports it with zero tries and any
+/// password attempt on it is refused without a comparison; once the store works the
+/// next command finishes the deletion and forgets its ephemeral key.
+#[test]
+fn eighth_wrong_password_with_failed_deletion_keeps_the_rest() {
+    let mut card = last_try_card(false);
+    let mut host = FailOneSave { inner: &mut card.host, skip: Some(1) };
+    let resp = card.app.process(&sym_calc("t", pw("wrong")), &mut host);
+    assert_eq!(resp, Outcome::Done(hex("6581")));
+    assert_record_loads(&card.host, None);
+    card.host.fail_all(true);
+    assert_eq!(card.retries_of("t"), Some(0), "the store keeps failing: deletion pending");
+    assert_eq!(card.send_raw(&sym_calc("t", pw("right"))).1, sw::MEMORY_FAILURE);
+    card.host.fail_all(false);
+    assert_eq!(card.send_raw(&sym_calc("t", pw("right"))).1, sw::FILE_NOT_FOUND);
+    assert_eq!(card.labels(), vec![b"other".to_vec()]);
+    // The label is free again, with the kept management key.
+    let mut t = Put::symmetric("t", [3; 16], [4; 16], pw("new"));
+    t.management_key = OTHER_KEY;
+    assert_eq!(card.put(&t), sw::OK);
+    assert_eq!(card.retries_of("t"), Some(8));
+}
+
+/// The pending deletion of an asymmetric credential at zero tries also drops its
+/// outstanding ephemeral key, so a re-created credential with the same label cannot
+/// use it.
+#[test]
+fn finished_deletion_forgets_the_ephemeral_key() {
+    let password = pw("right");
+    let mut card = Card::new();
+    let credential = test_key("z/SK.OCE");
+    let pk = credential.public_uncompressed();
+    let put = Put::asymmetric("a", Some(credential.scalar().to_vec()), password);
+    assert_eq!(card.put(&put), sw::OK);
+    let hsm = HsmSide::new("hsm");
+    for left in (1..8).rev() {
+        let (epk, _) = card.get_challenge("a", None);
+        let s = hsm.respond(&epk, &pk);
+        let data = calculate_data("a", &s.context, Some(&hsm.public()), Some(&s.receipt), &pw("wrong"));
+        assert_eq!(card.cmd(ins::CALCULATE, &data).1, sw::retries(left));
+    }
+    // GET CHALLENGE with a wrong password on the last try: spend stored, deletion not.
+    let mut d = tlv(tag::LABEL, b"a");
+    d.extend(tlv(tag::CREDENTIAL_PASSWORD, &pw("wrong")));
+    let mut host = FailOneSave { inner: &mut card.host, skip: Some(1) };
+    assert_eq!(card.app.process(&apdu(ins::GET_CHALLENGE, 0, 0, &d), &mut host), Outcome::Done(hex("6581")));
+    // A challenge issued while the deletion is pending (no password: nothing is checked).
+    card.host.fail_all(true);
+    let (epk, status) = card.get_challenge("a", None);
+    assert_eq!((epk.len(), status), (65, sw::OK));
+    card.host.fail_all(false);
+    assert_eq!(card.labels(), Vec::<Vec<u8>>::new(), "deleted at the next command");
+    assert_eq!(card.put(&put), sw::OK);
+    let s = hsm.respond(&epk, &pk);
+    let data = calculate_data("a", &s.context, Some(&hsm.public()), Some(&s.receipt), &password);
+    assert_eq!(card.cmd(ins::CALCULATE, &data).1, sw::DATA_INVALID);
+}
+
+// ----- Ne (second review) -----
+
+/// `docs/CONTRACTS.md` "APDU conventions": at most Ne bytes per response, the rest with
+/// `61xx` and GET RESPONSE (ISO/IEC 7816-4 §5.1, §7.6.1). Before the review fix a short
+/// Le was ignored. The continuation shapes of the real hosts keep working: yubikit's
+/// `00 C0 00 00 00` and ykhsmauth's `00 C0 00 00 XX` with XX from the previous `61XX`.
+#[test]
+fn short_le_limits_each_response_piece() {
+    let mut card = Card::new();
+    for i in 0..MAX_CREDENTIALS {
+        let label = format!("{i:02}{}", "n".repeat(62));
+        assert_eq!(card.put_symmetric(&label, [1; 16], [2; 16], pw("p")), sw::OK);
+    }
+    let (full, status) = card.cmd(ins::LIST, &[]);
+    assert_eq!((full.len(), status), (32 * 69, sw::OK));
+    // Short Le 16.
+    let (first, status) = card.send_raw(&[0x00, ins::LIST, 0x00, 0x00, 0x10]);
+    assert_eq!((first.len(), status), (16, 0x6100));
+    // ykhsmauth: `00 C0 00 00 XX`, XX = SW2 of the last `61XX` (`00` asks for 256).
+    let mut got = first;
+    let mut status = status;
+    while status & 0xFF00 == 0x6100 {
+        let le = (status & 0xFF) as u8;
+        let (more, next) = card.send_raw(&[0x00, ins::GET_RESPONSE, 0x00, 0x00, le]);
+        let expected = if le == 0 { 256 } else { usize::from(le) };
+        assert_eq!(more.len(), expected.min(full.len() - got.len()));
+        got.extend(more);
+        status = next;
+    }
+    assert_eq!((got, status), (full.clone(), sw::OK));
+    // Extended Le 300.
+    let (piece, status) = card.send_raw(&[0x00, ins::LIST, 0x00, 0x00, 0x00, 0x01, 0x2C]);
+    assert_eq!((piece.len(), status), (300, 0x6100));
+
+    // CALCULATE: 48 bytes of keys with short Le 16, with and without touch.
+    let context = [0x33u8; 16];
+    let expected: Vec<u8> = [
+        sp800_108_cmac(&[1; 16], constant::S_ENC, &context, 128),
+        sp800_108_cmac(&[2; 16], constant::S_MAC, &context, 128),
+        sp800_108_cmac(&[2; 16], constant::S_RMAC, &context, 128),
+    ]
+    .concat();
+    let label = format!("00{}", "n".repeat(62));
+    let calc = lk_codec::apdu::Command::new(0, ins::CALCULATE, 0, 0)
+        .with_data(calculate_data(&label, &context, None, None, &pw("p")))
+        .with_le(16)
+        .to_bytes();
+    let (head, status) = card.send_raw(&calc);
+    assert_eq!((head.len(), status), (16, 0x6120));
+    let (tail, status) = card.send_raw(&[0x00, ins::GET_RESPONSE, 0x00, 0x00, 0x20]);
+    assert_eq!(([head, tail].concat(), status), (expected.clone(), sw::OK));
+
+    let mut card = Card::new();
+    assert_eq!(card.put(&Put::symmetric("t", [1; 16], [2; 16], pw("p")).touch(true)), sw::OK);
+    let calc = lk_codec::apdu::Command::new(0, ins::CALCULATE, 0, 0)
+        .with_data(calculate_data("t", &context, None, None, &pw("p")))
+        .with_le(32)
+        .to_bytes();
+    assert!(matches!(card.raw(&calc), Outcome::NeedTouch { .. }));
+    let (head, status) = split(&card.app.touch_resolved(true, &mut card.host));
+    assert_eq!((head.len(), status), (32, 0x6110));
+    let (tail, status) = card.send_raw(&[0x00, ins::GET_RESPONSE, 0x00, 0x00, 0x00]);
+    assert_eq!(([head, tail].concat(), status), (expected, sw::OK));
+    assert_eq!(card.retries_of("t"), Some(8));
 }

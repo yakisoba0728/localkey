@@ -267,16 +267,14 @@ fn x25519_key_cannot_authenticate() {
     assert_eq!(card.authenticate(b"x").1, 0x6985);
 }
 
-/// Catalog "KDF-DO PIN flows": with a KDF-DO the derived PIN hashes unlock signing and
-/// deciphering like plain PINs (spec §4.3.2).
+/// Catalog "KDF-DO PIN flows": with a KDF-DO the derived PIN hashes unlock key generation,
+/// signing and deciphering like plain PINs (spec §4.3.2). F9 is written first: Yubico
+/// locks it once a key exists ("YubiKey 5.2.3 Enhancements to OpenPGP 3.4", the order
+/// `kdf-setup` before key generation that document gives).
 #[test]
 fn operations_with_kdf_pins() {
     let mut card = Card::new();
     card.admin();
-    card.set_attributes(0x00C1, attr::ED25519);
-    card.set_attributes(0x00C2, attr::X25519);
-    let Public::Point(sig_public) = parse_public(&card.generate(crt::SIG)) else { panic!() };
-    let Public::Point(dec_public) = parse_public(&card.generate(crt::DEC)) else { panic!() };
     let pw1 = [0x11u8; 32];
     let pw3 = [0x33u8; 32];
     let mut kdf = hex("810103 820108 830400010000");
@@ -284,6 +282,12 @@ fn operations_with_kdf_pins() {
     kdf.extend_from_slice(&lk_codec::tlv::encode(0x87, &pw1));
     kdf.extend_from_slice(&lk_codec::tlv::encode(0x88, &pw3));
     assert_eq!(card.put(0x00F9, &kdf), 0x9000);
+    assert_eq!(card.verify(0x83, b"12345678"), 0x63C2);
+    assert_eq!(card.verify(0x83, &pw3), 0x9000);
+    card.set_attributes(0x00C1, attr::ED25519);
+    card.set_attributes(0x00C2, attr::X25519);
+    let Public::Point(sig_public) = parse_public(&card.generate(crt::SIG)) else { panic!() };
+    let Public::Point(dec_public) = parse_public(&card.generate(crt::DEC)) else { panic!() };
     assert_eq!(card.verify(0x81, b"123456"), 0x63C2);
     assert_eq!(card.verify(0x81, &pw1), 0x9000);
     assert_eq!(card.verify(0x82, &pw1), 0x9000);
@@ -294,7 +298,9 @@ fn operations_with_kdf_pins() {
     let (shared, sw) = card.decipher(&cipher_do(&peer.public()));
     assert_eq!(sw, 0x9000);
     assert_eq!(shared, peer.dh(&dec_public).unwrap().to_vec());
-    // The keys survive the KDF change and the derived PW3 still administers them.
+    // The derived PW3 still administers the keys; with keys present F9 is locked.
     assert_eq!(card.verify(0x83, &pw3), 0x9000);
     assert_eq!(card.ext(0x47, 0x81, 0x00, crt::SIG).1, 0x9000);
+    assert_eq!(card.put(0x00F9, &[0x81, 0x01, 0x00]), 0x6985);
+    assert_eq!(card.retries(), [3, 0, 3]);
 }

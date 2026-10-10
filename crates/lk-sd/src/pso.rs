@@ -13,9 +13,11 @@
 //! SecurityDomain_allowlist, SecurityDomain_oce_cache):
 //! - every certificate is checked when it arrives, before it is acknowledged:
 //!   signature, role (CA for every certificate that is followed by another, OCE
-//!   key-agreement certificate for the last), key type, validity (order, and not
-//!   expired before the earliest possible current time, `cert::earliest_now`), critical
-//!   extensions, accumulated path length and, if the CA has an allowlist, its serial;
+//!   key-agreement certificate for the last), key type, validity (order, and the
+//!   current time as far as it is known, `cert::Clock`: the program's wall-clock
+//!   reading `Host::unix_time` when it lends one, otherwise only the earliest possible
+//!   current time), critical extensions, accumulated path length and, if the CA has an
+//!   allowlist, its serial;
 //! - the CA reference of the first command binds the chain; later P1/P2 are ignored
 //!   except for the "more follow" bit; with a wildcard every matching CA stays a
 //!   candidate as long as the chain verifies under it, and allowlists of different CAs
@@ -36,7 +38,7 @@ use lk_codec::apdu::{self, Command, sw};
 use lk_core::Host;
 
 use crate::SecurityDomain;
-use crate::cert::{Certificate, Link, earliest_now};
+use crate::cert::{Certificate, Clock, Link};
 use crate::channel::Shared;
 use crate::handshake::KeyRow;
 use crate::state::{AUTH_TRIES, MAX_CERTIFICATES, is_ca_kid};
@@ -109,7 +111,7 @@ impl SecurityDomain {
                 Err(status) => status,
             });
         };
-        if !cert.role_allows(more, earliest_now(&host.profile().cert_not_before)) {
+        if !cert.role_allows(more, Clock::of(host)) {
             return apdu::status(sw::SECURITY_STATUS);
         }
         let next: Vec<Candidate> = chain

@@ -126,20 +126,40 @@ fn security_support_template_layout() {
     assert_eq!(data, vec![0x7A, 0x05, 0x93, 0x03, 0x00, 0x00, 0x00]);
 }
 
-/// AID 4F (spec §4.2.1): version 3.4, manufacturer, BCD serial from the profile.
+/// AID 4F (spec §4.2.1): version 3.4, manufacturer, BCD serial from the profile. The
+/// manufacturer bytes are `DeviceProfile::openpgp_manufacturer` (Yubico `0006` in the
+/// compatibility profile, `FF00` in the own profile), also inside 6E.
 #[test]
 fn aid_contains_profile_serial_and_manufacturer() {
     let mut card = Card::yubikey();
-    assert_eq!(
-        card.get_ok(0x004F),
-        vec![0xD2, 0x76, 0x00, 0x01, 0x24, 0x01, 0x03, 0x04, 0x00, 0x06, 0x12, 0x34, 0x56, 0x78, 0x00, 0x00]
-    );
+    let yubikey_aid =
+        vec![0xD2, 0x76, 0x00, 0x01, 0x24, 0x01, 0x03, 0x04, 0x00, 0x06, 0x12, 0x34, 0x56, 0x78, 0x00, 0x00];
+    assert_eq!(card.get_ok(0x004F), yubikey_aid);
+    let application = card.get_ok(0x006E);
+    let (outer, _) = tlv::parse_one(&application).unwrap();
+    assert_eq!(tlv::find(&outer.children().unwrap(), 0x4F).unwrap().value, yubikey_aid.as_slice());
     let mut own = Card::new();
     let aid = own.get_ok(0x004F);
-    assert_eq!(aid[8..10], [0xFF, 0xFF]);
+    assert_eq!(aid[8..10], [0xFF, 0x00]);
     assert_eq!(aid[10..14], [0x12, 0x34, 0x56, 0x78]);
     let mut other = Card::with_host(lk_testkit::TestHost::with_profile(DeviceProfile::own(31_415_926)));
     assert_eq!(other.get_ok(0x004F)[10..14], [0x31, 0x41, 0x59, 0x26]);
+}
+
+/// docs/CONTRACTS.md "lk-core additions": the AID manufacturer is derived from
+/// `DeviceProfile::openpgp_manufacturer`, not inferred from the manufacturer string. A
+/// profile named "Yubico" with a test-range ID announces the test-range ID, and the own
+/// profile with Yubico's ID announces `0006`.
+#[test]
+fn aid_manufacturer_follows_the_profile_field() {
+    let mut yubico_name = DeviceProfile::yubikey_5c_nano_5_7_4(12_345_678);
+    yubico_name.openpgp_manufacturer = 0xFFFE;
+    let mut card = Card::with_host(lk_testkit::TestHost::with_profile(yubico_name));
+    assert_eq!(card.get_ok(0x004F)[8..10], [0xFF, 0xFE]);
+    let mut own_name = DeviceProfile::own(12_345_678);
+    own_name.openpgp_manufacturer = 0x0006;
+    let mut card = Card::with_host(lk_testkit::TestHost::with_profile(own_name));
+    assert_eq!(card.get_ok(0x004F)[8..10], [0x00, 0x06]);
 }
 
 /// Cardholder related data 65 (spec §4.4.3.2) in its factory state.

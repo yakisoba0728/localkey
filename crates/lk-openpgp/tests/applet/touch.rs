@@ -78,19 +78,47 @@ fn cached_touch_lasts_15_seconds() {
     assert_eq!(card.send_touch(&sign_apdu(b"e"), true).1, 0x9000);
 }
 
-/// The cache survives SELECT and card power-off but not a power cycle (model policy).
+/// Yubico "YubiKey 5.2.3 Enhancements to OpenPGP 3.4", Touch Cache: a touch unlocks the
+/// cryptographic functions "for up to 15 seconds or until the OpenPGP session ends". Other
+/// commands within the session keep it; SELECT, deselection and every reset kind end the
+/// session and with it the cached touch.
 #[test]
-fn cached_touch_cleared_by_power_cycle() {
+fn cached_touch_ends_with_the_session() {
     let (mut card, _) = card_with_keys(0x04);
     assert_eq!(card.send_touch(&sign_apdu(b"a"), true).1, 0x9000);
-    card.app.reset(ResetKind::CardPowerOff);
-    card.select();
+    assert_eq!(card.get(0x006E).1, 0x9000);
     assert_eq!(card.verify(0x81, b"123456"), 0x9000);
     assert_eq!(card.send(&sign_apdu(b"b")).1, 0x9000);
-    card.app.reset(ResetKind::PowerCycle);
-    card.select();
-    assert_eq!(card.verify(0x81, b"123456"), 0x9000);
-    assert_eq!(card.send_touch(&sign_apdu(b"c"), true).1, 0x9000);
+    type SessionEnd = (&'static str, fn(&mut Card));
+    let ends: [SessionEnd; 5] = [
+        ("SELECT", |card| {
+            card.select();
+        }),
+        ("deselect", |card| {
+            card.app.deselect();
+            card.select();
+        }),
+        ("card power-off", |card| {
+            card.app.reset(ResetKind::CardPowerOff);
+            card.select();
+        }),
+        ("USB reset", |card| {
+            card.app.reset(ResetKind::UsbReset);
+            card.select();
+        }),
+        ("power cycle", |card| {
+            card.app.reset(ResetKind::PowerCycle);
+            card.select();
+        }),
+    ];
+    for (what, end) in ends {
+        end(&mut card);
+        assert_eq!(card.verify(0x81, b"123456"), 0x9000, "{what}");
+        assert!(matches!(card.process(&sign_apdu(b"c")), Outcome::NeedTouch { .. }), "{what}");
+        assert_eq!(split(card.app.touch_resolved(true, &mut card.host)).1, 0x9000, "{what}");
+        // Cached again within the new session.
+        assert_eq!(card.send(&sign_apdu(b"d")).1, 0x9000, "{what}");
+    }
 }
 
 /// D7 governs PSO:DECIPHER, D8 INTERNAL AUTHENTICATE and D9 GET ATTESTATION.

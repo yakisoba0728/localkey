@@ -34,7 +34,11 @@
 //!   `lk_otp::MgmtBridge` is in the `transport` module documentation.
 //! - [`MgmtApplet`] is the CCID view ([`lk_core::CardApplet`]) wrapping one
 //!   [`Management`]; `lk-device` reaches the shared state through
-//!   [`MgmtApplet::management`] / [`MgmtApplet::management_mut`].
+//!   [`MgmtApplet::management`] / [`MgmtApplet::management_mut`]. It follows the
+//!   binding APDU conventions of `docs/CONTRACTS.md` ("Applications B"): `6882` for
+//!   secure-messaging CLA bits, `6E00` for other classes (`6881` for a logical
+//!   channel), and at most Ne response bytes per APDU with `61xx` and GET RESPONSE
+//!   (`C0`) for the rest.
 //!
 //! State is persisted in [`lk_core::Record::Device`] (format in [`Management::new`]).
 //! The device identity (serial, firmware version, form factor, supported capabilities)

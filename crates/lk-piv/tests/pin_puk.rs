@@ -120,7 +120,8 @@ fn verify_header_guards_consume_no_retry() {
     assert_eq!(card.send("0020008108313233343536FFFF").1, 0x6A88, "PUK cannot be verified");
     assert_eq!(card.send("0020009E08313233343536FFFF").1, 0x6A88);
     assert_eq!(card.send("0020000108313233343536FFFF").1, 0x6A88);
-    assert_eq!(card.send("0020008008313233343536FFFF00").1, 0x6700, "explicit Le");
+    // A non-zero Le; Le 00 (yubico-piv-tool on T=1) is accepted (tests/interop.rs).
+    assert_eq!(card.send("0020008008313233343536FFFF01").1, 0x6700, "explicit Le");
     assert_eq!(card.send("0020008006313233343536").1, 0x6A80, "not 8 bytes");
     assert_eq!(card.send("0020008009313233343536FFFFFF").1, 0x6A80, "not 8 bytes");
     assert_eq!(card.pin_status(), 0x63C3);
@@ -184,7 +185,7 @@ fn change_reference_header_guards() {
     // §3.2.2: an unsupported key reference is '6A 88'.
     assert_eq!(card.cmd(0x24, 0x00, 0x00, &data, None).1, 0x6A88);
     assert_eq!(card.cmd(0x24, 0x00, 0x9B, &data, None).1, 0x6A88);
-    assert_eq!(card.cmd(0x24, 0x00, 0x80, &data, Some(0)).1, 0x6700);
+    assert_eq!(card.cmd(0x24, 0x00, 0x80, &data, Some(1)).1, 0x6700, "non-zero Le");
     assert_eq!(card.host.persist_count(), base);
     card.verify_default_pin();
 }
@@ -253,12 +254,54 @@ fn reset_retry_counter_guards() {
     // the PIV Card Application shall return the status word '6A 88'".
     assert_eq!(card.cmd(0x2C, 0x00, 0x81, &data, None).1, 0x6A88);
     assert_eq!(card.cmd(0x2C, 0x00, 0x00, &data, None).1, 0x6A88);
-    assert_eq!(card.cmd(0x2C, 0x00, 0x80, &data, Some(0)).1, 0x6700);
+    assert_eq!(card.cmd(0x2C, 0x00, 0x80, &data, Some(1)).1, 0x6700, "non-zero Le");
     assert_eq!(card.cmd(0x2C, 0x00, 0x80, &data[..15], None).1, 0x6A80);
+    assert_eq!(card.host.persist_count(), base);
+    // The PUK is compared before the new PIN's format (python yubikit blocks the PUK with
+    // FF*16, tests/interop.rs). A correct PUK with a malformed new PIN is 6A80 and
+    // changes nothing: the PIN, both counters and the record stay as they were.
+    let before = card.host.persisted(Record::Piv);
+    let mut wrong = pad(b"00000000");
+    wrong.extend_from_slice(&pad(b"135790"));
+    assert_eq!(card.cmd(0x2C, 0x00, 0x80, &wrong, None).1, 0x63C2);
+    let after_wrong = card.host.persisted(Record::Piv);
+    for new in ["3132333435FFFFFF", "FFFFFFFFFFFFFFFF", "313233343536FF37"] {
+        let mut short_pin = hex(DEFAULT_PUK);
+        short_pin.extend_from_slice(&hex(new));
+        assert_eq!(card.cmd(0x2C, 0x00, 0x80, &short_pin, None).1, 0x6A80, "{new}");
+        assert_eq!(card.host.persisted(Record::Piv), after_wrong, "{new}: PUK counter put back");
+    }
+    assert_eq!(card.metadata(0x81).0, hex("0101FF 050101 06020302"), "still one retry spent");
+    // A wrong PUK with a malformed new PIN spends a retry (63CX, not 6A80).
+    let mut wrong_and_short = pad(b"00000000");
+    wrong_and_short.extend_from_slice(&pad(b"12345"));
+    assert_eq!(card.cmd(0x2C, 0x00, 0x80, &wrong_and_short, None).1, 0x63C1);
+    assert_ne!(card.host.persisted(Record::Piv), before);
+    card.verify_default_pin();
+}
+
+#[test]
+fn reset_retry_counter_storage_failure_on_the_malformed_new_pin_path() {
+    // Persist calls after construction: the decrement, then putting the counter back. If
+    // that second save fails the card answers 6581 and keeps the durable decrement
+    // (`docs/CONTRACTS.md` retry counters: storage failure is the answer whatever the
+    // secret was).
+    let mut card = Card::new();
     let mut short_pin = hex(DEFAULT_PUK);
     short_pin.extend_from_slice(&pad(b"12345"));
-    assert_eq!(card.cmd(0x2C, 0x00, 0x80, &short_pin, None).1, 0x6A80);
+    let base = card.host.persist_count();
+    card.host.fail_next_saves(1);
+    assert_eq!(card.cmd(0x2C, 0x00, 0x80, &short_pin, None).1, 0x6581, "decrement fails");
     assert_eq!(card.host.persist_count(), base);
+    assert_eq!(card.metadata(0x81).0, hex("0101FF 050101 06020303"));
+    let inner = std::mem::replace(&mut card.host, TestHost::new());
+    let mut host = FailAt { inner, fail_at: 2, calls: 0 };
+    let resp = card.piv.process(&apdu(0x00, 0x2C, 0x00, 0x80, &short_pin, None), &mut host);
+    assert_eq!(resp, Outcome::Done(hex("6581")), "putting the counter back fails");
+    card.host = host.inner;
+    assert_eq!(card.metadata(0x81).0, hex("0101FF 050101 06020302"), "memory matches storage");
+    card.restart();
+    assert_eq!(card.metadata(0x81).0, hex("0101FF 050101 06020302"));
 }
 
 #[test]

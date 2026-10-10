@@ -11,7 +11,8 @@
 //! verified with reference 82 (spec §4.4.1; legacy profile
 //! `private_101_103_write_pin_reference = 0x82`). Read-only and undeclared tags answer
 //! `6B00` (catalog: "read-only and undeclared PUT rejection"). Length violations answer
-//! `6700`; invalid contents `6A80`.
+//! `6700`; invalid contents `6A80`. The KDF-DO F9 cannot change while the SIG, DEC or AUT
+//! slot holds a key (`6985`, Yubico's documented KDF lock; see `holds_user_key`).
 
 use lk_codec::apdu::{Command, sw};
 use lk_codec::tlv;
@@ -216,6 +217,9 @@ impl OpenPgp {
             }
             tag::RESETTING_CODE => put_resetting_code(&mut next, value)?,
             tag::KDF => {
+                if holds_user_key(&self.state) {
+                    return Err(sw::CONDITIONS);
+                }
                 put_kdf(&mut next, value)?;
                 drop_access = true;
             }
@@ -297,8 +301,24 @@ fn put_resetting_code(next: &mut State, value: &[u8]) -> Result<(), u16> {
     Ok(())
 }
 
+/// Whether the SIG, DEC or AUT slot holds a key (generated or imported).
+///
+/// Yubico ("YubiKey 5.2.3 Enhancements to OpenPGP 3.4", Key Derived Format): "Once a key
+/// has been placed on the YubiKey any changes to the KDF settings will be prevented until
+/// the OpenPGP application has been reset", and the attempt fails with "Conditions of use
+/// not satisfied" (`6985`). The attestation slot does not count: every YubiKey ships with
+/// an attestation key, the reset keeps it, and the document's `kdf-setup` flow runs on such
+/// a card. The check follows the PW3 access check and precedes the validation of the new
+/// F9 value (model policy for the order: a state condition before the data).
+fn holds_user_key(state: &State) -> bool {
+    [Slot::Sig, Slot::Dec, Slot::Aut]
+        .into_iter()
+        .any(|slot| state.slot(slot).key.is_some())
+}
+
 /// F9 (spec §4.3.2): store the KDF-DO, reset PW1/PW3 to their initial values with full
-/// counters, and remove the resetting code.
+/// counters, and remove the resetting code. Refused while a key exists (see
+/// [`holds_user_key`]).
 fn put_kdf(next: &mut State, value: &[u8]) -> Result<(), u16> {
     let kdf = Kdf::parse(value)?;
     let (pw1, pw3) = kdf.initial_references()?;

@@ -1,12 +1,12 @@
 //! Every slot/algorithm variant of the algorithm information FA (spec §4.4.3.13; the 43
 //! entries of `reference/yubikey-5c-nano-5.7.4/openpgp-reference-observation.json`),
 //! driven by the bytes the applet returns for GET DATA FA:
-//! - the 23 variants lk-crypto implements are imported (spec §4.4.3.12) and, except RSA
+//! - the 39 variants lk-crypto implements are imported (spec §4.4.3.12) and, except RSA
 //!   3072/4096 (same code path, generated once each in `generation.rs` because they take
 //!   seconds in debug builds), generated (spec §7.2.14); each key then performs its slot's
 //!   operation and the result is verified test-side with lk-crypto: SIG PSO:CDS, DEC
 //!   PSO:DECIPHER, AUT INTERNAL AUTHENTICATE, ATT signing an attestation certificate;
-//! - the 20 variants on P-521, secp256k1 and the brainpool curves answer `6A81`.
+//! - the 4 brainpoolP512r1 variants answer `6A81` (no lk-crypto arithmetic for it).
 
 use lk_codec::tlv;
 use lk_crypto::{Curve, EcPrivateKey, Ed25519Key, RsaPrivateKey, X25519Key, ecdsa_verify_prehash, ed25519_verify};
@@ -31,6 +31,10 @@ fn kind(attributes: &[u8]) -> Kind {
         _ => match &attributes[1..] {
             [0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07] => Kind::Ec(Curve::P256),
             [0x2b, 0x81, 0x04, 0x00, 0x22] => Kind::Ec(Curve::P384),
+            [0x2b, 0x81, 0x04, 0x00, 0x23] => Kind::Ec(Curve::P521),
+            [0x2b, 0x81, 0x04, 0x00, 0x0a] => Kind::Ec(Curve::Secp256k1),
+            [0x2b, 0x24, 0x03, 0x03, 0x02, 0x08, 0x01, 0x01, 0x07] => Kind::Ec(Curve::BrainpoolP256r1),
+            [0x2b, 0x24, 0x03, 0x03, 0x02, 0x08, 0x01, 0x01, 0x0b] => Kind::Ec(Curve::BrainpoolP384r1),
             [0x2b, 0x06, 0x01, 0x04, 0x01, 0xda, 0x47, 0x0f, 0x01] => Kind::Ed25519,
             [0x2b, 0x06, 0x01, 0x04, 0x01, 0x97, 0x55, 0x01, 0x05, 0x01] => Kind::X25519,
             _ => Kind::Unsupported,
@@ -73,14 +77,18 @@ fn exercise(card: &mut Card, tag: u16, kind: Kind, public: &Public, seed: u64) {
         (0x00C1 | 0x00C3, _) => {
             let pin_mode = if tag == 0x00C1 { 0x81 } else { 0x82 };
             assert_eq!(card.verify(pin_mode, b"123456"), 0x9000);
+            // ECDSA input is the digest conventionally paired with the curve: SHA-256 for
+            // the 256-bit curves, SHA-384 for the 384-bit ones, SHA-512 for P-521.
             let input = match kind {
                 Kind::Rsa(_) => digest_info_sha256(b"variant"),
-                Kind::Ec(Curve::P256) => lk_crypto::sha256(b"variant").to_vec(),
-                Kind::Ec(Curve::P384) => lk_crypto::sha384(b"variant").to_vec(),
+                Kind::Ec(curve) => lk_crypto::digest(curve.nonce_hash(), b"variant"),
                 _ => b"variant".to_vec(),
             };
             let (signature, sw) = if tag == 0x00C1 { card.sign(&input) } else { card.authenticate(&input) };
             assert_eq!(sw, 0x9000, "{tag:04X} {kind:?}");
+            if let Kind::Ec(curve) = kind {
+                assert_eq!(signature.len(), 2 * curve.field_len(), "{tag:04X} {kind:?}");
+            }
             let valid = match (kind, public) {
                 (Kind::Rsa(_), Public::Rsa { n, e }) => rsa_verify(n, e, &input, &signature),
                 (Kind::Ec(curve), Public::Point(point)) => ecdsa_verify_prehash(curve, point, &input, &signature),
@@ -133,10 +141,11 @@ fn exercise(card: &mut Card, tag: u16, kind: Kind, public: &Public, seed: u64) {
     }
 }
 
-/// Catalog OpenPGP_algorithms: "all 43 variants generated and imported" (23 here; the 20
-/// on curves lk-crypto lacks are deferred and answer 6A81) and "independent RSA/ECDSA/
+/// Catalog OpenPGP_algorithms: "all 43 variants generated and imported" (39 here; the 4
+/// brainpoolP512r1 variants are deferred and answer 6A81) and "independent RSA/ECDSA/
 /// Ed25519 signatures, PKCS1 decryption, ECDH/X25519 secret comparison and ten attestation
-/// issuers" (five issuer variants here).
+/// issuers" (nine issuer variants here: RSA 2048/3072/4096, P-256, P-384, P-521,
+/// secp256k1, brainpoolP256r1 and brainpoolP384r1).
 #[test]
 fn every_advertised_variant() {
     let mut card = Card::new();
@@ -183,5 +192,5 @@ fn every_advertised_variant() {
         assert_ne!(generated, public);
         exercise(&mut card, tag, kind, &generated, seed + 500);
     }
-    assert_eq!((supported, unsupported), (23, 20));
+    assert_eq!((supported, unsupported), (39, 4));
 }

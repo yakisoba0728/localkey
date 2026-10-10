@@ -10,9 +10,21 @@
 //! | `A1` | one credential (constructed, repeated) |
 //!
 //! Inside `A1`: `80` label, `81` algorithm, `82` touch (`00`/`01`), `83` password tries
-//! left (1–8), `84` credential password (16), `85` K-ENC (16), `86` K-MAC (16), `87`
+//! left (0–8), `84` credential password (16), `85` K-ENC (16), `86` K-MAC (16), `87`
 //! P-256 private scalar (32). Unknown tags are skipped at both levels. Anything else
 //! that does not validate makes the whole record unreadable, which means factory state.
+//!
+//! A credential stored with zero tries left is loaded as deleted. The applet spends a
+//! try and persists it *before* comparing the password (`docs/CONTRACTS.md` "Retry
+//! counters"), so spending the last try writes a zero that stands until the deletion
+//! (wrong password) or the return to eight tries (right password) is stored too; a
+//! power loss or a failed save in between leaves it in the record. A credential with
+//! no tries left is deleted (YESDK YubiHSM Auth overview: "a limit of 8 retries, after
+//! which the credential will be permanently deleted"; catalog "credential deleted on
+//! eighth wrong password ... label recoverable after restart"), so the loader finishes
+//! that deletion instead of rejecting the record: rejecting it would turn one
+//! interrupted try into a factory reset that drops every other credential and puts
+//! the management key back to the default.
 
 use lk_codec::tlv;
 use lk_crypto::{Curve, EcPrivateKey};
@@ -83,7 +95,9 @@ pub(crate) struct Credential {
     pub(crate) key: Key,
     pub(crate) touch: bool,
     pub(crate) password: [u8; CREDENTIAL_PASSWORD_LEN],
-    /// Password tries left, 1..=8 (a credential reaching 0 is deleted).
+    /// Password tries left, 0..=8. Zero exists only between spending the last try and
+    /// storing the deletion or the restored count; such a credential is deleted at the
+    /// next opportunity (`HsmAuth::settle`) and is dropped when the record is loaded.
     pub(crate) retries: u8,
 }
 
@@ -173,6 +187,10 @@ impl State {
         let mut credentials: Vec<Credential> = Vec::new();
         for item in items.iter().filter(|i| i.tag == field::CREDENTIAL) {
             let cred = parse_credential(item.value)?;
+            if cred.retries == 0 {
+                // An interrupted deletion (module docs): the credential is gone.
+                continue;
+            }
             if credentials.len() >= MAX_CREDENTIALS || credentials.iter().any(|c| c.label == cred.label) {
                 return None;
             }
@@ -195,7 +213,7 @@ fn parse_credential(value: &[u8]) -> Option<Credential> {
         _ => return None,
     };
     let retries = byte(single(&items, field::RETRIES)?)?;
-    if !(1..=RETRIES).contains(&retries) {
+    if retries > RETRIES {
         return None;
     }
     let password = fixed::<CREDENTIAL_PASSWORD_LEN>(single(&items, field::PASSWORD)?)?;
@@ -298,12 +316,39 @@ mod tests {
             c.label = b"sym".to_vec();
         }
         assert!(State::deserialize(&state.serialize()).is_none());
-        // Credential with zero tries left cannot exist.
+        // More tries than the maximum.
+        let mut state = sample();
+        if let Some(c) = state.credentials.get_mut(0) {
+            c.retries = RETRIES + 1;
+        }
+        assert!(State::deserialize(&state.serialize()).is_none());
+    }
+
+    /// A credential stored with zero tries left (an interrupted spend of the last try,
+    /// module docs) loads as deleted; the rest of the record, including the management
+    /// key and the other credentials, loads unchanged. Before the review fix the whole
+    /// record was rejected, which meant factory state.
+    #[test]
+    fn zero_tries_credential_loads_as_deleted() {
         let mut state = sample();
         if let Some(c) = state.credentials.get_mut(0) {
             c.retries = 0;
         }
-        assert!(State::deserialize(&state.serialize()).is_none());
+        let loaded = State::deserialize(&state.serialize()).expect("record stays readable");
+        assert_eq!(loaded.management_key, [0x11; 16]);
+        assert_eq!(loaded.management_retries, 5);
+        let labels: Vec<&[u8]> = loaded.credentials.iter().map(|c| c.label.as_slice()).collect();
+        assert_eq!(labels, vec!["\u{e9}c".as_bytes()]);
+        // Its label no longer counts against duplicates or capacity.
+        let mut state = sample();
+        if let Some(c) = state.credentials.get_mut(0) {
+            c.retries = 0;
+        }
+        let mut again = state.credentials[0].clone();
+        again.retries = 3;
+        state.credentials.push(again);
+        let loaded = State::deserialize(&state.serialize()).expect("readable");
+        assert_eq!(loaded.find(b"sym").map(|i| loaded.credentials[i].retries), Some(3));
     }
 
     #[test]

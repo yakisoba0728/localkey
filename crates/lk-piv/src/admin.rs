@@ -7,7 +7,7 @@
 use lk_codec::apdu::{Command, sw};
 use lk_codec::tlv;
 use lk_core::Host;
-use lk_crypto::{aes_ecb_encrypt_block, ct_eq, tdes_ecb_encrypt_block};
+use lk_crypto::{SecretBytes, aes_ecb_encrypt_block, ct_eq, tdes_ecb_encrypt_block};
 
 use crate::asym::slot_metadata;
 use crate::keys::Operation;
@@ -19,6 +19,10 @@ use crate::{Piv, Reply, Step, explicit_le};
 
 /// Key reference of the card management key (SP 800-73-4 Part 1 Table 4).
 pub(crate) const KEY_MGMT: u8 = 0x9B;
+/// Key references of the primary and secondary finger on-card biometric comparison
+/// (SP 800-73-4 Part 1 Table 4); not held by this card.
+const KEY_OCC_PRIMARY: u8 = 0x96;
+const KEY_OCC_SECONDARY: u8 = 0x97;
 
 /// Dynamic Authentication Template and its elements (SP 800-73-4 Part 2 Table 7).
 const TAG_DYN_AUTH: u32 = 0x7C;
@@ -46,7 +50,8 @@ const P2_TOUCH: u8 = 0xFE;
 #[derive(Clone, PartialEq, Eq)]
 pub(crate) enum Challenge {
     /// Mutual authentication: the card sent `E(K, witness)` and expects `witness` back.
-    Mutual { witness: Vec<u8> },
+    /// The witness proves knowledge of the key, so it is wiped when dropped.
+    Mutual { witness: SecretBytes },
     /// External authentication: the card sent `challenge` and expects `E(K, challenge)`.
     External { challenge: Vec<u8> },
 }
@@ -138,7 +143,7 @@ impl Piv {
         let shape: Vec<(u32, usize)> = items.iter().map(|t| (t.tag, t.value.len())).collect();
         match shape.as_slice() {
             [(TAG_WITNESS, 0)] => {
-                let mut witness = vec![0; block];
+                let mut witness = SecretBytes::zeroed(block);
                 host.fill(&mut witness);
                 let encrypted = encrypt_block(&self.state.mgmt, &witness)?;
                 self.session.challenge = Some(Challenge::Mutual { witness });
@@ -224,7 +229,9 @@ impl Piv {
         let (&alg, rest) = cmd.data.split_first().ok_or(sw::INCORRECT_DATA)?;
         let alg = MgmtAlg::from_byte(alg).ok_or(sw::INCORRECT_DATA)?;
         let key = match tlv::parse_all(rest).map_err(|_| sw::INCORRECT_DATA)?.as_slice() {
-            [key] if key.tag == u32::from(KEY_MGMT) && key.value.len() == alg.key_len() => key.value.to_vec(),
+            [key] if key.tag == u32::from(KEY_MGMT) && key.value.len() == alg.key_len() => {
+                SecretBytes::from_slice(key.value)
+            }
             _ => return Err(sw::INCORRECT_DATA),
         };
         self.modify(host, |s| s.mgmt = MgmtKey { alg, key, touch })?;
@@ -300,6 +307,10 @@ impl Piv {
     ///   is not documented (model policy).
     /// - Key slots: `01` algorithm, `02` PIN and touch policy, `03` origin, `04` public key
     ///   (`asym::slot_metadata`); `6A88` while empty.
+    /// - The on-card biometric comparison references `96` and `97` (SP 800-73-4 Part 1
+    ///   Table 4), which only a YubiKey Bio holds: `6A88`. python yubikit's
+    ///   `get_bio_metadata()` (called by `ykman piv info` and by `PivSession.reset()`)
+    ///   treats only `6A88` and `6D00` as "no biometrics" and fails on anything else.
     /// - Anything else: `6A86`.
     pub(crate) fn get_metadata(&self, cmd: &Command) -> Reply {
         if cmd.p1 != 0 {
@@ -309,6 +320,7 @@ impl Piv {
             KEY_PIN => Ok(credential_metadata(&self.state.pin, &DEFAULT_PIN)),
             KEY_PUK => Ok(credential_metadata(&self.state.puk, &DEFAULT_PUK)),
             KEY_MGMT => Ok(management_metadata(&self.state)),
+            KEY_OCC_PRIMARY | KEY_OCC_SECONDARY => Err(sw::REF_NOT_FOUND),
             slot if is_key_slot(slot) => self.state.slots.get(&slot).map(slot_metadata).ok_or(sw::REF_NOT_FOUND),
             _ => Err(sw::INCORRECT_P1P2),
         }

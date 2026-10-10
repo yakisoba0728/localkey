@@ -900,7 +900,7 @@ impl Otp {
         }
         match config.mode() {
             Mode::YubicoOtp | Mode::StaticTicket => {
-                if config.cfg_flags & cfg::SEND_REF != 0 {
+                if sends_reference(&config) {
                     for nibble in 0..16 {
                         typist.modhex_nibble(nibble);
                     }
@@ -964,6 +964,19 @@ enum Body {
     Modhex(Vec<u8>),
     Digits(u32, u32),
     None,
+}
+
+/// Whether the keyboard output starts with the modhex reference string `0..F`
+/// (`CFGFLAG_SEND_REF`, "send reference string (0..F) before data"). In static-ticket
+/// mode `SEND_REF` together with `CFGFLAG_STRONG_PW2` is the "special character" option
+/// of the strong password policy (yubikit `StaticTicketSlotConfiguration.strong_password`
+/// sets `SEND_REF` only as `special`, and only with `STRONG_PW2`), not a reference
+/// string, so nothing extra is typed then. (The strong-password transforms themselves
+/// are not modelled; see `docs/catalog/otp.md`.)
+fn sends_reference(config: &SlotConfig) -> bool {
+    let strong_special = config.mode() == Mode::StaticTicket
+        && config.cfg_flags & cfg::STRONG_PW2 != 0;
+    config.cfg_flags & cfg::SEND_REF != 0 && !strong_special
 }
 
 /// Split a payload into the configuration and the current access code.

@@ -5,7 +5,7 @@
 
 use lk_codec::cbor::{MapBuilder, Value};
 use lk_core::{Host, Outcome};
-use lk_crypto::sha256;
+use lk_crypto::{SecretBytes, sha256};
 
 use crate::client_pin::permission;
 use crate::credential::{Alg, CredSecret};
@@ -14,7 +14,7 @@ use crate::request::{
     CtapResult, PUBLIC_KEY, Params, array, boolean, bytes, descriptor_ids, integer, map,
     optional_text, options, required, text, text_key, unsigned,
 };
-use crate::state::Resident;
+use crate::state::{LARGE_BLOB_KEY_LEN, Resident};
 use crate::{Authenticator, Pending, ensure_keys, ok, status};
 
 /// authenticatorData flags (WebAuthn L2 §6.1).
@@ -23,8 +23,9 @@ pub(crate) const FLAG_UV: u8 = 0x04;
 pub(crate) const FLAG_AT: u8 = 0x40;
 pub(crate) const FLAG_ED: u8 = 0x80;
 
-/// Longest stored user name / display name: WebAuthn L2 §6.4.1 lets authenticators
-/// truncate these strings to 64 bytes.
+/// Longest stored RP name, user name and display name: authenticators may truncate a
+/// `name` member (WebAuthn L2 §5.4.1, `PublicKeyCredentialEntity`, so also `rp.name`) and
+/// `displayName` (§5.4.3) to 64 bytes; truncation keeps whole characters (§6.4.1).
 pub(crate) const MAX_STORED_NAME: usize = 64;
 
 /// Extension inputs of makeCredential (CTAP 2.1 §12).
@@ -32,8 +33,8 @@ pub(crate) const MAX_STORED_NAME: usize = 64;
 struct Extensions {
     /// credProtect level when a supported level (1..=3) was requested (§12.1).
     cred_protect: Option<u8>,
-    /// credBlob input (§12.2).
-    cred_blob: Option<Vec<u8>>,
+    /// credBlob input (§12.2), secret ("additional, secret information", §6.10).
+    cred_blob: Option<SecretBytes>,
     /// largeBlobKey input (§12.3).
     large_blob_key: Option<bool>,
     /// `"hmac-secret": true` (§12.5).
@@ -56,7 +57,7 @@ fn extensions(value: Option<&Value>) -> CtapResult<Extensions> {
                 let level = unsigned(v)?;
                 ext.cred_protect = u8::try_from(level).ok().filter(|l| (1..=3).contains(l));
             }
-            Some("credBlob") => ext.cred_blob = Some(bytes(v)?.to_vec()),
+            Some("credBlob") => ext.cred_blob = Some(SecretBytes::from_slice(bytes(v)?)),
             Some("largeBlobKey") => ext.large_blob_key = Some(boolean(v)?),
             Some("hmac-secret") => ext.hmac_secret = boolean(v)?,
             Some("minPinLength") => ext.min_pin_length = boolean(v)?,
@@ -71,6 +72,8 @@ fn extensions(value: Option<&Value>) -> CtapResult<Extensions> {
 pub(crate) struct Plan {
     client_data_hash: Vec<u8>,
     rp_id: String,
+    /// `rp.name`, stored with a discoverable credential for enumerateRPs (§6.8.3).
+    rp_name: Option<String>,
     rp_id_hash: [u8; 32],
     user_id: Vec<u8>,
     user_name: Option<String>,
@@ -118,7 +121,7 @@ impl Authenticator {
         let client_data_hash = bytes(required(p.get(0x01))?)?.to_vec();
         let rp = map(required(p.get(0x02))?)?;
         let rp_id = text(required(text_key(rp, "id"))?)?.to_owned();
-        optional_text(rp, "name")?;
+        let rp_name = optional_text(rp, "name")?;
         let user = map(required(p.get(0x03))?)?;
         let user_id = bytes(required(text_key(user, "id"))?)?.to_vec();
         let user_name = optional_text(user, "name")?;
@@ -221,6 +224,7 @@ impl Authenticator {
         let plan = Plan {
             client_data_hash,
             rp_id,
+            rp_name: truncate(rp_name.filter(|n| !n.is_empty()), MAX_STORED_NAME),
             rp_id_hash,
             user_id,
             user_name: truncate(user_name, MAX_STORED_NAME),
@@ -248,7 +252,7 @@ impl Authenticator {
     fn create_credential(&mut self, plan: Plan, host: &mut dyn Host) -> CtapResult<Vec<u8>> {
         let mut next = self.state.clone();
         let keys_changed = ensure_keys(&mut next, host)?;
-        let secret = next.secret.ok_or(status::OTHER)?;
+        let secret = next.secret.clone().ok_or(status::OTHER)?;
 
         // §12.1: level 1 (userVerificationOptional) is the default.
         let cred_protect = plan.ext.cred_protect.unwrap_or(1);
@@ -282,7 +286,7 @@ impl Authenticator {
         }
         // §12.3: 32 random bytes kept with the discoverable credential.
         let large_blob_key = plan.ext.large_blob_key.map(|_| {
-            let mut key = [0u8; 32];
+            let mut key = SecretBytes::zeroed(LARGE_BLOB_KEY_LEN);
             host.fill(&mut key);
             key
         });
@@ -297,12 +301,13 @@ impl Authenticator {
             next.residents.push(Resident {
                 id: id.clone(),
                 rp_id: plan.rp_id.clone(),
+                rp_name: plan.rp_name.clone(),
                 rp_id_hash: plan.rp_id_hash,
                 user_id: plan.user_id.clone(),
                 user_name: plan.user_name.clone(),
                 display_name: plan.display_name.clone(),
                 cred_blob: stored_blob,
-                large_blob_key,
+                large_blob_key: large_blob_key.clone(),
                 cred_protect,
             });
         }

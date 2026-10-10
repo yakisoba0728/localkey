@@ -546,16 +546,22 @@ fn get_next_assertion_returns_every_discoverable_credential() {
 }
 
 /// CTAP 2.1 §11.2.9.2.2 CTAPHID_LOCK ("As long as the lock is active, any other channel
-/// trying to send a message will fail"): other channels get ERR_LOCK_REQUIRED (lk-ctaphid
-/// framer check order, step 3, model policy) until the lock expires — a device deadline
-/// the program's timer loop reaches — or is released with a zero lock time.
+/// trying to send a message will fail"): other channels get ERR_CHANNEL_BUSY (`0x06`,
+/// §11.2.9.1.6 "The client SHOULD retry the request after a short delay"; lk-ctaphid
+/// framer check order, step 3: ERR_LOCK_REQUIRED means "Command requires channel lock",
+/// and Chromium and python-fido2 retry only CHANNEL_BUSY) until the lock expires — a
+/// device deadline the program's timer loop reaches — or is released with a zero lock
+/// time.
 #[test]
 fn ctaphid_lock_reserves_the_device_until_it_expires() {
     let mut rig = Rig::new();
     let first = rig.ctaphid_init();
     let second = rig.ctaphid_init();
     assert_eq!(rig.ctaphid(first, 0x04, &[2]), (0x04, vec![]));
-    assert_eq!(rig.ctaphid(second, CTAPHID_PING, b"p"), (CTAPHID_ERROR, vec![0x0A]));
+    assert_eq!(rig.ctaphid(second, CTAPHID_PING, b"p"), (CTAPHID_ERROR, vec![0x06]));
+    let probe = Rig::ctaphid_packets(BROADCAST, CTAPHID_INIT, &[9; 8]);
+    let refused = parse_fido(&rig.input(lk_device::Input::FidoReport(&probe[0])));
+    assert_eq!(refused, vec![(CTAPHID_ERROR, vec![0x06])], "a new client's broadcast INIT is busy too");
     assert_eq!(rig.ctaphid(first, CTAPHID_PING, b"p"), (CTAPHID_PING, b"p".to_vec()), "the owner works");
     let start = rig.now;
     assert_eq!(rig.dev.next_deadline(), Some(start + 2_000), "the lock expiry is a deadline");
@@ -563,7 +569,7 @@ fn ctaphid_lock_reserves_the_device_until_it_expires() {
     assert_eq!(rig.ctaphid(second, CTAPHID_PING, b"p"), (CTAPHID_PING, b"p".to_vec()));
 
     assert_eq!(rig.ctaphid(second, 0x04, &[10]), (0x04, vec![]));
-    assert_eq!(rig.ctaphid(first, CTAPHID_PING, b"p"), (CTAPHID_ERROR, vec![0x0A]));
+    assert_eq!(rig.ctaphid(first, CTAPHID_PING, b"p"), (CTAPHID_ERROR, vec![0x06]));
     assert_eq!(rig.ctaphid(second, 0x04, &[0]), (0x04, vec![]), "release");
     assert_eq!(rig.ctaphid(first, CTAPHID_PING, b"p"), (CTAPHID_PING, b"p".to_vec()));
 }

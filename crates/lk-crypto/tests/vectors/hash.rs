@@ -7,7 +7,7 @@
 //! values (e.g. di-mgt.com.au SHA test vectors), cross-checked with an independent
 //! implementation (Python hashlib).
 
-use lk_crypto::{HashAlg, digest, sha1, sha256, sha384, sha512};
+use lk_crypto::{HashAlg, Hasher, digest, sha1, sha256, sha384, sha512};
 
 use crate::common::hex;
 
@@ -116,4 +116,76 @@ fn empty_message() {
         hex("cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce
              47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e")
     );
+}
+
+const ALGS: [HashAlg; 4] = [HashAlg::Sha1, HashAlg::Sha256, HashAlg::Sha384, HashAlg::Sha512];
+
+#[test]
+fn hasher_million_a_examples() {
+    // FIPS 180-2 Appendices A.3, B.3, C.3 and D.3: one million repetitions of "a", fed in
+    // 1000-byte pieces so the result depends on the incremental state.
+    let piece = [b'a'; 1000];
+    for (alg, expected) in [
+        (HashAlg::Sha1, "34aa973c d4c4daa4 f61eeb2b dbad2731 6534016f"),
+        (HashAlg::Sha256, "cdc76e5c 9914fb92 81a1c7e2 84d73e67 f1809a48 a497200e 046d39cc c7112cd0"),
+        (
+            HashAlg::Sha384,
+            "9d0e1809716474cb 086e834e310a4a1c ed149e9c00f24852 7972cec5704c2a5b
+             07b8b3dc38ecc4eb ae97ddd87f3d8985",
+        ),
+        (
+            HashAlg::Sha512,
+            "e718483d0ce76964 4e2e42c7bc15b463 8e1f98b13b204428 5632a803afa973eb
+             de0ff244877ea60a 4cb0432ce577c31b eb009c5c2c49aa2e 4eadb217ad8cc09b",
+        ),
+    ] {
+        let mut hasher = Hasher::new(alg);
+        for _ in 0..1000 {
+            hasher.update(&piece);
+        }
+        assert_eq!(hasher.finalize(), hex(expected), "{alg:?}");
+    }
+}
+
+#[test]
+fn hasher_matches_the_one_shot_digest_for_any_split() {
+    // Every split point of the published messages, including empty updates.
+    for alg in ALGS {
+        for message in [ABC, MSG_448, MSG_896, b"".as_slice()] {
+            let expected = digest(alg, message);
+            for cut in 0..=message.len() {
+                let mut hasher = Hasher::new(alg);
+                hasher.update(&message[..cut]);
+                hasher.update(&[]);
+                hasher.update(&message[cut..]);
+                assert_eq!(hasher.finalize(), expected, "{alg:?} cut {cut}");
+            }
+            // Byte by byte.
+            let mut hasher = Hasher::new(alg);
+            for byte in message {
+                hasher.update(std::slice::from_ref(byte));
+            }
+            let out = hasher.finalize();
+            assert_eq!(out, expected, "{alg:?} bytewise");
+            assert_eq!(out.len(), alg.output_len());
+        }
+    }
+}
+
+#[test]
+fn hasher_without_input_is_the_empty_digest_and_clones_independently() {
+    for alg in ALGS {
+        let hasher = Hasher::new(alg);
+        assert_eq!(hasher.alg(), alg);
+        assert_eq!(hasher.clone().finalize(), digest(alg, b""), "{alg:?}");
+        // A clone continues from the same state without affecting the original.
+        let mut first = Hasher::new(alg);
+        first.update(b"ab");
+        let mut second = first.clone();
+        second.update(b"c");
+        first.update(b"x");
+        assert_eq!(second.finalize(), digest(alg, ABC), "{alg:?}");
+        assert_eq!(first.finalize(), digest(alg, b"abx"), "{alg:?}");
+        assert_eq!(format!("{:?}", Hasher::new(alg)), format!("Hasher {{ alg: {alg:?}, .. }}"));
+    }
 }

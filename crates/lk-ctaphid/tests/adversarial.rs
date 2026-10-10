@@ -60,7 +60,7 @@ fn rejected_broadcast_init_allocates_no_channel() {
     assert_eq!(dev.report(3, &init_packet(a, LOCK, 1, &[2])).len(), 1);
     assert_eq!(
         dev.report(3, &broadcast_init),
-        error_events(BROADCAST, ERR_LOCK_REQUIRED)
+        error_events(BROADCAST, ERR_CHANNEL_BUSY)
     );
     // Once free, the next identifier follows the first one directly.
     assert_eq!(allocate(&mut dev, 3 + 2000), a + 1);
@@ -168,10 +168,11 @@ fn sequence_errors_at_the_far_end_of_a_maximum_message() {
 }
 
 #[test]
-fn lock_lapsing_during_the_holders_request_turns_lock_required_into_busy() {
+fn lock_lapsing_during_the_holders_request_keeps_others_busy_until_the_answer() {
     // CTAP 2.1 §11.2.9.2.2 (lock time up to 10 s) and §11.2.5.1 (busy until the
-    // response). After the lock lapses via tick(), other channels see CHANNEL_BUSY
-    // until the holder's outstanding request is answered.
+    // response). Other channels see CHANNEL_BUSY while the lock holds, still after it
+    // lapses via tick() while the holder's request is outstanding, and are served once
+    // that request is answered.
     let mut dev = device();
     let a = allocate(&mut dev, 0);
     let b = allocate(&mut dev, 0);
@@ -179,7 +180,7 @@ fn lock_lapsing_during_the_holders_request_turns_lock_required_into_busy() {
     start_cbor(&mut dev, 10, a, &[0x01]);
     assert_eq!(
         dev.report(999, &init_packet(b, PING, 0, &[])),
-        error_events(b, ERR_LOCK_REQUIRED)
+        error_events(b, ERR_CHANNEL_BUSY)
     );
     assert_eq!(dev.next_deadline(), Some(1000));
     assert_eq!(dev.tick(1000), vec![], "lock expiry sends nothing");
@@ -212,7 +213,7 @@ fn tick_before_the_deadline_changes_nothing() {
     }
     assert_eq!(
         dev.report(9_999, &init_packet(b, PING, 0, &[])),
-        error_events(b, ERR_LOCK_REQUIRED)
+        error_events(b, ERR_CHANNEL_BUSY)
     );
     assert_eq!(dev.tick(10_000), vec![]);
     assert_eq!(dev.next_deadline(), None);

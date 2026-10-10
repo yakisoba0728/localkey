@@ -8,6 +8,9 @@
 //! | `63Cx` | wrong management key or credential password, `x` tries left |
 //! | `6581` | the state could not be stored; nothing changed |
 //! | `6700` | malformed APDU; RESET with data or an explicit Le |
+//! | `6881` | CLA names a logical channel (ISO/IEC 7816-4 §5.1.1; ykhsmauth `SW_LOGICAL_CHANNEL_NOT_SUPPORTED`) |
+//! | `6882` | CLA carries secure-messaging bits: the device's secure channel clears them after unwrapping, so such a command was never verified (`docs/CONTRACTS.md` "APDU conventions"; ykhsmauth `SW_SECURE_MESSAGING_NOT_SUPPORTED`) |
+//! | `6883` | the header changed in the middle of a command chain |
 //! | `6982` | a touch-required CALCULATE was not touched (ykman "not touched"; ykhsmauth touch error; YESDK `RetryWithTouch`) |
 //! | `6983` | PUT with an existing label; GET PUBLIC KEY of a symmetric credential (ykman; YESDK "label conflict" / "invalid entry") |
 //! | `6984` | card cryptogram or receipt does not verify, or the context does not carry the outstanding ephemeral key (YESDK maps `ReferenceDataUnusable` `6984` to "invalid authentication data"; ykhsmauth `SW_DATA_INVALID`; the exact triggers are a model decision) |
@@ -17,7 +20,7 @@
 //! | `6A84` | all 32 credential slots are in use |
 //! | `6A86` | RESET without `P1 P2 = DE AD` |
 //! | `6D00` | unknown instruction (including 5.8's CHANGE CREDENTIAL PASSWORD) |
-//! | `6E00` | unsupported class |
+//! | `6E00` | class outside the first interindustry range (`20`–`FF`) |
 
 use core::fmt;
 
@@ -34,10 +37,12 @@ use crate::{
     TOUCH_TIMEOUT_MS, alg, ins, tag,
 };
 
-/// CLA bits this application accepts: the chaining bit (ISO/IEC 7816-4 §5.1.1.1) and
-/// the secure messaging indication (§5.1.1), which the device's secure channel has
-/// already processed. Logical channels and other classes are `6E00`.
-const CLA_ALLOWED_BITS: u8 = 0x10 | 0x0C;
+/// CLA command-chaining bit (ISO/IEC 7816-4 §5.1.1.1).
+const CLA_CHAIN: u8 = 0x10;
+/// CLA secure-messaging indication of the first interindustry class (§5.1.1).
+const CLA_SM: u8 = 0x0C;
+/// CLA logical channel number of the first interindustry class (§5.1.1).
+const CLA_CHANNEL: u8 = 0x03;
 /// Response data per APDU for short commands (ISO/IEC 7816-4 §5.1: Ne at most 256).
 const SHORT_MAX_NE: usize = 256;
 /// Response data per APDU for extended commands without a smaller Le.
@@ -73,6 +78,9 @@ enum Reply {
 struct PendingTouch {
     /// S-ENC || S-MAC || S-RMAC.
     keys: Vec<u8>,
+    /// Ne of the CALCULATE (see [`max_response`]); the keys go out in pieces of at
+    /// most this size, the rest through GET RESPONSE.
+    max: usize,
     /// Label of the credential whose password tries go back to eight on touch, with
     /// the try count before this attempt (restored when the touch does not come).
     restore: Option<(Vec<u8>, u8)>,
@@ -151,11 +159,31 @@ impl HsmAuth {
         }
     }
 
-    /// Put back the try of an abandoned touch-required CALCULATE. If the store fails,
-    /// the try stays spent (the conservative side) and nothing else changes.
+    /// Finish what an earlier command could not store, before the next command runs:
+    ///
+    /// 1. Put back the try of an abandoned touch-required CALCULATE. If the store
+    ///    fails, the try stays spent (the conservative side).
+    /// 2. Delete every credential left at zero tries: one whose eighth wrong password
+    ///    was counted but whose deletion could not be stored, or one whose last try was
+    ///    spent before a correct password and could not be given back. A credential
+    ///    with no tries left is deleted (YESDK YubiHSM Auth overview; `state` module
+    ///    docs), and the loader drops it the same way, so the in-memory state matches
+    ///    what a restart would load. If the store fails, it stays at zero and every
+    ///    password attempt on it finishes the deletion ([`Self::check_password`]).
     fn settle(&mut self, host: &mut dyn Host) {
         if let Some((label, before)) = self.unsettled.take() {
             let _ = self.restore_tries(&label, before, host);
+        }
+        if self.state.credentials.iter().any(|c| c.retries == 0) {
+            let mut next = self.state.clone();
+            next.credentials.retain(|c| c.retries > 0);
+            let gone: Vec<Vec<u8>> =
+                self.state.credentials.iter().filter(|c| c.retries == 0).map(|c| c.label.clone()).collect();
+            if self.commit(next, host).is_ok() {
+                for label in gone {
+                    self.forget_challenge(&label);
+                }
+            }
         }
     }
 
@@ -225,8 +253,11 @@ impl HsmAuth {
     /// `GetAes128SessionKeysCommand`: "Supplying the correct password before the
     /// credential is deleted will reset the retry counter to 8"), or to the previous
     /// count when a touch-required CALCULATE is not touched ("the credential password
-    /// retry count is not changed"). A session reset while waiting for that touch keeps
-    /// the try spent: the conservative side.
+    /// retry count is not changed"). A touch abandoned by a reset, a deselect or another
+    /// command gets its try back at the next command (`unsettled`, [`Self::settle`]);
+    /// only if that save fails, or power is lost first, does the try stay spent (the
+    /// conservative side). Spending the last try therefore persists a credential with
+    /// zero tries; the loader and [`Self::settle`] treat it as deleted.
     fn check_password(
         &mut self,
         index: usize,
@@ -237,7 +268,8 @@ impl HsmAuth {
         let label = cred.label.clone();
         let tries = cred.retries;
         if tries == 0 {
-            // Left at zero by an interrupted deletion: finish it.
+            // Left at zero by a deletion or a restore that could not be stored (see
+            // `settle`): finish the deletion, without comparing anything.
             self.delete_blocked(&label, host)?;
             return Err(sw::retries(0));
         }
@@ -285,7 +317,7 @@ impl HsmAuth {
         match cmd.ins {
             ins::PUT => self.put(data, host),
             ins::DELETE => self.delete(data, host),
-            ins::CALCULATE => self.calculate(data, host),
+            ins::CALCULATE => self.calculate(data, max_response(cmd), host),
             ins::GET_CHALLENGE => self.get_challenge(data, host),
             ins::LIST => Ok(Reply::Data(self.list())),
             ins::RESET => self.reset_application(cmd, host),
@@ -418,7 +450,7 @@ impl HsmAuth {
     ///   above succeed; GET CHALLENGE never waits for touch (catalog
     ///   `hsmauth_symmetric_challenge_touch`). The return to eight tries is committed
     ///   only when the touch arrives (see [`PendingTouch`]).
-    fn calculate(&mut self, data: &[u8], host: &mut dyn Host) -> Result<Reply, u16> {
+    fn calculate(&mut self, data: &[u8], max: usize, host: &mut dyn Host) -> Result<Reply, u16> {
         let fields = Fields::parse(
             data,
             &[tag::LABEL, tag::CONTEXT, tag::PUBLIC_KEY, tag::RESPONSE, tag::CREDENTIAL_PASSWORD],
@@ -456,7 +488,7 @@ impl HsmAuth {
                 return Err(code);
             }
         };
-        let mut pending = PendingTouch { keys: keys.to_vec(), restore: Some((label.to_vec(), before)) };
+        let mut pending = PendingTouch { keys: keys.to_vec(), max, restore: Some((label.to_vec(), before)) };
         wipe(&mut keys);
         if touch {
             return Ok(Reply::AfterTouch(pending));
@@ -568,18 +600,23 @@ impl HsmAuth {
     /// restore the default management key with all tries.
     ///
     /// Catalog `hsmauth_reset_apdu_shape`: data or an explicit Le is rejected (`6700`)
-    /// before anything is cleared, except the ambiguous five-byte form `00 06 DE AD 00`
-    /// that formatters emitting an empty Lc produce (parsed as short Le `00`).
+    /// before anything is cleared. Two data-less encodings that formatters emit for an
+    /// empty Lc are not an explicit Le (`docs/CONTRACTS.md` "APDU conventions"):
+    ///
+    /// - `00 06 DE AD 00` (short, parsed as Le `00`): ykhsmauth `send_data` always
+    ///   writes Lc, and current yubikit `ShortApduFormatter` adds "explicit Lc" `00`;
+    /// - `00 06 DE AD 00 00 00` (extended, parsed as Le `0000`): yubikit 5.0's
+    ///   `_encode_extended_apdu` (`">BBBBBH", cla, ins, p1, p2, 0, len(data)`), which
+    ///   ykman 5.0 `hsmauth reset` uses over USB. Before the review fix this was `6700`.
     fn reset_application(&mut self, cmd: &Command, host: &mut dyn Host) -> Result<Reply, u16> {
         if [cmd.p1, cmd.p2] != RESET_P1P2 {
             return Err(sw::INCORRECT_P1P2);
         }
-        let le_acceptable = match cmd.le {
-            None => true,
-            Some(0) => !cmd.extended,
-            Some(_) => false,
+        let explicit_le = match cmd.le {
+            None | Some(0) => false,
+            Some(_) => true,
         };
-        if !cmd.data.is_empty() || !le_acceptable {
+        if !cmd.data.is_empty() || explicit_le {
             return Err(sw::WRONG_LENGTH);
         }
         self.commit(State::factory(), host)?;
@@ -625,11 +662,41 @@ impl HsmAuth {
     }
 }
 
-/// Response bytes per APDU before `61xx` continuation (ISO/IEC 7816-4 §5.1.3). Short
-/// commands get up to 256 bytes whatever their Le, which also covers formatters that
-/// send an empty Lc (`00`) that parses as Le; extended ones up to Ne.
+/// Response bytes per APDU before `61xx` continuation: at most Ne (ISO/IEC 7816-4
+/// §5.1: "the maximum number of bytes expected in the response data field";
+/// `docs/CONTRACTS.md` "APDU conventions"), the rest through GET RESPONSE (§7.6.1).
+/// Without an Le field the card answers as if Ne were the largest of the length form
+/// (256 short, 65 536 extended), as hosts that omit Le expect; an empty-Lc `00` parses
+/// as Le `00`, which is Ne = 256 anyway. ykhsmauth's continuation `00 C0 00 00 XX`
+/// (XX from the previous `61XX`) asks for exactly what remains.
 fn max_response(cmd: &Command) -> usize {
-    if cmd.extended { cmd.expected_len().filter(|&n| n > 0).unwrap_or(EXTENDED_MAX_NE) } else { SHORT_MAX_NE }
+    if cmd.extended {
+        cmd.expected_len().unwrap_or(EXTENDED_MAX_NE)
+    } else {
+        cmd.expected_len().map_or(SHORT_MAX_NE, |ne| ne.min(SHORT_MAX_NE))
+    }
+}
+
+/// Check the class byte (ISO/IEC 7816-4 §5.1.1): `00`, or `10` for a chained command.
+///
+/// - Outside the first interindustry range (`20`–`FF`): `6E00`.
+/// - Secure-messaging bits: `6882`. The device's secure channel clears them after
+///   unwrapping (`docs/CONTRACTS.md` "Secure messaging", "APDU conventions"), so a
+///   command that still carries them was never verified and must not run as if it
+///   had been. Before the review fix they were tolerated.
+/// - A logical channel number: `6881` (as lk-piv and lk-oath).
+fn check_cla(cla: u8) -> Result<(), u16> {
+    if cla & !CLA_CHAIN == 0 {
+        Ok(())
+    } else if cla & 0xE0 != 0 {
+        Err(sw::CLA_NOT_SUPPORTED)
+    } else if cla & CLA_SM != 0 {
+        Err(sw::SM_NOT_SUPPORTED)
+    } else if cla & CLA_CHANNEL != 0 {
+        Err(sw::LOGICAL_CHANNEL_NOT_SUPPORTED)
+    } else {
+        Err(sw::CLA_NOT_SUPPORTED)
+    }
 }
 
 impl CardApplet for HsmAuth {
@@ -657,23 +724,27 @@ impl CardApplet for HsmAuth {
                 return Outcome::Done(status(err.sw()));
             }
         };
-        if cmd.cla & !CLA_ALLOWED_BITS != 0 {
+        if let Err(code) = check_cla(cmd.cla) {
             self.chain.clear();
             self.queue.clear();
-            return Outcome::Done(status(sw::CLA_NOT_SUPPORTED));
+            return Outcome::Done(status(code));
         }
         if cmd.ins == ins::GET_RESPONSE && !self.chain.is_active() {
             let max = max_response(&cmd);
             return Outcome::Done(self.queue.next(max).unwrap_or_else(|| status(sw::CONDITIONS)));
         }
         self.queue.clear();
-        let cmd = match self.chain.push(cmd) {
+        let mut cmd = match self.chain.push(cmd) {
             Ok(Some(cmd)) => cmd,
             Ok(None) => return Outcome::Done(status(sw::OK)),
             Err(err) => return Outcome::Done(status(err.sw())),
         };
         let max = max_response(&cmd);
-        match self.dispatch(&cmd, host) {
+        let result = self.dispatch(&cmd, host);
+        // The data field carries management keys, credential passwords and key material
+        // (`docs/DESIGN.md` §8: secret buffers are wiped; best effort, see `wipe`).
+        wipe(&mut cmd.data);
+        match result {
             Ok(Reply::Data(data)) => Outcome::Done(self.queue.start(data, sw::OK, max)),
             Ok(Reply::AfterTouch(pending)) => {
                 self.pending = Some(pending);
@@ -686,17 +757,19 @@ impl CardApplet for HsmAuth {
     /// Finish a touch-required CALCULATE.
     ///
     /// - Touched: a correct password's return to eight tries is persisted first
-    ///   (`6581` and no keys if that fails), then the session keys go out.
-    /// - Not touched: `6982` (ykman `handle_error` "The device was not touched";
-    ///   ykhsmauth `translate_error` `SW_SECURITY_STATUS_NOT_SATISFIED` → touch error;
-    ///   YESDK `RetryWithTouch`), nothing is persisted, so "the credential password
-    ///   retry count is not changed" (YESDK `GetAes128SessionKeysResponse`).
+    ///   (`6581` and no keys if that fails), then the session keys go out, at most Ne
+    ///   bytes of the CALCULATE at a time.
+    /// - Not touched: `6982` (ykman `handle_error`: `SECURITY_CONDITION_NOT_SATISFIED`
+    ///   "The device was not touched"; ykhsmauth `translate_error`
+    ///   `SW_SECURITY_STATUS_NOT_SATISFIED` → touch error; YESDK `RetryWithTouch`). The
+    ///   try spent before the comparison is put back (persisted), so "the credential
+    ///   password retry count is not changed" (YESDK `GetAes128SessionKeysResponse`).
     /// - `touched = false` answers `6982` even if a reset or deselect already dropped
     ///   the pending command, since `lk_core::Outcome::NeedTouch` allows the device to
     ///   report the session reset in either order; a touch with nothing waiting is
     ///   `6985` (model decision).
     fn touch_resolved(&mut self, touched: bool, host: &mut dyn Host) -> Vec<u8> {
-        let Some(pending) = self.pending.take() else {
+        let Some(mut pending) = self.pending.take() else {
             self.settle(host);
             return status(if touched { sw::CONDITIONS } else { sw::SECURITY_STATUS });
         };
@@ -710,7 +783,8 @@ impl CardApplet for HsmAuth {
         if !touched {
             return status(sw::SECURITY_STATUS);
         }
-        response(&pending.keys, sw::OK)
+        // Ne of the CALCULATE applies: what does not fit follows with GET RESPONSE.
+        self.queue.start(core::mem::take(&mut pending.keys), sw::OK, pending.max)
     }
 
     fn deselect(&mut self) {

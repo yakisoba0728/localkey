@@ -135,6 +135,152 @@ fn attestation_is_reissued_when_the_profile_identity_changes() {
     assert!(a.verifies_with(&first.public_key()));
 }
 
+/// Subject attribute `oid` of the certificate name at `index` (3 issuer, 5 subject).
+fn name_attr(cert: &[u8], index: usize, oid: &[u64]) -> Option<String> {
+    cert_name(cert, index)
+        .into_iter()
+        .find(|(k, _)| k == oid)
+        .map(|(_, v)| v)
+}
+
+#[test]
+fn attestation_subject_uses_the_profile_organization_and_country() {
+    // docs/CONTRACTS.md lk-core additions: DeviceProfile::attestation_organization and
+    // attestation_country replace the former constants. WebAuthn L2 §8.2.1 subject O and C;
+    // RFC 5280 Appendix A.1 X520countryName (PrintableString, two letters).
+    let mut profile = DeviceProfile::own(7);
+    profile.attestation_organization = "Acme Keys".into();
+    profile.attestation_country = "KR".into();
+    let mut host = TestHost::with_profile(profile);
+    let mut auth = Authenticator::new(None, &mut host);
+    let cert = register(&mut auth, &mut host, &Mc::new()).cert();
+    assert_eq!(
+        name_attr(&cert, 5, oid::ORGANIZATION_NAME).as_deref(),
+        Some("Acme Keys")
+    );
+    assert_eq!(
+        name_attr(&cert, 5, oid::COUNTRY_NAME).as_deref(),
+        Some("KR")
+    );
+    let root = persisted_state(&host).attestation.unwrap().root_cert;
+    assert_eq!(
+        name_attr(&root, 5, oid::ORGANIZATION_NAME).as_deref(),
+        Some("Acme Keys")
+    );
+    assert_eq!(
+        name_attr(&root, 5, oid::COMMON_NAME).as_deref(),
+        Some("Acme Keys FIDO attestation root")
+    );
+    assert_eq!(
+        cert_name(&cert, 3),
+        cert_name(&root, 5),
+        "issuer = root subject"
+    );
+
+    // A changed country re-issues the certificate (the subject must name the device);
+    // the same identity keeps it.
+    let again = register(&mut auth, &mut host, &Mc::new()).cert();
+    assert_eq!(again, cert);
+    host.profile_mut().attestation_country = "DE".into();
+    let reissued = register(&mut auth, &mut host, &Mc::new()).cert();
+    assert_ne!(reissued, cert);
+    assert_eq!(
+        name_attr(&reissued, 5, oid::COUNTRY_NAME).as_deref(),
+        Some("DE")
+    );
+    host.profile_mut().attestation_organization = "Other Org".into();
+    let reissued_again = register(&mut auth, &mut host, &Mc::new()).cert();
+    assert_ne!(reissued_again, reissued);
+    assert_eq!(
+        name_attr(&reissued_again, 5, oid::ORGANIZATION_NAME).as_deref(),
+        Some("Other Org")
+    );
+}
+
+#[test]
+fn unusable_profile_subject_values_fall_back() {
+    // Model policy (attestation module documentation): an empty organization becomes
+    // "localkey", one over ub-organization-name (64 characters) is cut, and a country that
+    // is not two ASCII capital letters becomes "ZZ", so no profile yields an invalid
+    // certificate (RFC 5280 Appendix A.1). A profile that keeps the same bad values does
+    // not re-issue the certificate on every registration.
+    for (org, country, want_org, want_country) in [
+        ("", "Korea", "localkey".to_owned(), "ZZ"),
+        ("x", "kr", "x".to_owned(), "ZZ"),
+        ("é".repeat(70).as_str(), "K1", "é".repeat(64), "ZZ"),
+    ] {
+        let mut profile = DeviceProfile::own(7);
+        profile.attestation_organization = org.into();
+        profile.attestation_country = country.into();
+        let mut host = TestHost::with_profile(profile);
+        let mut auth = Authenticator::new(None, &mut host);
+        let cert = register(&mut auth, &mut host, &Mc::new()).cert();
+        assert_eq!(
+            name_attr(&cert, 5, oid::ORGANIZATION_NAME),
+            Some(want_org.clone())
+        );
+        assert_eq!(
+            name_attr(&cert, 5, oid::COUNTRY_NAME).as_deref(),
+            Some(want_country)
+        );
+        let root = persisted_state(&host).attestation.unwrap().root_cert;
+        assert!(
+            name_attr(&root, 5, oid::COMMON_NAME)
+                .unwrap()
+                .chars()
+                .count()
+                <= 64,
+            "ub-common-name"
+        );
+        assert_eq!(register(&mut auth, &mut host, &Mc::new()).cert(), cert);
+    }
+}
+
+#[test]
+fn unusable_profile_common_names_fall_back() {
+    // Regression: the leaf CN was copied from the profile unchecked, so an empty or overlong
+    // DeviceProfile::attestation_common_name produced a certificate outside X520CommonName
+    // (SIZE (1..ub-common-name), 64 characters, RFC 5280 Appendix A.1). Model policy
+    // (attestation module documentation): empty becomes the own-profile name, longer is cut
+    // to 64 characters, and the certificate is not re-issued on every registration.
+    for (cn, want) in [
+        ("", "localkey software authenticator".to_owned()),
+        ("ü".repeat(100).as_str(), "ü".repeat(64)),
+        ("Exactly", "Exactly".to_owned()),
+    ] {
+        let mut profile = DeviceProfile::own(9);
+        profile.attestation_common_name = cn.into();
+        let mut host = TestHost::with_profile(profile);
+        let mut auth = Authenticator::new(None, &mut host);
+        let cert = register(&mut auth, &mut host, &Mc::new()).cert();
+        assert_eq!(name_attr(&cert, 5, oid::COMMON_NAME), Some(want));
+        assert_eq!(register(&mut auth, &mut host, &Mc::new()).cert(), cert);
+    }
+}
+
+#[test]
+fn records_without_the_subject_tags_keep_their_certificate() {
+    // state module documentation: tags 8F/90 were added later; a record without them was
+    // issued as O = "localkey", C = "ZZ", which is what the own profile still asks for, so
+    // the certificate is kept rather than re-issued.
+    let (mut auth, mut host) = device();
+    let cert = register(&mut auth, &mut host, &Mc::new()).cert();
+    let stored = host.persisted(Record::Fido).unwrap();
+    let mut stripped = vec![stored[0]];
+    for item in lk_codec::tlv::parse_all(&stored[1..]).unwrap() {
+        if item.tag != 0x8F && item.tag != 0x90 {
+            stripped.extend_from_slice(item.raw);
+        }
+    }
+    assert!(stripped.len() < stored.len(), "the tags were present");
+    host.set_persisted(Record::Fido, &stripped);
+    let mut auth = restart(&mut host);
+    let attestation = persisted_state(&host).attestation.unwrap();
+    assert_eq!(attestation.organization, "localkey");
+    assert_eq!(attestation.country, "ZZ");
+    assert_eq!(register(&mut auth, &mut host, &Mc::new()).cert(), cert);
+}
+
 fn mc_status(auth: &mut Authenticator, host: &mut TestHost, params: &Value) -> u8 {
     status_of(&send(auth, host, &encode_request(0x01, params)))
 }
@@ -522,7 +668,9 @@ fn pin_uv_auth_param_probe_and_protocol_checks() {
     // With a PIN set, the probe reports PIN_INVALID and a
     // discoverable credential needs a pinUvAuthToken (step 7, makeCredUvNotRqd).
     register(&mut auth, &mut host, &Mc::new());
-    let mut auth = with_state(&mut host, |s| s.pin.hash = Some([7; 16]));
+    let mut auth = with_state(&mut host, |s| {
+        s.pin.hash = Some(SecretBytes::from_slice(&[7; 16]))
+    });
     let mut probe = Mc::new();
     probe.pin_param = Some(vec![]);
     assert_eq!(
@@ -574,9 +722,15 @@ fn discoverable_credential_extensions_and_large_blob_key() {
     assert_eq!(reg.large_blob_key.as_ref().map(Vec::len), Some(32));
     let stored = persisted_state(&host);
     assert_eq!(stored.residents.len(), 1);
-    assert_eq!(stored.residents[0].cred_blob, Some(vec![0xB1; 32]));
     assert_eq!(
-        stored.residents[0].large_blob_key.map(|k| k.to_vec()),
+        stored.residents[0].cred_blob.as_deref(),
+        Some(&[0xB1; 32][..])
+    );
+    assert_eq!(
+        stored.residents[0]
+            .large_blob_key
+            .as_ref()
+            .map(|k| k.to_vec()),
         reg.large_blob_key
     );
     assert_eq!(stored.residents[0].cred_protect, 2);

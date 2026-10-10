@@ -77,9 +77,12 @@ pub mod err {
     pub const INVALID_SEQ: u8 = 0x04;
     /// The message was not completed in time.
     pub const MSG_TIMEOUT: u8 = 0x05;
-    /// The device is busy with a transaction on another channel.
+    /// The device is busy with a transaction on another channel, or another channel
+    /// holds the channel lock.
     pub const CHANNEL_BUSY: u8 = 0x06;
-    /// Another channel holds the channel lock.
+    /// The command requires a channel lock (CTAP 2.1 §11.2.9.1.6: "Command requires
+    /// channel lock"). No command of this framer requires one, so it is never sent; a
+    /// channel kept out by another channel's lock gets [`CHANNEL_BUSY`].
     pub const LOCK_REQUIRED: u8 = 0x0A;
     /// The channel is reserved, unknown or not usable for this command.
     pub const INVALID_CHANNEL: u8 = 0x0B;

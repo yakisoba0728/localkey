@@ -261,26 +261,40 @@ fn generate_le_guard_keeps_previous_key() {
     assert_eq!(again.len(), fresh.len());
 }
 
-/// The algorithm information also advertises P-521, secp256k1 and the brainpool curves;
-/// their attributes are accepted (FA parity) but lk-crypto has no arithmetic for them, so
-/// generation and import answer `6A81` and the slot stays empty (deferred, see report).
+/// lk-crypto implements P-521, secp256k1 and brainpoolP256r1/P384r1, so generation and
+/// import succeed for them in any slot; brainpoolP512r1 alone still answers `6A81` (spec
+/// §7.2.14 / §4.4.3.12 "function not supported").
 #[test]
-fn unsupported_curves_answer_6a81() {
+fn only_brainpool_p512r1_answers_6a81() {
     let mut card = Card::new();
     card.admin();
-    for (tag, attributes, crt) in [
-        (0x00C1, attr::P521_ECDSA, crt::SIG),
-        (0x00C1, attr::SECP256K1_ECDSA, crt::SIG),
-        (0x00C2, attr::BP256_ECDH, crt::DEC),
-        (0x00C3, attr::BP384_ECDSA, crt::AUT),
-        (0x00DA, attr::BP512_ECDSA, crt::ATT),
+    for (tag, attributes, crt, curve) in [
+        (0x00C1, attr::P521_ECDSA, crt::SIG, Some(Curve::P521)),
+        (0x00C1, attr::SECP256K1_ECDSA, crt::SIG, Some(Curve::Secp256k1)),
+        (0x00C2, attr::BP256_ECDH, crt::DEC, Some(Curve::BrainpoolP256r1)),
+        (0x00C3, attr::BP384_ECDSA, crt::AUT, Some(Curve::BrainpoolP384r1)),
+        (0x00DA, attr::BP512_ECDSA, crt::ATT, None),
     ] {
         card.set_attributes(tag, attributes);
-        assert_eq!(card.ext(0x47, 0x80, 0x00, crt).1, 0x6A81, "{attributes}");
-        let import = crate::common::import_data(crt, &[(0x92, &[0x11; 66])]);
-        assert_eq!(card.import(&import), 0x6A81, "{attributes}");
+        match curve {
+            Some(curve) => {
+                let generated = point(&card.generate(crt));
+                assert!(lk_crypto::ec_public_is_valid(curve, &generated), "{attributes}");
+                let key = EcPrivateKey::generate(curve, &mut SeededEntropy::new(u64::from(tag)));
+                let import = crate::common::import_data(crt, &[(0x92, key.scalar())]);
+                assert_eq!(card.import(&import), 0x9000, "{attributes}");
+                assert_eq!(point(&card.public_key(crt).0), key.public_uncompressed(), "{attributes}");
+            }
+            None => {
+                assert_eq!(card.ext(0x47, 0x80, 0x00, crt).1, 0x6A81, "{attributes}");
+                let import = crate::common::import_data(crt, &[(0x92, &[0x11; 64])]);
+                assert_eq!(card.import(&import), 0x6A81, "{attributes}");
+            }
+        }
     }
-    assert_eq!(card.key_status(), [0, 0, 0, 0]);
+    // Imported keys have status 02 (spec §4.4.3.8); changing DA's attributes removed the
+    // factory issuer and no brainpoolP512r1 key replaced it.
+    assert_eq!(card.key_status(), [0x02, 0x02, 0x02, 0x00]);
 }
 
 /// Catalog OpenPGP_algorithms: "SIG generation/import resets digital-signature counter;

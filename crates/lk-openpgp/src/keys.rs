@@ -8,17 +8,20 @@
 //!   key DO 7F49).
 //! - RFC 8017 §9.2 (EMSA-PKCS1-v1_5 encoding for signatures) and §7.2.2 (RSAES-PKCS1-v1_5
 //!   decryption).
-//! - FIPS 186-5 / SEC 1 (ECDSA and ECDH on the NIST curves), RFC 8032 (Ed25519), RFC 7748
-//!   (X25519).
+//! - FIPS 186-5 / SEC 1 (ECDSA and ECDH on the prime curves: NIST P-256/P-384/P-521, SEC 2
+//!   secp256k1, RFC 5639 brainpoolP256r1/P384r1), RFC 8032 (Ed25519), RFC 7748 (X25519).
 //! - RFC 9580 §5.5.5.6.1.1: the legacy Curve25519 ECDH secret is an MPI whose octets are the
 //!   native little-endian X25519 scalar reversed. Hosts (GnuPG, YubiKit) import it in that
 //!   big-endian form, so import reverses it; the public key DO and cipher DOs use the
 //!   native 32-byte encoding.
 //!
-//! Only primitives of `lk_crypto` are used. lk-crypto implements P-256 and P-384 but not
-//! P-521, secp256k1 or the brainpool curves that the algorithm information FA also
-//! advertises; for those, generation, import and use answer `6A81` (function not
-//! supported) while the attributes themselves stay selectable (FA parity).
+//! Only primitives of `lk_crypto` are used. It implements every prime curve of the
+//! algorithm information FA except brainpoolP512r1 (no RustCrypto crate exists for it, see
+//! lk-crypto's `ec` module); for that curve generation and import answer `6A81` (function
+//! not supported) while its attributes stay selectable (FA parity). Key widths follow
+//! spec §4.4.3.12 and the catalog ("standard EC ... import widths; 66-byte zero-padded
+//! P521"): an ECC private key is exactly the field length (32, 48 or 66 bytes) and the
+//! public key the uncompressed point.
 
 use core::fmt;
 
@@ -41,7 +44,8 @@ pub(crate) const DIGEST_INFO_SHA256: [u8; 19] = [
 const PKCS1_OVERHEAD: usize = 11;
 
 /// Largest ECDSA digest accepted (SHA-512). Longer input cannot be a hash the host computed
-/// for a supported curve; FIPS 186-5 §6.4.1 truncation handles shorter ones.
+/// for a supported curve; FIPS 186-5 §6.4.1 uses shorter ones as integers (every digest up
+/// to 64 bytes fits P-521's 521-bit order without truncation).
 const MAX_ECDSA_DIGEST: usize = 64;
 
 /// The named curves of the algorithm information FA (OIDs as DER content octets, X.690
@@ -77,12 +81,16 @@ impl NamedCurve {
         Self::TABLE.iter().find(|(_, o)| *o == oid).map(|(c, _)| *c)
     }
 
-    /// The lk-crypto curve, if lk-crypto implements it.
+    /// The lk-crypto curve, if lk-crypto implements it (all but brainpoolP512r1).
     pub(crate) fn engine_curve(self) -> Option<Curve> {
         match self {
             NamedCurve::P256 => Some(Curve::P256),
             NamedCurve::P384 => Some(Curve::P384),
-            _ => None,
+            NamedCurve::P521 => Some(Curve::P521),
+            NamedCurve::Secp256k1 => Some(Curve::Secp256k1),
+            NamedCurve::BrainpoolP256r1 => Some(Curve::BrainpoolP256r1),
+            NamedCurve::BrainpoolP384r1 => Some(Curve::BrainpoolP384r1),
+            NamedCurve::BrainpoolP512r1 => None,
         }
     }
 }
@@ -216,6 +224,19 @@ const KIND_P256: u8 = 0x02;
 const KIND_P384: u8 = 0x03;
 const KIND_ED25519: u8 = 0x04;
 const KIND_X25519: u8 = 0x05;
+const KIND_P521: u8 = 0x06;
+const KIND_SECP256K1: u8 = 0x07;
+const KIND_BRAINPOOL_P256R1: u8 = 0x08;
+const KIND_BRAINPOOL_P384R1: u8 = 0x09;
+/// Storage kind of each EC curve.
+const EC_KINDS: [(u8, Curve); 6] = [
+    (KIND_P256, Curve::P256),
+    (KIND_P384, Curve::P384),
+    (KIND_P521, Curve::P521),
+    (KIND_SECP256K1, Curve::Secp256k1),
+    (KIND_BRAINPOOL_P256R1, Curve::BrainpoolP256r1),
+    (KIND_BRAINPOOL_P384R1, Curve::BrainpoolP384r1),
+];
 /// Largest stored RSA component (a 4096-bit key's primes are 256 bytes).
 const MAX_RSA_PART: usize = 512;
 
@@ -233,6 +254,10 @@ impl KeyMaterial {
                 let kind = match curve {
                     Curve::P256 => KIND_P256,
                     Curve::P384 => KIND_P384,
+                    Curve::P521 => KIND_P521,
+                    Curve::Secp256k1 => KIND_SECP256K1,
+                    Curve::BrainpoolP256r1 => KIND_BRAINPOOL_P256R1,
+                    Curve::BrainpoolP384r1 => KIND_BRAINPOOL_P384R1,
                 };
                 tlv::encode_into(&mut out, 0x80, &[kind]);
                 tlv::encode_into(&mut out, 0x81, scalar);
@@ -260,10 +285,12 @@ impl KeyMaterial {
             |tag: u32| get(tag).filter(|v| !v.is_empty() && v.len() <= MAX_RSA_PART).map(<[u8]>::to_vec);
         match get(0x80)? {
             [KIND_RSA] => Some(KeyMaterial::Rsa { p: rsa_part(0x81)?, q: rsa_part(0x82)?, e: rsa_part(0x83)? }),
-            [KIND_P256] => Some(KeyMaterial::Ec { curve: Curve::P256, scalar: sized(0x81, 32)? }),
-            [KIND_P384] => Some(KeyMaterial::Ec { curve: Curve::P384, scalar: sized(0x81, 48)? }),
             [KIND_ED25519] => Some(KeyMaterial::Ed25519 { seed: sized(0x81, 32)? }),
             [KIND_X25519] => Some(KeyMaterial::X25519 { secret: sized(0x81, 32)? }),
+            [kind] => {
+                let (_, curve) = EC_KINDS.iter().find(|(k, _)| k == kind)?;
+                Some(KeyMaterial::Ec { curve: *curve, scalar: sized(0x81, curve.field_len())? })
+            }
             _ => None,
         }
     }
@@ -322,10 +349,17 @@ impl CryptoKey {
     pub(crate) fn x509_public_key(&self) -> PublicKey {
         match self {
             CryptoKey::Rsa(key) => PublicKey::Rsa { modulus: key.modulus(), exponent: key.public_exponent() },
-            CryptoKey::Ec(key) => match key.curve() {
-                Curve::P256 => PublicKey::EcP256(key.public_uncompressed()),
-                Curve::P384 => PublicKey::EcP384(key.public_uncompressed()),
-            },
+            CryptoKey::Ec(key) => {
+                let point = key.public_uncompressed();
+                match key.curve() {
+                    Curve::P256 => PublicKey::EcP256(point),
+                    Curve::P384 => PublicKey::EcP384(point),
+                    Curve::P521 => PublicKey::EcP521(point),
+                    Curve::Secp256k1 => PublicKey::EcSecp256k1(point),
+                    Curve::BrainpoolP256r1 => PublicKey::EcBrainpoolP256r1(point),
+                    Curve::BrainpoolP384r1 => PublicKey::EcBrainpoolP384r1(point),
+                }
+            }
             CryptoKey::Ed25519(key) => PublicKey::Ed25519(key.public().to_vec()),
             CryptoKey::X25519(key) => PublicKey::X25519(key.public().to_vec()),
         }
@@ -458,7 +492,7 @@ fn cipher_do_point(data: &[u8]) -> Option<&[u8]> {
     only(public, 0x86)
 }
 
-/// Generate a key for `alg` (spec §7.2.14). Unsupported curves are `6A81`.
+/// Generate a key for `alg` (spec §7.2.14). brainpoolP512r1 (no lk-crypto support) is `6A81`.
 pub(crate) fn generate(alg: Algorithm, entropy: &mut dyn Entropy) -> Result<KeyMaterial, u16> {
     match alg {
         Algorithm::Rsa { bits, .. } => {
@@ -566,7 +600,7 @@ fn template_list(mut bytes: &[u8]) -> Option<Vec<(u8, usize)>> {
 ///   Ed25519/X25519; X25519 in the reversed big-endian form, RFC 9580 §5.5.5.6.1.1),
 ///   optionally followed by `99` public key, which must match the private key.
 ///
-/// Malformed input is `6A80`; algorithms lk-crypto lacks are `6A81`.
+/// Malformed input is `6A80`; algorithms lk-crypto lacks (brainpoolP512r1) are `6A81`.
 pub(crate) fn import_material(alg: Algorithm, components: &[Component<'_>]) -> Result<KeyMaterial, u16> {
     if !alg.supported() {
         return Err(sw::FUNC_NOT_SUPPORTED);
@@ -674,8 +708,11 @@ mod tests {
                 supported += 1;
             }
         }
-        // RSA x3, P-256, P-384 and Ed25519/X25519 in SIG/DEC/AUT; RSA x3, P-256, P-384 in ATT.
-        assert_eq!(supported, 6 + 6 + 6 + 5);
+        // Per slot: RSA x3 and the six prime curves lk-crypto implements, plus Ed25519 (SIG,
+        // AUT) or X25519 (DEC); the attestation slot has no 25519 entry. Only the four
+        // brainpoolP512r1 entries are unsupported.
+        assert_eq!(supported, 10 + 10 + 10 + 9);
+        assert_eq!(entries.len() - supported, 4);
         assert_eq!(
             Algorithm::from_attributes(&[0x01, 0x08, 0x00, 0x00, 0x11, 0x00]),
             Some(Algorithm::Rsa { bits: 2048, e_bits: 17 })
@@ -767,6 +804,10 @@ mod tests {
             KeyMaterial::Rsa { p: vec![7; 128], q: vec![9; 128], e: vec![1, 0, 1] },
             KeyMaterial::Ec { curve: Curve::P256, scalar: vec![1; 32] },
             KeyMaterial::Ec { curve: Curve::P384, scalar: vec![2; 48] },
+            KeyMaterial::Ec { curve: Curve::P521, scalar: vec![1; 66] },
+            KeyMaterial::Ec { curve: Curve::Secp256k1, scalar: vec![5; 32] },
+            KeyMaterial::Ec { curve: Curve::BrainpoolP256r1, scalar: vec![6; 32] },
+            KeyMaterial::Ec { curve: Curve::BrainpoolP384r1, scalar: vec![7; 48] },
             KeyMaterial::Ed25519 { seed: vec![3; 32] },
             KeyMaterial::X25519 { secret: vec![4; 32] },
         ] {
@@ -775,6 +816,16 @@ mod tests {
         }
         assert_eq!(KeyMaterial::from_storage(&[0x80, 0x01, 0x02, 0x81, 0x01, 0x00]), None);
         assert_eq!(KeyMaterial::from_storage(&[0x80, 0x01, 0x09]), None);
+        assert_eq!(KeyMaterial::from_storage(&[0x80, 0x01, 0x0A, 0x81, 0x01, 0x00]), None);
+        // Each curve's scalar must have that curve's field length.
+        for (kind, len) in [(0x06, 66), (0x07, 32), (0x08, 32), (0x09, 48)] {
+            let mut bytes = vec![0x80, 0x01, kind, 0x81, len as u8 - 1];
+            bytes.extend(vec![1; len - 1]);
+            assert_eq!(KeyMaterial::from_storage(&bytes), None, "{kind:02X}");
+            let mut bytes = vec![0x80, 0x01, kind, 0x81, len as u8];
+            bytes.extend(vec![1; len]);
+            assert!(KeyMaterial::from_storage(&bytes).is_some(), "{kind:02X}");
+        }
         assert_eq!(KeyMaterial::from_storage(&[]), None);
     }
 }

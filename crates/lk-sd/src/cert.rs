@@ -20,10 +20,14 @@
 //! Model limits (recorded in `docs/catalog/sd.md`):
 //! - Only P-256 keys and ecdsa-with-SHA256 signatures are accepted: the Security Domain
 //!   holds P-256 keys only (key parameter reference `00`).
-//! - There is no wall clock in the engine (`docs/DESIGN.md` §4). Validity periods are
-//!   checked for form and order (notBefore <= notAfter), and notAfter against the
-//!   earliest the current time can be (the profile's certificate start date,
-//!   [`earliest_now`]); a notBefore in the future cannot be detected.
+//! - The engine reads no clock (`docs/DESIGN.md` §4); the program may lend a wall-clock
+//!   reading through `Host::unix_time` (docs/CONTRACTS.md "Applications B": "for
+//!   certificate validity"). Validity periods are always checked for form and order
+//!   (notBefore <= notAfter). With a lent reading, the certificate must be valid at that
+//!   instant (RFC 5280 §6.1.3 (a)(2)), so a notBefore in the future is refused too.
+//!   Without one, notAfter is checked against the earliest the current time can be
+//!   (the profile's certificate start date, [`earliest_now`]) and a notBefore in the
+//!   future cannot be detected. See [`Clock`].
 //! - A critical certificatePolicies extension is processed as RFC 5280 §6.1 does with
 //!   the initial policy set anyPolicy: any policy identifier is accepted, policy
 //!   qualifiers are not supported and reject the certificate. GP role policy
@@ -240,18 +244,15 @@ impl Certificate {
     /// §4.2.1.3); the last one is the OCE key-agreement certificate (not a CA,
     /// keyAgreement when keyUsage is present; GP Amendment F §7.5).
     ///
-    /// Validity (RFC 5280 §4.1.2.5, §6.1.3 (a)(2)): notBefore <= notAfter, and notAfter
-    /// is not before `earliest_now`, the earliest the current time can be (see
-    /// [`earliest_now`]). A certificate that expired before that date is expired under
-    /// any clock; without a wall clock nothing more can be checked.
-    pub(crate) fn role_allows(&self, issuing: bool, earliest_now: u64) -> bool {
+    /// Validity (RFC 5280 §4.1.2.5, §6.1.3 (a)(2)) as far as `clock` knows the current
+    /// time: see [`Clock::admits`].
+    pub(crate) fn role_allows(&self, issuing: bool, clock: Clock) -> bool {
         let usage = |bit: u16| self.key_usage.is_none_or(|u| u & bit != 0);
         let role = if issuing { self.ca && usage(key_usage::KEY_CERT_SIGN) } else { !self.ca && usage(key_usage::KEY_AGREEMENT) };
         self.ecdsa_sha256
             && self.version == 2
             && self.public_key.is_some()
-            && self.not_before <= self.not_after
-            && self.not_after >= earliest_now
+            && clock.admits(self.not_before, self.not_after)
             && !self.unknown_critical
             && !self.unsupported_qualifiers
             && role
@@ -298,12 +299,98 @@ impl Certificate {
     }
 }
 
+/// What the Security Domain knows about the current time when it checks a validity
+/// period (RFC 5280 §6.1.3 (a)(2): "The certificate validity period includes the
+/// current time"). Times are `YYYYMMDDHHMMSS` numbers, as [`parse_time`] makes them.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Clock {
+    /// The program lent a wall-clock reading (`Host::unix_time`, docs/CONTRACTS.md
+    /// "Applications B"; the engine itself still reads no clock, `docs/DESIGN.md` §4).
+    At(u64),
+    /// No reading: only the earliest the current time can be is known
+    /// ([`earliest_now`]).
+    Floor(u64),
+}
+
+impl Clock {
+    /// The clock `host` offers: its `unix_time` when the program supplied one,
+    /// otherwise the profile's certificate start date as a floor.
+    ///
+    /// PERFORM SECURITY OPERATION reads it for every command, so each certificate of a
+    /// chain is checked at the instant it arrives (the checks are incremental, catalog
+    /// SecurityDomain_incremental_pso); a clock lent or changed between two
+    /// certificates applies from the next one on. This is deliberate.
+    pub(crate) fn of(host: &dyn Host) -> Self {
+        match host.unix_time() {
+            Some(seconds) => Clock::At(unix_to_time(seconds)),
+            None => Clock::Floor(earliest_now(&host.profile().cert_not_before)),
+        }
+    }
+
+    /// Whether a validity period `not_before ..= not_after` passes: it is ordered, and
+    /// - with a reading `now`, `not_before <= now <= not_after` (RFC 5280 §4.1.2.5: the
+    ///   period includes both bounds), so a certificate that is not yet valid is
+    ///   refused as well as an expired one;
+    /// - with a floor, `not_after >= floor`: a certificate that expired before the
+    ///   earliest possible current time is expired under any clock, and nothing more
+    ///   can be checked (a notBefore in the future passes).
+    pub(crate) fn admits(self, not_before: u64, not_after: u64) -> bool {
+        not_before <= not_after
+            && match self {
+                Clock::At(now) => not_before <= now && now <= not_after,
+                Clock::Floor(floor) => not_after >= floor,
+            }
+    }
+}
+
+/// The latest time a certificate can name: GeneralizedTime `99991231235959Z`, RFC 5280
+/// §4.1.2.5 "no well-defined expiration date".
+const LATEST_TIME: u64 = 99_991_231_235_959;
+
+/// POSIX seconds since 1970-01-01T00:00:00Z (leap seconds not counted) as the number
+/// `YYYYMMDDHHMMSS` in UTC. A reading after 9999-12-31T23:59:59Z, which no
+/// GeneralizedTime can express, saturates to it, so every certificate except one with
+/// no well-defined expiration counts as expired (the refusing direction).
+///
+/// The calendar arithmetic is the proleptic Gregorian "civil from days" conversion
+/// (400-year eras of 146 097 days, years starting on 1 March so that the leap day is
+/// last). Every intermediate value stays far below `u64::MAX` for any input.
+pub(crate) fn unix_to_time(seconds: u64) -> u64 {
+    let days = seconds / 86_400;
+    let of_day = seconds % 86_400;
+    // Days since 0000-03-01.
+    let z = days + 719_468;
+    let era = z / 146_097;
+    let day_of_era = z % 146_097;
+    let year_of_era = (day_of_era - day_of_era / 1_460 + day_of_era / 36_524 - day_of_era / 146_096) / 365;
+    let day_of_year = day_of_era - (365 * year_of_era + year_of_era / 4 - year_of_era / 100);
+    let shifted_month = (5 * day_of_year + 2) / 153;
+    let day = day_of_year - (153 * shifted_month + 2) / 5 + 1;
+    let month = if shifted_month < 10 { shifted_month + 3 } else { shifted_month - 9 };
+    let year = era * 400 + year_of_era + u64::from(month <= 2);
+    if year > 9999 {
+        return LATEST_TIME;
+    }
+    let (hour, minute, second) = (of_day / 3_600, of_day % 3_600 / 60, of_day % 60);
+    ((((year * 100 + month) * 100 + day) * 100 + hour) * 100 + minute) * 100 + second
+}
+
+/// Days in `month` (1-12) of `year` in the Gregorian calendar.
+fn days_in_month(year: u64, month: u64) -> u64 {
+    match month {
+        2 if year.is_multiple_of(4) && (!year.is_multiple_of(100) || year.is_multiple_of(400)) => 29,
+        2 => 28,
+        4 | 6 | 9 | 11 => 30,
+        _ => 31,
+    }
+}
+
 /// The earliest the current time can be, as `YYYYMMDDHHMMSS`: the start of validity of
 /// the certificates this device issues (`DeviceProfile::cert_not_before`, a
-/// GeneralizedTime). The engine has no wall clock (`docs/DESIGN.md` §4), but it cannot
-/// run before the identity it claims became valid, so a certificate whose notAfter is
-/// earlier has expired whatever the real date is. An unreadable profile date gives `0`
-/// (no bound).
+/// GeneralizedTime). Without a lent wall clock (see [`Clock`]) the engine cannot know
+/// the date, but it cannot run before the identity it claims became valid, so a
+/// certificate whose notAfter is earlier has expired whatever the real date is. An
+/// unreadable profile date gives `0` (no bound).
 pub(crate) fn earliest_now(profile_not_before: &str) -> u64 {
     parse_time(tag::GENERALIZED_TIME, profile_not_before.as_bytes()).unwrap_or(0)
 }
@@ -349,7 +436,9 @@ fn parse_validity(value: &[u8]) -> Result<(u64, u64), Malformed> {
 
 /// UTCTime `YYMMDDHHMMSSZ` (years 1950-2049, RFC 5280 §4.1.2.5.1) or GeneralizedTime
 /// `YYYYMMDDHHMMSSZ` (§4.1.2.5.2) as the number `YYYYMMDDHHMMSS`, which orders like the
-/// time it names.
+/// time it names. The date must exist in the Gregorian calendar (X.680 §46/§47 name a
+/// calendar date; a 30 February is not one), so that comparisons with a lent wall-clock
+/// reading ([`unix_to_time`]) are between real instants.
 fn parse_time(t: u8, value: &[u8]) -> Result<u64, Malformed> {
     let (digits, year_digits) = match (t, value.split_last()) {
         (tag::UTC_TIME, Some((b'Z', digits))) if digits.len() == 12 => (digits, 2),
@@ -368,7 +457,12 @@ fn parse_time(t: u8, value: &[u8]) -> Result<u64, Malformed> {
     }
     let rest = |i: usize| number(year_digits + 2 * i..year_digits + 2 * i + 2);
     let (month, day, hour, minute, second) = (rest(0), rest(1), rest(2), rest(3), rest(4));
-    if !(1..=12).contains(&month) || !(1..=31).contains(&day) || hour > 23 || minute > 59 || second > 59 {
+    if !(1..=12).contains(&month)
+        || !(1..=days_in_month(year, month)).contains(&day)
+        || hour > 23
+        || minute > 59
+        || second > 59
+    {
         return Err(Malformed);
     }
     Ok(((((year * 100 + month) * 100 + day) * 100 + hour) * 100 + minute) * 100 + second)
@@ -530,7 +624,7 @@ mod tests {
         assert_eq!(cert.public_key.as_deref(), Some(key.public_uncompressed().as_slice()));
         assert_eq!(cert.key_usage, Some(key_usage::KEY_AGREEMENT));
         assert!(!cert.ca);
-        assert!(cert.role_allows(false, earliest_now(&host.profile().cert_not_before)));
+        assert!(cert.role_allows(false, Clock::of(&host)));
         let anchor = Link { point: key.public_uncompressed(), ski: None, budget: None };
         assert!(cert.link(&anchor, false, &[]).is_some());
         // Hedged signatures: a second certificate for the same key differs.
@@ -548,6 +642,50 @@ mod tests {
         assert!(parse_time(tag::OCTET_STRING, b"491231235959Z").is_err());
     }
 
+    /// Calendar dates must exist (X.680 GeneralizedTime/UTCTime name calendar dates):
+    /// month lengths and Gregorian leap years (2000 and 2024 leap, 1900 and 2100 not).
+    #[test]
+    fn times_name_real_calendar_dates() {
+        for ok in [&b"20000229000000Z"[..], b"20240229235959Z", b"20250430000000Z", b"20251231000000Z"] {
+            assert!(parse_time(tag::GENERALIZED_TIME, ok).is_ok(), "{}", String::from_utf8_lossy(ok));
+        }
+        assert!(parse_time(tag::UTC_TIME, b"240229000000Z").is_ok());
+        for bad in [&b"19000229000000Z"[..], b"21000229000000Z", b"20250229000000Z", b"20250431000000Z", b"20250230000000Z", b"20250100000000Z"] {
+            assert!(parse_time(tag::GENERALIZED_TIME, bad).is_err(), "{}", String::from_utf8_lossy(bad));
+        }
+        assert!(parse_time(tag::UTC_TIME, b"250229000000Z").is_err());
+        assert!(parse_time(tag::UTC_TIME, b"250931000000Z").is_err());
+    }
+
+    /// POSIX seconds to `YYYYMMDDHHMMSS`. Expected values from Python 3
+    /// `datetime.fromtimestamp(s, timezone.utc).strftime('%Y%m%d%H%M%S')`; beyond
+    /// 9999-12-31T23:59:59Z the reading saturates (no overflow, no panic).
+    #[test]
+    fn unix_seconds_convert_to_utc_calendar_time() {
+        let cases: [(u64, u64); 10] = [
+            (0, 19700101000000),
+            (951_782_400, 20000229000000),
+            (951_868_799, 20000229235959),
+            (983_318_400, 20010228000000),
+            (4_107_456_000, 21000228000000),
+            (4_107_542_400, 21000301000000),
+            (1_767_225_599, 20251231235959),
+            (1_767_225_600, 20260101000000),
+            (1_800_000_000, 20270115080000),
+            (253_402_300_799, 99991231235959),
+        ];
+        for (seconds, expected) in cases {
+            assert_eq!(unix_to_time(seconds), expected, "{seconds}");
+        }
+        assert_eq!(unix_to_time(253_402_300_800), LATEST_TIME);
+        assert_eq!(unix_to_time(u64::MAX), LATEST_TIME);
+        // Every converted reading is itself a valid GeneralizedTime.
+        for seconds in [0, 951_782_400, 4_107_542_400, 1_800_000_000, 253_402_300_799] {
+            let text = format!("{:014}Z", unix_to_time(seconds));
+            assert_eq!(parse_time(tag::GENERALIZED_TIME, text.as_bytes()).unwrap(), unix_to_time(seconds));
+        }
+    }
+
     /// The earliest current time comes from the profile's GeneralizedTime (`docs/DESIGN.md`
     /// §4); a notAfter before it fails the validity check, on or after it passes, and an
     /// unreadable profile date sets no bound (RFC 5280 §6.1.3 (a)(2)).
@@ -558,14 +696,33 @@ mod tests {
         let mut host = TestHost::new();
         let key = EcPrivateKey::generate(Curve::P256, &mut host);
         let mut cert = Certificate::parse(&own_certificate(&key, &mut host)).unwrap();
-        let floor = earliest_now("20260101000000Z");
+        let floor = Clock::Floor(earliest_now("20260101000000Z"));
+        assert_eq!(Clock::of(&host), floor, "TestHost lends no wall clock");
         cert.not_before = 20200101000000;
         cert.not_after = 20251231235959;
         assert!(!cert.role_allows(false, floor), "expired before the earliest current time");
         cert.not_after = 20260101000000;
         assert!(cert.role_allows(false, floor));
         cert.not_after = 20251231235959;
-        assert!(cert.role_allows(false, 0), "no bound");
+        assert!(cert.role_allows(false, Clock::Floor(0)), "no bound");
+        cert.not_before = 20990101000000;
+        cert.not_after = 20991231235959;
+        assert!(cert.role_allows(false, floor), "a future notBefore cannot be detected without a clock");
+    }
+
+    /// With a lent wall-clock reading the period must include it, both bounds inclusive
+    /// (RFC 5280 §4.1.2.5, §6.1.3 (a)(2)); the profile floor no longer applies.
+    #[test]
+    fn validity_is_checked_against_a_lent_wall_clock() {
+        let at = |t: u64| Clock::At(t);
+        assert!(at(20260615000000).admits(20250101000000, 20450101000000));
+        assert!(at(20250101000000).admits(20250101000000, 20450101000000), "notBefore is inclusive");
+        assert!(at(20450101000000).admits(20250101000000, 20450101000000), "notAfter is inclusive");
+        assert!(!at(20241231235959).admits(20250101000000, 20450101000000), "not yet valid");
+        assert!(!at(20450101000001).admits(20250101000000, 20450101000000), "expired");
+        assert!(!at(20300101000000).admits(20310101000000, 20290101000000), "inverted period");
+        assert!(at(20200101000000).admits(20100101000000, 20251231235959), "the reading, not the profile date, decides");
+        assert!(at(LATEST_TIME).admits(20250101000000, LATEST_TIME), "no well-defined expiration");
     }
 
     #[test]

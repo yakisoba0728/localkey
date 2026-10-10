@@ -139,8 +139,24 @@ fn activate_restores_every_factory_value() {
     let factory_objects: Vec<Vec<u8>> =
         [0x006E, 0x0065, 0x007A, 0x00C4, 0x00F9, 0x5F50, 0x005E, 0x0101, 0x0102].map(|t| factory.get_ok(t)).to_vec();
 
-    let mut card = card_with_keys();
-    assert_eq!(card.verify(0x81, b"123456"), 0x9000);
+    // The KDF-DO goes first: Yubico locks it once a key exists (kdf.rs
+    // `kdf_locked_while_a_key_exists`). PW1 and PW3 become the initial hashes.
+    let (pw1, pw3) = ([0x11u8; 32], [0x33u8; 32]);
+    let mut card = Card::new();
+    card.admin();
+    let mut kdf = hex("810103 820108 830400010000");
+    kdf.extend_from_slice(&lk_codec::tlv::encode(0x84, &[7; 8]));
+    kdf.extend_from_slice(&lk_codec::tlv::encode(0x87, &pw1));
+    kdf.extend_from_slice(&lk_codec::tlv::encode(0x88, &pw3));
+    assert_eq!(card.put(0x00F9, &kdf), 0x9000);
+    assert_eq!(card.verify(0x83, &pw3), 0x9000);
+    card.set_attributes(0x00C1, attr::ED25519);
+    card.set_attributes(0x00C2, attr::X25519);
+    card.set_attributes(0x00C3, attr::ED25519);
+    for crt in [crt::SIG, crt::DEC, crt::AUT] {
+        card.generate(crt);
+    }
+    assert_eq!(card.verify(0x81, &pw1), 0x9000);
     assert_eq!(card.sign(b"count me").1, 0x9000);
     for (tag, value) in [
         (0x005B, &b"Doe<<John"[..]),
@@ -157,25 +173,22 @@ fn activate_restores_every_factory_value() {
         (0x00D7, &[0x04, 0x20]),
         (0x7F21, b"aut-cert"),
         (0x00C4, &[0x00]),
-        (0x00D3, b"resetcode"),
+        // Under the KDF-DO the resetting code is a hash too (spec §4.3.2).
+        (0x00D3, &[0x55; 32]),
     ] {
         assert_eq!(card.put(tag, value), 0x9000, "PUT {tag:04X}");
     }
     assert_eq!(card.apdu(0x00, 0xF2, 0x00, 0x00, &[5, 6, 7], None).1, 0x9000);
-    assert_eq!(card.verify(0x82, b"123456"), 0x9000);
+    assert_eq!(card.verify(0x82, &pw1), 0x9000);
     assert_eq!(card.put(0x0101, b"one"), 0x9000);
     let att_public = card.public_key(crt::ATT);
     let att_certificate = card.get_ok(0x00FC);
-    let mut kdf = hex("810103 820108 830400010000");
-    kdf.extend_from_slice(&lk_codec::tlv::encode(0x84, &[7; 8]));
-    kdf.extend_from_slice(&lk_codec::tlv::encode(0x87, &[0x11; 32]));
-    kdf.extend_from_slice(&lk_codec::tlv::encode(0x88, &[0x33; 32]));
-    assert_eq!(card.put(0x00F9, &kdf), 0x9000);
+    assert_eq!(card.get_ok(0x00F9), kdf);
     // Block PW3 (KDF active: any value is wrong), then reset without verification.
     for _ in 0..7 {
         card.verify(0x83, b"wrong");
     }
-    assert_eq!(card.verify(0x83, &[0x33; 32]), 0x6983);
+    assert_eq!(card.verify(0x83, &pw3), 0x6983);
     assert_eq!(card.send(&hex("00E60000")).1, 0x9000);
     assert_eq!(card.send(&hex("00440000")).1, 0x9000);
     card.reload();

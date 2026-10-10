@@ -331,8 +331,9 @@ fn certificate_chain_checks() {
             pki.leaf_cert.clone(),
         ], vec![0x9000, 0x6982, 0x6982]),
         ("validity inverted", vec![pki.inter_cert.clone(), leaf(CertSpec { not_before: "20300101000000Z".into(), not_after: "20290101000000Z".into(), ..base_leaf() })], vec![0x9000, 0x6982]),
-        // RFC 5280 §6.1.3 (a)(2) against the earliest possible current time: the
-        // profile's certificate start date 2026-01-01 (lk_core::DeviceProfile::own).
+        // RFC 5280 §6.1.3 (a)(2) against the earliest possible current time (TestHost
+        // lends no wall clock): the profile's certificate start date 2026-01-01
+        // (lk_core::DeviceProfile::own). With a clock: `pso_validity_follows_a_lent_wall_clock`.
         ("leaf expired before the profile date", vec![pki.inter_cert.clone(), leaf(CertSpec { not_before: "20200101000000Z".into(), not_after: "20251231235959Z".into(), ..base_leaf() })], vec![0x9000, 0x6982]),
         ("intermediate expired before the profile date", vec![inter(CertSpec { not_before: "20150101000000Z".into(), not_after: "20240101000000Z".into(), ..base_inter() }), pki.leaf_cert.clone()], vec![0x6982, 0x6982]),
         ("old leaf still valid after the profile date", vec![pki.inter_cert.clone(), leaf(CertSpec { not_before: "20100101000000Z".into(), not_after: "20260101000000Z".into(), ..base_leaf() })], vec![0x9000, 0x9000]),
@@ -391,6 +392,86 @@ fn certificate_chain_checks() {
     assert!(sd.has_verified_oce());
     // A complete verification restores the CA's tries.
     assert_eq!(sd.remaining_tries(0x10, 0x03), Some(64));
+}
+
+/// `Host::unix_time` (docs/CONTRACTS.md "Applications B": "for certificate validity").
+/// With a reading, every presented certificate must be valid at that instant (RFC 5280
+/// §6.1.3 (a)(2); §4.1.2.5: both bounds inclusive), so a notBefore in the future is
+/// refused with `6982` like an expired notAfter, and the profile's certificate start
+/// date no longer matters. Without one, the floor rule is unchanged (notAfter not before
+/// the profile date 2026-01-01; a future notBefore passes). Refusals change no
+/// persistent state and use no CA try. The `pki` chain is valid 2025-01-01 to
+/// 2045-01-01. Instants: Python 3 `datetime(..., tzinfo=timezone.utc).timestamp()`.
+#[test]
+fn pso_validity_follows_a_lent_wall_clock() {
+    const Y2024_12_31_235959: u64 = 1_735_689_599;
+    const Y2025_06_01: u64 = 1_748_736_000;
+    const Y2027_01_15_080000: u64 = 1_800_000_000;
+    const Y2029_12_31_235959: u64 = 1_893_455_999;
+    const Y2030_01_01: u64 = 1_893_456_000;
+    const Y2045_01_01: u64 = 2_366_841_600;
+    const Y2045_01_01_000001: u64 = 2_366_841_601;
+    let pki = pki(0);
+    let leaf_point = PublicKey::EcP256(pki.leaf.public_uncompressed());
+    let leaf = |not_before: &str, not_after: &str| {
+        CertSpec { not_before: not_before.into(), not_after: not_after.into(), ..CertSpec::leaf(&pki.leaf_serial, "OCE Intermediate", "OCE") }
+            .build(leaf_point.clone(), &pki.inter)
+    };
+    let with_inter = |leaf: Vec<u8>| vec![pki.inter_cert.clone(), leaf];
+    let from_2030 = with_inter(leaf("20300101000000Z", "20400101000000Z"));
+    let until_2026 = with_inter(leaf("20100101000000Z", "20260101000000Z"));
+    let until_2027 = with_inter(leaf("20250101000000Z", "20270101000000Z"));
+    let ended_2025 = with_inter(leaf("20200101000000Z", "20251231235959Z"));
+    let ok2 = vec![0x9000, 0x9000];
+    let leaf_refused = vec![0x9000, 0x6982];
+    // A refused first certificate drops the chain, so the next one starts a new chain:
+    // the intermediate is refused for the same date, the leaf because the CA key did
+    // not sign it.
+    let all_refused = vec![0x6982, 0x6982, 0x6982];
+
+    let cases: Vec<(Option<u64>, &str, Vec<Vec<u8>>, Vec<u16>)> = vec![
+        (None, "no clock: full chain", pki.full_chain(), vec![0x9000; 3]),
+        (None, "no clock: a future notBefore cannot be detected", from_2030.clone(), ok2.clone()),
+        (None, "no clock: valid on the profile date", until_2026.clone(), ok2.clone()),
+        (None, "no clock: expired before the profile date", ended_2025.clone(), leaf_refused.clone()),
+        (Some(Y2027_01_15_080000), "full chain inside its period", pki.full_chain(), vec![0x9000; 3]),
+        (Some(Y2027_01_15_080000), "leaf not yet valid", from_2030.clone(), leaf_refused.clone()),
+        (Some(Y2027_01_15_080000), "leaf expired on 2026-01-01", until_2026, leaf_refused.clone()),
+        (Some(Y2027_01_15_080000), "leaf expired on 2027-01-01", until_2027, leaf_refused.clone()),
+        (Some(Y2029_12_31_235959), "one second before notBefore", from_2030.clone(), leaf_refused.clone()),
+        (Some(Y2030_01_01), "notBefore is inclusive", from_2030, ok2.clone()),
+        (Some(Y2025_06_01), "the reading, not the profile date, decides", ended_2025, ok2),
+        (Some(Y2024_12_31_235959), "root and intermediate not yet valid", pki.full_chain(), all_refused.clone()),
+        (Some(Y2045_01_01), "notAfter is inclusive", pki.full_chain(), vec![0x9000; 3]),
+        (Some(Y2045_01_01_000001), "root and intermediate expired", pki.full_chain(), all_refused),
+        (Some(u64::MAX), "a reading past 9999 saturates: everything expired", pki.full_chain(), vec![0x6982; 3]),
+    ];
+    for (unix_time, name, chain, expected) in cases {
+        let mut host = ClockHost { unix_time, ..ClockHost::default() };
+        let mut sd = SecurityDomain::new(None, &mut host);
+        provision(&mut sd, &mut host.inner, &pki);
+        let before = host.inner.persisted(Record::SecurityDomain);
+        let got: Vec<u16> = pso_apdus(0x10, 0x03, &chain).iter().map(|apdu| status(&sd.handshake(apdu, &mut host).0)).collect();
+        assert_eq!(got, expected, "{name}");
+        let accepted = got.iter().all(|&s| s == 0x9000);
+        assert_eq!(sd.has_verified_oce(), accepted, "{name}");
+        if !accepted {
+            assert_eq!(host.inner.persisted(Record::SecurityDomain), before, "{name}: no state change");
+            assert_eq!(sd.remaining_tries(0x10, 0x03), Some(64), "{name}: no CA try used");
+        }
+    }
+
+    // End to end: a chain accepted under the lent clock authorizes SCP11a, and the
+    // independent OCE verifies the receipt.
+    let mut host = ClockHost { unix_time: Some(Y2027_01_15_080000), ..ClockHost::default() };
+    let mut sd = SecurityDomain::new(None, &mut host);
+    let pk_sd = provision(&mut sd, &mut host.inner, &pki);
+    let statuses: Vec<u16> = pso_apdus(0x10, 0x03, &pki.full_chain()).iter().map(|apdu| status(&sd.handshake(apdu, &mut host).0)).collect();
+    assert!(all_ok(&statuses));
+    let req = request(Variant::A, 0x01, key_from(0x41));
+    let (resp, ch) = sd.handshake(&req.apdu, &mut host);
+    req.finish(&resp, &pk_sd, Some(&pki.leaf)).unwrap();
+    assert!(ch.is_some_and(|c| c.protocol() == Protocol::Scp11a));
 }
 
 /// Allowlists (Yubico SD commands: every presented certificate is checked; catalog
@@ -1225,4 +1306,176 @@ fn ca_replacement_drops_a_partial_chain() {
     assert!(all_ok(&present(&mut sd, &mut host, 0x10, 0x03, &pki.full_chain())));
     assert_eq!(ok(&mut sd, &mut ch, &mut host, &mut s, 0x80, 0xD8, 0x03, 0x10, &ca_key_data(0x05, &other.public_uncompressed())), vec![0x05]);
     assert!(sd.has_verified_oce());
+}
+
+// ---------------------------------------------------------------------------------
+// yubikit wire shapes on USB (extended) and NFC (short) sessions
+// ---------------------------------------------------------------------------------
+
+/// The APDUs yubikit sends for one command (yubikit `core/smartcard`:
+/// `SmartCardProtocol.send_apdu` passes Le 0, which both formatters leave out):
+/// - extended session (USB, `configure(Version(5, 3, 0))`): one extended APDU without
+///   Le; a command without data is the bare header (case 1);
+/// - short session (NFC, `force_short`): `CommandChainingProcessor` splits the data into
+///   255-byte parts, CLA b5 on all but the last, no Le; a command without data ends in
+///   `00` ("explicit Lc").
+fn yubikit_apdus(cla: u8, ins: u8, p1: u8, p2: u8, data: &[u8], extended: bool) -> Vec<Vec<u8>> {
+    if extended {
+        return vec![encode_apdu(cla, ins, p1, p2, data, None, true)];
+    }
+    if data.is_empty() {
+        return vec![encode_apdu(cla, ins, p1, p2, &[], Some(0), false)];
+    }
+    let parts: Vec<&[u8]> = data.chunks(255).collect();
+    let last = parts.len() - 1;
+    parts
+        .iter()
+        .enumerate()
+        .map(|(i, part)| encode_apdu(if i < last { cla | 0x10 } else { cla }, ins, p1, p2, part, None, false))
+        .collect()
+}
+
+/// A plaintext command as yubikit sends it, with `lk-device`'s routing (handshakes to
+/// `handshake`, others to `process`), followed through `61xx` with yubikit's GET
+/// RESPONSE (`ResponseChainingProcessor`: `00 C0 00 00`, Le 0, in the session's form).
+fn yubikit_plain(sd: &mut SecurityDomain, host: &mut TestHost, cla: u8, ins: u8, p1: u8, p2: u8, data: &[u8], extended: bool) -> (Vec<u8>, u16, Option<SecureChannel>) {
+    let apdus = yubikit_apdus(cla, ins, p1, p2, data, extended);
+    let mut channel = None;
+    let mut resp = Vec::new();
+    for (i, apdu) in apdus.iter().enumerate() {
+        if lk_sd::is_handshake(apdu) {
+            (resp, channel) = sd.handshake(apdu, host);
+        } else {
+            resp = plain(sd, host, apdu);
+        }
+        if i + 1 < apdus.len() {
+            assert_eq!(resp, hex("9000"), "intermediate chained part");
+        }
+    }
+    let mut out = Vec::new();
+    loop {
+        let sw = status(&resp);
+        out.extend_from_slice(&resp[..resp.len() - 2]);
+        if sw >> 8 != 0x61 {
+            return (out, sw, channel);
+        }
+        let get_response = yubikit_apdus(0x00, 0xC0, 0x00, 0x00, &[], extended).remove(0);
+        resp = plain(sd, host, &get_response);
+    }
+}
+
+/// A protected command as yubikit's `ScpProcessor.send_apdu` sends it: the data is
+/// always encrypted (an empty field becomes one padding block), the C-MAC covers the
+/// extended Lc when the protected data exceeds 255 bytes or the session is extended and
+/// the short Lc otherwise, and on a short session a long protected command is then split
+/// by command chaining. `lk-device` reassembles such a chain and re-encodes it with
+/// `Command::to_bytes` before `unwrap_command` (lk-sd `channel.rs` layering note 1).
+fn yubikit_send(sd: &mut SecurityDomain, ch: &mut SecureChannel, host: &mut TestHost, s: &mut HostSession, cla: u8, ins: u8, p1: u8, p2: u8, data: &[u8], extended: bool) -> (Vec<u8>, u16) {
+    let protected_len = (data.len() / 16 + 1) * 16 + 8;
+    let mac_extended = extended || protected_len > 255;
+    let protected = s.wrap(cla, ins, p1, p2, data, None, mac_extended);
+    let apdu = if extended || !mac_extended {
+        protected
+    } else {
+        let full = lk_codec::apdu::Command::parse(&protected).unwrap();
+        let mut chain = lk_codec::apdu::CommandChain::new(65_535);
+        let mut assembled = None;
+        for part in yubikit_apdus(full.cla, ins, p1, p2, &full.data, false) {
+            assembled = chain.push(lk_codec::apdu::Command::parse(&part).unwrap()).unwrap();
+        }
+        assembled.unwrap().to_bytes()
+    };
+    s.unwrap(&device_transmit(sd, ch, host, &apdu)).unwrap()
+}
+
+/// Every Security Domain request shape yubikit produces (`securitydomain.py`, `scp.py`,
+/// `core/smartcard`) on a USB session (extended APDUs, never an Le) and on a short NFC
+/// session (command chaining, data-less commands ending in `00`): SELECT (sent before
+/// `configure`, so short), public GET DATA including chained answers, SCP11b with the
+/// factory certificate, SCP03 with an EXTERNAL AUTHENTICATE MACed over the session's Lc
+/// form, key and data provisioning (a certificate bundle longer than a short APDU), CA
+/// identifiers longer than 256 bytes (`61xx` and GET RESPONSE), and SCP11a with the
+/// chain presented one certificate per PSO.
+#[test]
+fn yubikit_request_shapes_on_extended_and_short_sessions() {
+    for extended in [true, false] {
+        let session = if extended { "USB/extended" } else { "NFC/short" };
+        let (mut sd, mut host) = fresh();
+        let pki = pki(0);
+
+        let select = encode_apdu(0x00, 0xA4, 0x04, 0x00, lk_sd::AID, None, false);
+        assert_eq!(sd.select(&select, &mut host), [&hex("6f178408a000000151000000a50b730906072a864886fc6b01")[..], &[0x90, 0x00]].concat());
+        assert_eq!(yubikit_plain(&mut sd, &mut host, 0x00, 0xCA, 0x00, 0xE0, &[], extended).0, hex(FACTORY_KEY_INFO), "{session}");
+        assert_eq!(yubikit_plain(&mut sd, &mut host, 0x00, 0xCA, 0x00, 0x66, &[], extended).0.len(), 63, "{session}");
+        assert_eq!(yubikit_plain(&mut sd, &mut host, 0x00, 0xCA, 0xFF, 0x33, &[], extended).1, 0x6A88, "{session}: no CA identifiers yet");
+
+        // SCP11b with the key of the factory certificate (ykman reads BF21 first).
+        let (bundle, sw, _) = yubikit_plain(&mut sd, &mut host, 0x00, 0xCA, 0xBF, 0x21, &hex("A60483021301"), extended);
+        assert_eq!(sw, 0x9000, "{session}");
+        let (pk_sd_b, _) = cert_key_and_check(&der_split_all(&bundle)[0], None);
+        let req = request(Variant::B, 0x01, key_from(0x41));
+        let (resp, sw, ch) = yubikit_plain(&mut sd, &mut host, 0x80, 0x88, 0x01, 0x13, &req.data, extended);
+        let mut est = req.finish(&[resp, sw.to_be_bytes().to_vec()].concat(), &pk_sd_b, None).unwrap();
+        let mut ch = ch.unwrap();
+        assert_eq!(yubikit_send(&mut sd, &mut ch, &mut host, &mut est.session, 0x00, 0xCA, 0x00, 0x66, &[], extended).0.len(), 63, "{session}");
+
+        // SCP03 in a new `SecurityDomainSession` (SELECT ends the SCP11b session):
+        // INITIALIZE UPDATE without Le, EXTERNAL AUTHENTICATE MACed over the Lc form of
+        // the session and sent without Le.
+        sd.select(&select, &mut host);
+        assert!(!ch.is_open());
+        let challenge = [0x5Au8; 8];
+        let (resp, sw, _) = yubikit_plain(&mut sd, &mut host, 0x80, 0x50, 0x00, 0x00, &challenge, extended);
+        let pending = read_init_response(&StaticKeys::DEFAULT, &challenge, &[resp, sw.to_be_bytes().to_vec()].concat());
+        assert!(pending.card_cryptogram_ok, "{session}");
+        let (ea, mut s) = pending.external_authenticate_form(0x33, &pending.host_cryptogram(), extended, extended);
+        let ea_data = lk_codec::apdu::Command::parse(&ea).unwrap().data;
+        let (_, sw, ch) = yubikit_plain(&mut sd, &mut host, 0x84, 0x82, 0x33, 0x00, &ea_data, extended);
+        assert_eq!(sw, 0x9000, "{session}");
+        let mut ch = ch.unwrap();
+
+        // Provisioning as yubikit `put_key`, `store_ca_issuer`, `store_certificate_bundle`.
+        let mut send = |sd: &mut SecurityDomain, host: &mut TestHost, cla: u8, ins: u8, p1: u8, p2: u8, data: &[u8]| {
+            yubikit_send(sd, &mut ch, host, &mut s, cla, ins, p1, p2, data, extended)
+        };
+        assert_eq!(send(&mut sd, &mut host, 0x80, 0xD8, 0x00, 0x10, &ca_key_data(0x03, &pki.ca.public_uncompressed())), (vec![0x03], 0x9000));
+        let dek = pending.dek;
+        let sd_key = key_from(0x61);
+        assert_eq!(send(&mut sd, &mut host, 0x80, 0xD8, 0x00, 0x11, &private_key_data(&dek, 0x01, sd_key.scalar())), (vec![0x01], 0x9000));
+        let bundle = pki.full_chain();
+        assert!(bundle.iter().all(|c| c.len() > 255), "each certificate needs the long form (chained PSO on NFC)");
+        assert_eq!(send(&mut sd, &mut host, 0x00, 0xE2, 0x90, 0x00, &cert_store_data(0x11, 0x01, &bundle)).1, 0x9000, "{session}");
+        // The anchor's identifier is the root's SKI: the card binds it to the first AKI.
+        assert_eq!(send(&mut sd, &mut host, 0x00, 0xE2, 0x90, 0x00, &ca_issuer_data(0x10, 0x03, &pki.root_ski)).1, 0x9000);
+        for kid in 0x20..0x2Au8 {
+            let point = key_from(kid).public_uncompressed();
+            assert_eq!(send(&mut sd, &mut host, 0x80, 0xD8, 0x00, kid, &ca_key_data(0x01, &point)), (vec![0x01], 0x9000));
+            assert_eq!(send(&mut sd, &mut host, 0x00, 0xE2, 0x90, 0x00, &ca_issuer_data(kid, 0x01, &[kid; 20])).1, 0x9000);
+        }
+        // One identifier of 10 bytes and ten of 26: 270 bytes, more than one short answer.
+        let (ids, sw) = send(&mut sd, &mut host, 0x00, 0xCA, 0xFF, 0x33, &[]);
+        assert_eq!((ids.len(), sw), (270, 0x9000), "{session}");
+        assert!(ch.is_open());
+
+        let (plain_ids, sw, _) = yubikit_plain(&mut sd, &mut host, 0x00, 0xCA, 0xFF, 0x33, &[], extended);
+        assert_eq!((plain_ids, sw), (ids, 0x9000), "{session}: GET RESPONSE completes the answer");
+        let (stored, sw, _) = yubikit_plain(&mut sd, &mut host, 0x00, 0xCA, 0xBF, 0x21, &hex("A60483021101"), extended);
+        assert_eq!((stored, sw), (bundle.concat(), 0x9000), "{session}");
+
+        // SCP11a in a new session: one PSO per certificate (P2 b8 while more follow),
+        // then MUTUAL AUTHENTICATE without Le.
+        sd.select(&select, &mut host);
+        let last = bundle.len() - 1;
+        for (i, cert) in bundle.iter().enumerate() {
+            let p2 = 0x10 | if i < last { 0x80 } else { 0x00 };
+            assert_eq!(yubikit_plain(&mut sd, &mut host, 0x80, 0x2A, 0x03, p2, cert, extended).1, 0x9000, "{session}: PSO {i}");
+        }
+        let req = request(Variant::A, 0x01, key_from(0x42));
+        let (resp, sw, ch) = yubikit_plain(&mut sd, &mut host, 0x80, 0x82, 0x01, 0x11, &req.data, extended);
+        let mut est = req.finish(&[resp, sw.to_be_bytes().to_vec()].concat(), &sd_key.public_uncompressed(), Some(&pki.leaf)).unwrap();
+        let mut ch = ch.unwrap();
+        assert_eq!(ch.protocol(), Protocol::Scp11a);
+        let (info, sw) = yubikit_send(&mut sd, &mut ch, &mut host, &mut est.session, 0x00, 0xCA, 0x00, 0xE0, &[], extended);
+        assert_eq!((info.len(), sw), (18 + 13 * 8, 0x9000), "{session}: SCP03 set, CA 10/03, 11/01, 13/01, CAs 20-29");
+    }
 }

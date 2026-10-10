@@ -10,12 +10,15 @@
 //! | `authenticate` | `LEFT(HMAC-SHA-256(key, m), 16)` | `HMAC-SHA-256(key[..32], m)` |
 //!
 //! `Z` is the X coordinate of the ECDH product on P-256 (§6.5.6 `ecdh()`).
+//!
+//! Shared secrets and decrypted plaintexts (PIN hashes, padded PINs, hmac-secret salts) are
+//! held in [`SecretBytes`], which wipes them when dropped (`docs/DESIGN.md` §8).
 
 use lk_codec::cbor::{MapBuilder, Value};
 use lk_core::Entropy;
 use lk_crypto::{
-    Curve, EcPrivateKey, aes_cbc_decrypt, aes_cbc_encrypt, ct_eq, ec_public_is_valid, hkdf_sha256,
-    hmac_sha256, sha256,
+    Curve, EcPrivateKey, SecretBytes, aes_cbc_decrypt, aes_cbc_encrypt, ct_eq, ec_public_is_valid,
+    hkdf_sha256, hmac_sha256, sha256,
 };
 
 use crate::request::CtapResult;
@@ -29,6 +32,16 @@ const HMAC_KEY_INFO: &[u8] = b"CTAP2 HMAC key";
 const AES_KEY_INFO: &[u8] = b"CTAP2 AES key";
 /// COSE algorithm of the key-agreement key: ECDH-ES + HKDF-256 (§6.5.6 `getPublicKey()`).
 const COSE_ALG_ECDH_ES_HKDF_256: i64 = -25;
+
+/// Move a fixed-size secret that lk-crypto returned by value into [`SecretBytes`] and
+/// overwrite the array. Best effort: copies the compiler made while moving the array are
+/// out of reach without `zeroize`, which only lk-crypto may use (`docs/DESIGN.md` §8).
+pub(crate) fn secret_from<const N: usize>(mut bytes: [u8; N]) -> SecretBytes {
+    let secret = SecretBytes::from_slice(&bytes);
+    bytes.fill(0);
+    core::hint::black_box(&bytes);
+    secret
+}
 
 /// A supported pinUvAuthProtocol (GetInfo `pinUvAuthProtocols [2, 1]`, §6.4).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -48,16 +61,22 @@ impl PinProtocol {
     }
 
     /// `kdf(Z)`: the shared secret (§6.5.6 / §6.5.7).
-    pub(crate) fn kdf(self, z: &[u8]) -> CtapResult<Vec<u8>> {
+    pub(crate) fn kdf(self, z: &[u8]) -> CtapResult<SecretBytes> {
         match self {
-            Self::One => Ok(sha256(z).to_vec()),
+            Self::One => Ok(secret_from(sha256(z))),
             Self::Two => {
-                let mut secret = hkdf_sha256(Some(&HKDF_SALT), z, HMAC_KEY_INFO, 32)
-                    .map_err(|_| status::OTHER)?;
-                secret.extend_from_slice(
-                    &hkdf_sha256(Some(&HKDF_SALT), z, AES_KEY_INFO, 32)
+                let hmac_key = SecretBytes::new(
+                    hkdf_sha256(Some(&HKDF_SALT), z, HMAC_KEY_INFO, 32)
                         .map_err(|_| status::OTHER)?,
                 );
+                let aes_key = SecretBytes::new(
+                    hkdf_sha256(Some(&HKDF_SALT), z, AES_KEY_INFO, 32)
+                        .map_err(|_| status::OTHER)?,
+                );
+                let mut secret = SecretBytes::zeroed(hmac_key.len() + aes_key.len());
+                let (first, second) = secret.split_at_mut(hmac_key.len());
+                first.copy_from_slice(&hmac_key);
+                second.copy_from_slice(&aes_key);
                 Ok(secret)
             }
         }
@@ -96,17 +115,19 @@ impl PinProtocol {
     }
 
     /// `decrypt(key, demCiphertext)`; `None` for the protocol's error cases (not whole
-    /// blocks; for protocol 2 also shorter than one IV).
-    pub(crate) fn decrypt(self, key: &[u8], ciphertext: &[u8]) -> Option<Vec<u8>> {
+    /// blocks; for protocol 2 also shorter than one IV). The plaintext is always secret
+    /// here (a PIN hash, a padded PIN or hmac-secret salts).
+    pub(crate) fn decrypt(self, key: &[u8], ciphertext: &[u8]) -> Option<SecretBytes> {
         let aes_key = self.aes_key(key)?;
-        match self {
-            Self::One => aes_cbc_decrypt(aes_key, &[0; BLOCK], ciphertext).ok(),
+        let plaintext = match self {
+            Self::One => aes_cbc_decrypt(aes_key, &[0; BLOCK], ciphertext).ok()?,
             Self::Two => {
                 let iv = ciphertext.get(..BLOCK)?;
                 let ct = ciphertext.get(BLOCK..)?;
-                aes_cbc_decrypt(aes_key, iv, ct).ok()
+                aes_cbc_decrypt(aes_key, iv, ct).ok()?
             }
-        }
+        };
+        Some(SecretBytes::new(plaintext))
     }
 
     /// `authenticate(key, message)`. For protocol 2 a key longer than 32 bytes (a shared
@@ -165,7 +186,7 @@ impl KeyAgreement {
         &self,
         protocol: PinProtocol,
         peer: &[(Value, Value)],
-    ) -> CtapResult<Vec<u8>> {
+    ) -> CtapResult<SecretBytes> {
         let get = |key: i64| {
             peer.iter()
                 .find_map(|(k, v)| (*k == Value::int_key(key)).then_some(v))
@@ -216,7 +237,10 @@ mod tests {
             &secret[32..],
             &hkdf_sha256(None, &z, b"CTAP2 AES key", 32).unwrap()[..]
         );
-        assert_eq!(PinProtocol::One.kdf(&z).unwrap(), sha256(&z).to_vec());
+        assert_eq!(
+            PinProtocol::One.kdf(&z).unwrap().to_vec(),
+            sha256(&z).to_vec()
+        );
     }
 
     #[test]
@@ -229,10 +253,13 @@ mod tests {
         assert!(PinProtocol::One.decrypt(&k1, &[0; 15]).is_none());
         assert!(PinProtocol::Two.decrypt(&k2, &[0; 15]).is_none());
         assert!(PinProtocol::Two.decrypt(&k2, &[0; 33]).is_none());
-        assert_eq!(PinProtocol::Two.decrypt(&k2, &[0; 16]), Some(vec![]));
+        assert_eq!(
+            PinProtocol::Two.decrypt(&k2, &[0; 16]).map(|p| p.to_vec()),
+            Some(vec![])
+        );
         for (p, k) in [(PinProtocol::One, &k1[..]), (PinProtocol::Two, &k2[..])] {
             let ct = p.encrypt(k, &[7; 32], &mut rng).unwrap();
-            assert_eq!(p.decrypt(k, &ct), Some(vec![7; 32]));
+            assert_eq!(p.decrypt(k, &ct).map(|p| p.to_vec()), Some(vec![7; 32]));
         }
         assert_eq!(PinProtocol::One.authenticate(&k1, b"m").len(), 16);
         assert_eq!(PinProtocol::Two.authenticate(&k2, b"m").len(), 32);

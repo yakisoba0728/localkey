@@ -121,7 +121,7 @@ fn reset_wipes_everything_rotates_the_secret_and_keeps_attestation() {
     let plain = register(&mut auth, &mut host, &Mc::new());
     assert(&mut auth, &mut host, &Ga::new().allow(vec![plain.id()]));
     let mut auth = with_state(&mut host, |s| {
-        s.pin.hash = Some([1; 16]);
+        s.pin.hash = Some(SecretBytes::from_slice(&[1; 16]));
         s.pin.min_length = 8;
         s.pin.min_pin_rp_ids = vec!["x".into()];
     });

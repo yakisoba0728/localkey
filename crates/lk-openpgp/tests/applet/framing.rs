@@ -26,11 +26,28 @@ fn malformed_apdu_is_wrong_length() {
     assert_eq!(card.send(&hex("00DA5F5005 6162")).1, 0x6700);
 }
 
-/// The secure-messaging indication bits are ignored (lk-device unwraps SM first).
+/// docs/CONTRACTS.md "APDU conventions": applets answer `6882` to secure-messaging CLA
+/// bits. lk-device clears them after unwrapping a secure channel, and forwards them
+/// unchanged when no channel is open, so a command that still has them was never
+/// verified; C0 announces no secure messaging (ISO 7816-4 §5.1.1). The check comes before
+/// the logical-channel one (as in lk-piv), and like every CLA rejection it leaves a
+/// pending response in place.
 #[test]
-fn secure_messaging_bits_ignored() {
-    let mut card = Card::new();
-    assert_eq!(card.send(&hex("0CCA5F5200")).1, 0x9000);
+fn secure_messaging_bits_answer_6882() {
+    let mut card = Card::yubikey();
+    for apdu in ["04CA5F5200", "08CA5F5200", "0CCA5F5200", "1CDA5F5000", "0DCA5F5200", "0C20008106313233343536"] {
+        assert_eq!(card.send(&hex(apdu)), (vec![], 0x6882), "{apdu}");
+    }
+    assert_eq!(card.retries(), [3, 0, 3]);
+    // GET ATTESTATION: proprietary 84 is the secure-messaging form of 80.
+    assert_eq!(card.send(&hex("84FB010000")).1, 0x6882);
+    assert_eq!(card.send(&hex("80FB010000")).1, 0x6982);
+    // A pending response survives the rejected class.
+    assert_eq!(card.send(&hex("00CA006E00")).1, 0x613B);
+    assert_eq!(card.send(&hex("0CC0000000")).1, 0x6882);
+    let (rest, sw) = card.send(&hex("00C0000000"));
+    assert_eq!((rest.len(), sw), (59, 0x9000));
+    assert_eq!(card.send(&hex("00CA5F5200")).1, 0x9000);
 }
 
 /// Catalog: "OpenPGP GET DATA rejects unsupported command-chain CLA 10 with 6E00, leaving
