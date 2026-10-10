@@ -534,6 +534,7 @@ dependencies = [
  "lk-core",
  "lk-crypto",
  "lk-device",
+ "lk-testkit",
 ]
 
 [[package]]
@@ -630,6 +631,19 @@ dependencies = [
  "lk-core",
  "lk-device",
  "lk-run",
+]
+
+[[package]]
+name = "localkeyd"
+version = "0.1.0"
+dependencies = [
+ "lk-codec",
+ "lk-core",
+ "lk-crypto",
+ "lk-device",
+ "lk-host",
+ "lk-run",
+ "lk-wire",
 ]
 
 [[package]]

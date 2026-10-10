@@ -1,0 +1,25 @@
+[package]
+name = "localkeyd"
+description = "The localkey daemon: storage, run loop, wire and control sockets around the engine"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "localkeyd"
+path = "src/main.rs"
+
+[dependencies]
+lk-core.workspace = true
+lk-crypto.workspace = true
+lk-device.workspace = true
+lk-host.workspace = true
+lk-run.workspace = true
+lk-wire.workspace = true
+
+[dev-dependencies]
+lk-codec.workspace = true

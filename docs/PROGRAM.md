@@ -280,3 +280,152 @@ localkeyd ctl --control PATH (tap [long] | down | up | power-cycle | status | wa
   acknowledged. Leftover sockets are replaced at the next start.
 - Logging to stderr: default startup and errors; `-v` adds connections, enumeration and
   presence; `-vv` adds frame types and sizes (never payload bytes).
+
+## Program core as built (binding)
+
+`lk-host`, `lk-run`, `lk-wire` and `localkeyd` were implemented, adversarially reviewed and
+fixed. Each crate's root doc (or `localkeyd/src/run.rs`, `log.rs`, `args.rs`) keeps an
+"As built" list; the points that refine the sections above:
+
+- **lk-host**
+  - `HostError::Permissions { path, mode, refusal }`: `Refusal::{SymbolicLink,
+    GroupOrOtherAccess, NotADirectory, NotARegularFile}` says why, because the mode alone
+    cannot.
+  - The state path is normalised (`components()`) before any check; a symlinked state path,
+    `lock` or `<name>.rec` is refused, never followed. A `.rec` that is a symlink or not a
+    regular file loads as `Err` (lk-device then reports it unreadable and the daemon refuses
+    to serve), not as `Ok(None)`.
+  - `save` removes a leftover `<name>.rec.tmp` and creates the new one with `create_new`, so
+    it never writes through a planted link. The parent of a newly created state directory is
+    synced.
+  - **Decided**: when the directory sync after the rename fails, `save` still returns `Err`
+    although the new bytes are in place. This fails closed: the engine answers with a
+    storage failure and keeps its old state, and a retry counter on disk can only be ahead
+    of memory (spent), never behind. Returning `Ok` would acknowledge a write that a power
+    loss could undo.
+  - `key_from_command` reads at most `MAX_OUTPUT_LEN` (1024) bytes and kills a command that
+    prints more. `OsEntropy::open` refuses a `/dev/urandom` that is not a character device.
+    Only canonical 8-digit serials are accepted in `identity`.
+- **lk-run**
+  - `HostInput`'s `Debug` shows the variant and payload size only (no PINs or payloads).
+  - `Command::Tap` before `serve` is ignored, like inputs.
+  - `Output::Reenumerate` discards the suspend queue (counted as dropped), ends the
+    suspension and releases a held sensor. `Bus(PowerCycle)` also releases a held sensor
+    (without `Touch(Up)`) and cancels a pending tap release; `Bus(Reset)` keeps it.
+  - `Runner::shutdown` and `Drop` raise a stop flag first, so commands queued behind the
+    shutdown are dropped instead of processed.
+  - Dead presence watchers are also probed when a registration finds the list at its limit
+    (64, then twice the survivors); a live watcher may hear its unchanged state again.
+  - An attached transport holds a `Sender` clone, so after `serve` the loop ends only on
+    `Shutdown` (not when the other senders are dropped).
+- **lk-wire**
+  - **Backpressure**: the reader sends a `Command::Status` marker after every 64 frames or
+    256 KiB and waits for the previous marker's answer, so at most two windows of one
+    client's inputs sit in the runner's unbounded channel; the rest waits in the socket.
+  - Accepting starts at the first `enumerate`. The write queue holds 4096 frames; a full
+    queue drops the client. After a malformed frame the client has 1 s in total to receive
+    what was queued plus the `ERROR`, then the socket is shut down.
+  - A server remembers its socket file's device and inode and removes the path (or wakes
+    its accept loop) only while the path still holds that file.
+  - Control: a request line is at most 256 bytes and must arrive within 10 s in total;
+    `attached` is omitted from `status` when the transport cannot tell; `watch` writes no
+    line for a repeated state, and a client that half-closes its socket keeps watching.
+  - `Client::recv` / `connect_timeout` with a timeout too large to represent wait without a
+    deadline.
+- **localkeyd**
+  - Logging never blocks: a 1024-line queue drained by one writer thread; dropped lines are
+    counted and reported; exit waits at most 5 s for the queue.
+  - The wire and control sockets must be two different files: compared by spelling before
+    the state directory is opened, and by resolved parent plus file name right after.
+  - A device that fails to open on the runner thread exits 2 (a startup failure). `keygen`
+    and `ctl` failures exit 1; usage errors exit 2 for every command; `help` after a
+    command prints the usage.
+  - After `Device::open` the daemon overwrites its own `[u8; 32]` copy of the key (best
+    effort; compiler copies cannot be wiped).
+
+## Linux transports (second step)
+
+Two transport crates for Linux. Neither can be exercised against a real kernel here: the
+Docker Desktop VM kernel has no `UHID`, no `DUMMY_HCD` and no USB gadget support, and there
+is no other Linux guest. They are therefore built as byte-level logic over generic I/O,
+tested on macOS with fakes (temporary files, FIFOs, socket pairs), and reported as
+**unverified on a real kernel** until a Linux guest is available.
+
+Both use only files and processes (no `ioctl`, no `unsafe`), so they compile and their tests
+run on every Unix; `localkeyd` refuses to start them on a non-Linux OS at run time.
+
+Kernel ABI facts (structure layouts, constants) come from the kernel's UAPI headers and its
+documentation (`Documentation/hid/uhid.rst`, `Documentation/usb/functionfs.rst`,
+`Documentation/usb/gadget_configfs.rst`). Those are interface definitions, not legacy code;
+use them for facts and do not copy their text. Every constant in the code cites its source.
+
+### lk-uhid (FIDO HID and OTP HID through `/dev/uhid`)
+
+- One UHID device per enabled HID interface: FIDO (the FIDO report descriptor) and OTP (the
+  boot-keyboard report descriptor with its feature report). CCID is not available through
+  UHID; with this transport the CCID interface is simply not presented.
+- `UHID_CREATE2` with `bus` = `BUS_USB`, the identity's vendor, product and release, `name`
+  = the product string, `uniq` = the serial string or empty, `phys` = `"localkey"`.
+- Events in: `UHID_START`, `UHID_STOP`, `UHID_OPEN`, `UHID_CLOSE`, `UHID_OUTPUT`,
+  `UHID_GET_REPORT`, `UHID_SET_REPORT`. Events out: `UHID_INPUT2`,
+  `UHID_GET_REPORT_REPLY`, `UHID_SET_REPORT_REPLY`, `UHID_DESTROY`.
+- Report ID prefix: the descriptors use no report IDs, but the kernel's raw report paths can
+  carry the report number as a leading byte. Accept FIDO output of 65 bytes with a leading
+  `00` (strip it) or exactly 64 bytes; accept OTP feature SET_REPORT data of 9 bytes with a
+  leading `00` or exactly 8; answer GET_REPORT(feature) with the report number followed by
+  the 8 bytes. Which form the kernel uses must be confirmed on a real kernel (open item).
+- FIDO input reports go out as `UHID_INPUT2` with 64 bytes; OTP keyboard reports as
+  `UHID_INPUT2` with 8 bytes.
+- Re-enumeration destroys the devices and creates the ones the new identity enables.
+- Bus events: creating the devices is a plug-in (`BusEvent::PowerCycle`); UHID has no
+  suspend, resume or reset.
+- The device path defaults to `/dev/uhid` and is a parameter (tests pass a fake).
+
+### lk-gadget (ConfigFS + FunctionFS composite gadget)
+
+The faithful transport: one USB device with exactly the engine's descriptors (OTP keyboard,
+FIDO HID and CCID interfaces), for a Linux machine with a USB device controller (a board
+plugged into a computer, or `dummy_hcd` in a test guest). It needs root.
+
+- **ConfigFS** (`/sys/kernel/config/usb_gadget/<name>`, root path a parameter): `idVendor`,
+  `idProduct`, `bcdDevice`, `bcdUSB` from the device descriptor; `max_speed` =
+  `full-speed` (the engine's descriptors are full-speed: 64-byte bulk packets);
+  `strings/0x409/{manufacturer,product,serialnumber}`; one configuration `c.1` with
+  `bmAttributes` and `MaxPower` from the configuration descriptor; one FunctionFS function
+  `ffs.<name>` linked into `c.1`; `UDC` written last to bind, emptied to unbind.
+- **FunctionFS**: mounted with `mount -t functionfs <name> <dir>` (a `Command`; the mount
+  point is a parameter). Write the descriptors (`FUNCTIONFS_DESCRIPTORS_MAGIC_V2`,
+  full-speed only) and the strings blob to `ep0`, then open the endpoint files in descriptor
+  order. The interface, class and endpoint descriptors are the engine's configuration
+  descriptor minus its 9-byte configuration header, in the same order, so the host sees the
+  engine's bytes.
+- **ep0 events** (12-byte `usb_functionfs_event`): `BIND`, `UNBIND`, `ENABLE`, `DISABLE`,
+  `SETUP`, `SUSPEND`, `RESUME`. `ENABLE` → `BusEvent::Reset` (the host configured the
+  device after a bus reset), `SUSPEND` → `BusEvent::Suspend`, `RESUME` → `BusEvent::Resume`.
+  The first `ENABLE` after the gadget is bound is a plug-in → `BusEvent::PowerCycle`.
+- **Control requests** (`SETUP`; interface numbers as in our descriptors):
+  - HID interfaces: GET_DESCRIPTOR for the HID report descriptor (`0x22`) and the HID
+    descriptor (`0x21`); SET_IDLE, GET_IDLE, SET_PROTOCOL, GET_PROTOCOL (state kept per
+    interface, no effect on the engine); OTP GET_REPORT(feature) → `Input::OtpGetFeature`
+    answered with the resulting `Output::OtpFeature`; OTP SET_REPORT(feature) →
+    `Input::OtpSetFeature`; SET_REPORT(output) on the keyboard (LEDs) acknowledged and
+    ignored; FIDO SET_REPORT(output) of 64 bytes → `Input::FidoReport`.
+  - CCID interface: ABORT (`bRequest 01`, `wValue = bSeq << 8 | bSlot`) →
+    `Input::CcidControlAbort`. GET_CLOCK_FREQUENCIES and GET_DATA_RATES are stalled,
+    because the class descriptor has `bNumClockSupported = 0` and
+    `bNumDataRatesSupported = 0` (CCID Rev 1.1 §5.3.2, §5.3.3).
+  - Anything else is stalled (an IN request is stalled by reading `ep0`, an OUT request by
+    writing to it, per `functionfs.rst`).
+- **Endpoints**: FIDO interrupt OUT (64-byte reads) and IN; OTP keyboard interrupt IN; CCID
+  bulk OUT, bulk IN and interrupt IN. A CCID bulk-out message is read packet by packet: the
+  first 64-byte packet gives `dwLength`, then the rest is read until the message is complete
+  (a host does not send a zero-length packet after a message that fills whole packets).
+  Each IN endpoint has a writer thread with a queue, so `deliver` never blocks the runner.
+- **GET_REPORT needs an answer inside the control transfer**: the ep0 thread sends
+  `Input::OtpGetFeature` and waits (bounded, 1 s) for the matching `Output::OtpFeature`
+  that `deliver` hands back through a channel; on timeout it stalls.
+- **Re-enumeration**: unbind (`UDC` = empty), close the endpoints and `ep0`, rewrite
+  `idProduct` and strings, reopen `ep0` with the descriptors for the new interface set,
+  reopen the endpoints, bind again.
+- Teardown on drop: unbind, close files, unmount, remove the ConfigFS directories in
+  reverse order of creation (a failure is logged, not fatal).

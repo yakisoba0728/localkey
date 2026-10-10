@@ -15,3 +15,4 @@ lk-crypto.workspace = true
 
 [dev-dependencies]
 lk-device.workspace = true
+lk-testkit.workspace = true
