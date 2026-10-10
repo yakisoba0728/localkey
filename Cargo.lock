@@ -528,6 +528,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "lk-gadget"
+version = "0.1.0"
+dependencies = [
+ "lk-core",
+ "lk-device",
+ "lk-run",
+]
+
+[[package]]
 name = "lk-host"
 version = "0.1.0"
 dependencies = [
@@ -622,6 +631,15 @@ version = "0.1.0"
 dependencies = [
  "lk-core",
  "lk-crypto",
+]
+
+[[package]]
+name = "lk-uhid"
+version = "0.1.0"
+dependencies = [
+ "lk-core",
+ "lk-device",
+ "lk-run",
 ]
 
 [[package]]

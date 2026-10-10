@@ -1,0 +1,15 @@
+[package]
+name = "lk-gadget"
+description = "Linux ConfigFS and FunctionFS composite USB gadget transport for the localkey program"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+lk-core.workspace = true
+lk-device.workspace = true
+lk-run.workspace = true
