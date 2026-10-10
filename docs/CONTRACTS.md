@@ -524,8 +524,8 @@ additions; existing callers compile unchanged.
     - `Device::set_unix_time(Option<u64>)` backs `Host::unix_time`. The device never
       advances it.
   - Constants: `KEEPALIVE_INTERVAL_MS` (100), `WTX_INTERVAL_MS` (500),
-    `U2F_REQUEST_WINDOW_MS` and `U2F_LATCH_MS` (3000), `FIDO_REPORT_DESCRIPTOR`,
-    `OTP_REPORT_DESCRIPTOR`.
+    `U2F_REQUEST_WINDOW_MS` and `U2F_LATCH_MS` (3000), `OTP_REBOOT_DELAY_MS` (1000),
+    `FIDO_REPORT_DESCRIPTOR`, `OTP_REPORT_DESCRIPTOR`.
   - `lk_device::storage`: `seal`, `open`, `record_id`, `SealError`, `FORMAT_VERSION`,
     `NONCE_LEN`, `TAG_LEN`, `OVERHEAD` (layout in "Phase 0 as implemented").
   - `Device` is `!Send`, because it holds `Box<dyn Store>` and `Box<dyn Entropy>` without
@@ -550,6 +550,16 @@ additions; existing callers compile unchanged.
   be needed if the firmware re-enumerated by itself. Unmeasured on a physical 5.7.4
   (`docs/catalog/mgmt.md`, `device.md`; test
   `management::interface_change_without_reboot_waits_for_the_next_enumeration`).
+  - **When the reboot happens** (added in the program phase, found with ykman on a real
+    kernel): a write with `REBOOT` over CCID or CTAPHID reboots right after its response.
+    Over OTP HID the write ends with the frame's last feature report, and yubikit then
+    reads the status (programming sequence) to see the write succeed; rebooting at once
+    made that read fail and ykman report a failed write. The device therefore reboots
+    right after the next OTP status read (GET_REPORT), or `OTP_REBOOT_DELAY_MS` (1 s,
+    model policy) after the write if the host reads nothing; a power cycle first takes
+    the owed reboot over. Tests: `management::otp_hid_write_config_reboots_after_the_host_read_the_status`,
+    `management::otp_hid_write_config_reboots_after_a_delay_without_a_status_read`,
+    `management::a_power_cycle_before_the_status_read_takes_the_owed_reboot_over`.
 - **Remaining known gaps** (also in `docs/STATUS.md`):
   - brainpoolP512r1 (4 OpenPGP variants, 5 deferred catalog lines).
   - Zeroization is partial (DESIGN §8):

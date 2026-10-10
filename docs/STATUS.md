@@ -1,7 +1,9 @@
 # Implementation status
 
-Updated 2026-10-10 at the final integration. Every phase of `docs/DESIGN.md` §10 is done, so
-the engine is complete. The program phase (`docs/DESIGN.md` §13) has not started.
+Updated 2026-10-11. Every engine phase of `docs/DESIGN.md` §10 is done. The program phase
+(`docs/DESIGN.md` §13, contract in `docs/PROGRAM.md`) has a working daemon with three
+transports; see "Program phase" below. The engine sections describe the state at the final
+engine integration (2026-10-10), plus the one engine change the program phase made.
 
 What "done" means here: behaviour is tested against the public specifications, published
 test vectors and the public bytes read from a real key (`reference/yubikey-5c-nano-5.7.4/`).
@@ -126,7 +128,9 @@ Model policies (unmeasured, documented in each catalog file):
 - the KEEPALIVE cadence (100 ms) and the CCID time-extension cadence (500 ms);
 - the U2F request window and latch (3 s each);
 - Management configuration changes apply at the next enumeration; only `REBOOT`
-  re-enumerates at once (ykman `config usb`, yubikit `set_mode`);
+  re-enumerates at once (ykman `config usb`, yubikit `set_mode`); over OTP HID the reboot
+  follows the host's status read, or comes 1 s later (`OTP_REBOOT_DELAY_MS`, added in the
+  program phase);
 - OpenPGP RSA attributes accept exponent lengths of 17 to 32 bits (GnuPG and OpenSC write
   `0020`; FA lists `0011`);
 - the touch timeouts (15 s for card applets, 30 s for FIDO);
@@ -137,35 +141,79 @@ Upstream note: ecdsa 0.17 disagrees with rfc6979 on how to truncate P-521 digest
 bytes or more, which can reveal the key. lk-crypto works around this, with tests. Filing
 it upstream (RustCrypto/signatures) is still to do.
 
-## What the program phase needs
+## Program phase
 
-From `docs/DESIGN.md` §13 and the duties the lk-device docs state
-(`docs/CONTRACTS.md` "Final integration"):
+Commits 31dd38b … cda6265 (2026-10-11). Each crate was implemented against
+`docs/PROGRAM.md`, reviewed adversarially by an independent agent and fixed; the Linux
+transports were then run on a real kernel.
 
-- **Transports.**
-  - Linux: UHID or a FunctionFS/ConfigFS composite gadget, and a PC/SC IFD handler.
-  - macOS: IOHIDUserDevice/IOUSBHost, which need Apple entitlements and signing.
-  - On every platform the program routes control and endpoint traffic and builds the USB
-    string descriptors (LANGID, UTF-16LE) from `Device::usb_identity()`. It also handles
-    HID class requests (SET_IDLE, SET_PROTOCOL, LED output) and a Report ID prefix, and
-    re-enumerates on `Output::Reenumerate`.
-- **The run loop.**
-  - One thread owns the `Device` (it is `!Send`; making it `Send` is an open decision)
-    and feeds it inputs with a monotonic `now`.
-  - It delivers `Input::Tick` by `next_deadline()` and acts on every output in order.
-  - It queues or drops outputs produced while the bus is suspended, and calls
-    `set_unix_time` again whenever a trusted clock moves.
-- **Storage.**
-  - A `Store` with atomic per-record writes, a 0600 state file and a process lock.
-  - The 32-byte storage key kept in the OS keychain.
-  - After open, check `unreadable_records()` before serving, because the first
-    mutating command of an application replaces its unreadable record.
-- **Entropy**: an `Entropy` backed by OS randomness.
-- **Touch UI**: touch edges in, `PresenceIndicator` out; OTP keyboard reports to a real
-  keyboard interface.
+| Crate | Role | Tests |
+| --- | --- | ---: |
+| `lk-host` | state directory (0700, process lock, atomic per-record saves), OS entropy, storage key file or user command, serial | 51 |
+| `lk-run` | runner thread that owns the `Device`: clock, deadlines, taps, suspend queue, presence watchers | 28 |
+| `lk-wire` | private Unix-socket transport (framed `Input`/`Output`) and the line control socket | 91 |
+| `lk-uhid` | Linux FIDO HID and OTP HID through `/dev/uhid` | 72 |
+| `lk-gadget` | Linux ConfigFS + FunctionFS composite USB gadget (OTP, FIDO, CCID) | 156 |
+| `localkeyd` | the daemon: `keygen`, `run --transport wire|uhid|gadget`, `ctl` | 59 |
+
+All program crates are std only, without `unsafe`, like the engine.
+
+### Verification (2026-10-11)
+
+- macOS: `cargo test --workspace` **2164 passed, 0 failed, 1 ignored** (the lk-fido long
+  repeat test); lk-device now has 213 tests. `cargo clippy --workspace --all-targets`: no
+  warnings. `tools/license_check.py` and `tools/catalog_status.py --check`: clean.
+- Linux (Docker `rust:1.98-slim` + clippy, offline, `--network none`): **2163 passed, 0
+  failed, 1 ignored**; the missing one is the macOS-only test that `uhid`/`gadget` are
+  refused off Linux. clippy: no warnings. The Linux run found one defect (a control
+  connection reset by unread input, fixed in 0dfdebd).
+- Real kernel: `tools/linux-guest/` builds an Ubuntu 26.04 arm64 guest (its own 7.0.0-38
+  kernel plus `dummy_hcd` built from the matching source) that runs under QEMU with no NIC
+  inside a `--network none` container. Results, all PASS:
+  - `smoke.sh`: modules, `dummy_udc.0`, both transports enumerate and tear down cleanly.
+  - `uhid.sh`: report descriptors byte-equal; libfido2 (`fido2-token`, `fido2-cred`,
+    `fido2-assert` with a PIN); python-fido2 2.0.0 make/get with attestation verified; ykman
+    info, OTP challenge-response (HMAC matches), static password typed as
+    `Hello1World\n` on the kernel's keyboard device; `ykman config usb` re-enumeration both
+    ways; `kill -9` and restart with every credential kept.
+  - `gadget.sh`: descriptors byte-equal except the controller-assigned fields below; the
+    same HID checks; CCID through pcscd/libccid: ATR, ykman info, OATH code (RFC 6238),
+    PIV key and certificate generation, OpenPGP info, `gpg --card-status`; multi-packet
+    CCID messages both ways (zero-length packet confirmed); suspend, resume, port reset and
+    `authorized` 0/1; re-enumeration over CCID, OTP HID and FIDO HID; `kill -9` and the
+    leftover-gadget reclaim.
+- Defects the real tools found, all fixed with macOS regression tests: three in lk-uhid
+  (replies and outputs lost at re-enumeration, the kernel failing a reply followed at once
+  by DESTROY), three in lk-gadget (the same losses before unbind, a SUSPEND of the ending
+  session reaching the rebooted device), and one in the engine (an OTP HID `REBOOT` now
+  waits for the host's status read, `OTP_REBOOT_DELAY_MS`, a new unmeasured model policy).
+
+### Known gaps of the program
+
+- **Gadget differences from the reference key that user space cannot fix** (dummy_hcd):
+  endpoint addresses are the controller's, `iSerialNumber` is 3 with an empty string, and
+  `bcdUSB`/DEVICE_QUALIFIER/BOS follow the controller. Other controllers (dwc2, dwc3, musb,
+  chipidea) are untested.
+- **uhid**: CCID is not available (UHID is HID only). The OTP hidraw node needs a udev
+  rule for desktop users (`docs/PROGRAM.md`). A device whose HID driver was unbound by
+  someone else leaks one reader thread per re-enumeration (needs `poll`).
+- **No PC/SC IFD handler**: CCID reaches a host only through the gadget.
+- **macOS has only the wire transport**: virtual HID/USB needs Apple entitlements.
+- **Keychain**: not integrated; `--key-command` lets the user connect one (`security
+  find-generic-password -w ...`, `secret-tool`, `pass`).
+- No signal handling (std cannot catch signals without `unsafe`): the daemon runs until
+  killed, or until stdin closes with `--exit-on-stdin-eof`. Every save is atomic, so a kill
+  loses nothing acknowledged; a killed gadget is reclaimed at the next start.
+- The guest image pins Ubuntu's kernel 7.0.0-38; it must be bumped when Ubuntu supersedes it.
+
+## What is still open
+
 - **Measurement**: a command-by-command comparison with a physical key, only with the
   user's explicit permission (DESIGN §13). It is the only way to turn the model policies
   above into measured behaviour.
+- **PC/SC IFD handler** and **macOS transports** (see "Known gaps of the program").
+- `Device` is `!Send`; `lk-run` builds it on its own thread, so nothing needs it to be
+  `Send` now.
 - **Decisions to revisit before any public release** (DESIGN §12 records the current
   choices):
   - the project licence (none for now, all rights reserved);

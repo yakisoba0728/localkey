@@ -127,6 +127,9 @@ API 초안은 `crates/lk-core/src/lib.rs`와 `crates/lk-device/src/lib.rs`에 �
     조합이 바뀌어도 다음 열거(재부팅 또는 `BusEvent::PowerCycle`)에 적용한다. ykman `config usb`가
     조합이 바뀔 때만 `REBOOT`를 붙이고 yubikit `set_mode`가 재삽입을 안내하는 것을 근거로 한 모델
     정책이다(`docs/CONTRACTS.md`).
+  - **as built (프로그램 단계)**: CCID와 CTAPHID로 받은 `REBOOT`는 응답 직후 재부팅한다. OTP HID로 받은
+    쓰기는 호스트가 다음 상태를 읽은 직후, 읽지 않으면 1초(`OTP_REBOOT_DELAY_MS`) 뒤에 재부팅한다.
+    yubikit은 쓰기가 성공했는지 그 상태 읽기로 확인하기 때문이다.
 - **카드 세션**: AID로 앱을 SELECT하고, 선택 상태, 명령/응답 체이닝, 보안 채널 래핑(`lk-sd`)을
   관리한다.
   - CCID 전원 차단, USB 리셋, 다른 AID 선택 시 각 앱의 휘발 상태를 규칙대로 지운다.
@@ -281,13 +284,29 @@ VID/PID, 제품 문자열, AAGUID, 펌웨어 버전, 시리얼, 증명서 체인
 7. **프로그램 단계의 외부 도구 (2026-10-11, 3번을 다시 검토)**: 실제 호스트 소프트웨어(libfido2,
    python-fido2, ykman, pcscd/libccid, OpenSC, GnuPG)를 **블랙박스 클라이언트로만** 쓴다. 이 도구들은
    네트워크가 없는(`-nic none`) 일회용 QEMU 게스트 안에서만 돌고, 게스트는 `--network none` Docker
-   컨테이너 안에서 돈다. 호스트의 USB/HID/PCSC/키체인과 실물 키는 건드리지 않는다. 도구의 소스는 읽지
-   않으며, 저장소에는 게스트를 만드는 스크립트(`tools/linux-guest/`)만 둔다. 프로그램 크레이트도 엔진과
-   같이 표준 라이브러리만 쓰고 `unsafe`를 쓰지 않는다(`docs/PROGRAM.md`).
+   컨테이너 안에서 돈다. 호스트의 USB/HID/PCSC/키체인과 실물 키는 건드리지 않는다. 도구의 코드는
+   가져오지 않는다. 도구가 보내는 요청과 기대하는 응답은 프로토콜 사실로 인용할 수 있다(엔진 단계의
+   2차 검토도 yubikit, libfido2 등의 요청 형태를 그렇게 썼다). 저장소에는 게스트를 만드는 스크립트
+   (`tools/linux-guest/`)만 둔다. 프로그램 크레이트도 엔진과 같이 표준 라이브러리만 쓰고 `unsafe`를 쓰지
+   않는다(`docs/PROGRAM.md`).
+   - **결과 (2026-10-11)**: 게스트 커널은 Ubuntu 26.04의 7.0.0-38이고, 배포판 커널에 없는 `dummy_hcd`만
+     같은 소스 패키지에서 빌드했다. 도구 버전은 libfido2 1.16.0, python-fido2 2.0.0, ykman 5.8.0,
+     pcsc-lite 2.4.1, OpenSC 0.27.0rc1, GnuPG 2.4.8이다. 실제 도구가 결함 7개를 찾았고(`lk-uhid` 3,
+     `lk-gadget` 3, 엔진 1) 모두 고쳤다. 엔진 변경은 하나로, ykman이 OTP HID로 `config usb`를 실패로
+     보고한 것을 근거로 OTP HID 재부팅 시점을 상태 읽기 뒤로 옮겼다(§5).
 
-## 13. 프로그램화 단계로 미루는 것
+## 13. 프로그램화 단계
 
-- Linux: UHID, FunctionFS/ConfigFS 복합 USB 장치, PC/SC IFD 드라이버.
-- macOS: IOHIDUserDevice, IOUSBHost. Apple의 제한된 권한과 서명이 필요하다.
-- 데몬, 상태 파일 위치, 저장 키 보관(키체인 등), 터치 UI, 설치 패키지.
-- 실물 키와의 명령 단위 차분 비교. 실물을 쓰는 시험은 사용자의 명시적 허가가 있을 때만 한다.
+계약과 as-built 기록은 `docs/PROGRAM.md`에 있다.
+
+- **완료 (2026-10-11)**:
+  - 데몬 `localkeyd`: 상태 디렉터리, 저장 키 파일 또는 사용자 명령, 실행 루프, 제어 소켓.
+  - 전송: 비공개 유닉스 소켓(`wire`), Linux UHID(`uhid`), Linux FunctionFS/ConfigFS 복합 USB
+    장치(`gadget`).
+  - Linux 전송 둘은 네트워크 없는 QEMU 게스트에서 실제 호스트 도구로 검증했다(§12 결정 7).
+- **남은 것**:
+  - PC/SC IFD 드라이버: CCID는 지금 `gadget` 전송으로만 호스트에 닿는다.
+  - macOS: IOHIDUserDevice, IOUSBHost. Apple의 제한된 권한과 서명이 필요하다.
+  - 키체인 직접 연동: 지금은 `--key-command`로 사용자가 연결한다.
+  - 터치 UI, 설치 패키지, 서비스 등록.
+  - 실물 키와의 명령 단위 차분 비교. 실물을 쓰는 시험은 사용자의 명시적 허가가 있을 때만 한다.

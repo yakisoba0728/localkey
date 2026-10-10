@@ -78,6 +78,7 @@ The request shapes the tests send come from the host source:
 - A write without `REBOOT` changes the configuration and DeviceInfo at once. The USB interfaces follow at the next enumeration.
   - ykman `config usb` asks for `REBOOT` exactly when the interface set changes. yubikit `set_mode` (ykman `config mode`) writes without it and tells the user "You must remove and re-insert your YubiKey for this change to take effect". This suggests that the firmware itself does not re-enumerate without `REBOOT`.
   - `lk-device` (`settle_management`) follows this: only `REBOOT` re-enumerates; an interface-set change without it applies at the next reboot or power cycle (`management::interface_change_without_reboot_waits_for_the_next_enumeration`).
+  - Over OTP HID, `lk-device` reboots after the host's status read that follows the write (or after `OTP_REBOOT_DELAY_MS`), because yubikit needs that read to see the write succeed (`docs/catalog/device.md`).
 - CTAPHID error mapping: `6700` gives `ERR_INVALID_LEN`, `6A80`/`6A86` give `ERR_INVALID_PAR`, and anything else gives `ERR_OTHER`.
 - deferred: YubiKey 4 SET MODE is not implemented. `Management::legacy_set_mode` answers `6D00` and changes nothing.
   - This covers CCID INS `16`, OTP slot `0x11` through `lk_otp::MgmtBridge::write_device_config`, and CTAPHID `0x40`, which is left to `lk-device` (`set_mode_is_not_implemented_on_any_transport`, `legacy_set_mode_is_refused_without_change`).

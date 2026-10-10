@@ -366,7 +366,9 @@ fixed. Each crate's root doc (or `localkeyd/src/run.rs`, `log.rs`, `args.rs`) ke
 Two transport crates for Linux. The Docker Desktop VM kernel has no `UHID`, no `DUMMY_HCD`
 and no USB gadget support, so they are built as byte-level logic over generic I/O and tested
 on every Unix with fakes (socket pairs, temporary directories). Real-kernel runs happen in a
-QEMU guest inside Docker (`tools/linux-guest/`).
+QEMU guest inside Docker (`tools/linux-guest/`: `smoke.sh`, `uhid.sh`, `gadget.sh`); both
+transports pass there with libfido2, python-fido2, ykman, pcscd/libccid, OpenSC and GnuPG.
+Each crate's docs keep a "Settled on a real kernel" section with the observations.
 
 Both use only files and processes (no `ioctl`, no `unsafe`), so they compile and their tests
 run on every Unix; `localkeyd` refuses to start them on a non-Linux OS at run time.
@@ -402,11 +404,14 @@ use them for facts and do not copy their text. Every constant in the code cites 
   (hidraw writes and feature ioctls) carry the report number as a leading byte, and
   `UHID_START`'s `dev_flags` (`UHID_DEV_NUMBERED_*`) describe numbering. Check the
   semantics against `uhid.rst` and the kernel's `drivers/hid/uhid.c` / `hidraw.c` (read
-  for interface behaviour only). Until a real kernel confirms it, accept FIDO output of 65
-  bytes with a leading `00` (strip it) or exactly 64 bytes; accept OTP feature SET_REPORT
-  data of 9 bytes with a leading `00` or exactly 8; answer GET_REPORT(feature) in the form
-  the kernel copies back to a hidraw caller (report number, then the 8 bytes, if that is
-  what the source shows). Record the conclusion and its source in the crate docs.
+  for interface behaviour only). Accept FIDO output of 65 bytes with a leading `00` (strip
+  it) or exactly 64 bytes; accept OTP feature SET_REPORT data of 9 bytes with a leading
+  `00` or exactly 8; answer GET_REPORT(feature) with the report number, then the 8 bytes.
+  **Confirmed on a real kernel**: libfido2, python-fido2 and ykman write `00` + 64 bytes,
+  which arrives as a 65-byte output (a raw 64-byte write arrives as 64); `HIDIOCSFEATURE`
+  of 9 bytes arrives as 9, of 8 as 8 with report number 0; `HIDIOCGFEATURE(9)` returns
+  `00` + the 8 bytes verbatim; hidraw reads carry no prefix; `UHID_START` has
+  `dev_flags` 0.
 - FIDO input reports go out as `UHID_INPUT2` with 64 bytes; OTP keyboard reports as
   `UHID_INPUT2` with 8 bytes.
 - Re-enumeration destroys the devices and creates the ones the new identity enables.
@@ -416,9 +421,18 @@ use them for facts and do not copy their text. Every constant in the code cites 
 
 ### lk-gadget (ConfigFS + FunctionFS composite gadget)
 
-The faithful transport: one USB device with exactly the engine's descriptors (OTP keyboard,
-FIDO HID and CCID interfaces), for a Linux machine with a USB device controller (a board
-plugged into a computer, or `dummy_hcd` in a test guest). It needs root.
+The faithful transport: one USB device with the engine's descriptors (OTP keyboard, FIDO HID
+and CCID interfaces), for a Linux machine with a USB device controller (a board plugged into
+a computer, or `dummy_hcd` in a test guest). It needs root.
+
+**Measured exceptions** (dummy_hcd, `gadget.sh`), none fixable from user space: endpoint
+addresses are assigned by the controller (0407: `81/02/85/07/86/8a` where the engine has
+`81/04/84/02/82/83`; `FUNCTIONFS_VIRTUAL_ADDR` keeps the engine's addresses but then the
+host cannot configure the device); `iSerialNumber` is 3 with an empty string (ConfigFS
+always indexes the serial once a language exists); `bcdUSB`, DEVICE_QUALIFIER and BOS follow
+the controller, not `max_speed` (0x0200 and a DEVICE_QUALIFIER on high-speed dummy_hcd,
+0x0210 plus BOS on a SuperSpeed one). Only a full-speed-only controller matches the
+reference key's speed descriptors. Everything else is byte-identical.
 
 - **ConfigFS** (`/sys/kernel/config/usb_gadget/<name>`, root path a parameter): `idVendor`,
   `idProduct`, `bcdDevice`, `bcdUSB` from the device descriptor; `max_speed` =
@@ -472,7 +486,18 @@ and the items only a real kernel can settle. The points that refine the sections
 
 - **Both**: the reader threads pace themselves exactly like lk-wire (a `Command::Status`
   marker every 64 inputs, lk-gadget also every 256 KiB; at most two windows per producer in
-  the runner's channel). Every wait for a marker gives up when the device or session stops.
+  the runner's channel). Every wait for a marker gives up when the device or session stops,
+  except an OTP feature request in flight across a re-enumeration: lk-uhid lets it finish
+  (up to 1 s), and lk-gadget's drain lets it take the answer the runner already delivered.
+- **Both, re-enumeration (found on a real kernel)**: the response to the command that
+  caused the reboot, and the reply to the host's status read before an OTP HID reboot, are
+  written to the old device before it goes away. lk-uhid writes queued outputs and owed
+  replies before `UHID_DESTROY`, and the DESTROY waits `DESTROY_AFTER_REPLY` (100 ms) after
+  the last reply, because the kernel fails a request whose reply is followed at once by a
+  DESTROY. lk-gadget drains FIDO IN and CCID bulk-in data and a pending GET_REPORT for at
+  most `DRAIN_TIMEOUT` (1 s) before it unbinds, and a session it is stopping passes no bus
+  events (dummy_hcd reports SUSPEND before UNBIND). Dropping either transport does not
+  wait for owed replies.
 - **lk-uhid**
   - Report-number rule, from the driver code (`hidraw_send_report`, `hidraw_get_report`,
     `uhid_hid_output_raw`, `uhid_hid_set_report`): FIDO output arrives as 64 bytes or 65
@@ -490,6 +515,15 @@ and the items only a real kernel can settle. The points that refine the sections
   - `attached` = `UHID_CREATE2` accepted, not destroyed, and no `-EINVAL` on `UHID_INPUT2`
     since (the kernel's only sign of a failed `hid_add_device`). `UhidNotice::NotRunning`
     reports it once.
+  - Observed: the kernel's keyboard and SysRq handlers open the OTP device themselves; a
+    flood overflows the kernel's 32-event queue, which logs every dropped report (not rate
+    limited). A device with no bound driver gets no `UHID_STOP` after DESTROY, so its
+    reader thread and file stay until the process exits (accepted: waking a blocked read
+    needs `poll`, which std lacks); shutdown then takes about 1.1 s.
+  - udev: the FIDO node gets `uaccess` through `fido_id`. The OTP node lives under
+    `/devices/virtual/misc/uhid/`, so USB-attribute rules cannot match it; a desktop user
+    needs a rule such as `SUBSYSTEM=="hidraw", DEVPATH=="/devices/virtual/misc/uhid/0003:1209:0001.*", TAG+="uaccess"`
+    (vendor and product of the profile in use).
 - **lk-gadget**
   - The strings blob is the bare 16-byte header with both counts 0 (`__ffs_data_got_strings`
     requires both counts zero or both non-zero, and the engine's interfaces use no
@@ -518,4 +552,10 @@ and the items only a real kernel can settle. The points that refine the sections
     daemons with different state directories and the same gadget name.
   - If the unmount fails at teardown, the ConfigFS tree is left in place and reported,
     because removing the function directory under a live mount detaches it.
+  - Observed on dummy_hcd: the zero-length packet after a bulk-in message of whole packets
+    reaches the host (libccid reads with 65556-byte URBs and would hang without it); with
+    `O_NONBLOCK`, writes before the host configures the device fail at once with `EAGAIN`;
+    the controller answers interface GET_STATUS itself; `ep0` reopens at once after a
+    session; reclaiming a killed process's leftover works; an outside bind after an outside
+    unbind is refused by f_fs.
 
