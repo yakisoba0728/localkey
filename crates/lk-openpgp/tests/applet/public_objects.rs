@@ -1,0 +1,157 @@
+//! Public objects that must byte-match the firmware 5.7.4 observation.
+
+use lk_codec::tlv;
+use lk_core::{CardApplet, DeviceProfile};
+use lk_openpgp::AID_PREFIX;
+
+use crate::common::{Card, observed_hex, observed_lengths};
+
+/// Observation command `00a4040006d2760001240100` -> `9000`, 0 bytes.
+#[test]
+fn select_returns_9000_without_data() {
+    let mut card = Card::yubikey();
+    let resp = card.app.select(&crate::common::SELECT, &mut card.host);
+    assert_eq!(resp, vec![0x90, 0x00]);
+    assert_eq!(card.app.aid(), &AID_PREFIX);
+    assert_eq!(AID_PREFIX, [0xD2, 0x76, 0x00, 0x01, 0x24, 0x01]);
+}
+
+/// Observation `public_objects` (5F52, 7F66, 7F74) and commands `00ca5f5200`,
+/// `00ca7f6600`, `00ca7f7400` (8, 8 and 3 bytes).
+#[test]
+fn public_objects_match_observation() {
+    let mut card = Card::yubikey();
+    assert_eq!(card.get_ok(0x5F52), observed_hex("5f52"));
+    assert_eq!(card.get_ok(0x7F66), observed_hex("7f66"));
+    assert_eq!(card.get_ok(0x7F74), observed_hex("7f74"));
+    assert_eq!(card.get_ok(0x5F52).len(), 8);
+    assert_eq!(card.get_ok(0x7F66).len(), 8);
+    assert_eq!(card.get_ok(0x7F74).len(), 3);
+}
+
+/// Observation command `00ca00c000` -> `6b00` (catalog: "direct-C0 6B00 response").
+#[test]
+fn direct_c0_answers_6b00() {
+    let mut card = Card::yubikey();
+    assert_eq!(card.send(&[0x00, 0xCA, 0x00, 0xC0, 0x00]), (vec![], 0x6B00));
+}
+
+/// Observation `algorithm_information` and command `00ca00fa00` (421 bytes).
+#[test]
+fn algorithm_information_matches_observation() {
+    let mut card = Card::yubikey();
+    let fa = card.get_ok(0x00FA);
+    assert_eq!(fa.len(), 421);
+    assert_eq!(fa, observed_hex("algorithm_information"));
+}
+
+/// Observation command `00f1000000` -> 3 bytes (Yubico GET VERSION).
+#[test]
+fn get_version_returns_firmware() {
+    let mut card = Card::yubikey();
+    assert_eq!(card.send(&[0x00, 0xF1, 0x00, 0x00, 0x00]), (vec![5, 7, 4], 0x9000));
+}
+
+/// Observation `application_related_layout`, command `00ca006e00` (315 bytes),
+/// `extended_capabilities` and `algorithm_attributes`; spec §4.4.3.1.
+#[test]
+fn application_related_data_layout_matches_observation() {
+    let mut card = Card::yubikey();
+    let data = card.get_ok(0x006E);
+    assert_eq!(data.len(), 315);
+    let (outer, rest) = tlv::parse_one(&data).unwrap();
+    assert!(rest.is_empty());
+    assert_eq!(outer.tag, 0x6E);
+    let top = outer.children().unwrap();
+    let expected_top = observed_lengths("top_level_value_lengths");
+    assert_eq!(
+        top.iter().map(|t| (t.tag, t.value.len())).collect::<Vec<_>>(),
+        expected_top
+    );
+    assert_eq!(tlv::find(&top, 0x5F52).unwrap().value, observed_hex("5f52").as_slice());
+    assert_eq!(tlv::find(&top, 0x7F74).unwrap().value, observed_hex("7f74").as_slice());
+    let discretionary = tlv::find(&top, 0x73).unwrap().children().unwrap();
+    let expected_inner = observed_lengths("discretionary_value_lengths");
+    assert_eq!(
+        discretionary.iter().map(|t| (t.tag, t.value.len())).collect::<Vec<_>>(),
+        expected_inner
+    );
+    assert_eq!(tlv::find(&discretionary, 0xC0).unwrap().value, observed_hex("c0").as_slice());
+    assert_eq!(
+        tlv::find(&discretionary, 0x7F66).unwrap().value,
+        observed_hex("discretionary_7f66").as_slice()
+    );
+    for tag in [0xC1, 0xC2, 0xC3, 0xDA] {
+        let key = format!("{tag:02x}");
+        assert_eq!(tlv::find(&discretionary, tag).unwrap().value, observed_hex(&key).as_slice());
+    }
+    // Factory C4 (spec §4.4.3.6): PW1 valid for several signatures, maximum lengths 127,
+    // tries 3/0/3. The observation keeps only the length; these values are model policy
+    // consistent with public YubiKey documentation, not captured bytes.
+    assert_eq!(
+        tlv::find(&discretionary, 0xC4).unwrap().value,
+        &[0x01, 0x7F, 0x7F, 0x7F, 0x03, 0x00, 0x03]
+    );
+    // Key information DE: references 01, 02, 03, 81 (spec §4.4.3.8); only the factory
+    // attestation key is present, generated on the card (values are model policy, the
+    // observation keeps only the length).
+    assert_eq!(
+        tlv::find(&discretionary, 0xDE).unwrap().value,
+        &[0x01, 0x00, 0x02, 0x00, 0x03, 0x00, 0x81, 0x01]
+    );
+    for tag in [0xD6, 0xD7, 0xD8, 0xD9] {
+        assert_eq!(tlv::find(&discretionary, tag).unwrap().value, &[0x00, 0x20]);
+    }
+}
+
+/// C0 flags decoded per spec §4.4.3.7 match the observation's `extended_capabilities`
+/// summary (flags 125, challenge 3070, certificate 2048, special DO 255, no MSE).
+#[test]
+fn extended_capabilities_fields() {
+    let c0 = observed_hex("c0");
+    assert_eq!(c0[0], 125);
+    assert_eq!(u16::from_be_bytes([c0[2], c0[3]]), 3070);
+    assert_eq!(u16::from_be_bytes([c0[4], c0[5]]), 2048);
+    assert_eq!(u16::from_be_bytes([c0[6], c0[7]]), 255);
+    assert_eq!(c0[8], 0);
+    assert_eq!(c0[9], 0);
+}
+
+/// Observation `security_support_template_layout` and command `00ca007a00` (7 bytes):
+/// 7A wrapping 93 with a three-byte counter (spec §4.4.3.14).
+#[test]
+fn security_support_template_layout() {
+    let mut card = Card::yubikey();
+    let data = card.get_ok(0x007A);
+    assert_eq!(data, vec![0x7A, 0x05, 0x93, 0x03, 0x00, 0x00, 0x00]);
+}
+
+/// AID 4F (spec §4.2.1): version 3.4, manufacturer, BCD serial from the profile.
+#[test]
+fn aid_contains_profile_serial_and_manufacturer() {
+    let mut card = Card::yubikey();
+    assert_eq!(
+        card.get_ok(0x004F),
+        vec![0xD2, 0x76, 0x00, 0x01, 0x24, 0x01, 0x03, 0x04, 0x00, 0x06, 0x12, 0x34, 0x56, 0x78, 0x00, 0x00]
+    );
+    let mut own = Card::new();
+    let aid = own.get_ok(0x004F);
+    assert_eq!(aid[8..10], [0xFF, 0xFF]);
+    assert_eq!(aid[10..14], [0x12, 0x34, 0x56, 0x78]);
+    let mut other = Card::with_host(lk_testkit::TestHost::with_profile(DeviceProfile::own(31_415_926)));
+    assert_eq!(other.get_ok(0x004F)[10..14], [0x31, 0x41, 0x59, 0x26]);
+}
+
+/// Cardholder related data 65 (spec §4.4.3.2) in its factory state.
+#[test]
+fn cardholder_data_default() {
+    let mut card = Card::yubikey();
+    assert_eq!(card.get_ok(0x0065), crate::common::hex("65 09 5B00 5F2D00 5F3501 39"));
+}
+
+/// Factory KDF-DO: KDF_NONE `81 01 00` (spec §4.3.2).
+#[test]
+fn kdf_default_is_none() {
+    let mut card = Card::yubikey();
+    assert_eq!(card.get_ok(0x00F9), vec![0x81, 0x01, 0x00]);
+}
