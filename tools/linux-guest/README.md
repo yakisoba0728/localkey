@@ -36,6 +36,7 @@ The guest exists so that nothing touches the machine it runs on.
 | --- | --- |
 | `Dockerfile` | `localkey-guest-build:1`: QEMU, the kernel `Image`, the guest root filesystem `base.cpio.gz` |
 | `extract-image.py` | Ubuntu's arm64 `vmlinuz` (EFI stub + zstd zboot) to a raw `Image` for `qemu -kernel` |
+| `Dockerfile.rust` | `localkey-rust:1.98-clippy`: `rust:1.98-slim` plus clippy (base of the musl image; also runs the offline Linux test and clippy pass) |
 | `Dockerfile.musl` | `localkey-rust-musl:1`: the project's Rust image plus `aarch64-unknown-linux-musl` |
 | `env.sh` | shared settings (image names, resource caps, `$LK_GUEST_DIR` checks) |
 | `build-image.sh` | builds `localkey-guest-build:1` and copies its artifacts to `$LK_GUEST_DIR` |
@@ -47,6 +48,15 @@ The guest exists so that nothing touches the machine it runs on.
 | `tests/*.sh` | test scripts; `smoke.sh` is the smoke test, `uhid.sh` the uhid scenario, `gadget.sh` the gadget scenario |
 
 ## Building
+
+One-time preparation (network):
+
+```sh
+cargo vendor --locked /path/to/vendor > /dev/null           # crates for the offline builds
+docker build -t localkey-rust:1.98-clippy -f tools/linux-guest/Dockerfile.rust tools/linux-guest
+```
+
+Then:
 
 ```sh
 export LK_GUEST_DIR=/path/outside/the/repo/guest           # artifacts and logs
@@ -64,6 +74,22 @@ change to the Rust code; the guest image only needs rebuilding when the Dockerfi
 After the two builds `$LK_GUEST_DIR` holds `Image` (the kernel), `base.cpio.gz` (the guest
 root filesystem), `config` and `kernel-release` (the kernel's), `modules.list` (the modules
 in the guest), `rootfs-size`, `bin/localkeyd`, `target/` (cargo) and `logs/`.
+
+## The offline Linux test and clippy pass
+
+Not a guest run: the whole workspace's `cargo test` and `cargo clippy` on Linux, in a
+container without network, with the repository read-only.
+
+```sh
+mkdir -p "$LK_GUEST_DIR/linux-target" "$LK_GUEST_DIR/linux-home"
+printf '[source.crates-io]\nreplace-with = "vendored-sources"\n[source.vendored-sources]\ndirectory = "/vendor"\n' \
+  > "$LK_GUEST_DIR/linux-home/config.toml"
+docker run --rm --network none --cpus 2 --memory 6g --user "$(id -u):$(id -g)" \
+  -e HOME=/home/u -e CARGO_HOME=/home/u -e CARGO_TARGET_DIR=/target -e CARGO_BUILD_JOBS=2 \
+  -v "$PWD":/src:ro -v "$LK_VENDOR_DIR":/vendor:ro -v "$LK_GUEST_DIR/linux-home":/home/u \
+  -v "$LK_GUEST_DIR/linux-target":/target -w /src localkey-rust:1.98-clippy \
+  sh -c 'cargo test --offline --locked --workspace && cargo clippy --offline --locked --workspace --all-targets'
+```
 
 ## Running a test
 

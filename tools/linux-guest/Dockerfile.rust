@@ -1,0 +1,6 @@
+# localkey-rust: the Rust toolchain the project builds and checks with on Linux
+# (rust:1.98-slim plus clippy). Used for the offline Linux test/clippy run and as the base
+# of localkey-rust-musl (Dockerfile.musl).
+#   docker build -t localkey-rust:1.98-clippy -f tools/linux-guest/Dockerfile.rust tools/linux-guest
+FROM rust:1.98-slim
+RUN rustup component add clippy
