@@ -37,7 +37,10 @@
 //!    application whose Management capability is disabled, answers `6A82` and leaves
 //!    the current selection unchanged (ISO/IEC 7816-4 §5.6: "file or application not
 //!    found"). Every SELECT ends the secure channel session (Yubico: "When a new
-//!    applet is selected, the session is terminated"; `SecurityDomain::end_session`).
+//!    applet is selected, the session is terminated"; `SecurityDomain::end_session`);
+//!    an encrypted SELECT first drops the selected applet's authorization, so nothing
+//!    gained under the channel stays usable in plaintext. A channel that ends with a
+//!    response does the same.
 //! 5. **Other commands** go to the selected applet; the Security Domain receives
 //!    unwrapped commands through `SecurityDomain::process_secure`, and the OTP applet
 //!    its Management bridge through `OtpApplet::process_with`. With no application
@@ -293,6 +296,16 @@ impl Device {
     /// Step 4: SELECT by DF name.
     fn select(&mut self, command: &[u8], wrap: bool, max: usize) -> Vec<u8> {
         self.apps.sd.end_session();
+        if wrap {
+            // An encrypted SELECT ends the session, and the authorization gained under it
+            // ends before the SELECT is validated, also when it re-selects the current
+            // applet or names an unknown one (catalog SecurityDomain_versions: "encrypted
+            // SELECT terminate[s] authorization for subsequent commands";
+            // SecurityDomain_plaintext: "malformed plaintext SELECT clears OCE and PIV
+            // PIN/admin before validation"). `unwrap_secure` already revoked for a
+            // plaintext SELECT that ended the channel.
+            self.revoke_selected();
+        }
         let response = match Command::parse(command) {
             Err(e) => apdu::status(e.sw()),
             Ok(cmd) => match self.find_applet(&cmd.data) {
@@ -308,7 +321,7 @@ impl Device {
             },
         };
         let selected = self.card.selected;
-        let response = self.finish(selected, response, wrap, max);
+        let response = self.seal(selected, response, wrap, max);
         if self.card.channel.as_ref().is_some_and(|channel| !channel.is_open()) {
             self.card.channel = None;
         }
@@ -355,8 +368,21 @@ impl Device {
     }
 
     /// The response to send for a command of `app`: unchanged without a secure
-    /// channel; collected, wrapped and split under one.
+    /// channel; collected, wrapped and split under one. If the channel ended with this
+    /// response, the selected applet's authorization ends with it (catalog
+    /// SecurityDomain_versions: "reset ... terminate[s] authorization for subsequent
+    /// commands"), so nothing gained under the channel is usable in plaintext.
     pub(crate) fn finish(&mut self, app: Option<AppId>, response: Vec<u8>, wrap: bool, max: usize) -> Vec<u8> {
+        let response = self.seal(app, response, wrap, max);
+        if wrap && self.card.channel.is_none() {
+            self.revoke_selected();
+        }
+        response
+    }
+
+    /// [`Device::finish`] without the revocation, for SELECT: it revokes before it is
+    /// processed, and the applet it selected keeps its fresh selection state.
+    fn seal(&mut self, app: Option<AppId>, response: Vec<u8>, wrap: bool, max: usize) -> Vec<u8> {
         if !wrap {
             return response;
         }

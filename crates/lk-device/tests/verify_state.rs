@@ -180,6 +180,68 @@ fn wrapped_select_of_an_unknown_aid_ends_the_channel_and_keeps_the_selection() {
     assert_eq!(rig.apdu(&wrapped), vec![0x68, 0x82]);
 }
 
+/// Catalog SecurityDomain_versions: "encrypted SELECT terminate[s] authorization for
+/// subsequent commands". A PIV PIN verified inside an SCP03 session does not survive an
+/// encrypted re-SELECT of PIV (SP 800-73-4 keeps the security status only on a plain
+/// re-SELECT): after it the channel is gone and a plaintext VERIFY status check answers
+/// `63Cx`, not `9000`.
+#[test]
+fn encrypted_reselect_ends_authorization_gained_under_the_channel() {
+    let mut rig = Rig::new();
+    rig.power_on();
+    rig.select(AID_PIV);
+    let mut session = Scp03::open(&mut rig);
+    let verify = session.wrap(0x00, 0x20, 0x00, 0x80, &piv::pin_block("123456"), None);
+    assert_eq!(session.unwrap(&rig.apdu(&verify)), (vec![], 0x9000));
+    let select = session.wrap(0x00, 0xA4, 0x04, 0x00, AID_PIV, Some(0));
+    assert_eq!(session.unwrap(&rig.apdu(&select)).1, 0x9000);
+    let status = rig.apdu(&[0x00, 0x20, 0x00, 0x80]);
+    assert_eq!(sw(&status) & 0xFFF0, 0x63C0, "PIN no longer verified: {status:02X?}");
+}
+
+/// The same for an encrypted SELECT of an unknown AID: the selection stays (ISO/IEC
+/// 7816-4 §5.6 `6A82`) but the PIN verified under the channel is gone, and so is the
+/// verification made in plaintext before the channel opened.
+#[test]
+fn encrypted_select_of_an_unknown_aid_ends_authorization() {
+    for verify_inside in [true, false] {
+        let mut rig = Rig::new();
+        rig.power_on();
+        rig.select(AID_PIV);
+        if !verify_inside {
+            let mut verify = vec![0x00, 0x20, 0x00, 0x80, 0x08];
+            verify.extend_from_slice(&piv::pin_block("123456"));
+            assert_eq!(rig.apdu(&verify), vec![0x90, 0x00]);
+        }
+        let mut session = Scp03::open(&mut rig);
+        if verify_inside {
+            let verify = session.wrap(0x00, 0x20, 0x00, 0x80, &piv::pin_block("123456"), None);
+            assert_eq!(session.unwrap(&rig.apdu(&verify)), (vec![], 0x9000));
+        }
+        let select = session.wrap(0x00, 0xA4, 0x04, 0x00, &[0xA0, 0x00, 0x00, 0x06, 0x47, 0x2F, 0x00, 0x01], Some(0));
+        assert_eq!(rig.apdu(&select), vec![0x6A, 0x82]);
+        let status = rig.apdu(&[0x00, 0x20, 0x00, 0x80]);
+        assert_eq!(sw(&status) & 0xFFF0, 0x63C0, "PIN no longer verified ({verify_inside}): {status:02X?}");
+    }
+}
+
+/// A handshake is not a session boundary (catalog SecurityDomain_handoff:
+/// "not-yet-authenticated SCP03 INIT retain outer transport"): a PIN verified under the
+/// channel stays verified after a wrapped INITIALIZE UPDATE.
+#[test]
+fn nested_handshake_keeps_authorization() {
+    let mut rig = Rig::new();
+    rig.power_on();
+    rig.select(AID_PIV);
+    let mut session = Scp03::open(&mut rig);
+    let verify = session.wrap(0x00, 0x20, 0x00, 0x80, &piv::pin_block("123456"), None);
+    assert_eq!(session.unwrap(&rig.apdu(&verify)), (vec![], 0x9000));
+    let init = session.wrap(0x80, 0x50, 0x00, 0x00, &[0x01; 8], None);
+    assert_eq!(session.unwrap(&rig.apdu(&init)).1, 0x9000);
+    let status = session.wrap(0x00, 0x20, 0x00, 0x80, &[], None);
+    assert_eq!(session.unwrap(&rig.apdu(&status)), (vec![], 0x9000), "still verified");
+}
+
 /// Catalog appendix A `Linux_native` "86 actual profile6->FIDO-only->profile6 pending
 /// Management checks" and `lib.rs` `settle_management`: a configuration that changes the
 /// interface set re-enumerates at once and power-cycles volatile state. A CTAP2 command
