@@ -559,3 +559,70 @@ and the items only a real kernel can settle. The points that refine the sections
     session; reclaiming a killed process's leftover works; an outside bind after an outside
     unbind is refused by f_fs.
 
+
+## PC/SC through vpcd, transport combinations, clean shutdown (third step)
+
+### lk-vpcd
+
+A CCID path that needs no USB device controller: the `vpcd` IFD handler of the vsmartcard
+project (packaged as `vsmartcard-vpcd` in Debian and Ubuntu, also available for macOS)
+makes pcscd show a "Virtual PCD" reader and waits for a virtual card to connect to it over
+TCP. `lk-vpcd` is that card: a std-only TCP client. No vsmartcard code is used; the wire
+protocol is taken from the project's documentation (cite it) and checked against the real
+`vpcd` in the guest.
+
+- Connects to `--vpcd-addr HOST:PORT` (default `127.0.0.1:35963`, the documented default
+  of vpcd; check). Loopback only by default; a non-loopback address is allowed but logged as
+  a warning, because the APDUs are unencrypted. While vpcd is not listening the transport
+  retries every second; a lost connection is retried the same way (card removed, then
+  inserted again).
+- Protocol (verify every detail against the docs and the real vpcd): each message is a
+  2-byte big-endian length followed by that many bytes. A 1-byte message from vpcd is a
+  control command: power off, power on, reset, get ATR (answered with the ATR bytes). Any
+  longer message is a command APDU, answered with the response APDU.
+- Mapping to the engine (the transport is a small CCID host): power on →
+  `PC_to_RDR_IccPowerOn` (keep the ATR from the `RDR_to_PC_DataBlock`); power off →
+  `PC_to_RDR_IccPowerOff`; reset → power off then power on; get ATR → the ATR from the last
+  power on, powering on first if needed; APDU → `PC_to_RDR_XfrBlock` with the next `bSeq`,
+  and the answer is the `abData` of the matching `RDR_to_PC_DataBlock`. Time-extension
+  replies (`bStatus` bit 7, `0x80`) are skipped, so a command waiting for a touch simply
+  takes longer. An error reply (slot error, card absent) answers the APDU with `6F00` and
+  powers the slot on again before the next APDU. Exactly one command is in flight (vpcd is
+  synchronous).
+- Outputs other than `Output::Ccid` are ignored. `Output::CcidInterrupt` is ignored (vpcd has
+  no slot-change message). It sends no bus events: the device is powered when it opens.
+- Enumeration: when the identity's interfaces include CCID the transport connects; when
+  CCID is disabled it disconnects (the reader shows no card) and stays disconnected until an
+  enumeration enables CCID again.
+- Same structure as the other transports: pure protocol module with unit tests, an I/O seam
+  (connect function), and tests against a fake vpcd on `127.0.0.1` with an ephemeral port
+  (loopback only; this is the one place program tests use TCP).
+
+### Transport combinations
+
+- `lk_run::Fanout` (new public type in `lk-run`): a `Transport` made of several transports.
+  `enumerate` goes to every member in order; `deliver` gives every member a clone of the
+  output, and each member ignores what it does not carry; `attached` is `Some(true)` if any
+  member says so, `Some(false)` if all that know say false, else `None`.
+- `localkeyd run --transport` takes a comma-separated set: `wire`, `uhid`, `gadget`, `vpcd`.
+  Valid sets: any single transport, and `uhid,vpcd` (the whole device on a Linux machine
+  without a device controller: FIDO and OTP through UHID, CCID through pcscd). `wire` and
+  `gadget` present the whole device and combine with nothing. Each transport keeps its own
+  options (`--vpcd-addr` belongs to `vpcd`). `vpcd` alone runs on every Unix; on macOS it
+  needs vpcd installed into the system's PC/SC by the user (not done or tested here).
+
+### Clean shutdown from the control socket
+
+- Control request `shutdown`: replies `ok`, then the daemon does exactly what
+  `--exit-on-stdin-eof` does at EOF (control socket closed, runner shut down, device
+  dropped, transports torn down, sockets removed) and exits 0. `localkeyd ctl ... shutdown`
+  sends it. This gives supervisors (systemd `ExecStop`, launchd) a clean stop without
+  signal handling.
+
+### Service examples
+
+`tools/service/` (examples, not installed by anything): a systemd system unit for
+`--transport uhid,vpcd` (with `ExecStop=localkeyd ctl --control ... shutdown`, the storage
+key through `--key-command` or a root-only key file, `StateDirectory=`), a udev rule giving
+the logged-in user access to the OTP hidraw node, and a short README. They are checked for
+syntax only (`systemd-analyze verify` in the guest if available).
