@@ -310,6 +310,45 @@ The frozen crates' sources are the authority; these are the points other crates 
   - AAD `b"localkey" || record_id || 0x01`.
   - Record ids: Device 1, Fido 2, Oath 3, Otp 4, Piv 5, OpenPgp 6, HsmAuth 7, SecurityDomain 8.
 
+## Applications A as implemented (binding for lk-device)
+
+- Catalog mapping lives in `docs/catalog/<app>.md`, one file per crate. It replaces the
+  per-section rule above. `docs/CATALOG_STATUS.md` is assembled from those files at the end.
+- **SELECT detection**: only `xx A4 04 xx` is SELECT. `00 A4 00 0x` is OATH CALCULATE ALL and
+  goes to the selected applet's `process()`.
+- **Secure messaging**: after `lk_sd::SecureChannel::unwrap_command`, the applet receives the
+  command with the CLA secure-messaging bits cleared. Plaintext continuation commands
+  (SEND REMAINING, GET RESPONSE) are delivered as received.
+- **Touch timeouts**: applets return `NeedTouch { timeout_ms }` (OATH 15000, FIDO 30000).
+  lk-device calls `touch_resolved(false)` / `presence_resolved(false)` on timeout, cancel,
+  abort or session end.
+- **lk-fido**
+  - `cbor()` while a command waits answers `CTAP1_ERR_CHANNEL_BUSY` and keeps the waiting
+    command.
+  - `presence_resolved()` with nothing waiting returns an error status. `RESET_WINDOW_MS = 10000`.
+  - The attestation O/C are constants ("localkey", "ZZ") until `DeviceProfile` gains fields.
+- **lk-otp**
+  - CCID APDUs to the OTP AID must use `OtpApplet::process_with(apdu, Option<&mut dyn MgmtBridge>, host)`.
+  - HID: `OtpHid::set_feature(..)`, `OtpHid::get_feature_at(otp, now)` (the countdown needs
+    time), `OtpHid::touch_resolved(touched, otp, host)`, `OtpHid::is_waiting_for_touch()`.
+  - Touch model: `Otp::touch_down(host)` / `Otp::touch_up(host)` return keyboard reports.
+    `Otp::is_touch_active()`. `Otp::is_challenge_waiting(now)` means the touch belongs to the
+    pending OTP request, not to a button press.
+  - `MgmtBridge` mapping (see `lk-otp` and `lk-mgmt` docs):
+    - `serial` -> `Management::serial`;
+    - `device_info(page)` -> `Management::device_info_page(page, host)`;
+    - `write_device_info(len||TLVs)` -> `Management::write_config` (lk-device must apply the
+      returned `ConfigEffect` itself);
+    - `write_device_config` -> `Management::legacy_set_mode` (always `6D00`);
+    - `challenge_response_timeout_s` -> `Management::challenge_response_timeout_secs`.
+- **lk-mgmt**
+  - `write_config(data)` takes the wire form `len || TLVs`.
+  - CCID: call `MgmtApplet::take_effect()` right after sending the WRITE CONFIG response.
+  - CTAPHID vendor commands go through `ctaphid_vendor(..)`, which returns a ready `VendorReply`.
+  - Read-only entry points take `&dyn Host`.
+- **lk-oath**: the factory salt (device id) is persisted only at the first mutating command.
+  Until then it changes per power cycle. This is a known gap for the final review.
+
 ## Contract change requests
 
 Phase 0 requests are resolved in the section above.
