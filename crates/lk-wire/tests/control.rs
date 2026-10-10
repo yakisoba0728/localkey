@@ -230,6 +230,20 @@ fn an_unknown_or_empty_command_gets_an_error() -> TestResult {
     Ok(())
 }
 
+/// Linux resets a Unix stream closed with unread input; the server reads what is waiting
+/// first, so the client gets its reply and a clean end of stream.
+#[test]
+fn bytes_after_the_request_line_still_end_in_a_clean_close() -> TestResult {
+    let dir = TestDir::new();
+    let runner = FakeRunner::plain();
+    let server = serve(&dir, &runner)?;
+    assert_eq!(control(server.path(), &format!("tap\n{}", "y".repeat(2000)))?, "ok\n");
+    assert_eq!(runner.next(), Seen::Tap(TAP_SHORT_MS));
+    assert_eq!(control(server.path(), &"z".repeat(5000))?, "error request too long\n");
+    runner.assert_quiet();
+    Ok(())
+}
+
 #[test]
 fn a_request_may_end_at_the_close_of_the_clients_side() -> TestResult {
     let dir = TestDir::new();

@@ -124,6 +124,31 @@ fn serve(stream: UnixStream, runner: &Sender<Command>, closing: &AtomicBool) {
         Err(reason) => format!("error {reason}\n"),
     };
     let _ = (&stream).write_all(reply.as_bytes());
+    discard_pending(&stream);
+}
+
+/// Most bytes [`discard_pending`] reads.
+const DISCARD_LIMIT: usize = 64 * 1024;
+
+/// Read and drop the input that is already waiting, at most [`DISCARD_LIMIT`] bytes,
+/// without waiting for more. Linux resets a Unix stream socket that is closed with unread
+/// input (`unix_release_sock` in `net/unix/af_unix.c` sets `ECONNRESET` on the peer), so a
+/// client that sent more than its request line (a line over [`MAX_REQUEST`], bytes after
+/// the newline) would read its reply and then an error instead of the end of stream.
+fn discard_pending(stream: &UnixStream) {
+    if stream.set_nonblocking(true).is_err() {
+        return;
+    }
+    let mut sink = [0; 1024];
+    let mut discarded = 0;
+    while discarded < DISCARD_LIMIT {
+        match (&*stream).read(&mut sink) {
+            Ok(0) => break,
+            Ok(read) => discarded += read,
+            Err(error) if error.kind() == io::ErrorKind::Interrupted => {}
+            Err(_) => break,
+        }
+    }
 }
 
 /// The request line, without its newline, if it arrives within `limit` in total (each read
