@@ -588,6 +588,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "lk-run"
+version = "0.1.0"
+dependencies = [
+ "lk-core",
+ "lk-device",
+ "lk-testkit",
+]
+
+[[package]]
 name = "lk-sd"
 version = "0.1.0"
 dependencies = [

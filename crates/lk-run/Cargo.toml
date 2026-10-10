@@ -1,0 +1,17 @@
+[package]
+name = "lk-run"
+description = "Run loop that owns the Device and connects it to a transport"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+lk-core.workspace = true
+lk-device.workspace = true
+
+[dev-dependencies]
+lk-testkit.workspace = true
