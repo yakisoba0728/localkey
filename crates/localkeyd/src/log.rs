@@ -1,9 +1,12 @@
 //! Logging to stderr (`docs/PROGRAM.md` "localkeyd"): startup and errors by default, `-v`
-//! adds connections, enumeration and presence, `-vv` adds frame types and sizes.
+//! adds connections, enumeration, presence and transport events, `-vv` adds frame, report
+//! and transfer types and sizes.
 //!
 //! Nothing logged carries payload bytes, record contents or key bytes: the daemon logs
-//! paths, counts, frame types and sizes, and `lk_wire::WireEvent`s, whose texts never hold
-//! payloads (`docs/PROGRAM.md` "Rules for program crates", Secrets).
+//! paths, counts, frame types and sizes, and the transports' events (`lk_wire::WireEvent`,
+//! `lk_uhid::UhidNotice`, `lk_gadget::GadgetEvent`), whose texts never hold payloads
+//! (`docs/PROGRAM.md` "Rules for program crates", Secrets). Which event goes to which
+//! level is decided in `run`.
 //!
 //! # As built
 //!
@@ -111,6 +114,20 @@ impl Log {
     }
 }
 
+#[cfg(test)]
+impl Log {
+    /// A log without its writer thread, for tests: its lines stay queued until
+    /// [`Log::take_lines`] takes them.
+    pub fn unwritten(verbosity: u8) -> Log {
+        Log { verbosity, queue: Arc::new(Queue::default()) }
+    }
+
+    /// Every line queued so far, taken from the queue.
+    pub fn take_lines(&self) -> Vec<String> {
+        self.queue.lock().lines.drain(..).collect()
+    }
+}
+
 impl Queue {
     fn lock(&self) -> MutexGuard<'_, Pending> {
         // Every update is a few assignments; a panic cannot leave the queue unusable.
@@ -168,7 +185,7 @@ mod tests {
 
     /// A log without its writer thread: nothing leaves the queue unless the test takes it.
     fn unwritten() -> Log {
-        Log { verbosity: TRACE, queue: Arc::new(Queue::default()) }
+        Log::unwritten(TRACE)
     }
 
     fn take(log: &Log) -> Option<String> {

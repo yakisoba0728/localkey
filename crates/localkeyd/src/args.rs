@@ -2,11 +2,19 @@
 //!
 //! ```text
 //! localkeyd keygen (--key-file PATH | --print)
-//! localkeyd run --state DIR (--key-file PATH | --key-command CMD)
-//!               [--profile own|yubikey-5c-nano-5.7.4] [--wire PATH] [--control PATH]
+//! localkeyd run --state DIR (--key-file PATH | --key-command CMD) [TRANSPORT]
+//!               [--profile own|yubikey-5c-nano-5.7.4] [--control PATH]
 //!               [--wall-clock] [--allow-unreadable] [--exit-on-stdin-eof] [-v | -vv]
 //! localkeyd ctl --control PATH (tap [long] | down | up | power-cycle | status | watch)
+//!
+//! TRANSPORT (default wire):
+//!   [--transport wire] [--wire PATH]
+//!   --transport uhid [--uhid-path PATH]
+//!   --transport gadget --udc NAME [--gadget-name NAME] [--configfs DIR] [--ffs-dir DIR]
 //! ```
+//!
+//! The transports are `docs/PROGRAM.md` "lk-wire", "lk-uhid" and "lk-gadget"; the run
+//! side is in `run`.
 //!
 //! # As built
 //!
@@ -21,6 +29,24 @@
 //!   it (an error earlier on the line is reported instead), and an option's value stays a
 //!   value: `--state help` is a state directory named `help`.
 //! - The `ctl` command words and `--control` may come in either order.
+//! - `run` collects every option before it looks at `--transport`, so an option that
+//!   belongs to another transport (`--wire` without the wire transport, `--uhid-path`
+//!   without uhid, `--udc`, `--gadget-name`, `--configfs` or `--ffs-dir` without gadget)
+//!   is the same usage error wherever it stands on the line. `--control` belongs to every
+//!   transport: the control socket is how a touch reaches the device.
+//! - The transport defaults are resolved here, so [`RunOptions`] holds the paths the
+//!   daemon uses: `--uhid-path` [`DEFAULT_UHID_PATH`], `--gadget-name`
+//!   [`DEFAULT_GADGET_NAME`], `--configfs` [`DEFAULT_CONFIGFS`], `--ffs-dir`
+//!   `lk_gadget::default_mount_point` of the gadget name (`/dev/ffs-NAME`, the naming of
+//!   `Documentation/usb/functionfs.rst`). Each default is the transport crate's own, so
+//!   the two cannot drift apart. Only the wire socket's default stays `None`, because it
+//!   lives in the state directory (`run` normalises that path first).
+//! - `--gadget-name` must be 1 to 32 of `[A-Za-z0-9_-]`, the rule `lk_gadget` applies to
+//!   the names it puts into ConfigFS paths (it names the gadget directory, the FunctionFS
+//!   instance and the default `--ffs-dir`); `--udc` must not hold a `/` or a newline (it
+//!   is a name in `/sys/class/udc`, written to the gadget's `UDC` attribute followed by a
+//!   newline). Both must be UTF-8. Checking them here makes a name that can never work a
+//!   usage error; `lk_gadget::GadgetTransport` checks them again.
 
 use std::ffi::{OsStr, OsString};
 use std::fmt;
@@ -31,20 +57,44 @@ use std::path::PathBuf;
 pub const USAGE: &str = "\
 usage:
   localkeyd keygen (--key-file PATH | --print)
-  localkeyd run --state DIR (--key-file PATH | --key-command CMD)
-                [--profile own|yubikey-5c-nano-5.7.4] [--wire PATH] [--control PATH]
+  localkeyd run --state DIR (--key-file PATH | --key-command CMD) [TRANSPORT]
+                [--profile own|yubikey-5c-nano-5.7.4] [--control PATH]
                 [--wall-clock] [--allow-unreadable] [--exit-on-stdin-eof] [-v | -vv]
   localkeyd ctl --control PATH (tap [long] | down | up | power-cycle | status | watch)
 
-run defaults: --profile own, --wire DIR/wire.sock, --control DIR/control.sock
+TRANSPORT, how the device reaches a USB host (default wire):
+  [--transport wire] [--wire PATH]
+      a private Unix socket for a bridge or tests
+  --transport uhid [--uhid-path PATH]
+      the FIDO and OTP HID interfaces as kernel HID devices (Linux, /dev/uhid access)
+  --transport gadget --udc NAME [--gadget-name NAME] [--configfs DIR] [--ffs-dir DIR]
+      the whole device as a USB gadget on the device controller NAME (Linux, root)
+The control socket is served with every transport (ctl tap is the touch).
+
+run defaults: --profile own, --wire DIR/wire.sock, --control DIR/control.sock,
+--uhid-path /dev/uhid, --gadget-name localkey, --configfs /sys/kernel/config/usb_gadget,
+--ffs-dir /dev/ffs-NAME (NAME is the gadget name)
+-v logs connections, enumeration, presence and transport events; -vv adds report
+and frame types and sizes (never their bytes)
 exit codes: 0 clean, 1 runtime failure, 2 startup failure (usage, lock, key,
-permissions), 3 unreadable records refused (see --allow-unreadable)
+permissions, uhid or gadget on a system other than Linux), 3 unreadable records
+refused (see --allow-unreadable)
 ";
 
 /// The wire socket's name in the state directory when `--wire` is not given.
 pub const WIRE_SOCKET: &str = "wire.sock";
 /// The control socket's name in the state directory when `--control` is not given.
 pub const CONTROL_SOCKET: &str = "control.sock";
+/// `--uhid-path` when not given (`docs/PROGRAM.md` "lk-uhid": the device path defaults to
+/// `/dev/uhid`).
+pub const DEFAULT_UHID_PATH: &str = lk_uhid::DEFAULT_UHID_PATH;
+/// `--gadget-name` when not given (`lk_gadget::GadgetConfig::new`'s gadget name).
+pub const DEFAULT_GADGET_NAME: &str = lk_gadget::DEFAULT_NAME;
+/// `--configfs` when not given: the ConfigFS gadget root (`docs/PROGRAM.md` "lk-gadget";
+/// `Documentation/usb/gadget_configfs.rst`).
+pub const DEFAULT_CONFIGFS: &str = lk_gadget::DEFAULT_CONFIGFS_ROOT;
+/// The longest `--gadget-name` (`lk_gadget::GadgetConfig`: 1 to 32 of `[A-Za-z0-9_-]`).
+pub const MAX_GADGET_NAME: usize = 32;
 
 /// What the command line asks for.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -100,14 +150,86 @@ impl Profile {
     }
 }
 
+/// `--transport`: how the device reaches a USB host.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TransportKind {
+    /// `wire`: `lk_wire::WireTransport`, a private Unix socket.
+    Wire,
+    /// `uhid`: `lk_uhid::UhidTransport`, Linux only.
+    Uhid,
+    /// `gadget`: `lk_gadget::GadgetTransport`, Linux only.
+    Gadget,
+}
+
+impl TransportKind {
+    fn parse(value: &str) -> Option<TransportKind> {
+        match value {
+            "wire" => Some(TransportKind::Wire),
+            "uhid" => Some(TransportKind::Uhid),
+            "gadget" => Some(TransportKind::Gadget),
+            _ => None,
+        }
+    }
+
+    /// The name the command line uses.
+    pub fn name(self) -> &'static str {
+        match self {
+            TransportKind::Wire => "wire",
+            TransportKind::Uhid => "uhid",
+            TransportKind::Gadget => "gadget",
+        }
+    }
+}
+
+/// The chosen transport with its options, defaults resolved (see the module's "As built"
+/// notes).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TransportOptions {
+    /// `--transport wire` (the default).
+    Wire {
+        /// `--wire`; `None` is [`WIRE_SOCKET`] in the state directory.
+        socket: Option<PathBuf>,
+    },
+    /// `--transport uhid`.
+    Uhid {
+        /// `--uhid-path`, [`DEFAULT_UHID_PATH`] when not given.
+        path: PathBuf,
+    },
+    /// `--transport gadget`.
+    Gadget(GadgetOptions),
+}
+
+impl TransportOptions {
+    pub fn kind(&self) -> TransportKind {
+        match self {
+            TransportOptions::Wire { .. } => TransportKind::Wire,
+            TransportOptions::Uhid { .. } => TransportKind::Uhid,
+            TransportOptions::Gadget(_) => TransportKind::Gadget,
+        }
+    }
+}
+
+/// The options of `--transport gadget` (`lk_gadget::GadgetConfig`).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GadgetOptions {
+    /// `--udc`: the USB device controller, a name in `/sys/class/udc`. Required.
+    pub udc: String,
+    /// `--gadget-name`: the ConfigFS gadget directory and the FunctionFS instance.
+    pub name: String,
+    /// `--configfs`: the ConfigFS gadget root.
+    pub configfs: PathBuf,
+    /// `--ffs-dir`: where FunctionFS is mounted.
+    pub ffs_dir: PathBuf,
+}
+
 /// The options of `run`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RunOptions {
     pub state: PathBuf,
     pub key: KeySource,
     pub profile: Profile,
-    /// `--wire`; `None` is [`WIRE_SOCKET`] in the state directory.
-    pub wire: Option<PathBuf>,
+    /// `--transport` and the options that belong to it.
+    pub transport: TransportOptions,
     /// `--control`; `None` is [`CONTROL_SOCKET`] in the state directory.
     pub control: Option<PathBuf>,
     pub wall_clock: bool,
@@ -312,7 +434,13 @@ fn parse_run(args: &[OsString]) -> Result<Invocation, UsageError> {
     let mut key_file = None;
     let mut key_command = None;
     let mut profile = None;
+    let mut transport = None;
     let mut wire = None;
+    let mut uhid_path = None;
+    let mut udc = None;
+    let mut gadget_name = None;
+    let mut configfs = None;
+    let mut ffs_dir = None;
     let mut control = None;
     let mut wall_clock = false;
     let mut allow_unreadable = false;
@@ -339,7 +467,32 @@ fn parse_run(args: &[OsString]) -> Result<Invocation, UsageError> {
                 })?;
                 once(&mut profile, &name, parsed)?;
             }
+            "--transport" => {
+                let value = utf8(&name, args.value(&name, inline)?)?;
+                let parsed = TransportKind::parse(value)
+                    .ok_or_else(|| usage(format!("unknown transport {value} (expected wire, uhid or gadget)")))?;
+                once(&mut transport, &name, parsed)?;
+            }
             "--wire" => once(&mut wire, &name, PathBuf::from(args.value(&name, inline)?))?,
+            "--uhid-path" => once(&mut uhid_path, &name, PathBuf::from(args.value(&name, inline)?))?,
+            "--udc" => {
+                let value = utf8(&name, args.value(&name, inline)?)?;
+                if value.contains(['/', '\n']) {
+                    return Err(usage(format!("--udc {value:?}: a controller name has no slash or newline")));
+                }
+                once(&mut udc, &name, value.to_owned())?;
+            }
+            "--gadget-name" => {
+                let value = utf8(&name, args.value(&name, inline)?)?;
+                if !valid_gadget_name(value) {
+                    return Err(usage(format!(
+                        "--gadget-name {value:?}: a gadget name is 1 to {MAX_GADGET_NAME} of A-Z, a-z, 0-9, _ and -"
+                    )));
+                }
+                once(&mut gadget_name, &name, value.to_owned())?;
+            }
+            "--configfs" => once(&mut configfs, &name, PathBuf::from(args.value(&name, inline)?))?,
+            "--ffs-dir" => once(&mut ffs_dir, &name, PathBuf::from(args.value(&name, inline)?))?,
             "--control" => once(&mut control, &name, PathBuf::from(args.value(&name, inline)?))?,
             "--wall-clock" => flag(&mut wall_clock, &name, inline)?,
             "--allow-unreadable" => flag(&mut allow_unreadable, &name, inline)?,
@@ -361,17 +514,53 @@ fn parse_run(args: &[OsString]) -> Result<Invocation, UsageError> {
         (Some(_), Some(_)) => return Err(usage("run takes --key-file PATH or --key-command CMD, not both")),
         (None, None) => return Err(usage("run needs --key-file PATH or --key-command CMD")),
     };
+    let kind = transport.unwrap_or(TransportKind::Wire);
+    // Every option that belongs to one transport only, with that transport.
+    let owned = [
+        ("--wire", wire.is_some(), TransportKind::Wire),
+        ("--uhid-path", uhid_path.is_some(), TransportKind::Uhid),
+        ("--udc", udc.is_some(), TransportKind::Gadget),
+        ("--gadget-name", gadget_name.is_some(), TransportKind::Gadget),
+        ("--configfs", configfs.is_some(), TransportKind::Gadget),
+        ("--ffs-dir", ffs_dir.is_some(), TransportKind::Gadget),
+    ];
+    if let Some((option, _, owner)) = owned.iter().find(|(_, given, owner)| *given && *owner != kind) {
+        return Err(usage(format!(
+            "{option} applies to --transport {} only (the transport is {})",
+            owner.name(),
+            kind.name()
+        )));
+    }
+    let transport = match kind {
+        TransportKind::Wire => TransportOptions::Wire { socket: wire },
+        TransportKind::Uhid => {
+            TransportOptions::Uhid { path: uhid_path.unwrap_or_else(|| PathBuf::from(DEFAULT_UHID_PATH)) }
+        }
+        TransportKind::Gadget => {
+            let udc = udc.ok_or_else(|| usage("--transport gadget needs --udc NAME"))?;
+            let name = gadget_name.unwrap_or_else(|| DEFAULT_GADGET_NAME.to_owned());
+            let ffs_dir = ffs_dir.unwrap_or_else(|| lk_gadget::default_mount_point(&name));
+            let configfs = configfs.unwrap_or_else(|| PathBuf::from(DEFAULT_CONFIGFS));
+            TransportOptions::Gadget(GadgetOptions { udc, name, configfs, ffs_dir })
+        }
+    };
     Ok(Invocation::Run(RunOptions {
         state,
         key,
         profile: profile.unwrap_or(Profile::Own),
-        wire,
+        transport,
         control,
         wall_clock,
         allow_unreadable,
         exit_on_stdin_eof,
         verbosity: verbosity.unwrap_or(0),
     }))
+}
+
+/// 1 to [`MAX_GADGET_NAME`] of `[A-Za-z0-9_-]` (see the module's "As built" notes).
+fn valid_gadget_name(name: &str) -> bool {
+    (1..=MAX_GADGET_NAME).contains(&name.len())
+        && name.bytes().all(|byte| byte.is_ascii_alphanumeric() || byte == b'_' || byte == b'-')
 }
 
 fn parse_ctl(args: &[OsString]) -> Result<Invocation, UsageError> {
@@ -404,6 +593,8 @@ fn parse_ctl(args: &[OsString]) -> Result<Invocation, UsageError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    use std::path::Path;
 
     fn args(line: &[&str]) -> Vec<OsString> {
         line.iter().map(OsString::from).collect()
@@ -442,7 +633,8 @@ mod tests {
     fn run_has_the_documented_defaults() {
         let options = run(&["run", "--state", "/s", "--key-file", "/k"]);
         assert_eq!(options.profile, Profile::Own);
-        assert_eq!((options.wire, options.control), (None, None), "the sockets go into the state directory");
+        assert_eq!(options.transport, TransportOptions::Wire { socket: None }, "the wire transport is the default");
+        assert_eq!(options.control, None, "the sockets go into the state directory");
         assert_eq!(options.key, KeySource::File("/k".into()));
         assert!(!options.wall_clock && !options.allow_unreadable && !options.exit_on_stdin_eof);
         assert_eq!(options.verbosity, 0);
@@ -469,7 +661,7 @@ mod tests {
         assert_eq!(options.state, PathBuf::from("/s"));
         assert_eq!(options.key, KeySource::Command("pass show localkey".into()));
         assert_eq!(options.profile, Profile::YubiKey5cNano574);
-        assert_eq!(options.wire, Some(PathBuf::from("/w")));
+        assert_eq!(options.transport, TransportOptions::Wire { socket: Some(PathBuf::from("/w")) });
         assert_eq!(options.control, Some(PathBuf::from("/c")));
         assert!(options.wall_clock && options.allow_unreadable && options.exit_on_stdin_eof);
         assert_eq!(options.verbosity, 2);
@@ -486,6 +678,159 @@ mod tests {
         );
         assert_eq!(error(&["run", "--state", "/s", "--state", "/t", "--key-file", "/k"]), "--state given twice");
         assert_eq!(error(&["run", "--state", "/s", "--key-file", "/k", "-v", "-vv"]), "-v or -vv given twice");
+    }
+
+    /// `run --state /s --key-file /k` followed by `extra`.
+    fn run_line<'a>(extra: &[&'a str]) -> Vec<&'a str> {
+        let mut line = vec!["run", "--state", "/s", "--key-file", "/k"];
+        line.extend_from_slice(extra);
+        line
+    }
+
+    fn transport(extra: &[&str]) -> TransportOptions {
+        run(&run_line(extra)).transport
+    }
+
+    fn run_error(extra: &[&str]) -> String {
+        error(&run_line(extra))
+    }
+
+    #[test]
+    fn the_wire_transport_can_be_named() {
+        let wire = transport(&["--transport", "wire", "--wire", "/w"]);
+        assert_eq!(wire, TransportOptions::Wire { socket: Some(PathBuf::from("/w")) });
+        assert_eq!(wire.kind(), TransportKind::Wire);
+        assert_eq!(transport(&["--transport=wire"]), TransportOptions::Wire { socket: None });
+    }
+
+    #[test]
+    fn the_uhid_transport_defaults_to_dev_uhid_and_takes_a_path() {
+        let uhid = transport(&["--transport", "uhid"]);
+        assert_eq!(uhid, TransportOptions::Uhid { path: PathBuf::from("/dev/uhid") });
+        assert_eq!(uhid.kind(), TransportKind::Uhid);
+        let uhid = transport(&["--uhid-path", "/tmp/fake", "--transport", "uhid"]);
+        assert_eq!(uhid, TransportOptions::Uhid { path: PathBuf::from("/tmp/fake") });
+        // The control socket belongs to every transport.
+        assert_eq!(run(&run_line(&["--transport", "uhid", "--control", "/c"])).control, Some(PathBuf::from("/c")));
+    }
+
+    #[test]
+    fn the_gadget_transport_needs_a_udc_and_has_the_documented_defaults() {
+        let gadget = transport(&["--transport", "gadget", "--udc", "dummy_udc.0"]);
+        let expected = GadgetOptions {
+            udc: "dummy_udc.0".into(),
+            name: "localkey".into(),
+            configfs: PathBuf::from("/sys/kernel/config/usb_gadget"),
+            ffs_dir: PathBuf::from("/dev/ffs-localkey"),
+        };
+        assert_eq!(gadget, TransportOptions::Gadget(expected));
+        assert_eq!(gadget.kind(), TransportKind::Gadget);
+        // The transport's own options may also come before --transport.
+        let before = transport(&["--udc", "dummy_udc.0", "--gadget-name", "g", "--transport", "gadget"]);
+        assert_eq!(before.kind(), TransportKind::Gadget);
+        assert_eq!(run_error(&["--transport", "gadget"]), "--transport gadget needs --udc NAME");
+        assert_eq!(run_error(&["--transport", "gadget", "--gadget-name", "g"]), "--transport gadget needs --udc NAME");
+    }
+
+    #[test]
+    fn the_gadget_transport_takes_every_documented_option() {
+        let options = run(&run_line(&[
+            "--transport",
+            "gadget",
+            "--udc=fe980000.usb",
+            "--gadget-name",
+            "lk_2",
+            "--configfs",
+            "/cfg",
+            "--ffs-dir",
+            "/mnt/ffs",
+            "--control",
+            "/c",
+        ]));
+        let expected = GadgetOptions {
+            udc: "fe980000.usb".into(),
+            name: "lk_2".into(),
+            configfs: PathBuf::from("/cfg"),
+            ffs_dir: PathBuf::from("/mnt/ffs"),
+        };
+        assert_eq!(options.transport, TransportOptions::Gadget(expected));
+        assert_eq!(options.control, Some(PathBuf::from("/c")));
+    }
+
+    #[test]
+    fn the_default_ffs_dir_follows_the_gadget_name() {
+        match transport(&["--transport", "gadget", "--udc", "u", "--gadget-name", "g-1"]) {
+            TransportOptions::Gadget(gadget) => assert_eq!(gadget.ffs_dir, PathBuf::from("/dev/ffs-g-1")),
+            other => panic!("{other:?}"),
+        }
+    }
+
+    #[test]
+    fn the_defaults_match_the_transport_crates() {
+        assert_eq!(lk_uhid::DevUhid::default().path(), Path::new(DEFAULT_UHID_PATH));
+        let crate_defaults = lk_gadget::GadgetConfig::new("u");
+        let TransportOptions::Gadget(ours) = transport(&["--transport", "gadget", "--udc", "u"]) else {
+            panic!("the gadget transport was asked for");
+        };
+        assert_eq!(ours.configfs, crate_defaults.configfs_root);
+        assert_eq!(ours.name, crate_defaults.gadget_name);
+        assert_eq!(ours.name, crate_defaults.function_name);
+        assert_eq!(ours.ffs_dir, crate_defaults.mount_point);
+        assert_eq!(ours.udc, crate_defaults.udc);
+    }
+
+    #[test]
+    fn an_option_of_another_transport_is_a_usage_error_wherever_it_stands() {
+        for (chosen, option, value, owner) in [
+            ("wire", "--uhid-path", "/u", "uhid"),
+            ("wire", "--udc", "u", "gadget"),
+            ("wire", "--gadget-name", "g", "gadget"),
+            ("wire", "--configfs", "/cfg", "gadget"),
+            ("wire", "--ffs-dir", "/f", "gadget"),
+            ("uhid", "--wire", "/w", "wire"),
+            ("uhid", "--udc", "u", "gadget"),
+            ("uhid", "--gadget-name", "g", "gadget"),
+            ("uhid", "--configfs", "/cfg", "gadget"),
+            ("uhid", "--ffs-dir", "/f", "gadget"),
+            ("gadget", "--wire", "/w", "wire"),
+            ("gadget", "--uhid-path", "/u", "uhid"),
+        ] {
+            // The gadget transport's own required option, so only the foreign one is wrong.
+            let required: &[&str] = if chosen == "gadget" { &["--udc", "u0"] } else { &[] };
+            let expected = format!("{option} applies to --transport {owner} only (the transport is {chosen})");
+            let before = [&[option, value, "--transport", chosen][..], required].concat();
+            let after = [&["--transport", chosen][..], required, &[option, value]].concat();
+            assert_eq!(run_error(&before), expected, "{before:?}");
+            assert_eq!(run_error(&after), expected, "{after:?}");
+        }
+        // Without --transport the transport is the wire.
+        assert_eq!(run_error(&["--udc", "u"]), "--udc applies to --transport gadget only (the transport is wire)");
+        assert_eq!(
+            run_error(&["--uhid-path", "/u"]),
+            "--uhid-path applies to --transport uhid only (the transport is wire)"
+        );
+    }
+
+    #[test]
+    fn transport_values_and_names_are_checked() {
+        assert_eq!(run_error(&["--transport", "usb"]), "unknown transport usb (expected wire, uhid or gadget)");
+        assert_eq!(run_error(&["--transport", "uhid", "--transport", "uhid"]), "--transport given twice");
+        assert_eq!(run_error(&["--transport", "uhid", "--uhid-path"]), "--uhid-path needs a value");
+        assert_eq!(run_error(&["--transport", "gadget", "--udc="]), "--udc needs a value");
+        assert_eq!(
+            run_error(&["--transport", "gadget", "--udc", "a/b"]),
+            "--udc \"a/b\": a controller name has no slash or newline"
+        );
+        assert_eq!(
+            run_error(&["--transport", "gadget", "--udc", "u", "--gadget-name", "a.b"]),
+            "--gadget-name \"a.b\": a gadget name is 1 to 32 of A-Z, a-z, 0-9, _ and -"
+        );
+        let longest = "g".repeat(MAX_GADGET_NAME);
+        let too_long = "g".repeat(MAX_GADGET_NAME + 1);
+        let accepted = transport(&["--transport", "gadget", "--udc", "u", "--gadget-name", &longest]);
+        assert_eq!(accepted.kind(), TransportKind::Gadget);
+        let refused = run_error(&["--transport", "gadget", "--udc", "u", "--gadget-name", &too_long]);
+        assert!(refused.starts_with("--gadget-name"), "{refused}");
     }
 
     #[test]

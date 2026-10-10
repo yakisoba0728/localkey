@@ -2,7 +2,8 @@
 //!
 //! - `keygen` makes a storage key ([`keygen`]);
 //! - `run` opens the state directory, starts the device on the runner thread and serves it
-//!   on the wire socket, with the control socket for the user side ([`run`]);
+//!   on one transport (the wire socket by default; UHID or a USB gadget on Linux), with
+//!   the control socket for the user side ([`run`]);
 //! - `ctl` sends one request to a running daemon's control socket ([`ctl`]).
 //!
 //! The arguments are parsed by hand ([`args`]); a usage error exits with code 2 and prints

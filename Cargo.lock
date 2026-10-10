@@ -659,8 +659,10 @@ dependencies = [
  "lk-core",
  "lk-crypto",
  "lk-device",
+ "lk-gadget",
  "lk-host",
  "lk-run",
+ "lk-uhid",
  "lk-wire",
 ]
 

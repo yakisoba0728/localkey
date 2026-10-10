@@ -249,6 +249,9 @@ fn usage_errors_exit_with_code_2() -> TestResult {
         &["run", "--state", "/nonexistent", "--key-file", "/k", "--profile", "yubikey"],
         &["keygen"],
         &["ctl", "--control", "/nonexistent", "frobnicate"],
+        &["run", "--state", "/nonexistent", "--key-file", "/k", "--transport", "gadget"],
+        &["run", "--state", "/nonexistent", "--key-file", "/k", "--transport", "uhid", "--wire", "/w"],
+        &["run", "--state", "/nonexistent", "--key-file", "/k", "--udc", "dummy_udc.0"],
     ] {
         let output = localkeyd(args.iter().copied())?;
         assert_eq!(output.status.code(), Some(2), "{args:?}");
@@ -427,6 +430,51 @@ fn help_after_a_command_prints_the_usage() -> TestResult {
         let output = localkeyd(args.iter().copied())?;
         assert_eq!(output.status.code(), Some(0), "{args:?}: {}", text(&output.stderr));
         assert!(text(&output.stdout).contains("usage:"), "{args:?}");
+    }
+    Ok(())
+}
+
+/// `--transport uhid` and `--transport gadget` on a system other than Linux: exit 2 with a
+/// message naming the reason, before the state directory is opened (`docs/PROGRAM.md`
+/// "Linux transports": `localkeyd` refuses to start them elsewhere). Not built on Linux,
+/// where the same command lines would start the transports. The paths given point into
+/// the test directory anyway, so even a refusal that failed would touch no device and no
+/// ConfigFS: a missing key file stops the daemon right after the state directory.
+#[cfg(not(target_os = "linux"))]
+#[test]
+fn the_linux_transports_are_refused_elsewhere_before_the_state_directory_is_touched() -> TestResult {
+    let dir = TestDir::new();
+    let missing_key = dir.join("no-key");
+    let missing_key = missing_key.to_str().ok_or("key path")?;
+    let uhid = dir.join("uhid");
+    let configfs = dir.join("cfg");
+    let ffs = dir.join("ffs");
+    let lines = [
+        vec!["--key-file", missing_key, "--transport", "uhid", "--uhid-path", uhid.to_str().ok_or("uhid path")?],
+        vec![
+            "--key-file",
+            missing_key,
+            "--transport",
+            "gadget",
+            "--udc",
+            "dummy_udc.0",
+            "--configfs",
+            configfs.to_str().ok_or("configfs path")?,
+            "--ffs-dir",
+            ffs.to_str().ok_or("ffs path")?,
+            "-vv",
+        ],
+    ];
+    for (args, transport) in lines.iter().zip(["uhid", "gadget"]) {
+        let mut daemon = Daemon::spawn(&dir, args)?;
+        let status = daemon.wait_exit()?;
+        assert_eq!(status.code(), Some(2), "{}", daemon.log());
+        let os = std::env::consts::OS;
+        let expected = format!("localkeyd: --transport {transport} runs on Linux only, and this system is {os}");
+        assert!(daemon.log().contains(&expected), "{}", daemon.log());
+        assert!(!daemon.log().contains("storage key"), "refused before the key was loaded: {}", daemon.log());
+        assert!(!dir.state().exists(), "the state directory was not created");
+        assert_eq!(fs::read_dir(dir.join("."))?.count(), 0, "nothing was created in the test directory");
     }
     Ok(())
 }

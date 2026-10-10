@@ -17,8 +17,10 @@ path = "src/main.rs"
 lk-core.workspace = true
 lk-crypto.workspace = true
 lk-device.workspace = true
+lk-gadget.workspace = true
 lk-host.workspace = true
 lk-run.workspace = true
+lk-uhid.workspace = true
 lk-wire.workspace = true
 
 [dev-dependencies]
