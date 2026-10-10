@@ -173,9 +173,10 @@ Depends on `lk-core`, `lk-device`, `lk-run`. Unix sockets only (`std::os::unix::
 
 ### Socket placement
 
-- The daemon binds the socket path given to it. Its parent directory must exist, be owned by
-  the current user and grant no group/other permission (checked; the default paths live in
-  the state directory, which is 0700). The socket file is set to 0600 after `bind`.
+- The daemon binds the socket path given to it. Its parent directory must exist and grant no
+  group/other permission (checked; the default paths live in the state directory, which is
+  0700). Ownership is not compared: std has no `getuid` without `unsafe`, and a 0700
+  directory of another user cannot be written to anyway. The socket file is set to 0600 after `bind`.
 - An existing path is removed before `bind` only if it is a socket; anything else is an
   error. The socket file is removed again on clean shutdown.
 
