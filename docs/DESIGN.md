@@ -122,7 +122,7 @@ API 초안은 `crates/lk-core/src/lib.rs`와 `crates/lk-device/src/lib.rs`에 �
 - **세 인터페이스**: FIDO HID (`lk-ctaphid` → `lk-fido`), OTP HID (`lk-otp`), CCID (`lk-ccid` →
   카드 세션).
   - Management 설정으로 켜고 끌 수 있다.
-  - 바뀌면 `Output::Reenumerate`를 낸다.
+  - 설정이 적용될 때(재부팅) `Output::Reenumerate`를 낸다.
   - **as built**: `REBOOT`가 있는 설정 쓰기만 곧바로 재열거한다. `REBOOT` 없이 쓴 설정은 인터페이스
     조합이 바뀌어도 다음 열거(재부팅 또는 `BusEvent::PowerCycle`)에 적용한다. ykman `config usb`가
     조합이 바뀔 때만 `REBOOT`를 붙이고 yubikit `set_mode`가 재삽입을 안내하는 것을 근거로 한 모델

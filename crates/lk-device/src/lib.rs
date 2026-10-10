@@ -123,8 +123,9 @@ pub enum Output {
     CcidInterrupt(Vec<u8>),
     /// The device is waiting for user presence (true) or stopped waiting (false).
     PresenceIndicator(bool),
-    /// The enabled interfaces changed, or the device rebooted; the host must
-    /// re-enumerate with this set ([`Device::usb_identity`] describes it).
+    /// The device rebooted (a Management write with `REBOOT`, or a power cycle that
+    /// brings a stored interface change into effect); the host must re-enumerate with
+    /// this set ([`Device::usb_identity`] describes it).
     Reenumerate(UsbInterfaces),
 }
 
@@ -240,8 +241,9 @@ impl Device {
     ///   once, no unpowered APDU, new PowerOn/ATR required; PIV PIN/admin revoked; real
     ///   terminal touch canceled without commit"; `lk_ccid::Ccid::reset`: "USB reset,
     ///   re-enumeration or resume"). FIDO and OTP state are kept.
-    /// - After the input, a Management reboot request or a change of the enabled
-    ///   interfaces emits [`Output::Reenumerate`] and power-cycles the volatile state
+    /// - After the input, a Management reboot request emits [`Output::Reenumerate`] with
+    ///   the stored configuration and power-cycles the volatile state; a configuration
+    ///   written without `REBOOT` waits for the next enumeration (`settle_management`)
     ///   (catalog appendix A `Linux_native`: "automatic management reboot and all seven
     ///   USB interface combinations, plus unchanged-profile reboot ... persistent
     ///   credentials retained and old PIN token rejected").

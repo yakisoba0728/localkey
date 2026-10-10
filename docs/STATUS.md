@@ -20,7 +20,7 @@ parity with the physical device.
 | 3 | lk-piv | done (b18de5b), second review in the final integration |
 | 4 | lk-openpgp: 39 of the 43 advertised algorithm variants (all except brainpoolP512r1) | done (b18de5b); P-521, secp256k1 and brainpoolP256r1/P384r1 added in the final integration (57f3ede) |
 | 5 | lk-sd (SCP03, SCP11a/b/c), lk-hsmauth | done (b18de5b, 77ed6c3), second reviews in the final integration |
-| 6 | lk-device integration, end-to-end scenarios, adversarial verification, catalog closure | done (ac7ad99, 8d6aa06, 57f3ede, and the closing commit) |
+| 6 | lk-device integration, end-to-end scenarios, adversarial verification, catalog closure | done (ac7ad99, 8d6aa06, 57f3ede, 1042fab) |
 
 The final integration (57f3ede) added:
 
@@ -32,7 +32,7 @@ The final integration (57f3ede) added:
 - `tools/catalog_status.py`;
 - this documentation.
 
-The closing commit then decided two model policies the reviews had left open: OpenPGP
+The closing commit (1042fab) then decided two model policies the reviews had left open: OpenPGP
 accepts RSA attributes with a 17- to 32-bit exponent length, and Management configuration
 changes apply at the next enumeration. It also added the device-level tests for OATH
 access and a malformed plaintext SELECT after a secure channel ends.
