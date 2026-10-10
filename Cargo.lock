@@ -496,6 +496,7 @@ version = "0.1.0"
 dependencies = [
  "lk-codec",
  "lk-core",
+ "lk-crypto",
  "lk-testkit",
 ]
 

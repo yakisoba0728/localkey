@@ -12,6 +12,8 @@ workspace = true
 [dependencies]
 lk-core.workspace = true
 lk-codec.workspace = true
+# Only for `ct_eq` (constant-time lock-code comparison).
+lk-crypto.workspace = true
 
 [dev-dependencies]
 lk-testkit.workspace = true
