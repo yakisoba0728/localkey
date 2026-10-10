@@ -118,12 +118,12 @@ fn otp_hid_write_config_with_reboot() {
     assert_eq!(reenumerations(&out), vec![ALL]);
 }
 
-/// A change of enabled interfaces re-enumerates even without REBOOT, and inputs for a
-/// disabled interface are ignored (docs/DESIGN.md §5).
+/// A change of enabled interfaces with REBOOT (as ykman `config usb` sends it)
+/// re-enumerates, and inputs for a disabled interface are ignored (docs/DESIGN.md §5).
 #[test]
 fn disabling_ccid_reenumerates_and_ignores_ccid() {
     let mut rig = Rig::new();
-    let out = write_config(&mut rig, &config(Some(Capabilities::OTP | Capabilities::U2F | Capabilities::FIDO2), false));
+    let out = write_config(&mut rig, &config(Some(Capabilities::OTP | Capabilities::U2F | Capabilities::FIDO2), true));
     assert_eq!(
         reenumerations(&out),
         vec![UsbInterfaces {
@@ -139,11 +139,31 @@ fn disabling_ccid_reenumerates_and_ignores_ccid() {
     assert_eq!(identity.product, "YubiKey OTP+FIDO");
 }
 
+/// `lib.rs` `settle_management` (model policy): a write without REBOOT changes nothing on
+/// the bus, also when it changes the interface set. CCID keeps working and the USB
+/// identity stays until the next enumeration; a power cycle then enumerates without CCID.
+#[test]
+fn interface_change_without_reboot_waits_for_the_next_enumeration() {
+    let mut rig = Rig::new();
+    let out = write_config(&mut rig, &config(Some(Capabilities::OTP | Capabilities::U2F | Capabilities::FIDO2), false));
+    assert!(reenumerations(&out).is_empty(), "{out:02X?}");
+    assert_eq!(rig.dev.interfaces(), ALL);
+    assert_eq!(rig.dev.usb_identity().product, "YubiKey OTP+FIDO+CCID");
+    rig.power_on();
+    assert_eq!(sw(&rig.select(AID_OATH)), 0x9000, "CCID still answers");
+    let out = rig.bus(BusEvent::PowerCycle);
+    let without_ccid = UsbInterfaces { otp: true, fido: true, ccid: false };
+    assert_eq!(reenumerations(&out), vec![without_ccid]);
+    let message = Rig::ccid_message(0x62, 0, [0, 0, 0], &[]);
+    assert!(rig.input(lk_device::Input::Ccid(&message)).is_empty());
+    assert_eq!(rig.dev.usb_identity().product, "YubiKey OTP+FIDO");
+}
+
 /// With FIDO disabled the FIDO HID reports are ignored.
 #[test]
 fn disabling_fido_ignores_fido_reports() {
     let mut rig = Rig::new();
-    let out = write_config(&mut rig, &config(Some(Capabilities::OTP | Capabilities::PIV | Capabilities::OATH), false));
+    let out = write_config(&mut rig, &config(Some(Capabilities::OTP | Capabilities::PIV | Capabilities::OATH), true));
     assert_eq!(
         reenumerations(&out),
         vec![UsbInterfaces {
@@ -314,7 +334,7 @@ fn reenumeration_drops_a_waiting_card_command() {
     let (_, out) = rig.xfr(&oath_calculate(b"t"));
     assert_eq!(indicators(&out), vec![true]);
     let cid = rig.ctaphid_init();
-    let out = rig.ctaphid_send(cid, 0x43, &config(Some(Capabilities::U2F | Capabilities::FIDO2), false));
+    let out = rig.ctaphid_send(cid, 0x43, &config(Some(Capabilities::U2F | Capabilities::FIDO2), true));
     assert_eq!(
         reenumerations(&out),
         vec![UsbInterfaces {

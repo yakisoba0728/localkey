@@ -376,9 +376,18 @@ pub(crate) fn application_data(state: &State, profile: &DeviceProfile) -> Vec<u8
     lk_codec::tlv::encode(u32::from(tag::APPLICATION), &inner)
 }
 
+/// Exponent lengths an RSA attribute may declare (spec §4.4.3.10 "length of public
+/// exponent e in bit"). The card generates e = 65537 (17 bits); GnuPG
+/// `change_rsa_keyattr` writes `0020` when it switches a slot from ECC to RSA and OpenSC
+/// writes `SC_OPENPGP_MAX_EXP_BITS` = `0020` before RSA generation, so every length from
+/// 17 to 32 bits is accepted and stored as written (model policy: FA lists only `0011`
+/// and a physical 5.7.4's answer to `0020` is unmeasured).
+const RSA_E_BITS: core::ops::RangeInclusive<u16> = 17..=32;
+
 /// Whether `value` is an algorithm attribute the slot accepts: one of the slot's entries
-/// in FA (spec §4.4.3.13), or an ECDH/ECDSA/EdDSA entry followed by the import-format
-/// byte `FF` ("public key included", spec §4.4.3.10).
+/// in FA (spec §4.4.3.13), an ECDH/ECDSA/EdDSA entry followed by the import-format byte
+/// `FF` ("public key included", spec §4.4.3.10), or an RSA entry with another exponent
+/// length in [`RSA_E_BITS`].
 pub(crate) fn attributes_supported(slot: Slot, value: &[u8]) -> bool {
     let Ok((fa, _)) = lk_codec::tlv::parse_one(&ALGORITHM_INFORMATION) else {
         return false;
@@ -393,11 +402,15 @@ pub(crate) fn attributes_supported(slot: Slot, value: &[u8]) -> bool {
             if entry.value == value {
                 return true;
             }
-            let is_ec = matches!(entry.value.first(), Some(0x12 | 0x13 | 0x16));
-            is_ec
-                && value.len() == entry.value.len() + 1
-                && value.starts_with(entry.value)
-                && value.last() == Some(&0xFF)
+            match (entry.value, value) {
+                ([0x01, n0, n1, _, _, format], [0x01, v0, v1, e0, e1, v_format]) => {
+                    (n0, n1, format) == (v0, v1, v_format) && RSA_E_BITS.contains(&u16::from_be_bytes([*e0, *e1]))
+                }
+                ([0x12 | 0x13 | 0x16, ..], _) => {
+                    value.len() == entry.value.len() + 1 && value.starts_with(entry.value) && value.last() == Some(&0xFF)
+                }
+                _ => false,
+            }
         })
 }
 
@@ -475,5 +488,17 @@ mod tests {
         assert!(!attributes_supported(Slot::Sig, &[]));
         // RSA 2048 with CRT import format (02) is not advertised in FA.
         assert!(!attributes_supported(Slot::Sig, &[0x01, 0x08, 0x00, 0x00, 0x11, 0x02]));
+        // Exponent lengths 17..=32 bits for every advertised RSA size, in every slot that
+        // advertises it; not below 17 (e = 65537), not above 32, not an unadvertised size.
+        for slot in [Slot::Sig, Slot::Dec, Slot::Aut, Slot::Att] {
+            for size in [[0x08, 0x00], [0x0C, 0x00], [0x10, 0x00]] {
+                for (e_bits, ok) in [(0x10, false), (0x11, true), (0x18, true), (0x20, true), (0x21, false)] {
+                    let value = [0x01, size[0], size[1], 0x00, e_bits, 0x00];
+                    assert_eq!(attributes_supported(slot, &value), ok, "{slot:?} {value:02X?}");
+                }
+            }
+        }
+        assert!(!attributes_supported(Slot::Sig, &[0x01, 0x04, 0x00, 0x00, 0x20, 0x00]));
+        assert!(!attributes_supported(Slot::Sig, &[0x01, 0x08, 0x00, 0x00, 0x20]));
     }
 }

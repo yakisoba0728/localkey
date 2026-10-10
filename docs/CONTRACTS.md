@@ -540,12 +540,16 @@ additions; existing callers compile unchanged.
   - Queue or drop the outputs produced while the bus is suspended (keepalives, time
     extensions, timeout answers, keyboard reports).
   - Build the USB string descriptors (LANGID, UTF-16LE) from `UsbIdentity`.
-- **Open model-policy question**: when a Management write without `REBOOT` changes the
-  enabled interface set, lk-device re-enumerates at once (`settle_management`). The
-  Management review reads ykman and yubikit as implying the firmware does not: ykman
-  `config usb` asks for `REBOOT` exactly when the set changes, and yubikit `set_mode`
-  tells the user to re-insert the key. The engine keeps the immediate re-enumeration
-  until the physical behaviour is measured (`docs/catalog/mgmt.md`, `device.md`).
+- **Configuration changes apply at the next enumeration** (model policy, decided):
+  only a Management write with `REBOOT` emits `Output::Reenumerate` and power-cycles
+  volatile state (`settle_management`). A write without it, also one that changes the
+  enabled interface set, takes effect at the next reboot or `BusEvent::PowerCycle`;
+  until then the interfaces, `usb_identity` and application gating stay as enumerated.
+  Source: ykman `config usb` asks for `REBOOT` exactly when the set changes, and yubikit
+  `set_mode` writes without it and tells the user to re-insert the key; neither would
+  be needed if the firmware re-enumerated by itself. Unmeasured on a physical 5.7.4
+  (`docs/catalog/mgmt.md`, `device.md`; test
+  `management::interface_change_without_reboot_waits_for_the_next_enumeration`).
 - **Remaining known gaps** (also in `docs/STATUS.md`):
   - brainpoolP512r1 (4 OpenPGP variants, 5 deferred catalog lines).
   - Zeroization is partial (DESIGN §8):

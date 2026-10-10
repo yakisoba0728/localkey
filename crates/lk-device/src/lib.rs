@@ -461,23 +461,25 @@ impl Device {
         self.card.clear();
     }
 
-    /// After each input: a Management write that asked for a reboot, or that changed
-    /// the set of enabled interfaces, re-enumerates the device and power-cycles its
-    /// volatile state, after the write's response has been output.
+    /// After each input: a Management write that asked for a reboot re-enumerates the
+    /// device with the stored configuration and power-cycles its volatile state, after
+    /// the write's response has been output.
     ///
     /// - CCID: `MgmtApplet::take_effect` right after the WRITE CONFIG response
     ///   (`docs/CONTRACTS.md` "Applications A as implemented", lk-mgmt).
     /// - OTP HID and CCID OTP slot `0x15`: the bridge's recorded `ConfigEffect`.
     /// - CTAPHID `0x43`: `VendorReply::effect`.
-    /// - A change of enabled interfaces without `REBOOT` also re-enumerates (the
-    ///   interfaces must follow the configuration). Capability changes that keep the
-    ///   interface set wait for the next enumeration, as `Management::enabled_usb`
-    ///   documents.
+    /// - A write without `REBOOT` changes nothing on the bus, also when it changes the
+    ///   set of enabled interfaces: every configuration change applies at the next
+    ///   enumeration (a reboot or [`BusEvent::PowerCycle`]), as `Management::enabled_usb`
+    ///   documents. Model policy: ykman `config usb` and yubikit `write_device_config`
+    ///   ask for `REBOOT` exactly when the interface set changes, which they would not
+    ///   need if the firmware re-enumerated by itself.
     fn settle_management(&mut self, out: &mut Vec<Output>) {
         let ccid_effect = self.apps.mgmt.take_effect();
         let owed = std::mem::take(&mut self.reboot_owed) || ccid_effect == ConfigEffect::Reboot;
-        let enabled = self.apps.mgmt.management().enabled_usb(&self.host);
-        if owed || enabled.interfaces() != self.interfaces {
+        if owed {
+            let enabled = self.apps.mgmt.management().enabled_usb(&self.host);
             out.push(Output::Reenumerate(enabled.interfaces()));
             self.restart(enabled);
         }

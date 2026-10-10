@@ -16,7 +16,7 @@
 
 use lk_crypto::RsaPrivateKey;
 
-use crate::common::{Card, crt, digest_info_sha256, hex, import_data, rsa_primes, rsa_verify};
+use crate::common::{Card, Public, crt, digest_info_sha256, hex, import_data, parse_public, rsa_primes, rsa_verify};
 
 const E: &[u8] = &[0x01, 0x00, 0x01];
 
@@ -107,21 +107,45 @@ fn gnupg_and_opensc_select_data_forms() {
     assert_eq!(card.send(&hex("00A5 0204 07 06 6004 5C02 7F21")).1, 0x6A80);
 }
 
-/// GnuPG `do_change_keyattr` / `change_rsa_keyattr` keeps the card's exponent length when
-/// it changes an RSA size (`01 1000 0011 00`), but writes `00 20` (32 bits) when it switches
-/// a slot from ECC back to RSA, and OpenSC `pgp_update_new_algo_attr` always writes
-/// `SC_OPENPGP_MAX_EXP_BITS` = `00 20`. The crate accepts only the advertised FA entries
-/// (exponent length `00 11`), so those two requests are `6A80` and change nothing. Whether
-/// a physical 5.7.4 accepts them is unmeasured (catalog: deferred).
+/// GnuPG `change_rsa_keyattr` keeps the card's exponent length when it changes an RSA
+/// size (`01 1000 0011 00`) but writes `00 20` (32 bits) when it switches a slot from ECC
+/// back to RSA, and OpenSC `pgp_update_new_algo_attr` always writes
+/// `SC_OPENPGP_MAX_EXP_BITS` = `00 20`. The crate accepts exponent lengths of 17 to 32 bits
+/// for every advertised RSA size and stores the value as written (model policy,
+/// `objects::RSA_E_BITS`; a physical 5.7.4's answer is unmeasured). GnuPG then sizes Le
+/// and the imported e from the 32 bits it reads back (`determine_rsa_response`,
+/// `build_privkey_template`): GENERATE with that Le gets 7F49 with e = 65537, and an
+/// import with e right-justified in 4 bytes signs verifiably.
 #[test]
-fn rsa_attributes_with_32_bit_exponent_length_are_not_advertised() {
+fn rsa_attributes_with_32_bit_exponent_length_are_accepted() {
     let mut card = Card::new();
     card.admin();
     card.set_attributes(0x00C1, "16 2b06010401da470f01");
-    for attributes in ["01 0800 0020 00", "01 0C00 0020 00", "01 1000 0020 00"] {
+    card.generate(crt::SIG);
+    assert_eq!(card.put(0x00C1, &hex("01 0800 0020 00")), 0x9000);
+    assert_eq!(card.get_ok(0x00C1), hex("01 0800 0020 00"));
+    assert_eq!(card.key_status()[0], 0x00, "the Ed25519 key left with its algorithm");
+    let le = gnupg_rsa_response(2048, 32);
+    let (template, sw) = card.send(&extended(0x47, 0x80, 0x00, &[0xB6, 0x00], le as u32));
+    assert_eq!(sw, 0x9000);
+    let Public::Rsa { n, e } = parse_public(&template) else { panic!("RSA public key expected") };
+    assert_eq!((n.len(), e.as_slice()), (256, E));
+    let (p, q) = rsa_primes(2048);
+    let four_byte_e: &[u8] = &[0x00, 0x01, 0x00, 0x01];
+    assert_eq!(card.import(&import_data(crt::SIG, &[(0x91, four_byte_e), (0x92, &p), (0x93, &q)])), 0x9000);
+    let key = RsaPrivateKey::from_primes(&p, &q, E).unwrap();
+    assert_eq!(card.verify(0x81, b"123456"), 0x9000);
+    let input = digest_info_sha256(b"m");
+    let (signature, sw) = card.sign(&input);
+    assert_eq!(sw, 0x9000);
+    assert!(rsa_verify(&key.modulus(), E, &input, &signature));
+    // Below e = 65537's 17 bits or above 32 bits is still refused and changes nothing.
+    for attributes in ["01 0800 0010 00", "01 0800 0021 00"] {
         assert_eq!(card.put(0x00C1, &hex(attributes)), 0x6A80, "{attributes}");
     }
-    assert_eq!(card.get_ok(0x00C1), hex("16 2b06010401da470f01"));
-    // The advertised form switches back.
-    assert_eq!(card.put(0x00C1, &hex("01 0800 0011 00")), 0x9000);
+    assert_eq!(card.get_ok(0x00C1), hex("01 0800 0020 00"));
+    assert_eq!(card.key_status()[0], 0x02, "the imported key stays");
+    card.reload();
+    assert_eq!(card.get_ok(0x00C1), hex("01 0800 0020 00"), "kept across a restart");
+    assert_eq!(card.key_status()[0], 0x02);
 }

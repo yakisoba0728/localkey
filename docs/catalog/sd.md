@@ -82,7 +82,7 @@ Model decisions that apply throughout (sources in the crate docs):
   live in the one `SecurityDomain`, so "across clients" is the same object. Multiplexing
   several host connections onto it is `lk-device`/program-phase work.
 
-Totals: 96 tested, 9 intentional differences, 15 deferred (120 bullets).
+Totals: 98 tested, 9 intentional differences, 13 deferred (120 bullets).
 
 ## SCP03
 
@@ -223,12 +223,12 @@ Totals: 96 tested, 9 intentional differences, 15 deferred (120 bullets).
 - PSO/INIT UPDATE/MUT/INTERNAL, chained CLA 90, GET DATA/RESPONSE, unsupported CLA rejected before dispatch: tested: `plaintext_commands_end_the_session_before_dispatch`, `plaintext_ends_scp11_sessions_before_dispatch` (`6982`, model status)
 - no transport rejection consumes retries or rewrites persistent state: tested: `plaintext_commands_end_the_session_before_dispatch`, `plaintext_ends_scp11_sessions_before_dispatch`, `wrong_cmac_ends_the_session`
 - closed wrapper and revoked OCE verified separately; peer channel and own material preserved: tested: `plaintext_ends_scp11_sessions_before_dispatch`, `wrong_cmac_ends_the_session`
-- PIV PIN/admin and OATH access revoked: deferred: lk-device clears the selected applet's authorization (`CardApplet::deselect`) when a channel ends; the PIV part is tested there (`secure_channel::plaintext_command_is_rejected_and_revokes_piv_pin`), no device test checks the OATH access state after a channel ends
+- PIV PIN/admin and OATH access revoked: tested: lk-device clears the selected applet's authorization (`CardApplet::deselect`) when a channel ends: `secure_channel::plaintext_command_is_rejected_and_revokes_piv_pin`, `verify_state::ending_the_channel_revokes_oath_access` (OATH validated inside SCP03, plaintext LIST afterwards `6982`), and for an encrypted SELECT `verify_state::encrypted_reselect_ends_authorization_gained_under_the_channel`, `encrypted_select_of_an_unknown_aid_ends_authorization`
 - normal SDK establishment, encrypted PSO and protected handoff: tested: `protected_handoff_in_every_combination`, `wrapped_exchange_matches_independent_known_answers`, `scp11b_matches_independent_known_answers`
 - prior v21 ZIP fails first plaintext PSO rejection; 326 items: intentional difference: a legacy release-artifact regression check, not device behaviour; the rejection itself is `plaintext_ends_scp11_sessions_before_dispatch`
 - vendor prose is the source model; physical status unmeasured: tested: `plaintext_commands_end_the_session_before_dispatch`, `plaintext_ends_scp11_sessions_before_dispatch` (Yubico yk5-apps-scp wording; `6982` model status)
 - prior v21 ZIP fails first plaintext PSO rejection; 394 items: intentional difference: a legacy release-artifact regression check, not device behaviour; covered as above
-- malformed plaintext SELECT clears OCE and PIV PIN/admin before validation: deferred: the PIV PIN/admin is lk-device state (lk-device revokes it when a plaintext command ends a channel, `secure_channel::plaintext_command_is_rejected_and_revokes_piv_pin`; not tested for a malformed SELECT); the Security Domain part (session ended and OCE revoked before the SELECT is validated; an unparsable one answers `6700`) is tested by `plaintext_ends_scp11_sessions_before_dispatch`, `plaintext_select_ends_the_session_and_passes_through`
+- malformed plaintext SELECT clears OCE and PIV PIN/admin before validation: tested: the PIV PIN is lk-device state, revoked when the plaintext SELECT ends the channel and before the SELECT is parsed (`verify_state::malformed_plaintext_select_revokes_the_piv_pin`); the Security Domain part (session ended and OCE revoked before the SELECT is validated; an unparsable one answers `6700`) is tested by `plaintext_ends_scp11_sessions_before_dispatch`, `plaintext_select_ends_the_session_and_passes_through`
 
 ## SecurityDomain_allowlist
 

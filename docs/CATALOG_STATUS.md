@@ -40,9 +40,9 @@ label or this table is stale. The rule is the same for every file:
 | PIV | `lk-piv` | 29 | 1 | 3 | 0 | 32 | [catalog/piv.md](catalog/piv.md) |
 | OpenPGP | `lk-openpgp` | 52 | 0 | 3 | 5 | 60 | [catalog/openpgp.md](catalog/openpgp.md) |
 | YubiHSM Auth | `lk-hsmauth` | 17 | 3 | 0 | 0 | 17 | [catalog/hsmauth.md](catalog/hsmauth.md) |
-| Security Domain / SCP03 / SCP11 | `lk-sd` | 96 | 0 | 9 | 15 | 120 | [catalog/sd.md](catalog/sd.md) |
+| Security Domain / SCP03 / SCP11 | `lk-sd` | 98 | 0 | 9 | 13 | 120 | [catalog/sd.md](catalog/sd.md) |
 | Device / transports / storage | `lk-device` | 70 | 2 | 4 | 24 | 98 | [catalog/device.md](catalog/device.md) |
-| **All files** | | **374** | **8** | **31** | **46** | **451** | |
+| **All files** | | **376** | **8** | **31** | **44** | **451** | |
 
 Bullets owned by another crate's file (not counted above): 3. Unlabelled bullets: 0.
 <!-- END tools/catalog_status.py -->
@@ -73,12 +73,11 @@ Grouped from the `deferred` lines at the final integration (`python3 tools/catal
 - **OTP static-ticket details** (2 lines): the `STRONG_PW1`/`STRONG_PW2` character
   transforms are stored but not applied, because the public sources do not give the
   character positions. `MAN_UPDATE` manual regeneration is not implemented.
-- **Security Domain** (15 lines):
+- **Security Domain** (13 lines):
   - GP elements that are not in the available sources: the role policy identifiers, the
     `BF20` element and the subject-ID extension;
-  - device-level checks not yet written: the OATH access state after a channel ends, an
-    SCP11 PSO followed by PIV commands, and a malformed plaintext SELECT revoking the
-    PIV PIN;
+  - one device-level check not yet written: an SCP11 PSO followed by PIV commands
+    (SCP03-wrapped PIV signing is tested);
   - socket and IFD runs, which are program phase.
 - **Device** (24 lines): items that only exist in an OS program, such as UHID,
   FunctionFS, IOUSBHost, the IFD handler, browsers, kernel power management, file modes

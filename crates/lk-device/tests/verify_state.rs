@@ -8,11 +8,12 @@
 
 mod common;
 
-use common::iso::piv;
+use common::iso::{command, find_tlv, piv, split, tlv};
 use common::json;
 use common::otp::{SlotConfig, slot};
 use common::*;
 use lk_core::{Capabilities, Millis, UsbInterfaces};
+use lk_crypto::hmac_sha1;
 use lk_device::{BusEvent, Input, Output, WTX_INTERVAL_MS};
 
 const USB_REFERENCE: &str = include_str!("../../../reference/yubikey-5c-nano-5.7.4/usb-reference-observation.json");
@@ -225,6 +226,57 @@ fn encrypted_select_of_an_unknown_aid_ends_authorization() {
     }
 }
 
+/// Catalog SecurityDomain_plaintext: "PIV verified PIN/admin and OATH access
+/// authorization revoked". OATH validated inside an SCP03 session (YKOATH VALIDATE `A3`:
+/// `75 HMAC-SHA1(key, card challenge)`, `74 host challenge`): a plaintext command ends the
+/// channel and the access with it, so a plaintext LIST then needs a new VALIDATE.
+#[test]
+fn ending_the_channel_revokes_oath_access() {
+    let mut rig = Rig::new();
+    rig.power_on();
+    rig.select(AID_OATH);
+    let key = [0x11u8; 16];
+    let mut key_field = vec![0x21];
+    key_field.extend_from_slice(&key);
+    let challenge = [0x22u8; 8];
+    let data = [tlv(0x73, &key_field), tlv(0x74, &challenge), tlv(0x75, &hmac_sha1(&key, &challenge))].concat();
+    assert_eq!(sw(&rig.apdu(&command(0x00, 0x03, 0x00, 0x00, &data, None))), 0x9000, "SET CODE");
+    let response = rig.select(AID_OATH);
+    let card_challenge = find_tlv(split(&response).0, 0x74).expect("locked: SELECT carries a challenge");
+    let mut session = Scp03::open(&mut rig);
+    let host_challenge = [0x33u8; 8];
+    let validate = [tlv(0x75, &hmac_sha1(&key, &card_challenge)), tlv(0x74, &host_challenge)].concat();
+    let wrapped = session.wrap(0x00, 0xA3, 0x00, 0x00, &validate, Some(0));
+    let (answer, status) = session.unwrap(&rig.apdu(&wrapped));
+    assert_eq!(status, 0x9000);
+    assert_eq!(find_tlv(&answer, 0x75).unwrap(), hmac_sha1(&key, &host_challenge));
+    let list = session.wrap(0x00, 0xA1, 0x00, 0x00, &[], Some(0));
+    assert_eq!(session.unwrap(&rig.apdu(&list)).1, 0x9000, "validated inside the channel");
+    assert_eq!(rig.apdu(&OATH_LIST), vec![0x69, 0x82], "plaintext rejected by the channel");
+    let wrapped = session.wrap(0x00, 0xA1, 0x00, 0x00, &[], Some(0));
+    assert_eq!(rig.apdu(&wrapped), vec![0x68, 0x82], "no channel any more");
+    assert_eq!(sw(&rig.apdu(&OATH_LIST)), 0x6982, "OATH access ended with the channel");
+}
+
+/// Catalog SecurityDomain_plaintext: "malformed plaintext SELECT clears OCE and PIV
+/// PIN/admin before validation". A plaintext SELECT whose Lc promises more data than it
+/// carries, sent inside an SCP03 session, ends the session, and the PIN verified under it
+/// is gone while PIV stays selected.
+#[test]
+fn malformed_plaintext_select_revokes_the_piv_pin() {
+    let mut rig = Rig::new();
+    rig.power_on();
+    rig.select(AID_PIV);
+    let mut session = Scp03::open(&mut rig);
+    let verify = session.wrap(0x00, 0x20, 0x00, 0x80, &piv::pin_block("123456"), None);
+    assert_eq!(session.unwrap(&rig.apdu(&verify)), (vec![], 0x9000));
+    let malformed = [0x00, 0xA4, 0x04, 0x00, 0x09, 0xA0, 0x00, 0x00, 0x03, 0x08];
+    let answer = rig.apdu(&malformed);
+    assert_ne!(sw(&answer), 0x9000, "{answer:02X?}");
+    let status = rig.apdu(&[0x00, 0x20, 0x00, 0x80]);
+    assert_eq!(sw(&status) & 0xFFF0, 0x63C0, "PIN no longer verified: {status:02X?}");
+}
+
 /// A handshake is not a session boundary (catalog SecurityDomain_handoff:
 /// "not-yet-authenticated SCP03 INIT retain outer transport"): a PIN verified under the
 /// channel stays verified after a wrapped INITIALIZE UPDATE.
@@ -253,7 +305,7 @@ fn reenumeration_ends_a_waiting_fido_command_without_an_answer() {
     let mut rig = Rig::new();
     let cid = rig.ctaphid_init();
     rig.ctaphid_send(cid, CTAPHID_CBOR, &SELECTION);
-    let (seq, out) = ccid_write_config(&mut rig, &config(Some(Capabilities::ALL.0 & !Capabilities::OTP), false));
+    let (seq, out) = ccid_write_config(&mut rig, &config(Some(Capabilities::ALL.0 & !Capabilities::OTP), true));
     assert_eq!(answer(&out, seq), Some(vec![0x90, 0x00]));
     assert_eq!(reenumerations(&out), vec![UsbInterfaces { otp: false, fido: true, ccid: true }]);
     assert!(!out.iter().any(|o| matches!(o, Output::FidoReport(_))), "no FIDO answer: {out:02X?}");
@@ -331,7 +383,7 @@ fn disabled_interfaces_ignore_their_inputs() {
     let mut rig = Rig::new();
     rig.otp_program(slot::CONFIG1, &SlotConfig::yubico_otp(&[], [1; 6], [0x3C; 16]), [0; 6]);
     let cid = rig.ctaphid_init();
-    let out = rig.ctaphid_send(cid, 0x43, &config(Some(Capabilities::ALL.0 & !Capabilities::OTP), false));
+    let out = rig.ctaphid_send(cid, 0x43, &config(Some(Capabilities::ALL.0 & !Capabilities::OTP), true));
     assert_eq!(reenumerations(&out), vec![UsbInterfaces { otp: false, fido: true, ccid: true }]);
     assert!(rig.input(Input::OtpGetFeature).is_empty());
     assert!(rig.input(Input::OtpSetFeature(&[0, 0, 0, 0, 0, 0, 0, 0x8F])).is_empty());
@@ -342,12 +394,12 @@ fn disabled_interfaces_ignore_their_inputs() {
     assert_eq!(sw(&answer(&out, seq).unwrap()), 0x9000, "the touch serves the card command");
     assert!(keyboard(&out).is_empty());
 
-    let (_, out) = ccid_write_config(&mut rig, &config(Some(Capabilities::OTP | Capabilities::OATH), false));
+    let (_, out) = ccid_write_config(&mut rig, &config(Some(Capabilities::OTP | Capabilities::OATH), true));
     assert_eq!(reenumerations(&out), vec![UsbInterfaces { otp: true, fido: false, ccid: true }]);
     let init = Rig::ctaphid_packets(BROADCAST, CTAPHID_INIT, &[1; 8]);
     assert!(rig.input(Input::FidoReport(&init[0])).is_empty(), "CTAPHID ignored");
 
-    let out = otp_write_config(&mut rig, &config(Some(Capabilities::OTP | Capabilities::U2F | Capabilities::FIDO2), false));
+    let out = otp_write_config(&mut rig, &config(Some(Capabilities::OTP | Capabilities::U2F | Capabilities::FIDO2), true));
     assert_eq!(reenumerations(&out), vec![UsbInterfaces { otp: true, fido: true, ccid: false }]);
     assert!(rig.input(Input::Ccid(&Rig::ccid_message(0x62, 0, [0, 0, 0], &[]))).is_empty(), "CCID ignored");
     assert!(rig.input(Input::CcidControlAbort { slot: 0, seq: 0 }).is_empty());

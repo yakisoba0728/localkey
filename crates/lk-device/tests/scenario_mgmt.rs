@@ -93,7 +93,7 @@ fn device_info_is_identical_over_ccid_otp_hid_and_ctaphid() {
 }
 
 /// `docs/DESIGN.md` §5: disabling every CCID application through CTAPHID WRITE CONFIG
-/// answers, then emits `Output::Reenumerate` without CCID; CCID messages are ignored
+/// with REBOOT (ykman `config usb`) answers, then emits `Output::Reenumerate` without CCID; CCID messages are ignored
 /// from then on, the product ID is the OTP+FIDO one, DeviceInfo shows the new enabled set,
 /// and re-enabling through OTP HID slot `0x15` re-enumerates with CCID working again.
 #[test]
@@ -101,7 +101,7 @@ fn disabling_ccid_reenumerates_and_ignores_ccid_until_reenabled() {
     let mut rig = Rig::new();
     rig.power_on();
     let cid = rig.ctaphid_init();
-    let out = rig.ctaphid_send(cid, 0x43, &config(&[(0x03, &NO_CCID_APPS.to_be_bytes())]));
+    let out = rig.ctaphid_send(cid, 0x43, &config(&[(0x03, &NO_CCID_APPS.to_be_bytes()), (0x0C, &[])]));
     assert_eq!(responses(&out), vec![(0x43, vec![])]);
     let reply = out.iter().position(|o| matches!(o, Output::FidoReport(_))).unwrap();
     let reenumerate = out.iter().position(|o| matches!(o, Output::Reenumerate(_))).unwrap();
@@ -121,7 +121,7 @@ fn disabling_ccid_reenumerates_and_ignores_ccid_until_reenabled() {
     assert_eq!(info, info_otp(&mut rig, 0));
 
     let mut payload = [0u8; 64];
-    let data = config(&[(0x03, &ALL_APPS.to_be_bytes())]);
+    let data = config(&[(0x03, &ALL_APPS.to_be_bytes()), (0x0C, &[])]);
     payload[..data.len()].copy_from_slice(&data);
     let out = rig.otp_send_frame(slot::YK4_SET_DEVICE_INFO, &payload);
     assert_eq!(

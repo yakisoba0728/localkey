@@ -18,11 +18,11 @@ parity with the physical device.
 | 1 | lk-fido: CTAP 2.1 commands, PIN/UV protocols 1 and 2, extensions, U2F, self attestation | done (b43c96b), second review in the final integration |
 | 2 | lk-otp, lk-oath, lk-mgmt | done (b43c96b, 2978875), second reviews in the final integration |
 | 3 | lk-piv | done (b18de5b), second review in the final integration |
-| 4 | lk-openpgp: 39 of the 43 advertised algorithm variants (all except brainpoolP512r1) | done (b18de5b); P-521, secp256k1 and brainpoolP256r1/P384r1 added in the final integration |
+| 4 | lk-openpgp: 39 of the 43 advertised algorithm variants (all except brainpoolP512r1) | done (b18de5b); P-521, secp256k1 and brainpoolP256r1/P384r1 added in the final integration (57f3ede) |
 | 5 | lk-sd (SCP03, SCP11a/b/c), lk-hsmauth | done (b18de5b, 77ed6c3), second reviews in the final integration |
-| 6 | lk-device integration, end-to-end scenarios, adversarial verification, catalog closure | done (ac7ad99, 8d6aa06, final integration) |
+| 6 | lk-device integration, end-to-end scenarios, adversarial verification, catalog closure | done (ac7ad99, 8d6aa06, 57f3ede, and the closing commit) |
 
-The final integration made these changes; none of them is committed yet:
+The final integration (57f3ede) added:
 
 - curve work in lk-crypto, lk-codec and lk-openpgp;
 - second independent reviews of every crate, which fixed bugs and added interop tests
@@ -32,12 +32,18 @@ The final integration made these changes; none of them is committed yet:
 - `tools/catalog_status.py`;
 - this documentation.
 
+The closing commit then decided two model policies the reviews had left open: OpenPGP
+accepts RSA attributes with a 17- to 32-bit exponent length, and Management configuration
+changes apply at the next enumeration. It also added the device-level tests for OATH
+access and a malformed plaintext SELECT after a secure channel ends.
+
 ## Verification at the final integration
 
-- `CARGO_BUILD_JOBS=2 cargo test --workspace`: **1701 passed, 0 failed, 1 ignored**. The
+- `CARGO_BUILD_JOBS=2 cargo test --workspace`: **1704 passed, 0 failed, 1 ignored**. The
   ignored test is lk-fido
   `tests::make_credential::ten_thousand_and_one_non_resident_registrations_leave_the_store_unchanged`,
-  a long repeat test. It passes with `cargo test -p lk-fido --lib -- --ignored` (48 s).
+  a long repeat test. It passes with `cargo test -p lk-fido --lib -- --ignored` (49 s, re-run
+  after the final reviews).
 
   | Crate | Tests |
   | --- | ---: |
@@ -55,15 +61,15 @@ The final integration made these changes; none of them is committed yet:
   | lk-openpgp | 197 |
   | lk-hsmauth | 93 |
   | lk-sd | 109 |
-  | lk-device | 207 |
+  | lk-device | 210 |
 
 - `cargo clippy --workspace --all-targets`: no warnings.
 - `python3 tools/license_check.py`: no problems. 68 linked third-party crates, 10
   build-time only, all permissive, all reached only through lk-crypto. `cargo tree -d`
   shows no duplicate versions.
 - `python3 tools/catalog_status.py --check`: every catalog bullet is labelled. The mapping
-  has 451 lines across the per-crate files: 374 tested (8 of them with a part deferred
-  or different), 31 intentional differences and 46 deferred. Details are in
+  has 451 lines across the per-crate files: 376 tested (8 of them with a part deferred
+  or different), 31 intentional differences and 44 deferred. Details are in
   `docs/CATALOG_STATUS.md`.
 - No rule enforces rustfmt, and the tree has never been rustfmt-clean (files untouched
   since Phase 0 differ too). Formatting was left as written.
@@ -80,13 +86,10 @@ Behaviour the engine does not have:
 - **Security Domain**: the GP role policy identifiers, the `BF20` element and the critical
   subject-ID extension are not in the available sources. A certificate carrying them is
   refused as having an unknown critical extension.
-- **Security Domain checks not written at device level** (deferred in `docs/catalog/sd.md`):
-  - the OATH access state after a secure channel ends;
-  - an SCP11 PSO followed by PIV commands;
-  - a malformed plaintext SELECT revoking the PIV PIN.
-
-  lk-device does clear the selected applet's authorization when a channel ends, and the
-  PIV case is tested.
+- **Security Domain check not written at device level** (deferred in `docs/catalog/sd.md`):
+  an SCP11 PSO followed by PIV commands. SCP03-wrapped PIV signing is tested, and so is
+  the revocation of PIV and OATH authorization when a channel ends (plaintext command,
+  malformed plaintext SELECT, encrypted SELECT).
 - **Zeroization is partial** (DESIGN §8):
   - lk-fido, lk-piv and the OpenPGP S2K use `lk_crypto::SecretBytes`;
   - lk-hsmauth, lk-sd, lk-device and the OpenPGP key material wipe their own buffers in
@@ -99,17 +102,11 @@ Behaviour the engine does not have:
 Interop gaps the reviews found and left unchanged, because no public source shows the
 physical answer:
 
-- OpenPGP rejects RSA attributes with a 32-bit exponent length (`01 nnnn 0020 00`) with
-  `6A80`. GnuPG sends this when it switches a slot from ECC back to RSA, and OpenSC sends it
-  before every RSA key generation, so both fail there. yubikit is unaffected.
 - OpenSC's PIV GET CHALLENGE (GENERAL AUTHENTICATE with P1 `00`, P2 `9B`) answers `6A86`,
   so `pkcs11-tool --generate-random` may fail. This comes from the reviewer's recollection
   of `card-piv.c`, which was not checked.
 - PIV refuses ECDSA digests longer than the field (`6A80`); host stacks truncate them
   themselves.
-- When a Management write without `REBOOT` changes the interface set, lk-device
-  re-enumerates at once. ykman and yubikit behaviour suggests the firmware waits for
-  re-insertion. This is recorded as an open model-policy question in `docs/CONTRACTS.md`.
 - Smaller edges, each documented in its crate:
   - a CTAPHID INIT with BCNT other than 8 on a busy channel does not abort the transaction;
   - a late control ABORT that arrives after a newer bulk Abort leaves lk-ccid waiting;
@@ -128,6 +125,10 @@ Model policies (unmeasured, documented in each catalog file):
 - every status word no source fixes;
 - the KEEPALIVE cadence (100 ms) and the CCID time-extension cadence (500 ms);
 - the U2F request window and latch (3 s each);
+- Management configuration changes apply at the next enumeration; only `REBOOT`
+  re-enumerates at once (ykman `config usb`, yubikit `set_mode`);
+- OpenPGP RSA attributes accept exponent lengths of 17 to 32 bits (GnuPG and OpenSC write
+  `0020`; FA lists `0011`);
 - the touch timeouts (15 s for card applets, 30 s for FIDO);
 - the OTP button windows;
 - the CTAPHID lock answer (`ERR_CHANNEL_BUSY`).
@@ -165,7 +166,8 @@ From `docs/DESIGN.md` §13 and the duties the lk-device docs state
 - **Measurement**: a command-by-command comparison with a physical key, only with the
   user's explicit permission (DESIGN §13). It is the only way to turn the model policies
   above into measured behaviour.
-- **Decisions left open in DESIGN §12**:
-  - the project licence;
-  - the trademark and identity question of the compatibility profile;
-  - fast-forwarding `main` to `engine` after review.
+- **Decisions to revisit before any public release** (DESIGN §12 records the current
+  choices):
+  - the project licence (none for now, all rights reserved);
+  - whether the compatibility profile's Yubico VID/PID, strings and AAGUID may be
+    shipped, a trademark and identity question (the default profile is the engine's own).

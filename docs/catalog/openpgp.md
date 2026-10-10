@@ -100,16 +100,21 @@ not count them as catalog lines):
   pending response; GET ATTESTATION with `84` (the GlobalPlatform secure-messaging form of
   `80`) is `6882` too (it was `6E00`; no earlier test pinned that value). The crate used
   to ignore the bits of interindustry classes and execute such a command.
-2. RSA attributes with a 32-bit exponent length: deferred (physical behaviour unmeasured).
-  GnuPG `change_rsa_keyattr` writes `01 nnnn 0020 00` when it switches a slot from ECC
-  back to RSA (an RSA size change keeps the card's `0011`), and OpenSC
-  `pgp_update_new_algo_attr` always writes `SC_OPENPGP_MAX_EXP_BITS` = `0020` before it
-  generates an RSA key (`cardctl.h`). FA advertises only `0011` and the crate accepts only
-  FA entries, so both answer `6A80` and change nothing
-  (`rsa_attributes_with_32_bit_exponent_length_are_not_advertised`); yubikit writes `0011`
+2. RSA attributes with a 32-bit exponent length: accepted (model policy; physical
+  behaviour unmeasured). GnuPG `change_rsa_keyattr` (gnupg master, `scd/app-openpgp.c`)
+  writes `01 nnnn 0020 00` when it switches a slot from ECC back to RSA (an RSA size
+  change keeps the card's `0011`), and OpenSC `pgp_update_new_algo_attr` always writes
+  `SC_OPENPGP_MAX_EXP_BITS` = `0020` before it generates an RSA key (`cardctl.h`). FA
+  advertises only `0011`; the crate accepts an exponent length of 17 to 32 bits for any
+  advertised RSA size and import format and stores the attribute as written
+  (`objects::RSA_E_BITS`), so those flows work: GnuPG reads 32 back, sizes Le and the
+  imported e from it, and the card still generates e = 65537
+  (`rsa_attributes_with_32_bit_exponent_length_are_accepted`,
+  `objects::tests::attribute_support_rules`). yubikit writes `0011`
   (`RsaAttributes.create`) and is unaffected. Whether a physical 5.7.4 accepts `0020` is
   not known from any public source found (a 2018 gnupg-devel report shows `6A80` from an
-  unnamed card).
+  unnamed card); accepting it follows the spec's variable exponent-length field and keeps
+  the common GnuPG and OpenSC flows working.
 3. attestation extensions `.10` (FIPS) and `.11` (CSPN): Yubico's OpenPGP attestation page
   lists them as markers of certified devices; this uncertified engine omits them and keeps
   the certification bits of `.9` zero (the catalog's "uncertified flags are zero").
