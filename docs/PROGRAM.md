@@ -8,14 +8,14 @@ later section wins.
 
 ## Scope and boundary
 
-In scope now:
+In scope:
 
 - `lk-host`: file storage, OS randomness, the storage key, the state directory;
 - `lk-run`: the run loop that owns the `Device`;
 - `lk-wire`: a private Unix-socket transport and the control socket;
-- `localkeyd`: the daemon binary.
-
-Later, as a separate step: Linux transports (UHID; FunctionFS/ConfigFS composite gadget).
+- `localkeyd`: the daemon binary;
+- as a second step, Linux transports: `lk-uhid` (UHID) and `lk-gadget` (FunctionFS/ConfigFS
+  composite gadget).
 
 Out of scope until the user widens the safety boundary:
 
@@ -24,9 +24,9 @@ Out of scope until the user widens the safety boundary:
 - anything that touches the host's USB/HID/PCSC stack, keyboard, kernel, or the physical
   YubiKey.
 
-The wire transport is the only transport that can be exercised end to end here. It carries the
-full `Input`/`Output` set, so a bridge process (for example a gadget relay inside a guest)
-can sit on the other side later.
+On this macOS host only the wire transport runs end to end. It carries the full
+`Input`/`Output` set, so a bridge process can sit on the other side. The Linux transports are
+exercised inside a disposable no-NIC QEMU guest (`tools/linux-guest/`, DESIGN §12 decision 7).
 
 ## Rules for program crates
 
@@ -258,11 +258,24 @@ The daemon binary (`crates/localkeyd`). Argument parsing by hand (no third-party
 
 ```text
 localkeyd keygen (--key-file PATH | --print)
-localkeyd run --state DIR (--key-file PATH | --key-command CMD)
-              [--profile own|yubikey-5c-nano-5.7.4] [--wire PATH] [--control PATH]
+localkeyd run --state DIR (--key-file PATH | --key-command CMD) [TRANSPORT]
+              [--profile own|yubikey-5c-nano-5.7.4] [--control PATH]
               [--wall-clock] [--allow-unreadable] [--exit-on-stdin-eof] [-v | -vv]
 localkeyd ctl --control PATH (tap [long] | down | up | power-cycle | status | watch)
+
+TRANSPORT (default wire):
+  [--transport wire] [--wire PATH]
+  --transport uhid [--uhid-path PATH]                      (Linux)
+  --transport gadget --udc NAME [--gadget-name NAME]
+                     [--configfs DIR] [--ffs-dir DIR]      (Linux, root)
 ```
+
+- **as built**: transport defaults `--uhid-path /dev/uhid`, `--gadget-name localkey`,
+  `--configfs /sys/kernel/config/usb_gadget`, `--ffs-dir /dev/ffs-<gadget name>`. An option
+  of another transport is a usage error. The control socket is served with every transport;
+  with uhid and gadget, `ctl tap` is how a touch reaches the device. `uhid` and `gadget` on
+  a non-Linux system exit 2 before anything is opened; the gadget configuration is checked
+  (read-only) before the state directory is opened.
 
 - `run` defaults: `--profile own`, `--wire <state>/wire.sock`, `--control
   <state>/control.sock`.
@@ -273,6 +286,11 @@ localkeyd ctl --control PATH (tap [long] | down | up | power-cycle | status | wa
   3 without binding any socket. Then bind the control socket and the wire socket and serve.
 - Exit codes: 0 clean, 1 runtime failure, 2 startup failure (usage, lock, key, permissions),
   3 unreadable records refused.
+  - **as built**: exit 2 also covers uhid or gadget on a non-Linux system, a gadget
+    configuration lk-gadget refuses, and any failure the transport reports during its first
+    enumeration (then the control socket is removed and the runner shut down). If the runner
+    stops during the first enumeration the code is 1. Failures of later enumerations are
+    logged and the device stays absent until the next one.
 - Clean shutdown: with `--exit-on-stdin-eof` (used by tests and supervisors) the daemon shuts
   down cleanly when stdin reaches EOF (runner shut down, device dropped, sockets removed);
   otherwise it runs until killed. No signal handling (std cannot catch
@@ -345,11 +363,10 @@ fixed. Each crate's root doc (or `localkeyd/src/run.rs`, `log.rs`, `args.rs`) ke
 
 ## Linux transports (second step)
 
-Two transport crates for Linux. Neither can be exercised against a real kernel here: the
-Docker Desktop VM kernel has no `UHID`, no `DUMMY_HCD` and no USB gadget support, and there
-is no other Linux guest. They are therefore built as byte-level logic over generic I/O,
-tested on macOS with fakes (temporary files, FIFOs, socket pairs), and reported as
-**unverified on a real kernel** until a Linux guest is available.
+Two transport crates for Linux. The Docker Desktop VM kernel has no `UHID`, no `DUMMY_HCD`
+and no USB gadget support, so they are built as byte-level logic over generic I/O and tested
+on every Unix with fakes (socket pairs, temporary directories). Real-kernel runs happen in a
+QEMU guest inside Docker (`tools/linux-guest/`).
 
 Both use only files and processes (no `ioctl`, no `unsafe`), so they compile and their tests
 run on every Unix; `localkeyd` refuses to start them on a non-Linux OS at run time.
@@ -445,3 +462,60 @@ plugged into a computer, or `dummy_hcd` in a test guest). It needs root.
   reopen the endpoints, bind again.
 - Teardown on drop: unbind, close files, unmount, remove the ConfigFS directories in
   reverse order of creation (a failure is logged, not fatal).
+
+## Linux transports as built (binding)
+
+Both crates were implemented, adversarially reviewed against the kernel sources (UAPI
+headers, `uhid.c`, `hidraw.c`, `hid-core.c`, `f_fs.c`, `composite.c`, `configfs.c`,
+`proc_namespace.c`) and fixed. Their crate docs list the settled kernel facts with sources
+and the items only a real kernel can settle. The points that refine the sections above:
+
+- **Both**: the reader threads pace themselves exactly like lk-wire (a `Command::Status`
+  marker every 64 inputs, lk-gadget also every 256 KiB; at most two windows per producer in
+  the runner's channel). Every wait for a marker gives up when the device or session stops.
+- **lk-uhid**
+  - Report-number rule, from the driver code (`hidraw_send_report`, `hidraw_get_report`,
+    `uhid_hid_output_raw`, `uhid_hid_set_report`): FIDO output arrives as 64 bytes or 65
+    with a leading `00`; OTP SET_REPORT(feature) as 8 or 9 bytes with `00`; the
+    GET_REPORT(feature) reply is `00` followed by the 8 bytes. `hidraw.rst` describes
+    unnumbered GET_FEATURE differently; the code wins.
+  - `UHID_CREATE2`'s name is cut to 127 bytes at a character boundary. A non-character
+    `--uhid-path` is refused. Unsupported GET/SET_REPORT get `EIO` at once; the feature read
+    has a 1 s budget (the kernel waits 5 s).
+  - Re-enumeration: each new device gets a new file; the writer waits for its
+    predecessor's `UHID_DESTROY`; outputs are dropped until a fence marker queued behind the
+    old inputs is answered, so nothing from before the reboot reaches the new devices.
+    Inputs queued before the reboot are still handled by the rebooted device before the
+    plug-in `PowerCycle`.
+  - `attached` = `UHID_CREATE2` accepted, not destroyed, and no `-EINVAL` on `UHID_INPUT2`
+    since (the kernel's only sign of a failed `hid_add_device`). `UhidNotice::NotRunning`
+    reports it once.
+- **lk-gadget**
+  - The strings blob is the bare 16-byte header with both counts 0 (`__ffs_data_got_strings`
+    requires both counts zero or both non-zero, and the engine's interfaces use no
+    strings).
+  - ConfigFS `MaxPower` is written in mA (2 × `bMaxPower`; the kernel halves it below
+    SuperSpeed). Unbind writes `"\n"`. The function link is made after the ep0 blobs, with an
+    absolute target. `bcdUSB` is written but `composite.c` overwrites it on every
+    GET_DESCRIPTOR(device) (`0x0200` on `dummy_hcd`).
+  - ENABLE: only a not-enabled → enabled change counts (`set_alt` reports one ENABLE per
+    interface); the first is the plug-in `PowerCycle`, later ones `Reset`. SUSPEND is passed
+    once until RESUME.
+  - CCID: one 64-byte packet per read; `dwMaxCCIDMessageLength` counts the 10-byte header
+    (CCID Rev 1.1 §5.1); a longer message is dropped without an answer; a zero-length packet
+    follows a bulk-in message that fills whole packets. Endpoint-directed requests are
+    stalled.
+  - ep0: calls interrupted by `EINTR` are repeated (at most 16 times), and a read is taken as
+    events only if it is whole events with the zero padding the kernel writes; anything
+    else is host data of a data stage and is discarded.
+  - An UNBIND the transport did not cause (or 20 failed ep0 reads) ends the session and
+    closes every FunctionFS file, so f_fs resets; the gadget stays unbound until the next
+    `Output::Reenumerate` or a restart.
+  - The leftover of a killed process (`UDC` empty, only the directories and links this
+    transport creates) is reclaimed at the next start: unmount wherever
+    `/proc/self/mounts` shows the instance, tear the tree down, create it again. Anything
+    else at the gadget path is refused and left alone. Residual risk, documented: two
+    daemons with different state directories and the same gadget name.
+  - If the unmount fails at teardown, the ConfigFS tree is left in place and reported,
+    because removing the function directory under a live mount detaches it.
+
