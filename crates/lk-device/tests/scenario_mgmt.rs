@@ -123,7 +123,10 @@ fn disabling_ccid_reenumerates_and_ignores_ccid_until_reenabled() {
     let mut payload = [0u8; 64];
     let data = config(&[(0x03, &ALL_APPS.to_be_bytes()), (0x0C, &[])]);
     payload[..data.len()].copy_from_slice(&data);
-    let out = rig.otp_send_frame(slot::YK4_SET_DEVICE_INFO, &payload);
+    let mut out = rig.otp_send_frame(slot::YK4_SET_DEVICE_INFO, &payload);
+    // The host then reads the status (yubikit `OtpProtocol._read_frame`); the reboot
+    // follows that read.
+    out.extend(rig.input(Input::OtpGetFeature));
     assert_eq!(
         reenumerations(&out),
         vec![UsbInterfaces {

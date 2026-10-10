@@ -10,10 +10,11 @@
 //!   per device.
 //!
 //! Only files are used (no `ioctl`, no `unsafe`), so the crate builds and its tests run on
-//! every Unix; it is useful on Linux only (`localkeyd` refuses it elsewhere). It is
-//! **unverified on a real kernel**: every kernel fact comes from the UAPI headers, the
-//! kernel documentation and the driver sources named below, and the tests play the kernel
-//! over `UnixStream::pair()` (`docs/PROGRAM.md` "Linux transports").
+//! every Unix; it is useful on Linux only (`localkeyd` refuses it elsewhere). The kernel
+//! facts come from the UAPI headers, the kernel documentation and the driver sources named
+//! below, and the tests play the kernel over `UnixStream::pair()` (`docs/PROGRAM.md`
+//! "Linux transports"). It has been **run on a real kernel** only as far as "Settled on a
+//! real kernel" below says; the rest is still unverified.
 //!
 //! # Report numbers
 //!
@@ -43,12 +44,12 @@
 //!   `Documentation/hid/hidraw.rst` says the data of an unnumbered report "will begin at
 //!   the first byte"; the driver code says otherwise, and this crate follows the code.
 //!
-//! Conclusion, until a real kernel confirms it ([`report`] implements it): FIDO output of
-//! 64 bytes, or 65 with a leading `00` (stripped), is accepted, any other output is
-//! dropped; an OTP feature SET_REPORT with report number 0 of 8 bytes, or 9 with a leading
-//! `00`, is accepted; GET_REPORT(feature) is answered with `00` + the 8 bytes. Input
-//! reports go out without a prefix (64 bytes FIDO, 8 bytes OTP keyboard), as an unnumbered
-//! report is read from hidraw.
+//! Conclusion ([`report`] implements it; confirmed on a real kernel, see "Settled on a real
+//! kernel"): FIDO output of 64 bytes, or 65 with a leading `00` (stripped), is accepted,
+//! any other output is dropped; an OTP feature SET_REPORT with report number 0 of 8 bytes,
+//! or 9 with a leading `00`, is accepted; GET_REPORT(feature) is answered with `00` + the
+//! 8 bytes. Input reports go out without a prefix (64 bytes FIDO, 8 bytes OTP keyboard),
+//! as an unnumbered report is read from hidraw.
 //!
 //! # As built
 //!
@@ -66,11 +67,22 @@
 //!   writer (at most [`DROP_TIMEOUT`]) so the kernel sees the DESTROY before the CREATE2.
 //!   A device whose file ended is replaced the same way.
 //! - Retiring a device cannot lose its DESTROY: the writer checks the device's `retiring`
-//!   flag before every queued item, and once it is up discards the rest of its queue
-//!   (INPUT2s counted in [`UhidStats::dropped`], replies not needed because the DESTROY
-//!   fails the kernel's pending requests, `uhid_dev_destroy`), writes DESTROY if the
-//!   kernel accepted the CREATE2, and ends. A CREATE2 that was never written is not
-//!   followed by a DESTROY (`uhid_dev_destroy` would refuse it with `-EINVAL`).
+//!   flag before every queued item, and once it is up writes the rest of its queue (all of
+//!   it was queued before the retirement: outputs the device produced before it rebooted,
+//!   replies to requests it had accepted) except a CREATE2 not yet written, waits at most
+//!   [`FEATURE_TIMEOUT`] for replies still owed, writes DESTROY if the kernel accepted the
+//!   CREATE2, and ends. A CREATE2 that was never written is not followed by a DESTROY
+//!   (`uhid_dev_destroy` would refuse it with `-EINVAL`). The DESTROY comes
+//!   [`DESTROY_AFTER_REPLY`] (100 ms) after the last GET_REPORT or SET_REPORT reply, so
+//!   the kernel's waiting caller takes the reply (see "Settled on a real kernel").
+//! - Replies owed across a re-enumeration: a GET_REPORT or SET_REPORT whose input reached
+//!   the runner counts as in flight (taken under the gate, so either before the device
+//!   retires or not at all) until its reply is queued. After a re-enumeration that reply
+//!   is still queued (a feature read keeps waiting for the runner's marker) and written
+//!   before the DESTROY; this is how the SET_REPORT that completes a Management write with
+//!   REBOOT, and the status read that `lk_device` answers right before such a reboot,
+//!   succeed for the host. When the transport is dropped, owed replies are not written
+//!   (no marker is answered any more; the DESTROY fails the requests).
 //! - Isolation of a rebooted device, exactly: the old file's reader drops what the kernel
 //!   still sends (outputs refused, requests unanswered because the DESTROY failed them).
 //!   Inputs the old readers handed to the runner before the re-enumeration are still
@@ -114,9 +126,10 @@
 //!   request; with none, or no answer in time, the reply is `EIO`. The runner must answer
 //!   `Command::Status` (`lk_run::Runner` does; pacing and the fence depend on it too).
 //! - Every wait for a marker (pacing, feature reads) is done in steps of 20 ms and gives
-//!   up once the device is retiring: `lk_run` drops the transport on the runner thread,
-//!   where no marker can be answered any more, and the reply would be pointless anyway.
-//!   A retiring device's reader queues no replies.
+//!   up once the device is retiring (a feature read only once the transport is dropped):
+//!   `lk_run` drops the transport on the runner thread, where no marker can be answered
+//!   any more. A retiring device's reader answers no request that arrives after the
+//!   retirement.
 //! - Every GET_REPORT and SET_REPORT gets a reply at once except that wait: unsupported
 //!   ones (any GET_REPORT but the OTP feature report, a report number other than 0) get
 //!   `EIO`. SET_REPORT(output) on the OTP keyboard (LEDs) is acknowledged and ignored, as
@@ -137,26 +150,140 @@
 //!   reports and failures, and event types with data sizes for `-vv`; never report bytes.
 //!   `Debug` of every type shows sizes only.
 //!
+//! # Settled on a real kernel
+//!
+//! Guest: Ubuntu's arm64 `7.0.0-38-generic` kernel (upstream 7.0.14) under QEMU, its own
+//! `uhid`, `hid`, `hid-generic` and `usbhid` modules, systemd-udevd 259, a static musl
+//! `localkeyd` (`tools/linux-guest/`). Two tests:
+//!
+//! - `tests/smoke.sh`: `localkeyd run --transport uhid -vv`, `ctl status`, a clean shutdown
+//!   through stdin EOF. Events: CREATE2 (OTP, FIDO), START (OTP, FIDO), OPEN (OTP); at
+//!   shutdown DESTROY and STOP for FIDO, then CLOSE, DESTROY and STOP for OTP.
+//! - `tests/uhid.sh`: host software as black-box clients against both profiles: libfido2
+//!   1.16.0 (`fido2-token -L/-I/-S`, `fido2-cred -M/-V`, `fido2-assert -G/-V`),
+//!   python-fido2 2.0.0 (`CtapHidDevice`, `Ctap2` with PIN tokens, `Fido2Client` with
+//!   `Fido2Server`), ykman 5.8.0 (`list`, `info`, `otp info`, `otp chalresp`, `otp
+//!   calculate`, `otp static`, `config usb --disable/--enable OTP`), raw hidraw calls,
+//!   evdev; `kill -9` and restart; driver unbind and bind; a hidraw flood. Touches through
+//!   `localkeyd ctl tap`. Every step passed with the fixes listed below.
+//!
+//! What the kernel does:
+//!
+//! - `UHID_CREATE2` as encoded here (4380-byte `struct uhid_event` on aarch64) is accepted
+//!   for both devices, and its fields arrive as designed: each hidraw node's uevent shows
+//!   `HID_ID=0003:00001209:00000001` (`BUS_USB`, the own profile's vendor and product;
+//!   `0003:00001050:00000407` with the YubiKey profile, `0003:00001050:00000406` after
+//!   `ykman config usb --disable OTP`), `HID_NAME` the product string (`YubiKey
+//!   OTP+FIDO+CCID`, then `YubiKey FIDO+CCID`), `HID_PHYS=localkey`, an empty `HID_UNIQ`;
+//!   `HIDIOCGRAWINFO` gives bus 3 and the IDs, `HIDIOCGRAWNAME`/`PHYS`/`UNIQ` the same
+//!   strings; `/proc/bus/input/devices` shows `Version=0574`; each node's
+//!   `report_descriptor` (and `HIDIOCGRDESC`) is the engine's FIDO (34 bytes) or OTP (77
+//!   bytes) descriptor byte for byte, compared with the descriptors the engine sends over
+//!   the wire transport. hid-generic binds both (`hidraw` for FIDO; `input,hidraw` for the
+//!   OTP keyboard). The devices live under `/devices/virtual/misc/uhid/`, with no USB
+//!   ancestor.
+//! - `UHID_START` arrives with `dev_flags` 0 for both devices, at every creation (logged
+//!   as "started (dev_flags 0x0)").
+//! - `UHID_STOP` follows `UHID_DESTROY` promptly for a started device: on shutdown (the
+//!   daemon exited about 0.34 s after its stdin closed, both destroys and thread joins
+//!   included) and at every re-enumeration (each old device logged "destroyed" and
+//!   "stopped", its reader ended and its file was closed; the new device was created
+//!   after). The hidraw nodes were gone afterwards.
+//! - The kernel itself opens the OTP device: `UHID_OPEN` arrives with no user process
+//!   running. The input device has `Handlers=sysrq kbd event0`, and the keyboard and SysRq
+//!   handlers open every input device they attach to (`input_open_device` in `kbd_connect`,
+//!   `drivers/tty/vt/keyboard.c`, and `sysrq_connect`, `drivers/tty/sysrq.c`), which
+//!   hid-input passes on as `UHID_OPEN`; its `UHID_CLOSE` comes only at the DESTROY. On
+//!   the FIDO device every hidraw open and close of a client is one `UHID_OPEN` /
+//!   `UHID_CLOSE` pair (ykman opens it on every run to enumerate).
+//! - Nothing in the kernel asks for reports: with the keyboard and SysRq handlers,
+//!   hid-generic, hid-input and systemd-udevd present (no desktop daemons), no
+//!   `UHID_GET_REPORT`, `UHID_SET_REPORT` or `UHID_OUTPUT` reached either device except
+//!   from hidraw clients (none at all on the OTP device before ykman ran; no keyboard LED
+//!   report either).
+//! - The report-number rule above holds:
+//!   - libfido2, python-fido2 and ykman write `00` + the 64-byte report to the FIDO node,
+//!     and each write arrives as a 65-byte `UHID_OUTPUT`. A raw 64-byte write arrives as a
+//!     64-byte `UHID_OUTPUT` (hidraw passes the buffer verbatim); both were answered.
+//!   - ykman's `HIDIOCSFEATURE(9)` (`00` + the 8-byte report) arrives as a 9-byte
+//!     `UHID_SET_REPORT`; a raw `HIDIOCSFEATURE(8)` as an 8-byte one with report number 0
+//!     (its first byte, 0); both are acknowledged and returned their size.
+//!   - `HIDIOCGFEATURE(9)` returns 9 and the reply data verbatim: `00 00 05 07 04 00 00 00
+//!     00`, the report number and then the 8-byte status (firmware 5.7.4). ykman reads the
+//!     report from byte 1: challenge-response in slot 2 (HMAC-SHA1, checked against the
+//!     generated key, the same answer twice and after a restart) and the slot writes ran
+//!     over 510 GET_REPORT and 186 SET_REPORT round trips without an error.
+//!     `HIDIOCGFEATURE(8)` returns 8: the report number and the first 7 report bytes (the
+//!     kernel cuts the reply to the caller's size). So `hidraw.rst`'s "the data will begin
+//!     at the first byte" does not describe uhid; the driver code does.
+//!   - hidraw `read()` returns input reports without a prefix: 64 bytes FIDO, 8 bytes OTP
+//!     keyboard.
+//! - The OTP keyboard: a static password in slot 1 (`ykman otp static 1 Hello1World
+//!   --keyboard-layout US`) typed on `ctl tap` came out of evdev as left shift + H, e, l,
+//!   l, o, 1, left shift + W, o, r, l, d, Enter (24 eight-byte reports on hidraw: press
+//!   and release for each key).
+//! - A GET_REPORT or SET_REPORT that is pending when `UHID_DESTROY` is written fails with
+//!   `EIO` in the caller (`uhid_dev_destroy`). So does one whose reply was written right
+//!   before the DESTROY: the woken caller checks `running` again
+//!   (`__uhid_report_queue_and_wait`) and the DESTROY has cleared it. Seen with ykman's
+//!   status read after `config usb --disable OTP` (reply written, then DESTROY, `OSError:
+//!   [Errno 5]`); with [`DESTROY_AFTER_REPLY`] it succeeds.
+//! - `kill -9` of the daemon: the kernel destroys both devices when the process's files
+//!   close (`uhid_char_release`): no hidraw node, HID device or input device is left. A
+//!   restart on the same state directory presents both again, with the state kept (FIDO
+//!   PIN set, a credential made before still asserts and verifies, both OTP slots
+//!   programmed, the same HMAC answer).
+//! - Driver unbind: unbinding hid-generic (`/sys/bus/hid/drivers/hid-generic/unbind`)
+//!   sends `UHID_STOP` and removes the hidraw node (logged, the reader goes on); binding
+//!   again sends `UHID_START` (`dev_flags` 0). A DESTROY of a device that no driver has
+//!   bound gets no `UHID_STOP`: the reader stays blocked in `read()`. At shutdown that
+//!   costs [`DROP_TIMEOUT`] ("fido: the reader thread did not end in time"; the daemon
+//!   exited 1.1–1.4 s after its stdin closed); at a re-enumeration the old reader and its
+//!   file (holding no device) stay until the process exits. A blocking `read()` cannot be
+//!   woken without an event, and std offers `O_NONBLOCK` (`custom_flags`) but no
+//!   `poll(2)`, so only a reader that sleeps and retries could notice, at a cost on every
+//!   device all the time; not done. The same holds for a device that no driver ever binds.
+//! - A hidraw client that writes 5000 reports as fast as it can (0.14–0.74 s) overruns the
+//!   kernel's 32-event queue: `uhid_queue` drops the excess and logs "Output queue is
+//!   full" once per dropped report with `hid_warn`, not rate-limited (22, 127, 196, 770
+//!   and over 4000 lines in five runs); the device answered normally right after. The
+//!   bound is the kernel's queue.
+//! - Permissions: `/dev/uhid` and both hidraw nodes are `crw-------` root. systemd-udevd's
+//!   `fido_id` recognises the FIDO node from its report descriptor (`ID_FIDO_TOKEN=1`,
+//!   `ID_SECURITY_TOKEN=1`, tags `security-device`, `seat`, `uaccess`), with either
+//!   profile, so a desktop user with a logind seat session gets access without extra
+//!   rules; the OTP node is tagged `seat` only. Rules that match the USB device's
+//!   attributes (`ATTRS{idVendor}`, as Yubico's) cannot match a uhid device. A rule on the
+//!   uhid device path works: `SUBSYSTEM=="hidraw",
+//!   DEVPATH=="/devices/virtual/misc/uhid/0003:1209:0001.*", TAG+="uaccess"` tagged the
+//!   OTP node `uaccess` (`0003:1050:*` for the YubiKey profile).
+//!
+//! What the real clients showed in this crate, now fixed (regression tests in
+//! `tests/transport.rs`):
+//!
+//! - The SET_REPORT that completes a Management write with REBOOT (ykman `config usb`
+//!   over OTP HID) lost its reply: the device retired before the reader queued it, the
+//!   DESTROY failed the request, and `HIDIOCSFEATURE` returned `EIO` for a write that had
+//!   taken effect (`a_set_report_whose_input_re_enumerates_is_acknowledged_before_the_destroy`).
+//! - Outputs queued before a re-enumeration were discarded once the device retired, so
+//!   the CTAPHID response to such a write reached the host only if the writer happened to
+//!   be quick (`outputs_delivered_before_a_re_enumeration_reach_the_old_device_before_its_destroy`).
+//! - A feature read answered right before a reboot lost its reply in the same way
+//!   (`a_feature_read_answered_right_before_a_re_enumeration_gets_its_reply_before_the_destroy`),
+//!   and a reply written right before the DESTROY still failed in the kernel
+//!   (`the_destroy_after_a_reply_leaves_the_caller_time_to_take_it`).
+//! - The engine rebooted right after the last SET_REPORT of such a write, before the host
+//!   could read the status it waits for; `lk_device` now reboots after that read (or
+//!   `lk_device::OTP_REBOOT_DELAY_MS` later).
+//!
 //! # Open items for a real kernel
 //!
-//! - Which form hidraw clients actually produce and expect (the report-number rule above),
-//!   and that `UHID_START` arrives with `dev_flags` 0.
-//! - That `UHID_STOP` follows `UHID_DESTROY` promptly (the old reader's exit on drop and on
-//!   re-enumeration depends on it). A device that was created but never started gets
-//!   none (one whose `hid_add_device` failed, or that no HID driver bound), and its reader
-//!   and file are left behind until the process exits. Waking a blocking `read()` would
-//!   need `O_NONBLOCK` or `poll`, which std cannot set on a character device without
-//!   `unsafe`. (A device retired before its CREATE2 was written does not leak: its reader
-//!   starts reading only after the CREATE2 was accepted, and ends at once otherwise.)
 //! - That `-EINVAL` on `UHID_INPUT2` is the only sign of a device whose `hid_add_device`
-//!   failed (read from `uhid_dev_input2` and `uhid_device_add_worker`; untested against a
-//!   kernel).
-//! - How often the kernel logs "Output queue is full" (`uhid_queue`) while pacing holds a
-//!   flooding hidraw writer back.
-//! - That nothing in the kernel itself (rather than hidraw) asks the OTP device for its
-//!   feature report: such a caller would expect the report without the leading `00`.
-//! - Permissions: `/dev/uhid` is usually root-only, and the hidraw nodes the kernel creates
-//!   need udev rules for a desktop user's FIDO client.
+//!   failed (read from `uhid_dev_input2` and `uhid_device_add_worker`; not provoked: the
+//!   kernel accepts the engine's descriptors).
+//! - Whether desktop daemons (power or input managers) ask the OTP device for reports;
+//!   none ran in the guest. Such a kernel-internal caller would expect the feature report
+//!   without the leading `00`.
 
 #![cfg(unix)]
 
@@ -167,6 +294,6 @@ mod transport;
 
 pub use crate::io::{DEFAULT_UHID_PATH, DevUhid, UhidHalves, UhidIo};
 pub use crate::transport::{
-    DROP_TIMEOUT, FEATURE_TIMEOUT, HidInterface, INPUT_WINDOW, Observer, PHYS, UhidNotice, UhidStats, UhidTransport,
-    WRITE_QUEUE_EVENTS,
+    DESTROY_AFTER_REPLY, DROP_TIMEOUT, FEATURE_TIMEOUT, HidInterface, INPUT_WINDOW, Observer, PHYS, UhidNotice,
+    UhidStats, UhidTransport, WRITE_QUEUE_EVENTS,
 };

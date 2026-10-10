@@ -16,7 +16,7 @@ use common::{
 };
 use lk_device::{BusEvent, Output};
 use lk_gadget::ffs::Event;
-use lk_gadget::{GadgetConfig, GadgetEvent, GadgetTransport, Observer};
+use lk_gadget::{DRAIN_TIMEOUT, GadgetConfig, GadgetEvent, GadgetTransport, OTP_REPORT_TIMEOUT, Observer};
 use lk_run::{Command, HostInput, Transport};
 
 /// FIDO+CCID endpoint files: FIDO OUT, FIDO IN, CCID bulk OUT, bulk IN, interrupt IN.
@@ -271,6 +271,116 @@ fn re_enumeration_unbinds_rewrites_the_product_id_and_reopens_with_the_new_inter
     harness.deliver(Output::FidoReport([0x78; 64]));
     assert_eq!(second.read_in(3, 64), vec![0x78; 64]);
     assert!(harness.events().contains(&GadgetEvent::Unbound));
+}
+
+/// Found with ykman over the Linux guest's `dummy_hcd` (`tools/linux-guest/tests/gadget.sh`,
+/// step 5): `ykman config usb --disable OTP` over OTP HID printed "Failed to configure USB
+/// applications" although the device rebooted with the new configuration. `lk_device`
+/// answers the status read that reports the write (GET_REPORT(feature)) and reboots right
+/// after it; the runner then re-enumerates before it answers the request's marker, and
+/// the transport unbound with the GET_REPORT still waiting for that marker, so the host's
+/// request failed. Now the re-enumeration drains: the request takes the answer the runner
+/// delivered, and the reply goes out before the unbind.
+#[test]
+fn an_otp_get_report_answered_right_before_a_re_enumeration_gets_its_reply_before_the_unbind() {
+    let harness = Harness::new();
+    *harness.otp_answer.lock().expect("not poisoned") = Some([0, 5, 7, 4, 0x2A, 0, 0, 0]);
+    harness.enumerate(&identity(ALL));
+    let first = harness.kernel.session();
+    first.ep0.event(Event::Bind);
+    first.ep0.event(Event::Enable);
+    assert_eq!(harness.input(), HostInput::Bus(BusEvent::PowerCycle));
+    *harness.reboot_after_get_feature.lock().expect("not poisoned") = Some(identity(FIDO_CCID));
+    let start = Instant::now();
+    let outcome = first.ep0.setup(request(0xA1, 0x01, 0x0300, 0, 8), &[]);
+    assert_eq!(outcome, Outcome::Reply(vec![0, 5, 7, 4, 0x2A, 0, 0, 0]), "the reply, not a cancelled request");
+    assert!(start.elapsed() < OTP_REPORT_TIMEOUT, "answered without waiting for the marker: {:?}", start.elapsed());
+    assert_eq!(harness.input(), HostInput::OtpGetFeature);
+    // The re-enumeration went on: the old session ended and the new one is FIDO+CCID.
+    let mut second = harness.kernel.session();
+    assert_eq!(first.ep0.outcome(), Outcome::Closed);
+    assert_eq!(harness.read("idProduct"), "0x0406\n");
+    second.ep0.event(Event::Enable);
+    assert_eq!(harness.input(), HostInput::Bus(BusEvent::PowerCycle));
+    harness.deliver(Output::FidoReport([0x31; 64]));
+    assert_eq!(second.read_in(FIDO_IN, 64), vec![0x31; 64]);
+}
+
+/// The response to the command that rebooted the device (a CCID WRITE CONFIG response, a
+/// CTAPHID response) is delivered right before `Output::Reenumerate`. The writer used to
+/// see the stop flag and drop what was still queued, and the unbind ended a write in
+/// progress, so whether the host got the response depended on thread timing (it did in
+/// the guest's runs over CCID and FIDO HID, by luck). Here IN writes complete only when the
+/// host takes them: one is in progress and one queued when the re-enumeration starts, and
+/// both reach the host before the unbind.
+#[test]
+fn responses_queued_before_a_re_enumeration_reach_the_host_before_the_unbind() {
+    let harness = Harness::new();
+    harness.kernel.acknowledge_in(true);
+    harness.enumerate(&identity(FIDO_CCID));
+    let mut first = harness.kernel.session();
+    first.ep0.event(Event::Bind);
+    first.ep0.event(Event::Enable);
+    assert_eq!(harness.input(), HostInput::Bus(BusEvent::PowerCycle));
+    let in_progress = ccid_message(300, 8);
+    let response = ccid_message(20, 9);
+    harness.deliver(Output::Ccid(in_progress.clone()));
+    harness.deliver(Output::FidoReport([0x42; 64]));
+    harness.deliver(Output::Ccid(response.clone()));
+    let done = harness.enumerate_in_background(&identity(ALL));
+    thread::sleep(Duration::from_millis(100));
+    assert_eq!(first.read_acknowledged(CCID_IN), Some(in_progress), "the write in progress completes");
+    assert_eq!(first.read_acknowledged(CCID_IN), Some(response), "the queued response follows before the unbind");
+    assert_eq!(first.read_acknowledged(FIDO_IN), Some(vec![0x42; 64]), "the queued CTAPHID report too");
+    done.recv_timeout(WAIT).expect("the re-enumeration ends");
+    assert_eq!(first.ep0.outcome(), Outcome::Closed);
+    assert_eq!(first.read_acknowledged(CCID_IN), None, "the unbind ended the endpoint");
+    let second = harness.kernel.session();
+    second.ep0.event(Event::Enable);
+    assert_eq!(harness.input(), HostInput::Bus(BusEvent::PowerCycle));
+    let failed = harness.events().into_iter().any(|event| matches!(event, GadgetEvent::Failed(_)));
+    assert!(!failed, "{:?}", harness.events());
+}
+
+/// A host that does not read holds a re-enumeration up for at most `DRAIN_TIMEOUT`; what
+/// it did not take is dropped and reported.
+#[test]
+fn a_re_enumeration_waits_at_most_the_drain_timeout_for_a_host_that_does_not_read() {
+    let (harness, _first) = plugged_in();
+    harness.deliver(Output::Ccid(vec![0x80; 4 * 1024 * 1024]));
+    let start = Instant::now();
+    harness.enumerate(&identity(ALL));
+    let took = start.elapsed();
+    assert!(took >= DRAIN_TIMEOUT, "drained for {took:?}");
+    assert!(took < DRAIN_TIMEOUT + Duration::from_secs(5), "drained for {took:?}");
+    let second = harness.kernel.session();
+    second.ep0.event(Event::Enable);
+    assert_eq!(harness.input(), HostInput::Bus(BusEvent::PowerCycle));
+    let reported = harness.events().into_iter().any(|event| {
+        matches!(&event, GadgetEvent::Failed(reason) if reason.contains("did not read 1 queued response"))
+    });
+    assert!(reported, "{:?}", harness.events());
+}
+
+/// `dummy_hcd` reports SUSPEND before UNBIND whenever the gadget is unbound (seen in the
+/// Linux guest at every re-enumeration: "gadget: bus Suspend", then "gadget: unbound").
+/// That SUSPEND reached the runner after the re-enumeration and suspended the rebooted
+/// device until the host configured it. A session the transport is ending passes no bus
+/// event any more.
+#[test]
+fn bus_events_of_a_session_the_transport_is_ending_do_not_reach_the_runner() {
+    let (harness, _first) = plugged_in();
+    harness.kernel.suspend_on_unbind(true);
+    harness.enumerate(&identity(ALL));
+    let second = harness.kernel.session();
+    second.ep0.event(Event::Bind);
+    second.ep0.event(Event::Enable);
+    assert_eq!(harness.input(), HostInput::Bus(BusEvent::PowerCycle), "no Suspend from the old session first");
+    assert!(!harness.events().contains(&GadgetEvent::Bus(BusEvent::Suspend)), "{:?}", harness.events());
+    // An unbind the transport did not cause still passes its SUSPEND: the session is live
+    // until UNBIND.
+    harness.kernel.unbind_externally();
+    assert_eq!(harness.input(), HostInput::Bus(BusEvent::Suspend));
 }
 
 #[test]

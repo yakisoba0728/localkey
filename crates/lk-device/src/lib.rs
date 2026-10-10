@@ -56,7 +56,9 @@ use crate::card::CardSession;
 use crate::host::DeviceHost;
 use crate::presence::{Touch, Waits};
 
-pub use crate::presence::{KEEPALIVE_INTERVAL_MS, U2F_LATCH_MS, U2F_REQUEST_WINDOW_MS, WTX_INTERVAL_MS};
+pub use crate::presence::{
+    KEEPALIVE_INTERVAL_MS, OTP_REBOOT_DELAY_MS, U2F_LATCH_MS, U2F_REQUEST_WINDOW_MS, WTX_INTERVAL_MS,
+};
 pub use crate::usb::{FIDO_REPORT_DESCRIPTOR, OTP_REPORT_DESCRIPTOR, UsbIdentity};
 
 /// Everything the host can deliver to the device.
@@ -149,8 +151,13 @@ pub struct Device {
     indicator: bool,
     /// Source of request order numbers for touch arbitration.
     order: u64,
-    /// A Management write through OTP HID or CTAPHID asked for a reboot.
+    /// A Management write through CTAPHID (or a timer, see `otp_reboot_at`) asked for a
+    /// reboot; `settle_management` carries it out after the current input.
     reboot_owed: bool,
+    /// A Management write through OTP HID asked for a reboot: it happens right after the
+    /// host's next status read (GET_REPORT on the feature report), or at this time
+    /// ([`OTP_REBOOT_DELAY_MS`] after the write), whichever comes first.
+    otp_reboot_at: Option<Millis>,
     suspended: bool,
     unreadable: Vec<Record>,
 }
@@ -215,6 +222,7 @@ impl Device {
             indicator: false,
             order: 0,
             reboot_owed: false,
+            otp_reboot_at: None,
             suspended: false,
             unreadable,
             host,
@@ -246,7 +254,11 @@ impl Device {
     ///   written without `REBOOT` waits for the next enumeration (`settle_management`)
     ///   (catalog appendix A `Linux_native`: "automatic management reboot and all seven
     ///   USB interface combinations, plus unchanged-profile reboot ... persistent
-    ///   credentials retained and old PIN token rejected").
+    ///   credentials retained and old PIN token rejected"). A write through OTP HID
+    ///   reboots after the [`Input::OtpGetFeature`] that reads its status (the
+    ///   [`Output::OtpFeature`] comes first), or [`OTP_REBOOT_DELAY_MS`] after the write
+    ///   when the host reads nothing: the status is the response of an OTP HID command,
+    ///   and yubikit must read it to see the write succeed.
     /// - Finally [`Output::PresenceIndicator`] reports a change in whether any presence
     ///   request is pending.
     pub fn handle(&mut self, now: Millis, input: Input<'_>) -> Vec<Output> {
@@ -270,6 +282,10 @@ impl Device {
                 if self.interfaces.otp {
                     let report = self.otp_hid.get_feature_at(self.apps.otp.otp(), now);
                     out.push(Output::OtpFeature(report));
+                    // The status that reports a Management write is out; its reboot follows.
+                    if self.otp_reboot_at.take().is_some() {
+                        self.reboot_owed = true;
+                    }
                 }
             }
             Input::Ccid(message) => {
@@ -294,8 +310,9 @@ impl Device {
     /// The latest time by which the host must deliver [`Input::Tick`], if any deadline
     /// is pending: the minimum of the CTAPHID message and lock timeouts, the CTAPHID
     /// KEEPALIVE cadence and the FIDO presence timeout, the CCID time-extension cadence
-    /// and the card presence timeout, the OTP challenge-response timeout, and the U2F
-    /// request window and latch expiry. The OTP button windows need no deadline:
+    /// and the card presence timeout, the OTP challenge-response timeout, the U2F
+    /// request window and latch expiry, and the reboot an OTP HID Management write owes
+    /// ([`OTP_REBOOT_DELAY_MS`]). The OTP button windows need no deadline:
     /// `lk_otp::Otp::touch_up` classifies a press by its duration when it is released.
     pub fn next_deadline(&self) -> Option<Millis> {
         self.next_timer().map(|(at, _)| at)
@@ -371,11 +388,14 @@ impl Device {
     /// OTP HID SET_REPORT: `lk_otp::OtpHid::set_feature` with the Management bridge.
     /// A write that ends a touch wait (a reset write, a new frame) drops the device's
     /// request too (`lk_otp::OtpHid::is_waiting_for_touch`); a challenge-response that
-    /// needs a touch becomes a presence request.
+    /// needs a touch becomes a presence request. A Management write that asks for a
+    /// reboot owes it until the host's status read (`otp_reboot_at`, [`Device::handle`]).
     fn otp_set_feature(&mut self, now: Millis, report: &[u8; 8]) {
         let mut bridge = apps::Bridge::new(self.apps.mgmt.management_mut());
         let outcome = self.otp_hid.set_feature(report, self.apps.otp.otp_mut(), Some(&mut bridge), &mut self.host);
-        self.reboot_owed |= bridge.reboot_requested();
+        if bridge.reboot_requested() {
+            self.otp_reboot_at.get_or_insert(now.saturating_add(OTP_REBOOT_DELAY_MS));
+        }
         if self.waits.otp.is_some() && !self.otp_hid.is_waiting_for_touch() {
             self.waits.otp = None;
         }
@@ -452,6 +472,7 @@ impl Device {
         self.touch = Touch::default();
         self.suspended = false;
         self.reboot_owed = false;
+        self.otp_reboot_at = None;
     }
 
     /// Reset every card applet with `kind` and forget the selection, the secure channel
@@ -469,7 +490,14 @@ impl Device {
     ///
     /// - CCID: `MgmtApplet::take_effect` right after the WRITE CONFIG response
     ///   (`docs/CONTRACTS.md` "Applications A as implemented", lk-mgmt).
-    /// - OTP HID and CCID OTP slot `0x15`: the bridge's recorded `ConfigEffect`.
+    /// - CCID OTP slot `0x15`: the bridge's recorded `ConfigEffect`, after the response.
+    /// - OTP HID slot `0x15`: the bridge's recorded `ConfigEffect`, once the host has read
+    ///   the status that reports the write, the OTP HID command's response
+    ///   (`Input::OtpGetFeature` in [`Device::handle`]), or at the
+    ///   [`OTP_REBOOT_DELAY_MS`] timer. Found with ykman over a real kernel's hidraw
+    ///   (`ykman config usb` through OTP HID): a reboot right after the frame made the
+    ///   status read fail on the vanished interface, and yubikit reported a failed write
+    ///   that had taken effect.
     /// - CTAPHID `0x43`: `VendorReply::effect`.
     /// - A write without `REBOOT` changes nothing on the bus, also when it changes the
     ///   set of enabled interfaces: every configuration change applies at the next

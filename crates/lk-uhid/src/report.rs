@@ -6,8 +6,10 @@
 //! number 0 and `UHID_START` carries no `UHID_DEV_NUMBERED_*` flag. The kernel's own report
 //! paths then add no prefix (`Documentation/hid/uhid.rst`), but hidraw passes the caller's
 //! buffer through verbatim, report number byte included (`drivers/hid/hidraw.c`,
-//! `drivers/hid/uhid.c`). Until a real kernel confirms which form arrives, both are
-//! accepted: the bare report, or the report behind a leading report number 0.
+//! `drivers/hid/uhid.c`). Both forms arrive on a real kernel (the crate docs, "Settled on
+//! a real kernel": host clients send `00` + the report, a raw write of the bare report
+//! arrives as it is), and both are accepted: the bare report, or the report behind a
+//! leading report number 0.
 
 /// Size of a CTAPHID report (`lk_device::Input::FidoReport`).
 pub const FIDO_REPORT_SIZE: usize = 64;

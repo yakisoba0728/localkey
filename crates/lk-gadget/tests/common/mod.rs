@@ -12,11 +12,19 @@
 //!   (`ffs_ep0_read`/`ffs_ep0_write` in `drivers/usb/gadget/function/f_fs.c`): blobs in
 //!   the first two writes, then events, data stages and stalls (`EL2HLT`);
 //! - `bind` writes the `UDC` file and hands the test a [`KernelSession`]; `unbind` writes
-//!   `"\n"`, queues `UNBIND` on `ep0` and shuts the endpoint sockets down, as unbinding
-//!   ends transfers in flight; [`FakeKernel::unbind_externally`] does the same for an
-//!   unbind the transport did not ask for;
+//!   `"\n"`, queues `UNBIND` on `ep0` (after `SUSPEND` with
+//!   [`FakeKernel::suspend_on_unbind`], as `dummy_hcd` does), cancels a SETUP still
+//!   pending (its data stage then fails with `EIDRM`, as `__ffs_event_add` cancels it)
+//!   and shuts the endpoint sockets down, as unbinding ends transfers in flight;
+//!   [`FakeKernel::unbind_externally`] does the same for an unbind the transport did not
+//!   ask for;
 //! - every file handed to the transport counts itself open until the transport drops it
 //!   ([`FakeKernel::open_files`]), as f_fs counts `ffs->opened`;
+//! - with [`FakeKernel::acknowledge_in`], an IN endpoint write returns only once the test
+//!   has taken its data ([`KernelSession::read_acknowledged`]), as an f_fs write returns
+//!   when the host has read the transfer (`ffs_epfile_io` waits for the request's
+//!   completion); a plain socket pair accepts a write into its buffer at once, and the
+//!   unbind's shutdown then discards what the test had not read yet;
 //! - a SETUP can be queued with a number of data-stage calls to fail with `EINTR`
 //!   ([`Ep0Driver::setup_interrupted`]), which leaves the request pending, as f_fs does
 //!   (`__ffs_ep0_queue_wait`).
@@ -29,7 +37,7 @@ use std::io::{self, Read, Write};
 use std::net::Shutdown;
 use std::os::unix::net::UnixStream;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError, Sender};
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 use std::thread;
@@ -50,6 +58,7 @@ pub const QUIET: Duration = Duration::from_millis(300);
 /// `errno.h`). On macOS they map to other errors; the transport only tells success from
 /// failure.
 const ESRCH: u32 = 3;
+const EIDRM: u32 = 43;
 /// `EINTR` is 4 on Linux and on macOS, so the transport sees `ErrorKind::Interrupted`.
 const EINTR: u32 = 4;
 const EINVAL: u32 = 22;
@@ -161,6 +170,8 @@ pub enum Outcome {
     Stall,
     /// An OUT data stage: this many bytes were handed over (0: status stage only).
     Read(usize),
+    /// A data-stage call after an unbind cancelled the request (`EIDRM`).
+    Cancelled,
     /// The transport closed `ep0`.
     Closed,
 }
@@ -182,6 +193,32 @@ impl Queued {
 
 /// Events queued for one `ep0`.
 type EventQueue = Sender<Queued>;
+
+/// The transport's side of an IN endpoint with acknowledged writes: each `write` is a
+/// frame `len:u32le bytes`, and returns once the kernel side answers it with one byte
+/// (the test took the data). End of file instead (the unbind shut the socket down) fails
+/// the write, as an f_fs transfer ended by the unbind does.
+#[derive(Debug)]
+struct AcknowledgedIn {
+    stream: UnixStream,
+}
+
+impl Write for AcknowledgedIn {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        let mut frame = (buf.len() as u32).to_le_bytes().to_vec();
+        frame.extend_from_slice(buf);
+        self.stream.write_all(&frame)?;
+        let mut ack = [0u8; 1];
+        match self.stream.read(&mut ack)? {
+            1 => Ok(buf.len()),
+            _ => Err(io::Error::from(io::ErrorKind::BrokenPipe)),
+        }
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        Ok(())
+    }
+}
 
 /// A transport-side file that counts itself open until the transport drops it.
 #[derive(Debug)]
@@ -225,8 +262,15 @@ struct Blobs {
     strings: Vec<u8>,
 }
 
-/// The kernel side of one `ep0` open: f_fs's state machine over the proxy frames.
-fn ep0_kernel(mut stream: UnixStream, events: Receiver<Queued>, outcomes: Sender<Outcome>, blobs: Arc<Mutex<Blobs>>) {
+/// The kernel side of one `ep0` open: f_fs's state machine over the proxy frames. Once
+/// `unbound` is set, a pending SETUP is cancelled: its data-stage call fails with `EIDRM`.
+fn ep0_kernel(
+    mut stream: UnixStream,
+    events: Receiver<Queued>,
+    outcomes: Sender<Outcome>,
+    blobs: Arc<Mutex<Blobs>>,
+    unbound: Arc<AtomicBool>,
+) {
     enum State {
         Descriptors,
         Strings,
@@ -271,6 +315,10 @@ fn ep0_kernel(mut stream: UnixStream, events: Receiver<Queued>, outcomes: Sender
                         ok(&mut stream, length, &[])
                     }
                     State::Active => match pending.take() {
+                        Some(_) if unbound.load(Ordering::SeqCst) => {
+                            let _ = outcomes.send(Outcome::Cancelled);
+                            fail(&mut stream, EIDRM)
+                        }
                         Some((request, data, interrupts)) if interrupts > 0 => {
                             // Interrupted: the request stays pending.
                             pending = Some((request, data, interrupts - 1));
@@ -290,6 +338,10 @@ fn ep0_kernel(mut stream: UnixStream, events: Receiver<Queued>, outcomes: Sender
                 }
             }
             _ => match (&state, pending.take()) {
+                (State::Active, Some(_)) if unbound.load(Ordering::SeqCst) => {
+                    let _ = outcomes.send(Outcome::Cancelled);
+                    fail(&mut stream, EIDRM)
+                }
                 (State::Active, Some((request, data, interrupts))) if interrupts > 0 => {
                     pending = Some((request, data, interrupts - 1));
                     fail(&mut stream, EINTR)
@@ -389,6 +441,19 @@ impl KernelSession {
     pub fn write_out(&mut self, index: usize, packet: &[u8]) {
         self.endpoint(index).write_all(packet).unwrap_or_else(|e| panic!("ep{index}: {e}"));
     }
+
+    /// With [`FakeKernel::acknowledge_in`]: take the next write of IN endpoint `index`
+    /// (each transport write is one transfer) and acknowledge it, which completes the
+    /// transport's write; `None` if the endpoint ended first.
+    pub fn read_acknowledged(&mut self, index: usize) -> Option<Vec<u8>> {
+        let stream = self.endpoint(index);
+        let mut length = [0u8; 4];
+        stream.read_exact(&mut length).ok()?;
+        let mut data = vec![0u8; u32::from_le_bytes(length) as usize];
+        stream.read_exact(&mut data).ok()?;
+        stream.write_all(&[1]).ok()?;
+        Some(data)
+    }
 }
 
 /// A session being built between `open_ep0` and `bind`.
@@ -398,6 +463,32 @@ struct Building {
     outcomes: Receiver<Outcome>,
     blobs: Arc<Mutex<Blobs>>,
     endpoints: BTreeMap<usize, UnixStream>,
+    unbound: Arc<AtomicBool>,
+}
+
+/// The bound session as the kernel keeps it: its event queue, clones of the endpoint
+/// halves, and the flag that cancels its pending SETUP.
+#[derive(Debug)]
+struct Bound {
+    events: EventQueue,
+    endpoints: Vec<UnixStream>,
+    unbound: Arc<AtomicBool>,
+}
+
+impl Bound {
+    /// What unbinding does to the session (`ffs_func_unbind`): a pending SETUP is
+    /// cancelled, `UNBIND` is reported (after `SUSPEND` on `dummy_hcd`), and the
+    /// transfers in flight end.
+    fn unbind(self, suspend_first: bool) {
+        self.unbound.store(true, Ordering::SeqCst);
+        if suspend_first {
+            let _ = self.events.send(Queued::event(Event::Suspend));
+        }
+        let _ = self.events.send(Queued::event(Event::Unbind));
+        for endpoint in self.endpoints {
+            let _ = endpoint.shutdown(Shutdown::Both);
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -406,11 +497,14 @@ struct KernelState {
     open: Arc<AtomicUsize>,
     log: Vec<String>,
     building: Option<Building>,
-    /// The bound session: its event queue and clones of the endpoint halves.
-    bound: Option<(EventQueue, Vec<UnixStream>)>,
+    bound: Option<Bound>,
     sessions: Sender<KernelSession>,
     fail_bind: bool,
     fail_unmount: bool,
+    /// Report `SUSPEND` before `UNBIND` at every unbind, as `dummy_hcd` does.
+    suspend_on_unbind: bool,
+    /// IN endpoints opened from now on complete a write only when the test takes it.
+    acknowledge_in: bool,
     /// Where FunctionFS instances are mounted: (instance, mount point).
     mounts: Vec<(String, PathBuf)>,
 }
@@ -433,6 +527,8 @@ impl FakeKernel {
             sessions: sessions_tx,
             fail_bind: false,
             fail_unmount: false,
+            suspend_on_unbind: false,
+            acknowledge_in: false,
             mounts: Vec::new(),
         };
         FakeKernel { state: Arc::new(Mutex::new(state)), sessions: Arc::new(Mutex::new(sessions)) }
@@ -496,12 +592,22 @@ impl FakeKernel {
     pub fn unbind_externally(&self) {
         let mut state = lock(&self.state);
         state.log.push("external unbind".into());
-        if let Some((events, endpoints)) = state.bound.take() {
-            let _ = events.send(Queued::event(Event::Unbind));
-            for endpoint in endpoints {
-                let _ = endpoint.shutdown(Shutdown::Both);
-            }
+        let suspend = state.suspend_on_unbind;
+        if let Some(bound) = state.bound.take() {
+            bound.unbind(suspend);
         }
+    }
+
+    /// Report `SUSPEND` before `UNBIND` at every unbind from now on: `dummy_hcd` does
+    /// (seen in the Linux guest, `tools/linux-guest/tests/gadget.sh`).
+    pub fn suspend_on_unbind(&self, suspend: bool) {
+        lock(&self.state).suspend_on_unbind = suspend;
+    }
+
+    /// IN endpoints opened from now on complete a write only once the test takes it with
+    /// [`KernelSession::read_acknowledged`] (see the module docs).
+    pub fn acknowledge_in(&self, acknowledge: bool) {
+        lock(&self.state).acknowledge_in = acknowledge;
     }
 
     pub fn fail_unmount(&self, fail: bool) {
@@ -563,10 +669,12 @@ impl GadgetIo for FakeIo {
         let (report, outcomes) = mpsc::channel();
         let blobs = Arc::new(Mutex::new(Blobs::default()));
         let kept = Arc::clone(&blobs);
-        thread::spawn(move || ep0_kernel(kernel, queue, report, kept));
+        let unbound = Arc::new(AtomicBool::new(false));
+        let flag = Arc::clone(&unbound);
+        thread::spawn(move || ep0_kernel(kernel, queue, report, kept, flag));
         let mut state = lock(&self.state);
         state.log.push("open ep0".into());
-        state.building = Some(Building { events, outcomes, blobs, endpoints: BTreeMap::new() });
+        state.building = Some(Building { events, outcomes, blobs, endpoints: BTreeMap::new(), unbound });
         drop(state);
         Ok(Box::new(self.counted(ProxyEp0 { stream: transport })))
     }
@@ -578,6 +686,9 @@ impl GadgetIo for FakeIo {
 
     fn open_in(&mut self, _mount_point: &Path, index: usize) -> io::Result<Box<dyn Write + Send>> {
         let stream = self.pair(index, "in")?;
+        if lock(&self.state).acknowledge_in {
+            return Ok(Box::new(self.counted(AcknowledgedIn { stream })));
+        }
         Ok(Box::new(self.counted(stream)))
     }
 
@@ -590,7 +701,8 @@ impl GadgetIo for FakeIo {
         fs::write(udc_file, format!("{udc}\n"))?;
         let building = state.building.take().ok_or_else(|| io::Error::other("ep0 is not open"))?;
         let clones = building.endpoints.values().filter_map(|s| s.try_clone().ok()).collect();
-        state.bound = Some((building.events.clone(), clones));
+        state.bound =
+            Some(Bound { events: building.events.clone(), endpoints: clones, unbound: Arc::clone(&building.unbound) });
         let blobs = lock(&building.blobs);
         let session = KernelSession {
             ep0: Ep0Driver { events: building.events.clone(), outcomes: building.outcomes },
@@ -607,11 +719,9 @@ impl GadgetIo for FakeIo {
         let mut state = lock(&self.state);
         state.log.push("unbind".into());
         fs::write(udc_file, "\n")?;
-        if let Some((events, endpoints)) = state.bound.take() {
-            let _ = events.send(Queued::event(Event::Unbind));
-            for endpoint in endpoints {
-                let _ = endpoint.shutdown(Shutdown::Both);
-            }
+        let suspend = state.suspend_on_unbind;
+        if let Some(bound) = state.bound.take() {
+            bound.unbind(suspend);
         }
         Ok(())
     }
@@ -637,6 +747,11 @@ pub struct Harness {
     events: Arc<Mutex<Vec<GadgetEvent>>>,
     /// What the fake runner's device answers to `OtpGetFeature` (none: no output).
     pub otp_answer: Arc<Mutex<Option<[u8; 8]>>>,
+    /// An identity the fake runner re-enumerates with right after it delivered the answer
+    /// to the next `OtpGetFeature`, before it answers that request's marker: what
+    /// `lk_device` does after the status read that reports an OTP HID Management write
+    /// with REBOOT (`Output::OtpFeature`, then `Output::Reenumerate`).
+    pub reboot_after_get_feature: Arc<Mutex<Option<UsbIdentity>>>,
 }
 
 impl Harness {
@@ -677,12 +792,22 @@ impl Harness {
         let (inputs_tx, inputs) = mpsc::channel();
         let otp_answer = Arc::new(Mutex::new(None));
         let answer = Arc::clone(&otp_answer);
-        thread::spawn(move || run_fake_runner(transport, &messages, &inputs_tx, &answer));
-        Harness { dir, kernel, config, runner, inputs, events, otp_answer }
+        let reboot_after_get_feature = Arc::new(Mutex::new(None));
+        let reboot = Arc::clone(&reboot_after_get_feature);
+        thread::spawn(move || run_fake_runner(transport, &messages, &inputs_tx, &answer, &reboot));
+        Harness { dir, kernel, config, runner, inputs, events, otp_answer, reboot_after_get_feature }
     }
 
     pub fn enumerate(&self, identity: &UsbIdentity) {
         self.ask(|done| Message::Enumerate(identity.clone(), done));
+    }
+
+    /// Ask the fake runner to enumerate and return at once; the receiver gets `()` when
+    /// the enumeration is over.
+    pub fn enumerate_in_background(&self, identity: &UsbIdentity) -> Receiver<()> {
+        let (done, wait) = mpsc::channel();
+        self.runner.send(Message::Enumerate(identity.clone(), done)).expect("the fake runner runs");
+        wait
     }
 
     pub fn deliver(&self, output: Output) {
@@ -741,18 +866,23 @@ fn run_fake_runner(
     messages: &Receiver<Message>,
     inputs: &Sender<HostInput>,
     answer: &Mutex<Option<[u8; 8]>>,
+    reboot: &Mutex<Option<UsbIdentity>>,
 ) {
     let mut transport = Some(transport);
     for message in messages {
         match message {
             Message::Command(Command::Input(input)) => {
-                if input == HostInput::OtpGetFeature
-                    && let Some(report) = *lock(answer)
-                    && let Some(transport) = transport.as_mut()
-                {
-                    transport.deliver(Output::OtpFeature(report));
-                }
+                let get_feature = input == HostInput::OtpGetFeature;
                 let _ = inputs.send(input);
+                if get_feature && let Some(transport) = transport.as_mut() {
+                    if let Some(report) = *lock(answer) {
+                        transport.deliver(Output::OtpFeature(report));
+                    }
+                    let identity = lock(reboot).take();
+                    if let Some(identity) = identity {
+                        transport.enumerate(&identity);
+                    }
+                }
             }
             Message::Command(Command::Status(reply)) => {
                 let _ = reply.send(status());

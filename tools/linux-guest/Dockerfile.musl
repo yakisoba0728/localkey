@@ -1,0 +1,7 @@
+# localkey-rust-musl: the project's Rust toolchain image plus the static aarch64 musl target,
+# for a localkeyd that runs in the guest whatever its C library. Built by
+# tools/linux-guest/build-localkeyd.sh (rustup downloads the target; that is the only
+# network use).
+ARG RUST_BASE=localkey-rust:1.98-clippy
+FROM ${RUST_BASE}
+RUN rustup target add aarch64-unknown-linux-musl && rustup target list --installed

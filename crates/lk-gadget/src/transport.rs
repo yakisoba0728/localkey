@@ -29,6 +29,17 @@
 //! an event, an unbound gadget has none, so the transport's next stop could not end that
 //! thread, its file would stay open and f_fs would never return to "read descriptors".
 //!
+//! A re-enumeration ends the session in two phases. First it drains: the threads keep
+//! running until the host has taken what the runner handed over before the reboot, the
+//! queued FIDO IN and CCID bulk IN data (the response to the command that caused it) and
+//! the answer to an OTP GET_REPORT in progress (the status read `lk_device` answers right
+//! before an OTP HID Management reboot), at most [`DRAIN_TIMEOUT`]. The runner is inside
+//! [`Transport::enumerate`] meanwhile and answers no marker, so a GET_REPORT in progress
+//! takes what the runner delivered (see [`OtpWait`]). Then the stop flag and the unbind
+//! end it as above. From the stop flag on, the session passes no bus event (`dummy_hcd`
+//! reports `SUSPEND` on every unbind), so nothing of the old session reaches the rebooted
+//! device as a bus event.
+//!
 //! Each OUT reader and the `ep0` thread pace their inputs as the wire transport does
 //! (`docs/PROGRAM.md` "Program core as built", lk-wire Backpressure): after every
 //! [`INPUT_WINDOW_FRAMES`] inputs or [`INPUT_WINDOW_BYTES`] it sends a `Command::Status`
@@ -62,6 +73,14 @@ pub const OTP_REPORT_TIMEOUT: Duration = Duration::from_secs(1);
 /// How long ending a session may take, in total, for its threads to stop after the
 /// unbind. A thread still running then is left behind (with the file it holds).
 pub const STOP_TIMEOUT: Duration = Duration::from_secs(2);
+/// How long a re-enumeration waits, at most, before its unbind for the host to take what
+/// the runner handed the session before the reboot: queued FIDO IN and CCID bulk IN data
+/// and the answer to an OTP GET_REPORT in progress (see the module docs). What is still
+/// owed then is dropped and reported.
+pub const DRAIN_TIMEOUT: Duration = Duration::from_secs(1);
+/// The slice in which an OTP GET_REPORT waits for the runner's marker, so that it notices
+/// a drain (the runner answers no marker during one).
+const MARKER_SLICE: Duration = Duration::from_millis(10);
 /// Reports queued per interrupt IN endpoint (FIDO, OTP keyboard, CCID interrupt). A full
 /// queue drops the output: the host is not reading.
 pub const IN_QUEUE_REPORTS: usize = 1024;
@@ -355,7 +374,7 @@ struct Session {
 
 /// What the session's threads share: the stop flag, whether the host has the function
 /// configured, a counter of configuration changes that endpoint threads wait on after a
-/// failed transfer, and the IN queues.
+/// failed transfer, the IN queues, and what the session owes the host for a drain.
 ///
 /// `configured` is per session, so a thread of a session that is ending (or was left
 /// behind) can never change what a later session reports.
@@ -368,6 +387,34 @@ struct SessionState {
     /// The IN queues by endpoint role. Closing them (dropping the senders) ends the
     /// writer threads once they are idle.
     queues: Mutex<Vec<(Role, SyncSender<Vec<u8>>)>>,
+    /// Raised when a re-enumeration starts draining the session (see the module docs).
+    draining: AtomicBool,
+    owed: Mutex<Owed>,
+    /// Signalled whenever `owed` shrinks.
+    settled: Condvar,
+}
+
+/// What a session owes the host: responses queued and not yet written, and whether the
+/// `ep0` thread is answering a request that waits for the runner.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+struct Owed {
+    /// FIDO IN and CCID bulk IN items queued and not yet written (or failed).
+    responses: usize,
+    /// An OTP GET_REPORT is between its SETUP and its reply or stall.
+    control: bool,
+}
+
+impl Owed {
+    fn is_settled(&self) -> bool {
+        self.responses == 0 && !self.control
+    }
+}
+
+/// Whether the items queued for an endpoint with `role` are responses that a drain waits
+/// for: FIDO IN and CCID bulk IN. The interrupt endpoints (keyboard, CCID slot change)
+/// carry no responses, and the host may not be reading them at all.
+fn is_response(role: Role) -> bool {
+    matches!(role, Role::FidoIn | Role::CcidBulkIn)
 }
 
 impl SessionState {
@@ -412,6 +459,48 @@ impl SessionState {
             .changed
             .wait_timeout_while(guard, timeout, |generation| *generation == seen && !self.stopping())
             .unwrap_or_else(PoisonError::into_inner);
+    }
+
+    fn draining(&self) -> bool {
+        self.draining.load(Ordering::SeqCst)
+    }
+
+    fn owed(&self) -> MutexGuard<'_, Owed> {
+        // Counter updates only: a panic elsewhere cannot leave it inconsistent.
+        self.owed.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
+    /// One more response is queued (counted before it is queued, so the writer can never
+    /// pay it first).
+    fn owe_response(&self) {
+        self.owed().responses += 1;
+    }
+
+    /// A response was written, failed, or not queued after all.
+    fn paid_response(&self) {
+        let mut owed = self.owed();
+        owed.responses = owed.responses.saturating_sub(1);
+        drop(owed);
+        self.settled.notify_all();
+    }
+
+    /// The `ep0` thread starts (true) or ends (false) answering a request that waits for
+    /// the runner.
+    fn answering(&self, busy: bool) {
+        self.owed().control = busy;
+        self.settled.notify_all();
+    }
+
+    /// Start draining and wait until nothing is owed or `timeout`; what is still owed.
+    fn drain(&self, timeout: Duration) -> Owed {
+        self.draining.store(true, Ordering::SeqCst);
+        self.bump();
+        let guard = self.owed();
+        let (owed, _) = self
+            .settled
+            .wait_timeout_while(guard, timeout, |owed| !owed.is_settled())
+            .unwrap_or_else(PoisonError::into_inner);
+        *owed
     }
 }
 
@@ -473,14 +562,31 @@ impl GadgetTransport {
         self.session.as_ref().is_some_and(|session| session.state.configured())
     }
 
-    /// End the session: stop flag, unbind (the kernel ends `ep0` and the transfers in
-    /// flight), close the IN queues, and join the threads within [`STOP_TIMEOUT`]. The
-    /// threads close their files as they end. Taking the session first is what makes
-    /// [`Transport::attached`] false from here on, whatever its threads still do.
-    fn stop_session(&mut self) {
+    /// End the session: with `drain` (a re-enumeration) first let the host take what is
+    /// owed (see the module docs; at most [`DRAIN_TIMEOUT`]), then stop flag, unbind (the
+    /// kernel ends `ep0` and the transfers in flight), close the IN queues, and join the
+    /// threads within [`STOP_TIMEOUT`]. The threads close their files as they end. Taking
+    /// the session first is what makes [`Transport::attached`] false from here on,
+    /// whatever its threads still do. A session that ended itself (an unbind by someone
+    /// else) has nothing to drain.
+    fn stop_session(&mut self, drain: bool) {
         let Some(session) = self.session.take() else {
             return;
         };
+        if drain && !session.state.stopping() {
+            let owed = session.state.drain(DRAIN_TIMEOUT);
+            if owed.responses > 0 {
+                self.shared.notify(GadgetEvent::Failed(format!(
+                    "re-enumeration: the host did not read {} queued response(s) within {DRAIN_TIMEOUT:?}; dropped",
+                    owed.responses
+                )));
+            }
+            if owed.control {
+                self.shared.notify(GadgetEvent::Failed(format!(
+                    "re-enumeration: the OTP GET_REPORT in progress was not answered within {DRAIN_TIMEOUT:?}"
+                )));
+            }
+        }
         session.state.stop();
         if let Err(error) = self.io.unbind(&session.udc_file) {
             // ENODEV: the gadget was unbound already (externally, or by f_fs itself).
@@ -611,7 +717,7 @@ impl GadgetTransport {
         let started = self.spawn_threads(&mut session, layout, ep0, readers, writers);
         self.session = Some(session);
         if let Err(error) = started {
-            self.stop_session();
+            self.stop_session(false);
             return Err(format!("cannot start a thread: {error}"));
         }
         Ok(())
@@ -661,17 +767,26 @@ impl GadgetTransport {
     }
 
     /// Queue IN data for the endpoint with `role`; dropped without a session, without
-    /// that endpoint, after the session ended, or when its queue is full.
+    /// that endpoint, after the session ended, or when its queue is full. A response
+    /// ([`is_response`]) is owed from here until its writer has handled it.
     fn queue(&self, role: Role, data: Vec<u8>) {
         let Some(session) = &self.session else {
             return;
         };
+        let state = &session.state;
         let full = {
-            let queues = session.state.queues();
+            let queues = state.queues();
             let Some((_, queue)) = queues.iter().find(|(r, _)| *r == role) else {
                 return;
             };
-            matches!(queue.try_send(data), Err(TrySendError::Full(_)))
+            if is_response(role) {
+                state.owe_response();
+            }
+            let result = queue.try_send(data);
+            if result.is_err() && is_response(role) {
+                state.paid_response();
+            }
+            matches!(result, Err(TrySendError::Full(_)))
         };
         if full {
             self.shared.notify(GadgetEvent::Dropped { endpoint: role, reason: "queue full".into() });
@@ -680,12 +795,13 @@ impl GadgetTransport {
 }
 
 impl Transport for GadgetTransport {
-    /// End the session if there is one, then present `identity`: ConfigFS (created the
-    /// first time, IDs and strings rewritten after), FunctionFS mounted once, `ep0`
-    /// blobs, endpoint files, bind, threads. A failure is reported to the observer and
-    /// leaves the gadget unbound until the next enumeration.
+    /// End the session if there is one (draining it first, see the module docs), then
+    /// present `identity`: ConfigFS (created the first time, IDs and strings rewritten
+    /// after), FunctionFS mounted once, `ep0` blobs, endpoint files, bind, threads. A
+    /// failure is reported to the observer and leaves the gadget unbound until the next
+    /// enumeration.
     fn enumerate(&mut self, identity: &UsbIdentity) {
-        self.stop_session();
+        self.stop_session(true);
         let layout = match Layout::from_identity(identity) {
             Ok(layout) => layout,
             Err(error) => {
@@ -722,8 +838,10 @@ impl Transport for GadgetTransport {
 }
 
 impl Drop for GadgetTransport {
+    /// Ends the session without draining: the runner is shutting down and delivers
+    /// nothing more.
     fn drop(&mut self) {
-        self.stop_session();
+        self.stop_session(false);
         let Some(mut gadget) = self.gadget.take() else {
             return;
         };
@@ -814,7 +932,12 @@ impl Ep0Loop {
             return true;
         }
         let was_enabled = self.bus.enabled();
-        if let Some(bus_event) = self.bus.event(&event) {
+        // Once the transport ends the session, its events are artefacts of the unbind
+        // (`dummy_hcd` reports SUSPEND before UNBIND) and must not reach the device, which
+        // is the rebooted one by the time the runner reads its channel again.
+        if let Some(bus_event) = self.bus.event(&event)
+            && !self.state.stopping()
+        {
             if matches!(bus_event, BusEvent::Reset | BusEvent::PowerCycle) {
                 self.control.reset();
             }
@@ -855,17 +978,22 @@ impl Ep0Loop {
                 }
                 "receive"
             }
-            Action::OtpGetFeature { length } => match self.otp.fetch(&self.shared) {
-                Some(report) => {
-                    let end = report.len().min(usize::from(length));
-                    let _ = self.ep0.reply(&report[..end], length);
-                    "reply"
-                }
-                None => {
-                    self.ep0.stall(request);
-                    "stall (no answer)"
-                }
-            },
+            Action::OtpGetFeature { length } => {
+                self.state.answering(true);
+                let outcome = match self.otp.fetch(&self.shared, &self.state) {
+                    Some(report) => {
+                        let end = report.len().min(usize::from(length));
+                        let _ = self.ep0.reply(&report[..end], length);
+                        "reply"
+                    }
+                    None => {
+                        self.ep0.stall(request);
+                        "stall (no answer)"
+                    }
+                };
+                self.state.answering(false);
+                outcome
+            }
             Action::Stall => {
                 self.ep0.stall(request);
                 "stall"
@@ -941,6 +1069,13 @@ impl Pacer {
 /// answer to this request, if the device gave one, is the last `Output::OtpFeature`
 /// delivered. The slot is cleared only after the markers of earlier, timed-out requests
 /// were answered, so a late answer to one of them is never taken for this one.
+///
+/// During a drain (a re-enumeration, see the module docs) the runner is inside
+/// [`Transport::enumerate`] and answers no marker, but it has delivered every output of
+/// the input that rebooted the device, and delivers nothing more until the drain is
+/// over: the slot then holds this request's answer if the device gave one before the
+/// reboot (the status read `lk_device` answers right before an OTP HID Management
+/// reboot), and the request takes it without waiting for the marker.
 #[derive(Debug, Default)]
 struct OtpWait {
     /// The marker of a request that timed out and may still be on its way.
@@ -948,14 +1083,20 @@ struct OtpWait {
 }
 
 impl OtpWait {
-    fn fetch(&mut self, shared: &Shared) -> Option<[u8; OTP_FEATURE_LEN]> {
+    fn fetch(&mut self, shared: &Shared, state: &SessionState) -> Option<[u8; OTP_FEATURE_LEN]> {
         let deadline = Instant::now() + OTP_REPORT_TIMEOUT;
         if let Some(previous) = self.previous.take() {
-            match previous.recv_timeout(deadline.saturating_duration_since(Instant::now())) {
-                Ok(_) | Err(RecvTimeoutError::Disconnected) => {}
-                Err(RecvTimeoutError::Timeout) => {
-                    self.previous = Some(previous);
-                    return None;
+            // During a drain the runner answers no marker: the earlier answer may still
+            // come later, so this request gets none.
+            loop {
+                let left = deadline.saturating_duration_since(Instant::now());
+                match previous.recv_timeout(left.min(MARKER_SLICE)) {
+                    Ok(_) | Err(RecvTimeoutError::Disconnected) => break,
+                    Err(RecvTimeoutError::Timeout) if left.is_zero() || state.draining() => {
+                        self.previous = Some(previous);
+                        return None;
+                    }
+                    Err(RecvTimeoutError::Timeout) => {}
                 }
             }
         }
@@ -965,13 +1106,21 @@ impl OtpWait {
         }
         let (reply, marker) = mpsc::channel();
         shared.runner.send(Command::Status(reply)).ok()?;
-        match marker.recv_timeout(deadline.saturating_duration_since(Instant::now())) {
-            Ok(_) => shared.otp_feature().take(),
-            Err(RecvTimeoutError::Timeout) => {
+        loop {
+            let left = deadline.saturating_duration_since(Instant::now());
+            if left.is_zero() {
                 self.previous = Some(marker);
-                None
+                return None;
             }
-            Err(RecvTimeoutError::Disconnected) => None,
+            match marker.recv_timeout(left.min(MARKER_SLICE)) {
+                Ok(_) => return shared.otp_feature().take(),
+                Err(RecvTimeoutError::Disconnected) => return None,
+                Err(RecvTimeoutError::Timeout) if state.draining() => {
+                    self.previous = Some(marker);
+                    return shared.otp_feature().take();
+                }
+                Err(RecvTimeoutError::Timeout) => {}
+            }
         }
     }
 }
@@ -1056,7 +1205,11 @@ fn write_loop(
         if state.stopping() {
             break;
         }
-        match write_item(&mut *file, &item, zlp) {
+        let result = write_item(&mut *file, &item, zlp);
+        if is_response(role) {
+            state.paid_response();
+        }
+        match result {
             Ok(()) => shared.notify(GadgetEvent::Sent { endpoint: role, size: item.len() }),
             Err(error) => {
                 if state.stopping() {

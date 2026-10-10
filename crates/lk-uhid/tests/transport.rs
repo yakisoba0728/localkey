@@ -17,8 +17,8 @@ use lk_device::{BusEvent, FIDO_REPORT_DESCRIPTOR, OTP_REPORT_DESCRIPTOR, Output}
 use lk_run::{Command, HostInput, Transport};
 use lk_uhid::event::{EIO, Event, ReportType, UHID_EVENT_SIZE, UHID_INPUT2};
 use lk_uhid::{
-    DROP_TIMEOUT, FEATURE_TIMEOUT, HidInterface, INPUT_WINDOW, UhidHalves, UhidIo, UhidNotice, UhidStats, UhidTransport,
-    WRITE_QUEUE_EVENTS,
+    DESTROY_AFTER_REPLY, DROP_TIMEOUT, FEATURE_TIMEOUT, HidInterface, INPUT_WINDOW, UhidHalves, UhidIo, UhidNotice,
+    UhidStats, UhidTransport, WRITE_QUEUE_EVENTS,
 };
 
 use common::{ALL, Answer, CCID, FIDO_CCID, Harness, KernelMode, PairIo, WAIT, identity, read_event};
@@ -611,7 +611,8 @@ fn re_enumeration_destroys_the_old_device_even_when_its_write_queue_is_full() {
     assert_eq!(events.last(), Some(&Event::Destroy), "the old device got UHID_DESTROY after {} events", events.len());
     let written = events.iter().filter(|event| matches!(event, Event::Input2 { .. })).count();
     assert_eq!(events.len(), written + 1, "only INPUT2 and the final DESTROY were written");
-    // Every report was written, dropped at the full queue, or discarded at the unplug.
+    // Every report was written (what was queued at the unplug too) or dropped at the full
+    // queue.
     assert_eq!(stats.dropped, (DELIVERED - written) as u64, "{stats:?}");
     assert!(matches!(created, Ok(Event::Create2(_))), "the new device is created: {created:?}");
 }
@@ -880,4 +881,163 @@ fn a_device_retired_before_its_create2_was_written_closes_its_file_at_once() {
         "the second file is closed without a single event: {second_event:?}"
     );
     assert!(matches!(third_event, Ok(Event::Create2(_))), "the third device is created: {third_event:?}");
+}
+
+/// The events a raw kernel end reads up to and including `UHID_DESTROY` (or until the
+/// stream ends or times out).
+fn events_until_destroy(stream: &mut UnixStream) -> Vec<Event> {
+    let mut events = Vec::new();
+    while let Ok(event) = read_event(stream) {
+        let destroy = event == Event::Destroy;
+        events.push(event);
+        if destroy {
+            break;
+        }
+    }
+    events
+}
+
+/// Found on a real kernel (`tools/linux-guest/tests/uhid.sh`, ykman 5.8.0 over hidraw):
+/// the OTP SET_REPORT that completes a Management write with REBOOT makes the device
+/// re-enumerate while the reader still has to reply. The reply was dropped (the device was
+/// already retiring) or discarded with the rest of the writer's queue, the DESTROY failed
+/// the kernel's request, and `HIDIOCSFEATURE` returned `EIO` for a write that had taken
+/// effect. A request whose input reached the runner gets its reply before the DESTROY, as
+/// a USB device completes a control transfer before it acts on its data. The writer is
+/// held up here (the kernel end does not read, the queue is full), so the reply is still
+/// waiting when the device is retired.
+#[test]
+fn a_set_report_whose_input_re_enumerates_is_acknowledged_before_the_destroy() {
+    let otp_only = lk_core::UsbInterfaces { otp: true, fido: false, ccid: false };
+    let (kernels_tx, kernels) = mpsc::channel();
+    let (runner, commands) = mpsc::channel::<Command>();
+    let mut transport = UhidTransport::new(Box::new(PairIo { kernels: kernels_tx }), runner);
+    transport.enumerate(&identity(0x0401, otp_only));
+    let mut old = kernels.recv_timeout(WAIT).expect("the OTP device's file is opened");
+    old.set_read_timeout(Some(WAIT)).expect("a read timeout can be set");
+    assert!(matches!(read_event(&mut old), Ok(Event::Create2(_))), "the first event is UHID_CREATE2");
+    for _ in 0..WRITE_QUEUE_EVENTS + 100 {
+        transport.deliver(Output::OtpKeyboard([0, 0, 4, 0, 0, 0, 0, 0]));
+    }
+    let set = feature(0, [&[0][..], &report(8, 1)].concat(), 77).encode().expect("the event encodes");
+    old.try_clone().expect("the kernel end can be cloned").write_all(&set).expect("the kernel writes");
+    let deadline = Instant::now() + WAIT;
+    let mut taken = false;
+    while !taken && Instant::now() < deadline {
+        taken = matches!(
+            commands.recv_timeout(WAIT),
+            Ok(Command::Input(HostInput::OtpSetFeature(report))) if report[..] == self::report(8, 1)[..]
+        );
+    }
+    // The runner handled the input, and the device rebooted in the same batch.
+    transport.enumerate(&identity(0x0401, otp_only));
+    let mut new = kernels.recv_timeout(WAIT).expect("the new OTP device's file is opened");
+    let events = events_until_destroy(&mut old);
+    new.set_read_timeout(Some(WAIT)).expect("a read timeout can be set");
+    let created = read_event(&mut new);
+
+    let _ = old.shutdown(Shutdown::Both);
+    let _ = new.shutdown(Shutdown::Both);
+    drop(transport);
+    drop(commands);
+
+    assert!(taken, "the runner received the SET_REPORT's input");
+    let replies: Vec<&Event> = events.iter().filter(|event| !matches!(event, Event::Input2 { .. })).collect();
+    assert_eq!(
+        replies,
+        vec![&Event::SetReportReply { id: 77, err: 0 }, &Event::Destroy],
+        "the SET_REPORT is acknowledged before the DESTROY ({} events)",
+        events.len()
+    );
+    assert!(matches!(created, Ok(Event::Create2(_))), "the new device is created: {created:?}");
+}
+
+/// Found on a real kernel with ykman: after a Management write over OTP HID the host reads
+/// the status with GET_REPORT(feature), and the device reboots right after answering it
+/// (`lk_device`: an OTP HID write with REBOOT re-enumerates after the status read). The
+/// answer reaches the reader only after the device is retiring; the reply must still be
+/// written, before the DESTROY, or `HIDIOCGFEATURE` fails with `EIO` and ykman reports a
+/// failed write.
+#[test]
+fn a_feature_read_answered_right_before_a_re_enumeration_gets_its_reply_before_the_destroy() {
+    let (harness, otp, fido) = Harness::plugged();
+    harness.set_answer(Answer::Feature([5; 8]));
+    harness.reboot_after(HostInput::OtpGetFeature, &identity(0x0402, FIDO_CCID));
+    otp.kernel.send(&Event::GetReport { id: 91, rnum: 0, rtype: ReportType::Feature });
+    assert_eq!(harness.input(), HostInput::OtpGetFeature);
+    assert_eq!(otp.kernel.next(), Event::GetReportReply { id: 91, err: 0, data: [&[0][..], &[5; 8]].concat() });
+    assert_eq!(otp.kernel.next(), Event::Destroy);
+    assert_eq!(fido.kernel.next(), Event::Destroy);
+    let new = harness.device();
+    assert_eq!(new.interface(), HidInterface::Fido);
+    assert_eq!(harness.input(), POWER_CYCLE);
+    assert_eq!(harness.stats(), UhidStats::default());
+}
+
+/// Found on a real kernel with ykman: the CTAPHID response to a Management write with
+/// REBOOT is delivered right before the re-enumeration. The writer discarded whatever was
+/// still queued once the device was retiring, so whether the host got the response (and
+/// ykman reported success) depended on thread timing. Outputs delivered before a
+/// re-enumeration are written, in order, before the DESTROY. The writer is held up here
+/// (the kernel end does not read yet), so the reports are still queued at the unplug.
+#[test]
+fn outputs_delivered_before_a_re_enumeration_reach_the_old_device_before_its_destroy() {
+    const DELIVERED: usize = 200;
+    let (kernels_tx, kernels) = mpsc::channel();
+    let (runner, commands) = mpsc::channel::<Command>();
+    let mut transport = UhidTransport::new(Box::new(PairIo { kernels: kernels_tx }), runner);
+    transport.enumerate(&identity(0x0402, FIDO_CCID));
+    let mut old = kernels.recv_timeout(WAIT).expect("the FIDO device's file is opened");
+    old.set_read_timeout(Some(WAIT)).expect("a read timeout can be set");
+    assert!(matches!(read_event(&mut old), Ok(Event::Create2(_))), "the first event is UHID_CREATE2");
+    for seed in 0..DELIVERED {
+        transport.deliver(Output::FidoReport([seed as u8; 64]));
+    }
+    transport.enumerate(&identity(0x0402, FIDO_CCID));
+    let mut new = kernels.recv_timeout(WAIT).expect("the new FIDO device's file is opened");
+    let events = events_until_destroy(&mut old);
+    new.set_read_timeout(Some(WAIT)).expect("a read timeout can be set");
+    let created = read_event(&mut new);
+    let stats = transport.stats();
+
+    let _ = old.shutdown(Shutdown::Both);
+    let _ = new.shutdown(Shutdown::Both);
+    drop(transport);
+    drop(commands);
+
+    let seeds: Vec<u8> = events
+        .iter()
+        .filter_map(|event| match event {
+            Event::Input2 { data } => Some(data[0]),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(seeds, (0..DELIVERED).map(|seed| seed as u8).collect::<Vec<u8>>(), "every report, in order");
+    assert_eq!(events.last(), Some(&Event::Destroy));
+    assert_eq!(events.len(), DELIVERED + 1, "only the reports and the DESTROY");
+    assert_eq!(stats.dropped, 0, "{stats:?}");
+    assert!(matches!(created, Ok(Event::Create2(_))), "the new device is created: {created:?}");
+}
+
+/// Found on a real kernel with ykman: with the reply to the status read written right
+/// before the DESTROY, `HIDIOCGFEATURE` still failed with `EIO`. `uhid_hid_get_report`
+/// (and `uhid_hid_set_report`) checks after waking whether the device still runs
+/// (`__uhid_report_queue_and_wait` in `drivers/hid/uhid.c`), and a DESTROY written right
+/// behind the reply clears that before the woken caller gets to look. The DESTROY waits
+/// [`DESTROY_AFTER_REPLY`] after the last reply, as a USB device's reboot comes some time
+/// after the control transfer it answered.
+#[test]
+fn the_destroy_after_a_reply_leaves_the_caller_time_to_take_it() {
+    let (harness, otp, _fido) = Harness::plugged();
+    harness.set_answer(Answer::Feature([6; 8]));
+    harness.reboot_after(HostInput::OtpGetFeature, &identity(0x0402, FIDO_CCID));
+    otp.kernel.send(&Event::GetReport { id: 92, rnum: 0, rtype: ReportType::Feature });
+    assert_eq!(harness.input(), HostInput::OtpGetFeature);
+    assert!(matches!(otp.kernel.next(), Event::GetReportReply { id: 92, err: 0, .. }));
+    let replied = Instant::now();
+    assert_eq!(otp.kernel.next(), Event::Destroy);
+    let gap = replied.elapsed();
+    // The fake kernel's thread hands the reply over a little after it was written.
+    assert!(gap >= DESTROY_AFTER_REPLY - Duration::from_millis(20), "DESTROY {gap:?} after the reply");
+    assert!(gap < DESTROY_AFTER_REPLY + Duration::from_secs(1), "DESTROY {gap:?} after the reply");
 }

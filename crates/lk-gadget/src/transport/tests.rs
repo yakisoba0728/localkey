@@ -183,8 +183,8 @@ fn an_otp_feature_answer_is_the_one_delivered_before_the_marker() {
     let shared = shared_with(runner);
     runner_answering(Arc::clone(&shared), commands, Duration::ZERO, vec![[1; 8], [2; 8]]);
     let mut wait = OtpWait::default();
-    assert_eq!(wait.fetch(&shared), Some([1; 8]));
-    assert_eq!(wait.fetch(&shared), Some([2; 8]));
+    assert_eq!(wait.fetch(&shared, &SessionState::default()), Some([1; 8]));
+    assert_eq!(wait.fetch(&shared, &SessionState::default()), Some([2; 8]));
 }
 
 #[test]
@@ -201,11 +201,11 @@ fn a_late_otp_feature_answer_is_never_given_to_the_next_request() {
     );
     let mut wait = OtpWait::default();
     let start = Instant::now();
-    assert_eq!(wait.fetch(&shared), None);
+    assert_eq!(wait.fetch(&shared, &SessionState::default()), None);
     assert!(start.elapsed() >= OTP_REPORT_TIMEOUT);
     // The runner is still busy with the first request for 300 ms, then takes 1.3 s for
     // the second: this request times out too, without taking the first answer.
-    assert_eq!(wait.fetch(&shared), None);
+    assert_eq!(wait.fetch(&shared, &SessionState::default()), None);
     assert!(wait.previous.is_some());
 }
 
@@ -215,8 +215,79 @@ fn an_otp_feature_request_the_device_does_not_answer_ends_at_the_marker() {
     let shared = shared_with(runner);
     runner_answering(Arc::clone(&shared), commands, Duration::ZERO, Vec::new());
     let mut wait = OtpWait::default();
-    assert_eq!(wait.fetch(&shared), None, "the marker came back with no OtpFeature before it");
+    let state = SessionState::default();
+    assert_eq!(wait.fetch(&shared, &state), None, "the marker came back with no OtpFeature before it");
     drop(shared);
+}
+
+/// A runner that delivers the answer and then re-enumerates (the status read before an
+/// OTP HID Management reboot): it drains the session instead of answering the marker.
+/// The request takes the delivered answer at once.
+#[test]
+fn an_otp_feature_request_takes_the_delivered_answer_when_the_session_drains() {
+    let (runner, commands) = mpsc::channel();
+    let shared = shared_with(runner);
+    let state = Arc::new(SessionState::default());
+    {
+        let (shared, state) = (Arc::clone(&shared), Arc::clone(&state));
+        thread::spawn(move || {
+            let mut unanswered = Vec::new();
+            for command in commands {
+                match command {
+                    Command::Input(HostInput::OtpGetFeature) => *shared.otp_feature() = Some([7; 8]),
+                    Command::Status(reply) => {
+                        unanswered.push(reply);
+                        assert_eq!(state.drain(Duration::ZERO), Owed { responses: 0, control: false });
+                    }
+                    _ => {}
+                }
+            }
+        });
+    }
+    let start = Instant::now();
+    assert_eq!(OtpWait::default().fetch(&shared, &state), Some([7; 8]));
+    assert!(start.elapsed() < OTP_REPORT_TIMEOUT, "{:?}", start.elapsed());
+}
+
+/// A request whose predecessor timed out first waits for the predecessor's marker; a
+/// draining runner answers none, so the request gives up at once instead of holding the
+/// drain for its whole budget.
+#[test]
+fn an_otp_feature_request_behind_a_timed_out_one_gives_up_when_the_session_drains() {
+    let (runner, _commands) = mpsc::channel();
+    let shared = shared_with(runner);
+    let state = SessionState::default();
+    let (_never_answered, previous) = mpsc::channel();
+    let mut wait = OtpWait { previous: Some(previous) };
+    assert_eq!(state.drain(Duration::ZERO), Owed::default());
+    let start = Instant::now();
+    assert_eq!(wait.fetch(&shared, &state), None);
+    assert!(start.elapsed() < OTP_REPORT_TIMEOUT / 2, "{:?}", start.elapsed());
+    assert!(wait.previous.is_some(), "the earlier marker is still awaited by the next request");
+}
+
+/// What a drain waits for: queued responses and a control request waiting for the
+/// runner; it ends as soon as both are settled, or at its timeout with what is owed.
+#[test]
+fn a_drain_waits_for_owed_responses_and_control_requests_until_its_timeout() {
+    let state = Arc::new(SessionState::default());
+    assert_eq!(state.drain(Duration::from_secs(30)), Owed::default(), "nothing owed: at once");
+    state.owe_response();
+    state.answering(true);
+    let start = Instant::now();
+    assert_eq!(state.drain(Duration::from_millis(50)), Owed { responses: 1, control: true });
+    assert!(start.elapsed() >= Duration::from_millis(50));
+    let settle = {
+        let state = Arc::clone(&state);
+        thread::spawn(move || {
+            thread::sleep(Duration::from_millis(50));
+            state.paid_response();
+            state.answering(false);
+        })
+    };
+    assert_eq!(state.drain(Duration::from_secs(30)), Owed::default());
+    settle.join().expect("the settling thread ends");
+    assert!(state.draining());
 }
 
 #[test]
@@ -225,7 +296,7 @@ fn an_otp_feature_request_to_a_stopped_runner_fails_at_once() {
     drop(commands);
     let shared = shared_with(runner);
     let start = Instant::now();
-    assert_eq!(OtpWait::default().fetch(&shared), None);
+    assert_eq!(OtpWait::default().fetch(&shared, &SessionState::default()), None);
     assert!(start.elapsed() < OTP_REPORT_TIMEOUT);
 }
 

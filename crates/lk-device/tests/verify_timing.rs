@@ -488,7 +488,11 @@ fn ended_requests_never_answer_late() {
             End::OtpHidReboot => {
                 let mut payload = [0u8; 64];
                 payload[..3].copy_from_slice(&[0x02, 0x0C, 0x00]);
-                rig.otp_write(slot::YK4_SET_DEVICE_INFO, &payload)
+                // The host then reads the status (yubikit `OtpProtocol._read_frame`); the
+                // reboot follows that read.
+                let mut out = rig.otp_write(slot::YK4_SET_DEVICE_INFO, &payload);
+                out.extend(rig.input(Input::OtpGetFeature));
+                out
             }
         };
         let card_ended = !matches!(end, End::InitResync | End::Cancel);

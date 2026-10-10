@@ -66,6 +66,16 @@ pub const U2F_REQUEST_WINDOW_MS: Millis = 3_000;
 /// request that needs presence. Model policy, see [`U2F_REQUEST_WINDOW_MS`].
 pub const U2F_LATCH_MS: Millis = 3_000;
 
+/// How long after an OTP HID Management write with `REBOOT` the device reboots when the
+/// host has not read the status yet. The reboot normally follows that status read (see
+/// [`Device::handle`]): yubikit reads it right after the last feature report of the frame
+/// (`OtpProtocol._read_frame`) and needs it to see the write succeed. Model policy: the
+/// firmware's timing is unmeasured (catalog appendix B
+/// `usb_management_reboot_reenumeration`: "macOS_runtime_and_firmware_timing_pending");
+/// one second leaves a slow host ample time while a host that never reads still sees the
+/// reboot.
+pub const OTP_REBOOT_DELAY_MS: Millis = 1_000;
+
 /// Upper bound on timer steps in one call; every step removes its timer or moves it
 /// past `now`, so the bound is never reached in practice.
 const MAX_TIMER_STEPS: usize = 64;
@@ -182,6 +192,8 @@ pub(crate) enum Timer {
     OtpTimeout,
     U2fWindow,
     U2fLatch,
+    /// The reboot owed to an OTP HID Management write ([`OTP_REBOOT_DELAY_MS`]).
+    OtpReboot,
 }
 
 impl Device {
@@ -198,6 +210,7 @@ impl Device {
             (self.waits.otp.map(|w| w.deadline), Timer::OtpTimeout),
             (self.waits.u2f.map(|w| w.until), Timer::U2fWindow),
             (self.u2f_latch, Timer::U2fLatch),
+            (self.otp_reboot_at, Timer::OtpReboot),
         ]
         .into_iter()
         .filter_map(|(at, timer)| at.map(|at| (at, timer)))
@@ -239,6 +252,12 @@ impl Device {
             Timer::OtpTimeout => self.drop_otp_wait(),
             Timer::U2fWindow => self.waits.u2f = None,
             Timer::U2fLatch => self.u2f_latch = None,
+            // The reboot happens now, before the input this call carries.
+            Timer::OtpReboot => {
+                self.otp_reboot_at = None;
+                self.reboot_owed = true;
+                self.settle_management(out);
+            }
         }
     }
 

@@ -302,6 +302,7 @@ enum Op {
     EnumerateThenDeliver(UsbIdentity, Vec<Output>),
     Deliver(Output),
     SetAnswer(Answer),
+    RebootAfter(HostInput, UsbIdentity),
     Stats(Sender<UhidStats>),
     Attached(Sender<Option<bool>>),
     Debug(Sender<String>),
@@ -404,6 +405,13 @@ impl Harness {
 
     pub fn set_answer(&self, answer: Answer) {
         self.op(Op::SetAnswer(answer));
+    }
+
+    /// When the runner next takes `input`, it re-enumerates with `identity` right after
+    /// handling it (after its feature answer, before the next command), as `lk_run` does
+    /// with an `Output::Reenumerate` in the input's outputs. Once.
+    pub fn reboot_after(&self, input: HostInput, identity: &UsbIdentity) {
+        self.op(Op::RebootAfter(input, identity.clone()));
     }
 
     pub fn stats(&self) -> UhidStats {
@@ -560,6 +568,7 @@ fn status() -> Status {
 fn run(transport: UhidTransport, ops: &Receiver<Op>, inputs: &Sender<HostInput>) {
     let mut transport = Some(transport);
     let mut answer = Answer::Feature([0; 8]);
+    let mut reboot: Option<(HostInput, UsbIdentity)> = None;
     // Markers of a `Silent` runner, kept so their waiters time out instead of failing.
     let mut unanswered = Vec::new();
     for op in ops {
@@ -576,6 +585,12 @@ fn run(transport: UhidTransport, ops: &Receiver<Op>, inputs: &Sender<HostInput>)
                         }
                         Answer::Nothing | Answer::Silent => {}
                     }
+                }
+                if reboot.as_ref().is_some_and(|(after, _)| *after == input)
+                    && let Some((_, identity)) = reboot.take()
+                    && let Some(transport) = transport.as_mut()
+                {
+                    transport.enumerate(&identity);
                 }
                 let _ = inputs.send(input);
             }
@@ -605,6 +620,7 @@ fn run(transport: UhidTransport, ops: &Receiver<Op>, inputs: &Sender<HostInput>)
                 }
             }
             Op::SetAnswer(new) => answer = new,
+            Op::RebootAfter(input, identity) => reboot = Some((input, identity)),
             Op::Stats(reply) => {
                 let _ = reply.send(transport.as_ref().map(UhidTransport::stats).unwrap_or_default());
             }

@@ -1,0 +1,77 @@
+#!/bin/bash
+# PID 1 of the localkey test guest (initramfs, no disk, no network).
+#
+# Kernel command line:
+#   lk.test=NAME      run /localkey/tests/NAME (default smoke.sh)
+#   lk.timeout=SECS   kill the test after SECS seconds (default 600)
+#   lk.udev=0         do not start systemd-udevd
+# Output goes to the serial console. The test's output is framed by
+#   ===== LK-TEST-BEGIN NAME =====  and  ===== LK-TEST-END NAME rc=N =====
+# and the guest powers off afterwards, whatever happened.
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+export HOME=/root LANG=C.UTF-8 TERM=dumb
+umask 022
+
+say() { echo "lk-init: $*"; }
+off() {
+    sync
+    busybox poweroff -f
+    echo o > /proc/sysrq-trigger
+    sleep 30
+}
+trap off EXIT
+
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t devtmpfs devtmpfs /dev
+mkdir -p /dev/pts /dev/shm
+mount -t devpts -o gid=5,mode=0620 devpts /dev/pts
+mount -t tmpfs -o mode=1777 tmpfs /dev/shm
+mount -t tmpfs -o mode=0755 tmpfs /run
+mount -t tmpfs -o mode=1777 tmpfs /tmp
+mount -t configfs configfs /sys/kernel/config
+mount -t debugfs debugfs /sys/kernel/debug
+ln -sfn /proc/self/fd /dev/fd
+ln -sfn /proc/self/fd/0 /dev/stdin
+ln -sfn /proc/self/fd/1 /dev/stdout
+ln -sfn /proc/self/fd/2 /dev/stderr
+mkdir -p /run/lock /var/tmp
+echo localkey-guest > /proc/sys/kernel/hostname
+
+say "init started at uptime $(cut -d' ' -f1 /proc/uptime) s"
+
+test_name=smoke.sh
+test_timeout=600
+use_udev=1
+for word in $(cat /proc/cmdline); do
+    case "$word" in
+        lk.test=*) test_name=${word#lk.test=} ;;
+        lk.timeout=*) test_timeout=${word#lk.timeout=} ;;
+        lk.udev=*) use_udev=${word#lk.udev=} ;;
+    esac
+done
+
+for module in uhid dummy_hcd libcomposite usb_f_fs usbhid hid_generic usbmon; do
+    modprobe "$module" || say "modprobe $module failed"
+done
+
+if [ "$use_udev" = 1 ]; then
+    /usr/lib/systemd/systemd-udevd --daemon --resolve-names=never || say "systemd-udevd failed"
+    udevadm trigger --type=subsystems --action=add
+    udevadm trigger --type=devices --action=add
+    udevadm settle --timeout=60 || say "udevadm settle timed out"
+fi
+
+say "ready at uptime $(cut -d' ' -f1 /proc/uptime) s"
+
+script=/localkey/tests/$test_name
+echo "===== LK-TEST-BEGIN $test_name ====="
+if [ -f "$script" ]; then
+    (cd /localkey && exec timeout -k 5 "$test_timeout" bash "$script")
+    rc=$?
+else
+    echo "no such test: $script"
+    rc=127
+fi
+echo "===== LK-TEST-END $test_name rc=$rc ====="
+say "done at uptime $(cut -d' ' -f1 /proc/uptime) s"

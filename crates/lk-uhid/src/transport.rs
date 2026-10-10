@@ -16,20 +16,33 @@
 //! `UHID_DESTROY` and its file is closed), and each interface the new identity enables
 //! gets a new file with `UHID_CREATE2`. Retiring raises the device's `retiring` flag; the
 //! writer looks at that flag before every item it takes from its queue, so the DESTROY
-//! cannot be lost to a full queue: once the flag is up the writer discards what is still
-//! queued (the reports of an unplugged device are lost, as data in a key's endpoints is),
-//! writes DESTROY if the kernel accepted the CREATE2, and ends. A new device's writer
-//! waits until the old device's writer has ended (at most [`DROP_TIMEOUT`]; writes to
-//! `/dev/uhid` do not block, so only a stuck file reaches it) before it writes CREATE2, so
-//! the kernel does not hold both. A reader starts reading only once its writer's CREATE2
-//! was accepted (a UHID file carries no events before), so a device retired before its
-//! CREATE2 was written ends both threads at once and its file is closed.
+//! cannot be lost behind a full queue: once the flag is up the writer writes what is still
+//! queued, waits (at most [`FEATURE_TIMEOUT`]) for the replies still owed to requests the
+//! device accepted before, writes DESTROY if the kernel accepted the CREATE2
+//! ([`DESTROY_AFTER_REPLY`] after the last reply), and ends. A new device's writer waits
+//! until the old device's writer has ended (at most [`DROP_TIMEOUT`]; writes to
+//! `/dev/uhid` do not block, so only a stuck file or an owed reply holds it up) before it
+//! writes CREATE2, so the kernel does not hold both. A reader starts reading only once its
+//! writer's CREATE2 was accepted (a UHID file carries no events before), so a device
+//! retired before its CREATE2 was written ends both threads at once and its file is
+//! closed.
+//!
+//! What the old device still writes, found with ykman on a real kernel
+//! (`tools/linux-guest/tests/uhid.sh`): a Management write with REBOOT ends with a reply
+//! (the CTAPHID response, or for OTP HID the SET_REPORT acknowledgement and the status
+//! that the next GET_REPORT reads), and the reboot follows at once. A USB device completes
+//! those transfers before it acts on them; here the outputs `deliver` queued before the
+//! re-enumeration and the replies to requests whose input reached the runner first
+//! ([`InFlight`], counted under the gate) are written before the DESTROY. Dropping the
+//! transport writes the queued outputs too but no owed replies: no marker is answered any
+//! more, and the DESTROY fails the kernel's pending requests (`uhid_dev_destroy`).
 //!
 //! What of the old instance reaches the rebooted device, exactly:
 //!
-//! - events the kernel still sends on an old file (outputs, requests) are dropped by its
-//!   reader, and requests get no reply: `uhid_dev_destroy` has already failed them in the
-//!   kernel (it clears `running` and wakes `report_wait`, `drivers/hid/uhid.c`);
+//! - events the kernel still sends on an old file after the re-enumeration (outputs,
+//!   requests) are dropped by its reader, and requests get no reply: the DESTROY fails
+//!   them in the kernel (it clears `running` and wakes `report_wait`,
+//!   `drivers/hid/uhid.c`);
 //! - inputs an old reader handed to the runner before the re-enumeration are already in
 //!   the runner's channel, ahead of the plug-in `BusEvent::PowerCycle`. The rebooted device
 //!   handles them before that power cycle, which discards their volatile effects; a
@@ -50,13 +63,14 @@
 //! device's inputs wait in the channel; meanwhile the reader does not read, and what a
 //! host sends beyond that waits in the kernel's queue of `UHID_BUFSIZE` (32) events, where
 //! `uhid_queue` drops it once full (`drivers/hid/uhid.c`). Every wait for a marker gives up
-//! once the device is retiring, so dropping the transport never waits for a runner that is
-//! busy dropping it.
+//! once the device is retiring (a feature read whose reply is owed only once the transport
+//! is dropped), so dropping the transport never waits for a runner that is busy dropping
+//! it.
 
 use std::fmt;
 use std::io::{self, Read, Write};
 use std::ops::ControlFlow;
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError, Sender, SyncSender, TryRecvError};
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 use std::thread::{self, JoinHandle};
@@ -85,6 +99,17 @@ pub const WRITE_QUEUE_EVENTS: usize = 1024;
 /// reads the `UHID_STOP` that follows `UHID_DESTROY`; a thread still running after this is
 /// left behind and reported.
 pub const DROP_TIMEOUT: Duration = Duration::from_secs(1);
+
+/// How long an unplugged device's DESTROY waits after the last GET_REPORT or SET_REPORT
+/// reply it wrote. The kernel wakes the caller waiting for the reply, but the caller, once
+/// it runs, fails the request with `EIO` if the device no longer runs
+/// (`__uhid_report_queue_and_wait` in `drivers/hid/uhid.c` checks `running` after the
+/// wait), and a DESTROY written right behind the reply clears `running` first. Seen on a
+/// real kernel: ykman's status read after a Management write over OTP HID failed that way
+/// although its reply had been written. A USB device's reboot likewise comes some time
+/// after the control transfer it answered. Generous for a loaded host; it delays only a
+/// re-enumeration that follows a reply.
+pub const DESTROY_AFTER_REPLY: Duration = Duration::from_millis(100);
 
 /// Inputs per window of one device's reader (see the module docs, Pacing): at most twice
 /// this many of a device's inputs wait in the runner's channel. Every input is one
@@ -234,8 +259,8 @@ pub struct UhidStats {
     /// answer in time.
     pub refused: u64,
     /// Device outputs lost: no device for the interface, its file ended, its write queue
-    /// was full, it was destroyed before they were written, the kernel does not run it,
-    /// or they answer inputs of an earlier enumeration (the fence, see the module docs).
+    /// was full, the kernel did not accept its CREATE2 or does not run it, or they answer
+    /// inputs of an earlier enumeration (the fence, see the module docs).
     pub dropped: u64,
 }
 
@@ -290,9 +315,18 @@ struct DeviceState {
     started: AtomicBool,
     /// Between `UHID_OPEN` and `UHID_CLOSE`.
     opened: AtomicBool,
-    /// The device is being unplugged: the writer writes DESTROY instead of what is queued,
-    /// and the reader forwards nothing and ends at `UHID_STOP`.
+    /// The device is being unplugged: the writer writes what is still queued and the
+    /// replies still owed, then DESTROY; the reader forwards nothing and ends at
+    /// `UHID_STOP`.
     retiring: AtomicBool,
+    /// Retired by a re-enumeration, not by dropping the transport: the runner still
+    /// answers markers, so a feature read in flight waits for its answer and replies.
+    /// Set before `retiring`, cleared when the transport is dropped.
+    reenumerated: AtomicBool,
+    /// Requests whose input reached the runner and whose reply is not queued yet
+    /// ([`InFlight`]). A retiring writer waits for them (at most [`FEATURE_TIMEOUT`])
+    /// before it writes DESTROY.
+    in_flight: AtomicUsize,
     /// Held while the reader checks `retiring` and sends an input, and while `retire`
     /// raises the flag (see the module docs, Unplugging).
     gate: Mutex<()>,
@@ -312,13 +346,35 @@ impl DeviceState {
         self.created.store(false, Ordering::SeqCst);
         self.running.store(false, Ordering::SeqCst);
     }
+
+    /// Whether a reply may still be queued: always before the device retires; after that
+    /// only a reply `owed` to a request accepted before (an [`InFlight`]), and only when a
+    /// re-enumeration retired the device. When the transport is dropped, the DESTROY fails
+    /// the kernel's pending requests instead (`uhid_dev_destroy`).
+    fn may_reply(&self, owed: bool) -> bool {
+        !self.retiring() || (owed && self.reenumerated.load(Ordering::SeqCst))
+    }
+}
+
+/// A request whose input the reader handed to the runner and whose reply it has not queued
+/// yet (`DeviceState::in_flight`). Taken under the gate, so a request either counts before
+/// the device retires or is refused; dropped once the reply is queued (or given up), which
+/// lets a retiring writer go on to DESTROY. A USB device completes a control transfer it
+/// accepted before it can act on its data, a reboot included, so its reply must not be
+/// lost to a re-enumeration that the request itself caused.
+struct InFlight(Arc<DeviceState>);
+
+impl Drop for InFlight {
+    fn drop(&mut self) {
+        self.0.in_flight.fetch_sub(1, Ordering::SeqCst);
+    }
 }
 
 /// An item of a writer's queue.
 enum Op {
     Event(Event),
-    /// Wake the writer to stop: after DESTROY when the device is retiring, at once when its
-    /// reader has ended.
+    /// Wake the writer to stop: once the queue is written and DESTROY too when the device
+    /// is retiring, at once when its reader has ended.
     Close,
 }
 
@@ -391,6 +447,7 @@ impl HidDevice {
                     shared: &shared,
                     go: Some(go),
                     buffer: [0; UHID_EVENT_SIZE],
+                    replied: None,
                 };
                 writer.run(&ops);
             })?
@@ -437,20 +494,28 @@ impl HidDevice {
     }
 
     /// Unplug the device: raise `retiring` (under the gate, so the reader sends no input
-    /// after this returns), then wake the writer, which writes `UHID_DESTROY` and ends; the
-    /// reader drops what still arrives and ends at the `UHID_STOP` that follows, or when
-    /// the file ends. Idempotent.
+    /// after this returns), then wake the writer, which writes what is still queued and
+    /// the replies still owed, then `UHID_DESTROY`, and ends; the reader drops what still
+    /// arrives and ends at the `UHID_STOP` that follows, or when the file ends.
+    /// `reenumerated` is false when the transport is dropped: then no marker will be
+    /// answered any more, and a feature read in flight gives up at once (also on a device
+    /// an earlier re-enumeration retired). Idempotent.
     ///
     /// The wake is needed only when the queue is empty and the writer waits in `recv`.
     /// When the queue is full the wake is lost, and that is fine: the writer is busy, and
     /// it looks at the flag before the next item it takes, which is already there.
-    fn retire(&mut self) {
+    fn retire(&mut self, reenumerated: bool) {
         self.feature = None;
+        if !reenumerated {
+            self.state.reenumerated.store(false, Ordering::SeqCst);
+        }
         {
             let _gate = self.state.gate();
-            if self.state.retiring.swap(true, Ordering::SeqCst) {
+            if self.state.retiring() {
                 return;
             }
+            self.state.reenumerated.store(reenumerated, Ordering::SeqCst);
+            self.state.retiring.store(true, Ordering::SeqCst);
         }
         let _ = self.queue.try_send(Op::Close);
     }
@@ -486,17 +551,20 @@ struct Writer<'a> {
     /// read. Dropped unsent when the writer ends before that (see [`Reader::run`]).
     go: Option<Sender<()>>,
     buffer: [u8; UHID_EVENT_SIZE],
+    /// When the last GET_REPORT or SET_REPORT reply was written ([`DESTROY_AFTER_REPLY`]).
+    replied: Option<Instant>,
 }
 
 impl Writer<'_> {
     /// Write queued events in order until `Op::Close`, the end of the queue, a file whose
-    /// other side is gone, or the device is retiring. A retiring device's queue is
-    /// discarded and, if the kernel holds the device, `UHID_DESTROY` is written last.
+    /// other side is gone, or the device is retiring; a retiring device is unplugged
+    /// ([`Writer::unplug`]).
     fn run(mut self, ops: &Receiver<Op>) {
+        let mut first = None;
         while let Ok(op) = ops.recv() {
-            // Before every item, so a full queue cannot keep the DESTROY out (`retire`).
+            // Before every item, so a full queue cannot keep the unplug out (`retire`).
             if self.state.retiring() {
-                self.discard(op);
+                first = Some(op);
                 break;
             }
             let Op::Event(event) = op else {
@@ -508,23 +576,66 @@ impl Writer<'_> {
             }
         }
         if self.state.retiring() {
-            for op in ops.try_iter() {
-                self.discard(op);
-            }
-            // A CREATE2 that was never written (or refused) leaves nothing to destroy;
-            // `uhid_dev_destroy` would refuse the DESTROY with `-EINVAL`.
-            if self.state.created.load(Ordering::SeqCst) {
-                let _ = self.write(Event::Destroy);
-            }
+            self.unplug(first, ops);
         }
         self.state.gone();
     }
 
-    /// An item of a retiring device's queue that is not written. Replies are not needed:
-    /// the DESTROY fails the kernel's pending requests (`uhid_dev_destroy`).
-    fn discard(&self, op: Op) {
-        if let Op::Event(Event::Input2 { .. }) = op {
-            self.shared.drop_output();
+    /// Unplug a retiring device: write what is still queued (`first`, then the rest), in
+    /// order, waiting at most [`FEATURE_TIMEOUT`] for the replies still owed
+    /// (`DeviceState::in_flight`), then `UHID_DESTROY` if the kernel holds the device.
+    ///
+    /// What is queued was queued before the device retired (`deliver` reaches only the
+    /// current devices, and the reader queues only replies owed to requests it accepted
+    /// before): outputs the device produced before it rebooted, such as the response to the
+    /// command that rebooted it, and replies to requests it accepted, such as the
+    /// SET_REPORT that completed that command. The queue is bounded and writes to
+    /// `/dev/uhid` do not block, so the DESTROY still follows promptly: at once, or
+    /// [`DESTROY_AFTER_REPLY`] after the last reply. A CREATE2 still queued is not
+    /// written: a device retired before it was created stays uncreated, and one that was
+    /// never created (or refused) gets no DESTROY either (`uhid_dev_destroy` would refuse
+    /// it with `-EINVAL`).
+    fn unplug(&mut self, first: Option<Op>, ops: &Receiver<Op>) {
+        let deadline = Instant::now() + FEATURE_TIMEOUT;
+        let mut next = first;
+        loop {
+            let op = match next.take() {
+                Some(op) => op,
+                None => match ops.try_recv() {
+                    Ok(op) => op,
+                    Err(TryRecvError::Disconnected) => break,
+                    Err(TryRecvError::Empty) => {
+                        // A reply is queued before its request stops counting, so once
+                        // none counts, one more look finds every owed reply.
+                        if self.state.in_flight.load(Ordering::SeqCst) == 0 || Instant::now() >= deadline {
+                            next = ops.try_recv().ok();
+                            if next.is_none() {
+                                break;
+                            }
+                            continue;
+                        }
+                        match ops.recv_timeout(JOIN_POLL) {
+                            Ok(op) => op,
+                            Err(RecvTimeoutError::Timeout) => continue,
+                            Err(RecvTimeoutError::Disconnected) => break,
+                        }
+                    }
+                },
+            };
+            match op {
+                Op::Close | Op::Event(Event::Create2(_)) => {}
+                Op::Event(event) => {
+                    if self.write(event).is_break() {
+                        return;
+                    }
+                }
+            }
+        }
+        if self.state.created.load(Ordering::SeqCst) {
+            if let Some(replied) = self.replied {
+                thread::sleep(DESTROY_AFTER_REPLY.saturating_sub(replied.elapsed()));
+            }
+            let _ = self.write(Event::Destroy);
         }
     }
 
@@ -562,6 +673,7 @@ impl Writer<'_> {
                         state.gone();
                         shared.notify(UhidNotice::Destroyed { interface });
                     }
+                    Event::GetReportReply { .. } | Event::SetReportReply { .. } => self.replied = Some(Instant::now()),
                     _ => {}
                 }
                 shared.notify(UhidNotice::Sent { interface, event: event.name(), size: event.data_len() });
@@ -723,15 +835,24 @@ impl Reader {
     /// is going away). The check and the send happen under the gate (see the module docs,
     /// Unplugging). Counts into the window.
     fn forward(&mut self, input: HostInput) -> Result<(), &'static str> {
-        {
+        self.forward_request(input).map(drop)
+    }
+
+    /// [`Reader::forward`] for a request that needs a reply: the request counts as in
+    /// flight from before the input is sent (under the gate) until the returned
+    /// [`InFlight`] is dropped, after its reply was queued.
+    fn forward_request(&mut self, input: HostInput) -> Result<InFlight, &'static str> {
+        let in_flight = {
             let _gate = self.state.gate();
             if self.state.retiring() {
                 return Err(RETIRING);
             }
+            self.state.in_flight.fetch_add(1, Ordering::SeqCst);
             self.shared.input(input);
-        }
+            InFlight(Arc::clone(&self.state))
+        };
         self.window.inputs += 1;
-        Ok(())
+        Ok(in_flight)
     }
 
     /// When the window is full, wait for the runner to answer the previous window's marker,
@@ -741,7 +862,7 @@ impl Reader {
             return;
         }
         if let Some(answer) = self.window.marker.take() {
-            match self.wait(&answer, None) {
+            match self.wait(&answer, None, false) {
                 Wait::Answered => {}
                 // A retiring device forwards nothing more; a gone runner takes nothing.
                 Wait::Retiring | Wait::Gone | Wait::TimedOut => {
@@ -756,10 +877,13 @@ impl Reader {
     }
 
     /// Wait for a marker's answer until `deadline` (or without one), in steps of
-    /// [`RETIRE_POLL`], giving up once the device is retiring.
-    fn wait(&self, answer: &Receiver<Status>, deadline: Option<Instant>) -> Wait {
+    /// [`RETIRE_POLL`], giving up once the device is retiring, unless the wait is for the
+    /// answer to a request that is `owed` a reply and a re-enumeration retired the device
+    /// ([`DeviceState::may_reply`]): the runner still answers then, and the reply is still
+    /// written before the DESTROY.
+    fn wait(&self, answer: &Receiver<Status>, deadline: Option<Instant>, owed: bool) -> Wait {
         loop {
-            if self.state.retiring() {
+            if !self.state.may_reply(owed) {
                 return Wait::Retiring;
             }
             let step = match deadline {
@@ -805,15 +929,16 @@ impl Reader {
     /// Everything else gets [`EIO`] at once, so the caller does not wait for the kernel's
     /// timeout.
     fn get_report(&mut self, id: u32, rnum: u8, rtype: ReportType) {
-        let answer = if self.state.retiring() {
-            Err(RETIRING)
+        let (in_flight, answer) = if self.state.retiring() {
+            (None, Err(RETIRING))
         } else {
             match (self.interface, rtype) {
                 (HidInterface::Otp, ReportType::Feature) if rnum == report::UNNUMBERED => {
-                    self.feature().map(|report| report::otp_feature_reply(&report).to_vec())
+                    let (in_flight, answer) = self.feature();
+                    (in_flight, answer.map(|report| report::otp_feature_reply(&report).to_vec()))
                 }
-                (HidInterface::Otp, ReportType::Feature) => Err("report number is not 0"),
-                _ => Err("unsupported GET_REPORT"),
+                (HidInterface::Otp, ReportType::Feature) => (None, Err("report number is not 0")),
+                _ => (None, Err("unsupported GET_REPORT")),
             }
         };
         let reply = match answer {
@@ -823,7 +948,7 @@ impl Reader {
                 Event::GetReportReply { id, err: EIO, data: Vec::new() }
             }
         };
-        self.reply(reply);
+        self.reply(reply, in_flight.is_some());
     }
 
     /// `UHID_SET_REPORT`: the OTP feature report goes to the runner, the keyboard's LED
@@ -836,29 +961,33 @@ impl Reader {
         } else {
             match (self.interface, rtype) {
                 (HidInterface::Otp, ReportType::Feature) => report::otp_feature_set(rnum, data)
-                    .and_then(|report| self.forward(HostInput::OtpSetFeature(report))),
-                (HidInterface::Otp, ReportType::Output) => Ok(()),
+                    .and_then(|report| self.forward_request(HostInput::OtpSetFeature(report)))
+                    .map(Some),
+                (HidInterface::Otp, ReportType::Output) => Ok(None),
                 (HidInterface::Fido, ReportType::Output) => report::fido_set_output(rnum, data)
-                    .and_then(|report| self.forward(HostInput::FidoReport(report))),
+                    .and_then(|report| self.forward_request(HostInput::FidoReport(report)))
+                    .map(Some),
                 _ => Err("unsupported SET_REPORT"),
             }
         };
-        let err = match result {
-            Ok(()) => 0,
+        let (in_flight, err) = match result {
+            Ok(in_flight) => (in_flight, 0),
             Err(reason) => {
                 self.shared.refuse(self.interface, "SET_REPORT", data.len(), reason);
-                EIO
+                (None, EIO)
             }
         };
-        self.reply(Event::SetReportReply { id, err });
+        self.reply(Event::SetReportReply { id, err }, in_flight.is_some());
     }
 
     /// Queue a reply; it waits for room, since a lost reply leaves the caller waiting for
-    /// the kernel's timeout. A writer that is gone takes nothing. A retiring device gets no
-    /// replies: its writer would discard them, and the DESTROY fails the kernel's request
-    /// (`uhid_dev_destroy`).
-    fn reply(&self, event: Event) {
-        if !self.state.retiring() {
+    /// the kernel's timeout. A writer that is gone takes nothing. After the device retired,
+    /// only a reply `owed` to a request accepted before is queued, and only after a
+    /// re-enumeration ([`DeviceState::may_reply`]); the writer writes it before the
+    /// DESTROY. Otherwise the DESTROY fails the kernel's request (`uhid_dev_destroy`).
+    /// The caller drops the request's [`InFlight`] after this.
+    fn reply(&self, event: Event, owed: bool) {
+        if self.state.may_reply(owed) {
             let _ = self.queue.send(Op::Event(event));
         }
     }
@@ -874,22 +1003,38 @@ impl Reader {
     /// in the channel (a late answer to an earlier request can only come before it). The
     /// answered marker also means every input of this reader has been handled, so the
     /// window starts afresh.
-    fn feature(&mut self) -> Result<[u8; report::OTP_FEATURE_SIZE], &'static str> {
+    ///
+    /// The request is in flight from before `OtpGetFeature` is sent (the returned
+    /// [`InFlight`], `None` when it was refused at once). When the answer comes with a
+    /// re-enumeration (the device reboots right after the host read the status of a
+    /// Management write), the device is already retiring when the marker is answered; the
+    /// wait goes on regardless and the reply is still written before the DESTROY.
+    fn feature(&mut self) -> (Option<InFlight>, Result<[u8; report::OTP_FEATURE_SIZE], &'static str>) {
         const GONE: &str = "the runner is gone";
         let Some(answers) = self.answers.as_ref() else {
-            return Err("unsupported GET_REPORT");
+            return (None, Err("unsupported GET_REPORT"));
         };
         while answers.try_recv().is_ok() {}
-        self.forward(HostInput::OtpGetFeature)?;
-        let marker = self.shared.marker().ok_or(GONE)?;
-        match self.wait(&marker, Some(Instant::now() + FEATURE_TIMEOUT)) {
-            Wait::Answered => self.window = Window::default(),
-            Wait::Retiring => return Err(RETIRING),
-            Wait::Gone => return Err(GONE),
-            Wait::TimedOut => return Err("the device gave no feature report in time"),
-        }
-        let answers = self.answers.as_ref().ok_or("unsupported GET_REPORT")?;
-        answers.try_iter().last().ok_or("the device gave no feature report")
+        let in_flight = match self.forward_request(HostInput::OtpGetFeature) {
+            Ok(in_flight) => in_flight,
+            Err(reason) => return (None, Err(reason)),
+        };
+        let Some(marker) = self.shared.marker() else {
+            return (Some(in_flight), Err(GONE));
+        };
+        let answer = match self.wait(&marker, Some(Instant::now() + FEATURE_TIMEOUT), true) {
+            Wait::Answered => {
+                self.window = Window::default();
+                self.answers
+                    .as_ref()
+                    .and_then(|answers| answers.try_iter().last())
+                    .ok_or("the device gave no feature report")
+            }
+            Wait::Retiring => Err(RETIRING),
+            Wait::Gone => Err(GONE),
+            Wait::TimedOut => Err("the device gave no feature report in time"),
+        };
+        (Some(in_flight), answer)
     }
 }
 
@@ -1029,7 +1174,7 @@ impl Transport for UhidTransport {
         let mut retired = false;
         for (after, interface) in previous.iter_mut().zip(HidInterface::ALL) {
             if let Some(mut device) = self.slot(interface).take() {
-                device.retire();
+                device.retire(true);
                 *after = device.writer_done.take();
                 self.retired.push(device);
                 retired = true;
@@ -1106,7 +1251,7 @@ impl Drop for UhidTransport {
         let mut devices: Vec<HidDevice> =
             self.otp.take().into_iter().chain(self.fido.take()).chain(self.retired.drain(..)).collect();
         for device in &mut devices {
-            device.retire();
+            device.retire(false);
         }
         let deadline = Instant::now() + DROP_TIMEOUT;
         for device in &mut devices {

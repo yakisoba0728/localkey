@@ -73,7 +73,11 @@ fn ccid_write_config(rig: &mut Rig, data: &[u8]) -> (u8, Vec<Output>) {
 fn otp_write_config(rig: &mut Rig, data: &[u8]) -> Vec<Output> {
     let mut payload = [0u8; 64];
     payload[..data.len()].copy_from_slice(data);
-    rig.otp_write(slot::YK4_SET_DEVICE_INFO, &payload)
+    // The host then reads the status (yubikit `OtpProtocol._read_frame`); a reboot follows
+    // that read (`lk_device::Device::handle`).
+    let mut out = rig.otp_write(slot::YK4_SET_DEVICE_INFO, &payload);
+    out.extend(rig.input(Input::OtpGetFeature));
+    out
 }
 
 /// USB CCID Rev 1.1 §6.1: the slot is busy with the XfrBlock whose APDU waits for a

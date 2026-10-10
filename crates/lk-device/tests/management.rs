@@ -49,7 +49,11 @@ fn write_config(rig: &mut Rig, data: &[u8]) -> Vec<Output> {
     } else {
         let mut payload = [0u8; 64];
         payload[..data.len()].copy_from_slice(data);
-        rig.otp_write(0x15, &payload)
+        // The host then reads the status (yubikit `OtpProtocol._read_frame`); a reboot
+        // follows that read.
+        let mut out = rig.otp_write(0x15, &payload);
+        out.extend(rig.input(lk_device::Input::OtpGetFeature));
+        out
     }
 }
 
@@ -107,7 +111,8 @@ fn ctaphid_write_config_with_reboot() {
 }
 
 /// docs/CONTRACTS.md: the OTP bridge's `write_device_info` returns no effect, so
-/// lk-device keeps the `ConfigEffect` and reboots after the slot command.
+/// lk-device keeps the `ConfigEffect` and reboots after the slot command, once the host
+/// has read the status that reports it (see the next test).
 #[test]
 fn otp_hid_write_config_with_reboot() {
     let mut rig = Rig::new();
@@ -115,7 +120,83 @@ fn otp_hid_write_config_with_reboot() {
     let data = config(None, true);
     payload[..data.len()].copy_from_slice(&data);
     let out = rig.otp_write(0x15, &payload);
+    assert_eq!(reenumerations(&out), vec![], "not before the host read the status");
+    let out = rig.input(lk_device::Input::OtpGetFeature);
+    assert!(matches!(out.first(), Some(Output::OtpFeature(_))), "{out:02X?}");
     assert_eq!(reenumerations(&out), vec![ALL]);
+}
+
+/// Found with ykman 5.8.0 over the uhid transport on a real Linux kernel
+/// (`tools/linux-guest/tests/uhid.sh`, `ykman config usb --disable OTP --force`): yubikit
+/// writes the configuration over OTP HID and then reads the status with
+/// GET_REPORT(feature) until the programming sequence has advanced
+/// (`OtpProtocol._read_frame`, `_is_sequence_updated`). The device rebooted as soon as the
+/// frame was complete, the status read failed on the vanished OTP interface, and ykman
+/// reported "Failed to configure USB applications" for a write that had taken effect. The
+/// response of an OTP HID command is that status: the reboot follows the read that
+/// returns it, as it follows the response on CCID and CTAPHID.
+#[test]
+fn otp_hid_write_config_reboots_after_the_host_read_the_status() {
+    let mut rig = Rig::new();
+    let before = rig.otp_read();
+    let mut payload = [0u8; 64];
+    let data = config(Some(Capabilities::OTP | Capabilities::U2F | Capabilities::FIDO2), true);
+    payload[..data.len()].copy_from_slice(&data);
+    let out = rig.otp_send_frame(common::otp::slot::YK4_SET_DEVICE_INFO, &payload);
+    assert_eq!(reenumerations(&out), vec![], "no reboot before the status read: {out:02X?}");
+    assert_eq!(rig.dev.interfaces(), ALL, "the device still runs as enumerated");
+    let out = rig.input(lk_device::Input::OtpGetFeature);
+    let without_ccid = UsbInterfaces { otp: true, fido: true, ccid: false };
+    match out.as_slice() {
+        [Output::OtpFeature(status), Output::Reenumerate(interfaces)] => {
+            assert_eq!(status[4], before[4].wrapping_add(1), "the status reports the write: {status:02X?}");
+            assert_eq!(status[7], 0, "a status report, no response pending: {status:02X?}");
+            assert_eq!(*interfaces, without_ccid);
+        }
+        other => panic!("expected the status, then the reboot: {other:02X?}"),
+    }
+    assert_eq!(rig.dev.interfaces(), without_ccid);
+    assert_eq!(rig.dev.usb_identity().product, "YubiKey OTP+FIDO");
+}
+
+/// A host that never reads the status after an OTP HID write with REBOOT still gets the
+/// reboot, `OTP_REBOOT_DELAY_MS` after the write; inputs before that reach the device as
+/// enumerated, and a status read after it finds no OTP interface left to answer.
+#[test]
+fn otp_hid_write_config_reboots_after_a_delay_without_a_status_read() {
+    let mut rig = Rig::new();
+    let mut payload = [0u8; 64];
+    let data = config(Some(Capabilities::U2F | Capabilities::FIDO2 | Capabilities::OATH), true);
+    payload[..data.len()].copy_from_slice(&data);
+    let out = rig.otp_write(0x15, &payload);
+    let written = rig.now;
+    assert_eq!(reenumerations(&out), vec![]);
+    assert_eq!(rig.dev.next_deadline(), Some(written + lk_device::OTP_REBOOT_DELAY_MS));
+    let fido_ccid = UsbInterfaces { otp: false, fido: true, ccid: true };
+    let later = rig.run_until(written + lk_device::OTP_REBOOT_DELAY_MS);
+    let reboots: Vec<(u64, &Output)> =
+        later.iter().filter(|(_, o)| matches!(o, Output::Reenumerate(_))).map(|(at, o)| (*at, o)).collect();
+    assert_eq!(reboots, vec![(written + lk_device::OTP_REBOOT_DELAY_MS, &Output::Reenumerate(fido_ccid))]);
+    assert_eq!(rig.dev.interfaces(), fido_ccid);
+    assert!(rig.input(lk_device::Input::OtpGetFeature).is_empty(), "OTP is disabled now");
+    assert_eq!(rig.dev.next_deadline(), None);
+}
+
+/// A reboot owed to an OTP HID write is superseded by a power cycle before the status
+/// read: the power cycle enumerates with the stored configuration, and nothing reboots
+/// again later.
+#[test]
+fn a_power_cycle_before_the_status_read_takes_the_owed_reboot_over() {
+    let mut rig = Rig::new();
+    let mut payload = [0u8; 64];
+    let data = config(Some(Capabilities::OTP | Capabilities::U2F | Capabilities::FIDO2), true);
+    payload[..data.len()].copy_from_slice(&data);
+    assert_eq!(reenumerations(&rig.otp_write(0x15, &payload)), vec![]);
+    let without_ccid = UsbInterfaces { otp: true, fido: true, ccid: false };
+    assert_eq!(reenumerations(&rig.bus(BusEvent::PowerCycle)), vec![without_ccid]);
+    assert_eq!(rig.dev.next_deadline(), None);
+    let out = rig.input(lk_device::Input::OtpGetFeature);
+    assert!(matches!(out.as_slice(), [Output::OtpFeature(_)]), "{out:02X?}");
 }
 
 /// A change of enabled interfaces with REBOOT (as ykman `config usb` sends it)
