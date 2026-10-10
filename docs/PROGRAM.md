@@ -354,6 +354,18 @@ tested on macOS with fakes (temporary files, FIFOs, socket pairs), and reported 
 Both use only files and processes (no `ioctl`, no `unsafe`), so they compile and their tests
 run on every Unix; `localkeyd` refuses to start them on a non-Linux OS at run time.
 
+Structure, so the logic is testable without a kernel:
+
+- a pure core (event and descriptor encoding and parsing, the control-request state
+  machine) with exhaustive unit tests;
+- an I/O trait for opening the device files (`/dev/uhid`; FunctionFS `ep0` and `epN`), whose
+  real implementation opens files and whose test implementation hands out
+  `UnixStream::pair()` halves, so a test plays the kernel side byte for byte;
+- the transport (`lk_run::Transport`) on top, with its reader/writer threads.
+
+ConfigFS writes go to a root directory given as a parameter, so tests point it at a
+temporary directory and inspect the files. The `mount` step is behind the same I/O trait.
+
 Kernel ABI facts (structure layouts, constants) come from the kernel's UAPI headers and its
 documentation (`Documentation/hid/uhid.rst`, `Documentation/usb/functionfs.rst`,
 `Documentation/usb/gadget_configfs.rst`). Those are interface definitions, not legacy code;
@@ -369,11 +381,15 @@ use them for facts and do not copy their text. Every constant in the code cites 
 - Events in: `UHID_START`, `UHID_STOP`, `UHID_OPEN`, `UHID_CLOSE`, `UHID_OUTPUT`,
   `UHID_GET_REPORT`, `UHID_SET_REPORT`. Events out: `UHID_INPUT2`,
   `UHID_GET_REPORT_REPLY`, `UHID_SET_REPORT_REPLY`, `UHID_DESTROY`.
-- Report ID prefix: the descriptors use no report IDs, but the kernel's raw report paths can
-  carry the report number as a leading byte. Accept FIDO output of 65 bytes with a leading
-  `00` (strip it) or exactly 64 bytes; accept OTP feature SET_REPORT data of 9 bytes with a
-  leading `00` or exactly 8; answer GET_REPORT(feature) with the report number followed by
-  the 8 bytes. Which form the kernel uses must be confirmed on a real kernel (open item).
+- Report ID prefix: the descriptors use no report IDs, but the kernel's raw report paths
+  (hidraw writes and feature ioctls) carry the report number as a leading byte, and
+  `UHID_START`'s `dev_flags` (`UHID_DEV_NUMBERED_*`) describe numbering. Check the
+  semantics against `uhid.rst` and the kernel's `drivers/hid/uhid.c` / `hidraw.c` (read
+  for interface behaviour only). Until a real kernel confirms it, accept FIDO output of 65
+  bytes with a leading `00` (strip it) or exactly 64 bytes; accept OTP feature SET_REPORT
+  data of 9 bytes with a leading `00` or exactly 8; answer GET_REPORT(feature) in the form
+  the kernel copies back to a hidraw caller (report number, then the 8 bytes, if that is
+  what the source shows). Record the conclusion and its source in the crate docs.
 - FIDO input reports go out as `UHID_INPUT2` with 64 bytes; OTP keyboard reports as
   `UHID_INPUT2` with 8 bytes.
 - Re-enumeration destroys the devices and creates the ones the new identity enables.
