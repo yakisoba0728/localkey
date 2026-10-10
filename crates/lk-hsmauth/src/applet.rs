@@ -73,8 +73,9 @@ enum Reply {
 struct PendingTouch {
     /// S-ENC || S-MAC || S-RMAC.
     keys: Vec<u8>,
-    /// Label of the credential whose password tries go back to eight on touch.
-    restore: Option<Vec<u8>>,
+    /// Label of the credential whose password tries go back to eight on touch, with
+    /// the try count before this attempt (restored when the touch does not come).
+    restore: Option<(Vec<u8>, u8)>,
 }
 
 impl Drop for PendingTouch {
@@ -98,6 +99,12 @@ pub struct HsmAuth {
     challenge: Option<Challenge>,
     /// A touch-required CALCULATE waiting for the user.
     pending: Option<PendingTouch>,
+    /// The try spent by a touch-required CALCULATE that was abandoned (reset, deselect or
+    /// another command) before the touch was resolved: credential label and the count to
+    /// put back. It is settled, with a host to persist through, at the next
+    /// `touch_resolved` or `process` call, so an abandoned touch also leaves the tries
+    /// unchanged.
+    unsettled: Option<(Vec<u8>, u8)>,
 }
 
 impl fmt::Debug for HsmAuth {
@@ -122,6 +129,7 @@ impl HsmAuth {
             queue: ResponseQueue::new(),
             challenge: None,
             pending: None,
+            unsettled: None,
         }
     }
 
@@ -133,10 +141,22 @@ impl HsmAuth {
         self.drop_pending();
     }
 
-    /// Abandon a CALCULATE waiting for touch; its keys are wiped (`PendingTouch::drop`)
-    /// and nothing is persisted, so the password tries stay as they were.
+    /// Abandon a CALCULATE waiting for touch. Its keys are wiped (`PendingTouch::drop`),
+    /// and the try it spent is remembered so it can be put back (see `unsettled`).
     fn drop_pending(&mut self) {
-        self.pending = None;
+        if let Some(mut pending) = self.pending.take()
+            && let Some(restore) = pending.restore.take()
+        {
+            self.unsettled = Some(restore);
+        }
+    }
+
+    /// Put back the try of an abandoned touch-required CALCULATE. If the store fails,
+    /// the try stays spent (the conservative side) and nothing else changes.
+    fn settle(&mut self, host: &mut dyn Host) {
+        if let Some((label, before)) = self.unsettled.take() {
+            let _ = self.restore_tries(&label, before, host);
+        }
     }
 
     /// Persist `next` and make it current; on failure keep the current state (`6581`).
@@ -171,22 +191,24 @@ impl HsmAuth {
     /// ... Once the management key is blocked, the application must be reset ...
     /// Supplying the correct management key before the management key is blocked will
     /// reset the retry counter to 8").
+    ///
+    /// The try is spent and persisted *before* the comparison, and given back only after
+    /// a match. If the store fails, the answer is `6581` whatever the key was, so a
+    /// failing store can never become an unlimited guessing oracle.
     fn verify_management_key(&mut self, presented: &[u8; MANAGEMENT_KEY_LEN], host: &mut dyn Host) -> Result<(), u16> {
         if self.state.management_retries == 0 {
             return Err(sw::retries(0));
         }
-        let mut next = self.state.clone();
+        let mut spent = self.state.clone();
+        spent.management_retries -= 1;
+        self.commit(spent, host)?;
         if ct_eq(presented, &self.state.management_key) {
-            if next.management_retries != RETRIES {
-                next.management_retries = RETRIES;
-                self.commit(next, host)?;
-            }
+            let mut restored = self.state.clone();
+            restored.management_retries = RETRIES;
+            self.commit(restored, host)?;
             return Ok(());
         }
-        next.management_retries = next.management_retries.saturating_sub(1);
-        let left = next.management_retries;
-        self.commit(next, host)?;
-        Err(sw::retries(left))
+        Err(sw::retries(self.state.management_retries))
     }
 
     /// Check a credential password.
@@ -196,48 +218,64 @@ impl HsmAuth {
     /// (YESDK YubiHSM Auth overview: "a limit of 8 retries, after which the credential
     /// will be permanently deleted"; `reference/BEHAVIOR_CATALOG.md` YubiHSMAuth).
     ///
-    /// A correct password answers `Ok(true)` when the tries must go back to eight
-    /// (YESDK `GetAes128SessionKeysCommand`: "Supplying the correct password before the
-    /// credential is deleted will reset the retry counter to 8"). Nothing is persisted
-    /// for it here: the caller commits it with [`Self::restore_tries`] before it
-    /// reveals anything, or after the touch for a touch-required CALCULATE.
+    /// The try is spent and persisted *before* the comparison (`6581`, revealing
+    /// nothing, if the store fails), so a failing store cannot become a guessing oracle.
+    /// A correct password answers `Ok(tries before this attempt)`. The caller then gives
+    /// the tries back with [`Self::restore_tries`]: to eight (YESDK
+    /// `GetAes128SessionKeysCommand`: "Supplying the correct password before the
+    /// credential is deleted will reset the retry counter to 8"), or to the previous
+    /// count when a touch-required CALCULATE is not touched ("the credential password
+    /// retry count is not changed"). A session reset while waiting for that touch keeps
+    /// the try spent: the conservative side.
     fn check_password(
         &mut self,
         index: usize,
         presented: &[u8; CREDENTIAL_PASSWORD_LEN],
         host: &mut dyn Host,
-    ) -> Result<bool, u16> {
+    ) -> Result<u8, u16> {
         let cred = self.credential(index)?;
-        let correct = ct_eq(presented, &cred.password);
-        let tries = cred.retries;
-        if correct {
-            return Ok(tries != RETRIES);
-        }
         let label = cred.label.clone();
-        let left = tries.saturating_sub(1);
-        let mut next = self.state.clone();
-        if left == 0 {
-            next.credentials.retain(|c| c.label != label);
-        } else if let Some(c) = next.credentials.get_mut(index) {
-            c.retries = left;
+        let tries = cred.retries;
+        if tries == 0 {
+            // Left at zero by an interrupted deletion: finish it.
+            self.delete_blocked(&label, host)?;
+            return Err(sw::retries(0));
         }
-        self.commit(next, host)?;
+        let mut spent = self.state.clone();
+        if let Some(c) = spent.credentials.get_mut(index) {
+            c.retries = tries - 1;
+        }
+        self.commit(spent, host)?;
+        if ct_eq(presented, &self.credential(index)?.password) {
+            return Ok(tries);
+        }
+        let left = tries - 1;
         if left == 0 {
-            self.forget_challenge(&label);
+            self.delete_blocked(&label, host)?;
         }
         Err(sw::retries(left))
     }
 
-    /// Give the credential named `label` its eight password tries back, persisted
+    /// Delete a credential whose password tries are exhausted, with its outstanding
+    /// ephemeral key.
+    fn delete_blocked(&mut self, label: &[u8], host: &mut dyn Host) -> Result<(), u16> {
+        let mut next = self.state.clone();
+        next.credentials.retain(|c| c.label != label);
+        self.commit(next, host)?;
+        self.forget_challenge(label);
+        Ok(())
+    }
+
+    /// Set the password tries of the credential named `label` to `tries`, persisted
     /// (`6581` on storage failure). `6985` if the credential no longer exists.
-    fn restore_tries(&mut self, label: &[u8], host: &mut dyn Host) -> Result<(), u16> {
+    fn restore_tries(&mut self, label: &[u8], tries: u8, host: &mut dyn Host) -> Result<(), u16> {
         let index = self.state.find(label).ok_or(sw::CONDITIONS)?;
-        if self.credential(index)?.retries == RETRIES {
+        if self.credential(index)?.retries == tries {
             return Ok(());
         }
         let mut next = self.state.clone();
         if let Some(c) = next.credentials.get_mut(index) {
-            c.retries = RETRIES;
+            c.retries = tries;
         }
         self.commit(next, host)
     }
@@ -408,27 +446,23 @@ impl HsmAuth {
             return Err(sw::INCORRECT_DATA);
         }
         let challenge = if asymmetric { self.challenge.take() } else { None };
-        let restore = self.check_password(index, &password, host)?;
+        let before = self.check_password(index, &password, host)?;
         let touch = self.credential(index)?.touch;
         let derived = self.session_keys(index, label, context, card_public, card_response, challenge);
         let mut keys = match derived {
             Ok(keys) => keys,
             Err(code) => {
-                if restore {
-                    self.restore_tries(label, host)?;
-                }
+                self.restore_tries(label, RETRIES, host)?;
                 return Err(code);
             }
         };
-        let mut pending = PendingTouch { keys: keys.to_vec(), restore: restore.then(|| label.to_vec()) };
+        let mut pending = PendingTouch { keys: keys.to_vec(), restore: Some((label.to_vec(), before)) };
         wipe(&mut keys);
         if touch {
             return Ok(Reply::AfterTouch(pending));
         }
-        if restore {
-            // `pending` (and its copy of the keys) is wiped on drop if this fails.
-            self.restore_tries(label, host)?;
-        }
+        // `pending` (and its copy of the keys) is wiped on drop if this fails.
+        self.restore_tries(label, RETRIES, host)?;
         Ok(Reply::Data(core::mem::take(&mut pending.keys)))
     }
 
@@ -497,10 +531,9 @@ impl HsmAuth {
         let password = fields.optional_fixed::<CREDENTIAL_PASSWORD_LEN>(tag::CREDENTIAL_PASSWORD)?;
         let index = self.state.find(label).ok_or(sw::FILE_NOT_FOUND)?;
         self.challenge = None;
-        if let Some(password) = password
-            && self.check_password(index, &password, host)?
-        {
-            self.restore_tries(label, host)?;
+        if let Some(password) = password {
+            self.check_password(index, &password, host)?;
+            self.restore_tries(label, RETRIES, host)?;
         }
         let asymmetric = matches!(self.credential(index)?.key, Key::EcP256 { .. });
         if asymmetric {
@@ -613,8 +646,9 @@ impl CardApplet for HsmAuth {
 
     fn process(&mut self, apdu: &[u8], host: &mut dyn Host) -> Outcome<Vec<u8>> {
         // Model decision: a command arriving while a CALCULATE waits for touch abandons
-        // that CALCULATE.
+        // that CALCULATE; its spent try is put back first.
         self.drop_pending();
+        self.settle(host);
         let cmd = match Command::parse(apdu) {
             Ok(cmd) => cmd,
             Err(err) => {
@@ -663,15 +697,18 @@ impl CardApplet for HsmAuth {
     ///   `6985` (model decision).
     fn touch_resolved(&mut self, touched: bool, host: &mut dyn Host) -> Vec<u8> {
         let Some(pending) = self.pending.take() else {
+            self.settle(host);
             return status(if touched { sw::CONDITIONS } else { sw::SECURITY_STATUS });
         };
+        if let Some((label, before)) = &pending.restore {
+            // Touched: back to eight. Not touched: back to the count before this attempt.
+            let tries = if touched { RETRIES } else { *before };
+            if let Err(code) = self.restore_tries(label, tries, host) {
+                return status(code);
+            }
+        }
         if !touched {
             return status(sw::SECURITY_STATUS);
-        }
-        if let Some(label) = &pending.restore
-            && let Err(code) = self.restore_tries(label, host)
-        {
-            return status(code);
         }
         response(&pending.keys, sw::OK)
     }

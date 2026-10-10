@@ -349,6 +349,44 @@ The frozen crates' sources are the authority; these are the points other crates 
 - **lk-oath**: the factory salt (device id) is persisted only at the first mutating command.
   Until then it changes per power cycle. This is a known gap for the final review.
 
+## Applications B and orchestrator changes (binding)
+
+- **Retry counters (all applications)**: spend the try and persist it *before* comparing the
+  presented secret. Restore it after a match. A failed save answers the storage-failure
+  status whatever the secret was, so a failing store is never a guessing oracle.
+  lk-openpgp, lk-piv, lk-fido and lk-hsmauth follow this (lk-hsmauth fixed in response to
+  a security review). A correct VERIFY therefore costs two saves.
+- **Unknown persisted fields**: crates may preserve them (lk-piv, lk-fido) or skip them
+  (lk-hsmauth). Either is allowed; loading must never fail because of them.
+- **Constructors may persist**, for example when lk-piv creates its own F9 attestation
+  material in `new()`.
+- **APDU conventions**:
+  - Applets serve at most Ne bytes, using `61xx` with GET RESPONSE (or their own continuation
+    command) for the rest.
+  - Data-less forms `CLA INS P1 P2 00` (T=0) and `CLA INS P1 P2 00 00 00` (extended) are
+    accepted where an explicit Le is otherwise rejected.
+  - Applets answer `6882` for secure-messaging CLA bits and `6E00` for CLA >= `0x80`.
+    lk-device must deliver unwrapped commands with those bits cleared.
+- **lk-device duties raised by the applets**:
+  - A SELECT of the already selected AID goes to `select()` without `deselect()`. SP 800-73-4
+    §3.1.1 keeps the PIV security status.
+  - `OpenPgp::select()` answers `6285` while terminated. Treat `62xx` as a successful
+    selection and keep routing to it.
+  - Reassemble ISO-chained secure-messaging commands before `SecureChannel::unwrap_command`.
+  - Touch timeouts: OATH, PIV, OpenPGP and HSM Auth use 15000 ms; FIDO uses 30000 ms.
+- **lk-core additions**:
+  - `DeviceProfile` has `attestation_organization`, `attestation_country`, `atr` and
+    `openpgp_manufacturer`. lk-fido and lk-openpgp should use them instead of constants or
+    manufacturer-string inference (final review).
+  - `Host::unix_time() -> Option<u64>` (default `None`) for certificate validity. lk-device
+    exposes a way for the program to set it.
+- **Known gaps for the final phase**:
+  - lk-crypto lacks P-521, secp256k1 and brainpoolP256r1/P384r1 (crates `p521`, `k256`,
+    `bp256`, `bp384` exist; no `bp512`). This leaves 20 OpenPGP algorithm variants
+    unusable.
+  - No incremental hasher, which caps the OpenPGP KDF.
+  - Secrets in lk-fido are not zeroized.
+
 ## Contract change requests
 
 Phase 0 requests are resolved in the section above.

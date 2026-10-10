@@ -253,6 +253,7 @@ fn deselect_and_reset_clear_volatile_state() {
 fn reset_requires_dead_p1p2_and_rejects_data_or_le() {
     let mut card = Card::new();
     assert_eq!(card.put_symmetric("keep", [1; 16], [2; 16], pw("p")), sw::OK);
+    let saves_after_put = card.host.persist_count();
     let rejected: [(&[u8], u16); 7] = [
         (&[0x00, 0x06, 0x00, 0x00], sw::INCORRECT_P1P2),
         (&[0x00, 0x06, 0xDE, 0xAE], sw::INCORRECT_P1P2),
@@ -266,7 +267,7 @@ fn reset_requires_dead_p1p2_and_rejects_data_or_le() {
         assert_eq!(card.send_raw(apdu).1, expected, "{apdu:02x?}");
     }
     assert_eq!(card.labels(), vec![b"keep".to_vec()]);
-    assert_eq!(card.host.persist_count(), 1);
+    assert_eq!(card.host.persist_count(), saves_after_put, "rejected RESETs store nothing");
 }
 
 /// Catalog `hsmauth_reset_apdu_shape`: the normal SDK form `00 06 DE AD` and the
@@ -576,16 +577,17 @@ fn touch_card_with_tries(tries: u8) -> Card {
 /// YESDK `GetAes128SessionKeysResponse` / `GetEccP256SessionKeysResponse`: "If this proof
 /// of user presence fails, the Status will be set to RetryWithTouch [6982], and the
 /// credential password retry count is not changed." With five tries left and the right
-/// password, a declined touch leaves five (in memory and in the record) and writes
-/// nothing. Before the review fix the count was reset to 8 before the touch request.
+/// password, a declined touch leaves five (in memory and in the record). The try is
+/// spent before the comparison (security review: no guessing oracle on a failing store)
+/// and put back when the touch is declined or abandoned.
 #[test]
 fn declined_touch_leaves_password_tries_unchanged() {
     let mut card = touch_card_with_tries(5);
-    let attempts = card.host.persist_attempts();
     assert!(matches!(card.raw(&sym_calc("t", pw("right"))), Outcome::NeedTouch { .. }));
-    assert_eq!(card.host.persist_attempts(), attempts, "nothing written before the touch");
+    // (Querying LIST here would abandon the pending CALCULATE, so check the record.)
+    let mut peek = Card::with_host(card.host.clone());
+    assert_eq!(peek.retries_of("t"), Some(4), "the try is spent while the touch is pending");
     assert_eq!(card.app.touch_resolved(false, &mut card.host), hex("6982"));
-    assert_eq!(card.host.persist_attempts(), attempts, "nothing written for a declined touch");
     assert_eq!(card.retries_of("t"), Some(5));
     // Abandoned by another command instead of declined: also unchanged.
     assert!(matches!(card.raw(&sym_calc("t", pw("right"))), Outcome::NeedTouch { .. }));
@@ -607,11 +609,10 @@ fn touch_completion_restores_tries_before_keys() {
     assert_eq!(keys[..16], sp800_108_cmac(&[1; 16], constant::S_ENC, &[0x33; 16], 128)[..]);
     let mut card = card.restart();
     assert_eq!(card.retries_of("t"), Some(8), "persisted before the keys");
-    // With all tries left nothing needs storing on touch.
-    let attempts = card.host.persist_attempts();
+    // With all tries left the count is spent and given back: still eight.
     assert!(matches!(card.raw(&sym_calc("t", pw("right"))), Outcome::NeedTouch { .. }));
     assert_eq!(split(&card.app.touch_resolved(true, &mut card.host)).1, sw::OK);
-    assert_eq!(card.host.persist_attempts(), attempts);
+    assert_eq!(card.retries_of("t"), Some(8));
 }
 
 /// `docs/CONTRACTS.md`: on a failed persist keep the previous state and answer `6581`.
@@ -622,7 +623,8 @@ fn storage_failure_after_touch_reveals_no_keys() {
     assert!(matches!(card.raw(&sym_calc("t", pw("right"))), Outcome::NeedTouch { .. }));
     card.host.fail_next_saves(1);
     assert_eq!(card.app.touch_resolved(true, &mut card.host), hex("6581"));
-    assert_eq!(card.retries_of("t"), Some(5));
+    // The try spent before the comparison stays spent when it cannot be given back.
+    assert_eq!(card.retries_of("t"), Some(4));
     // Nothing remains pending; the next attempt works normally.
     assert_eq!(split(&card.app.touch_resolved(true, &mut card.host)).1, sw::CONDITIONS);
     assert!(matches!(card.raw(&sym_calc("t", pw("right"))), Outcome::NeedTouch { .. }));

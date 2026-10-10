@@ -125,10 +125,12 @@ fn delete_unknown_label_is_file_not_found() {
 fn duplicate_label_is_rejected_with_6983() {
     let mut card = Card::new();
     assert_eq!(card.put_symmetric("dup", [1; 16], [2; 16], pw("p")), sw::OK);
-    let before = card.host.persist_count();
+    // The management key check spends and restores a try (two saves), so compare the
+    // stored content rather than the number of saves.
+    let before = card.host.persisted(Record::HsmAuth);
     assert_eq!(card.put_symmetric("dup", [5; 16], [6; 16], pw("q")), sw::AUTH_BLOCKED);
     assert_eq!(card.put(&Put::asymmetric("dup", None, pw("q"))), sw::AUTH_BLOCKED);
-    assert_eq!(card.host.persist_count(), before, "nothing stored");
+    assert_eq!(card.host.persisted(Record::HsmAuth), before, "stored state unchanged");
     assert_eq!(card.list().len(), 1);
     // The original credential is intact.
     let context = [0u8; 16];
@@ -502,6 +504,7 @@ fn label_rules_count_utf8_bytes_and_compare_exactly() {
 fn label_rules_apply_to_every_command() {
     let mut card = Card::new();
     assert_eq!(card.put_symmetric("s", [1; 16], [2; 16], pw("p")), sw::OK);
+    let saves_after_put = card.host.persist_count();
     let bad_labels: [Vec<u8>; 3] = [vec![], vec![b'L'; 65], vec![0xFF]];
     for label in &bad_labels {
         let mut d = tlv(tag::MANAGEMENT_KEY, &[0xEE; 16]); // wrong key: must not be checked
@@ -518,7 +521,7 @@ fn label_rules_apply_to_every_command() {
     }
     assert_eq!(card.management_retries(), 8);
     assert_eq!(card.retries_of("s"), Some(8));
-    assert_eq!(card.host.persist_count(), 1, "only the first PUT was stored");
+    assert_eq!(card.host.persist_count(), saves_after_put, "no save after the first PUT");
 }
 
 /// Malformed BER-TLV in the data field (ISO/IEC 7816-4 §5.2.2; `lk_codec::tlv` errors:
@@ -610,4 +613,39 @@ fn blocked_management_key_writes_nothing() {
     assert_eq!(card.host.persist_attempts(), attempts);
     // Syntax is still checked first.
     assert_eq!(card.put_management_key(&DEFAULT_KEY, &[1; 15]), sw::INCORRECT_DATA);
+}
+
+/// Security review: with the store failing, a guess must answer 6581 whether it is right
+/// or wrong, and must not be retried for free. Before the fix a correct management key
+/// at full tries succeeded without saving while wrong keys failed to save, so a failing
+/// store let a client test keys without ever losing a try.
+#[test]
+fn failing_store_is_not_a_guessing_oracle() {
+    let mut card = Card::new();
+    assert_eq!(card.put_symmetric("s", [1; 16], [2; 16], pw("p")), sw::OK);
+    card.host.fail_all(true);
+    // Management key: right and wrong both give 6581.
+    assert_eq!(card.delete(&DEFAULT_KEY, "s"), sw::MEMORY_FAILURE);
+    assert_eq!(card.delete(&[0xEE; 16], "s"), sw::MEMORY_FAILURE);
+    // Credential password: right and wrong both give 6581.
+    let context = [0u8; 16];
+    let right = card.cmd(ins::CALCULATE, &calculate_data("s", &context, None, None, &pw("p"))).1;
+    let wrong = card.cmd(ins::CALCULATE, &calculate_data("s", &context, None, None, &pw("x"))).1;
+    assert_eq!((right, wrong), (sw::MEMORY_FAILURE, sw::MEMORY_FAILURE));
+    card.host.fail_all(false);
+    assert_eq!(card.management_retries(), 8);
+    assert_eq!(card.retries_of("s"), Some(8));
+}
+
+/// Spend-first accounting: a wrong password costs exactly one try and a right one gives
+/// all tries back.
+#[test]
+fn password_tries_are_spent_before_comparison() {
+    let mut card = Card::new();
+    assert_eq!(card.put_symmetric("s", [1; 16], [2; 16], pw("p")), sw::OK);
+    let context = [0u8; 16];
+    assert_eq!(card.cmd(ins::CALCULATE, &calculate_data("s", &context, None, None, &pw("x"))).1, sw::retries(7));
+    assert_eq!(card.retries_of("s"), Some(7));
+    assert_eq!(card.cmd(ins::CALCULATE, &calculate_data("s", &context, None, None, &pw("p"))).1, sw::OK);
+    assert_eq!(card.retries_of("s"), Some(8));
 }

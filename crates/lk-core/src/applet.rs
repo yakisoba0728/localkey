@@ -13,6 +13,12 @@ pub trait Host: Entropy {
     /// The device identity.
     fn profile(&self) -> &DeviceProfile;
 
+    /// Wall-clock time as seconds since the Unix epoch, if the program supplied one.
+    /// Only certificate validity checks use it; protocol timing uses [`Host::now`].
+    fn unix_time(&self) -> Option<u64> {
+        None
+    }
+
     /// Seal and durably store an application's serialized state.
     ///
     /// The application must call this **before** it reports success for a mutating

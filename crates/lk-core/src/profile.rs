@@ -117,8 +117,16 @@ pub struct DeviceProfile {
     pub aaguid: [u8; 16],
     pub supported_usb: Capabilities,
     pub default_enabled_usb: Capabilities,
-    /// Common name used in this device's own attestation certificates.
+    /// Subject fields of this device's own attestation certificates.
     pub attestation_common_name: String,
+    pub attestation_organization: String,
+    /// ISO 3166 country code; `"ZZ"` (user-assigned) for the own identity.
+    pub attestation_country: String,
+    /// CCID answer-to-reset (ISO/IEC 7816-3 §8), including TCK.
+    pub atr: Vec<u8>,
+    /// OpenPGP card manufacturer ID in the AID (spec 3.4.1 §4.2.1; `0006` Yubico,
+    /// `FF00..=FFFE` test cards).
+    pub openpgp_manufacturer: u16,
     /// Validity of generated certificates as X.509 GeneralizedTime (`YYYYMMDDHHMMSSZ`).
     pub cert_not_before: String,
     pub cert_not_after: String,
@@ -150,6 +158,14 @@ impl DeviceProfile {
             supported_usb: Capabilities::ALL,
             default_enabled_usb: Capabilities::ALL,
             attestation_common_name: "localkey software authenticator".into(),
+            attestation_organization: "localkey".into(),
+            attestation_country: "ZZ".into(),
+            // Same interface bytes as the reference ATR; historical bytes carry "localkey".
+            atr: vec![
+                0x3B, 0xFE, 0x13, 0x00, 0x00, 0x81, 0x31, 0xFE, 0x15, 0x80, 0x73, 0xC0, 0x21, 0xC0, 0x58, 0x6C,
+                0x6F, 0x63, 0x61, 0x6C, 0x6B, 0x65, 0x79, 0x26,
+            ],
+            openpgp_manufacturer: 0xFF00,
             cert_not_before: "20260101000000Z".into(),
             cert_not_after: "99991231235959Z".into(),
         }
@@ -171,6 +187,11 @@ impl DeviceProfile {
             },
             manufacturer: "Yubico".into(),
             product: "YubiKey".into(),
+            atr: vec![
+                0x3B, 0xFD, 0x13, 0x00, 0x00, 0x81, 0x31, 0xFE, 0x15, 0x80, 0x73, 0xC0, 0x21, 0xC0, 0x57, 0x59,
+                0x75, 0x62, 0x69, 0x4B, 0x65, 0x79, 0x40,
+            ],
+            openpgp_manufacturer: 0x0006,
             aaguid: [
                 0xff, 0x4d, 0xac, 0x45, 0xed, 0xe8, 0x4e, 0xc2, 0xac, 0xed, 0xcf, 0x66, 0x10, 0x3f, 0x43, 0x35,
             ],
@@ -185,5 +206,33 @@ impl DeviceProfile {
             .filter_map(|(on, name)| on.then_some(name))
             .collect();
         format!("{} {}", self.product, parts.join("+"))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::DeviceProfile;
+
+    /// ISO/IEC 7816-3 §8.2.5: TCK makes the XOR of T0..TCK zero.
+    fn tck_ok(atr: &[u8]) -> bool {
+        atr.len() > 2 && atr[1..].iter().fold(0u8, |acc, b| acc ^ b) == 0
+    }
+
+    #[test]
+    fn atrs_have_valid_check_bytes() {
+        assert!(tck_ok(&DeviceProfile::own(1).atr));
+        assert!(tck_ok(&DeviceProfile::yubikey_5c_nano_5_7_4(1).atr));
+    }
+
+    /// The compatibility ATR is the published YubiKey 5 ATR.
+    #[test]
+    fn yubikey_atr_bytes() {
+        assert_eq!(
+            DeviceProfile::yubikey_5c_nano_5_7_4(1).atr,
+            [
+                0x3B, 0xFD, 0x13, 0x00, 0x00, 0x81, 0x31, 0xFE, 0x15, 0x80, 0x73, 0xC0, 0x21, 0xC0, 0x57, 0x59, 0x75,
+                0x62, 0x69, 0x4B, 0x65, 0x79, 0x40
+            ]
+        );
     }
 }
