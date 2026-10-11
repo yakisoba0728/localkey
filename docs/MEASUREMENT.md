@@ -100,8 +100,7 @@ transaction open ends with an INIT on its own channel (`probes.py` `resync`), an
 - Challenge-response timeout byte (DeviceInfo `07`): `0F` (15 s).
 - FIDO: PIN set, 8 PIN retries, one discoverable credential stored
   (`remainingDiscoverableCredentials` 99).
-- PIV: factory state (default PIN, PUK and AES-192 management key, 3 of 3 retries, no keys
-  in 9A, 9C, 9D, 9E).
+- PIV: no keys in 9A, 9C, 9D, 9E; PIN and PUK retry counters full (3 of 3).
 - OpenPGP: no user keys; PW1 and PW3 have 3 tries left.
 - Security Domain: factory SCP03 key set and SCP11b key (key information `E0` is the same
   on both targets).

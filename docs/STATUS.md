@@ -166,13 +166,19 @@ transports and vpcd were then run on a real kernel with real host tools.
 All program crates are std only, without `unsafe`, like the engine. `tools/service/` holds
 a systemd unit and a udev rule as examples.
 
-### Verification (2026-10-11)
+### Verification (2026-10-12, after the measurement alignment)
 
-- macOS: `cargo test --workspace` **2350 passed, 0 failed, 1 ignored** (the lk-fido long
+- macOS: `cargo test --workspace` **2369 passed, 0 failed, 1 ignored** (the lk-fido long
   repeat test). `cargo clippy --workspace --all-targets`: no warnings.
   `tools/license_check.py` (78 third-party crates, all through lk-crypto) and
-  `tools/catalog_status.py --check` (451 lines: 378 tested, 31 intentional differences,
+  `tools/catalog_status.py --check` (451 lines: 374 tested, 35 intentional differences,
   42 deferred): clean.
+- Linux (Docker, offline, `--network none`): **2370 passed, 0 failed, 1 ignored**; clippy clean.
+- Guest scenarios re-run after the alignment (`uhid.sh`, `gadget.sh`, `vpcd.sh`): all PASS.
+
+### Verification (2026-10-11)
+
+- macOS: `cargo test --workspace` **2350 passed, 0 failed, 1 ignored**.
 - Linux (Docker, offline, `--network none`): **2351 passed, 0 failed, 1 ignored** (Linux
   runs the real `/proc` peer-check tests and skips the macOS-only refusal tests); clippy
   clean. Linux runs found two defects, both fixed: a control connection reset by unread
