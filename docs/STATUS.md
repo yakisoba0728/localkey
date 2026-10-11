@@ -1,9 +1,11 @@
 # Implementation status
 
 Updated 2026-10-11. Every engine phase of `docs/DESIGN.md` §10 is done. The program phase
-(`docs/DESIGN.md` §13, contract in `docs/PROGRAM.md`) has a working daemon with three
+(`docs/DESIGN.md` §13, contract in `docs/PROGRAM.md`) has a working daemon with four
 transports; see "Program phase" below. The engine sections describe the state at the final
-engine integration (2026-10-10), plus the one engine change the program phase made.
+engine integration (2026-10-10), plus the engine changes the program phase made (OTP HID
+reboot timing, complete zeroization, the SCP11 device check; `docs/CONTRACTS.md` "Program
+phase changes to the engine").
 
 What "done" means here: behaviour is tested against the public specifications, published
 test vectors and the public bytes read from a real key (`reference/yubikey-5c-nano-5.7.4/`).
@@ -88,16 +90,11 @@ Behaviour the engine does not have:
 - **Security Domain**: the GP role policy identifiers, the `BF20` element and the critical
   subject-ID extension are not in the available sources. A certificate carrying them is
   refused as having an unknown critical extension.
-- **Security Domain check not written at device level** (deferred in `docs/catalog/sd.md`):
-  an SCP11 PSO followed by PIV commands. SCP03-wrapped PIV signing is tested, and so is
-  the revocation of PIV and OATH authorization when a channel ends (plaintext command,
-  malformed plaintext SELECT, encrypted SELECT).
-- **Zeroization is partial** (DESIGN §8):
-  - lk-fido, lk-piv and the OpenPGP S2K use `lk_crypto::SecretBytes`;
-  - lk-hsmauth, lk-sd, lk-device and the OpenPGP key material wipe their own buffers in
-    `Drop`;
-  - lk-oath (credential and access keys), lk-otp (slot secrets, access codes), lk-mgmt
-    (lock code) and lk-codec's APDU buffers are not wiped.
+- **Zeroization** (DESIGN §8, completed in the program phase): every engine crate wipes
+  the secrets it holds. Left: copies that leave a crate (`lk_otp::Ticket` is `Copy`,
+  keyboard reports, `Management::to_record`, bytes lk-codec hands to callers), lk-codec's
+  best-effort wipe (no `zeroize` there), the program transports' own buffers, and
+  compiler copies of fixed-size values.
 - **Management flags**: touch-eject, remote-wakeup and auto-eject are stored and reported,
   but nothing acts on them.
 
@@ -143,34 +140,40 @@ it upstream (RustCrypto/signatures) is still to do.
 
 ## Program phase
 
-Commits 31dd38b … cda6265 (2026-10-11). Each crate was implemented against
+Commits 31dd38b … (2026-10-11), in three steps: the program core, the Linux transports, and
+PC/SC through vpcd with transport combinations. Each crate was implemented against
 `docs/PROGRAM.md`, reviewed adversarially by an independent agent and fixed; the Linux
-transports were then run on a real kernel.
+transports and vpcd were then run on a real kernel with real host tools.
 
 | Crate | Role | Tests |
 | --- | --- | ---: |
 | `lk-host` | state directory (0700, process lock, atomic per-record saves), OS entropy, storage key file or user command, serial | 51 |
-| `lk-run` | runner thread that owns the `Device`: clock, deadlines, taps, suspend queue, presence watchers | 28 |
-| `lk-wire` | private Unix-socket transport (framed `Input`/`Output`) and the line control socket | 91 |
+| `lk-run` | runner thread that owns the `Device` (clock, deadlines, taps, suspend queue, presence watchers); `Fanout` | 34 |
+| `lk-wire` | private Unix-socket transport (framed `Input`/`Output`) and the line control socket (incl. `shutdown`) | 99 |
 | `lk-uhid` | Linux FIDO HID and OTP HID through `/dev/uhid` | 72 |
 | `lk-gadget` | Linux ConfigFS + FunctionFS composite USB gadget (OTP, FIDO, CCID) | 156 |
-| `localkeyd` | the daemon: `keygen`, `run --transport wire|uhid|gadget`, `ctl` | 59 |
+| `lk-vpcd` | CCID as a card in pcscd's vsmartcard `vpcd` reader | 101 |
+| `localkeyd` | the daemon: `keygen`, `run --transport wire\|uhid\|gadget\|vpcd\|uhid,vpcd`, `ctl` | 79 |
 
-All program crates are std only, without `unsafe`, like the engine.
+All program crates are std only, without `unsafe`, like the engine. `tools/service/` holds
+a systemd unit and a udev rule as examples.
 
 ### Verification (2026-10-11)
 
-- macOS: `cargo test --workspace` **2164 passed, 0 failed, 1 ignored** (the lk-fido long
-  repeat test); lk-device now has 213 tests. `cargo clippy --workspace --all-targets`: no
-  warnings. `tools/license_check.py` and `tools/catalog_status.py --check`: clean.
-- Linux (Docker `rust:1.98-slim` + clippy, offline, `--network none`): **2163 passed, 0
-  failed, 1 ignored**; the missing one is the macOS-only test that `uhid`/`gadget` are
-  refused off Linux. clippy: no warnings. The Linux run found one defect (a control
-  connection reset by unread input, fixed in 0dfdebd).
+- macOS: `cargo test --workspace` **2321 passed, 0 failed, 1 ignored** (the lk-fido long
+  repeat test). `cargo clippy --workspace --all-targets`: no warnings.
+  `tools/license_check.py` (78 third-party crates, all through lk-crypto) and
+  `tools/catalog_status.py --check` (451 lines: 378 tested, 31 intentional differences,
+  42 deferred): clean.
+- Linux (Docker, offline, `--network none`): **2320 passed, 0 failed, 1 ignored** (the
+  missing one is the macOS-only test that `uhid`/`gadget` are refused off Linux); clippy
+  clean. Linux runs found two defects, both fixed: a control connection reset by unread
+  input (0dfdebd) and a too-tight timing bound in an lk-vpcd test.
 - Real kernel: `tools/linux-guest/` builds an Ubuntu 26.04 arm64 guest (its own 7.0.0-38
   kernel plus `dummy_hcd` built from the matching source) that runs under QEMU with no NIC
   inside a `--network none` container. Results, all PASS:
-  - `smoke.sh`: modules, `dummy_udc.0`, both transports enumerate and tear down cleanly.
+  - `smoke.sh`: modules, `dummy_udc.0`, vpcd driver, both USB transports enumerate and tear
+    down cleanly.
   - `uhid.sh`: report descriptors byte-equal; libfido2 (`fido2-token`, `fido2-cred`,
     `fido2-assert` with a PIN); python-fido2 2.0.0 make/get with attestation verified; ykman
     info, OTP challenge-response (HMAC matches), static password typed as
@@ -182,11 +185,19 @@ All program crates are std only, without `unsafe`, like the engine.
     CCID messages both ways (zero-length packet confirmed); suspend, resume, port reset and
     `authorized` 0/1; re-enumeration over CCID, OTP HID and FIDO HID; `kill -9` and the
     leftover-gadget reclaim.
+  - `vpcd.sh`: `--transport vpcd` with pcscd and vsmartcard-vpcd 3.3: ATR, ykman info, OATH
+    with touch, PIV keys and certificates (a 2907-byte certificate round trip, a 4007-byte
+    extended APDU), OpenPGP, `gpg --card-status`, a touch-policy-ALWAYS signature completed
+    by `ctl tap`, `ctl shutdown`; `--transport uhid,vpcd` as the whole device (libfido2 and
+    ykman over all three connections, CCID disabled and re-enabled, `ykman config mode` plus
+    `ctl power-cycle`, `kill -9` and restart); `systemd-analyze verify` and `udevadm verify`
+    of the service examples.
 - Defects the real tools found, all fixed with macOS regression tests: three in lk-uhid
-  (replies and outputs lost at re-enumeration, the kernel failing a reply followed at once
-  by DESTROY), three in lk-gadget (the same losses before unbind, a SUSPEND of the ending
-  session reaching the rebooted device), and one in the engine (an OTP HID `REBOOT` now
-  waits for the host's status read, `OTP_REBOOT_DELAY_MS`, a new unmeasured model policy).
+  and three in lk-gadget (replies and outputs lost at re-enumeration, the kernel failing a
+  reply followed at once by DESTROY, a SUSPEND of the ending session reaching the rebooted
+  device), one in lk-vpcd (pcscd missed the card removal on an immediate re-plug; now a
+  1.5 s pause), and one in the engine (an OTP HID `REBOOT` now waits for the host's status
+  read, `OTP_REBOOT_DELAY_MS`, a new unmeasured model policy).
 
 ### Known gaps of the program
 
@@ -194,16 +205,24 @@ All program crates are std only, without `unsafe`, like the engine.
   endpoint addresses are the controller's, `iSerialNumber` is 3 with an empty string, and
   `bcdUSB`/DEVICE_QUALIFIER/BOS follow the controller. Other controllers (dwc2, dwc3, musb,
   chipidea) are untested.
-- **uhid**: CCID is not available (UHID is HID only). The OTP hidraw node needs a udev
-  rule for desktop users (`docs/PROGRAM.md`). A device whose HID driver was unbound by
-  someone else leaks one reader thread per re-enumeration (needs `poll`).
-- **No PC/SC IFD handler**: CCID reaches a host only through the gadget.
-- **macOS has only the wire transport**: virtual HID/USB needs Apple entitlements.
+- **uhid**: HID only (CCID comes from `vpcd` or the gadget). The OTP hidraw node needs a
+  udev rule for desktop users (`tools/service/70-localkey.rules`). A device whose HID
+  driver was unbound by someone else leaks one reader thread per re-enumeration (needs
+  `poll`).
+- **vpcd**: ykman needs the reader renamed to contain "Yubico YubiKey" (vpcd's
+  `FRIENDLYNAME`); vpcd itself listens on every IPv4 interface; a `ctl power-cycle` without
+  an interface change leaves the card in the reader; pcscd's `--auto-exit` drops the card
+  between clients; vpcd on macOS is untested.
+- **macOS**: only `wire` runs here (and `vpcd` if the user installs vpcd); virtual HID/USB
+  needs Apple entitlements and signing. A PC/SC driver of our own would need a C ABI and
+  therefore `unsafe`.
 - **Keychain**: not integrated; `--key-command` lets the user connect one (`security
   find-generic-password -w ...`, `secret-tool`, `pass`).
-- No signal handling (std cannot catch signals without `unsafe`): the daemon runs until
-  killed, or until stdin closes with `--exit-on-stdin-eof`. Every save is atomic, so a kill
-  loses nothing acknowledged; a killed gadget is reclaimed at the next start.
+- No signal handling (std cannot catch signals without `unsafe`): the daemon stops on
+  `ctl shutdown`, on stdin EOF with `--exit-on-stdin-eof`, or when killed. Every save is
+  atomic, so a kill loses nothing acknowledged; a killed gadget is reclaimed at the next
+  start.
+- The program transports do not wipe their own APDU/CTAP buffers.
 - The guest image pins Ubuntu's kernel 7.0.0-38; it must be bumped when Ubuntu supersedes it.
 
 ## What is still open
@@ -211,7 +230,7 @@ All program crates are std only, without `unsafe`, like the engine.
 - **Measurement**: a command-by-command comparison with a physical key, only with the
   user's explicit permission (DESIGN §13). It is the only way to turn the model policies
   above into measured behaviour.
-- **PC/SC IFD handler** and **macOS transports** (see "Known gaps of the program").
+- **macOS transports** (see "Known gaps of the program").
 - `Device` is `!Send`; `lk-run` builds it on its own thread, so nothing needs it to be
   `Send` now.
 - **Decisions to revisit before any public release** (DESIGN §12 records the current

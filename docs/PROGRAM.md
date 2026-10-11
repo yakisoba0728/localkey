@@ -15,7 +15,9 @@ In scope:
 - `lk-wire`: a private Unix-socket transport and the control socket;
 - `localkeyd`: the daemon binary;
 - as a second step, Linux transports: `lk-uhid` (UHID) and `lk-gadget` (FunctionFS/ConfigFS
-  composite gadget).
+  composite gadget);
+- as a third step, `lk-vpcd` (PC/SC through vsmartcard's `vpcd`), transport combinations,
+  the control `shutdown` and service examples.
 
 Out of scope until the user widens the safety boundary:
 
@@ -261,13 +263,16 @@ localkeyd keygen (--key-file PATH | --print)
 localkeyd run --state DIR (--key-file PATH | --key-command CMD) [TRANSPORT]
               [--profile own|yubikey-5c-nano-5.7.4] [--control PATH]
               [--wall-clock] [--allow-unreadable] [--exit-on-stdin-eof] [-v | -vv]
-localkeyd ctl --control PATH (tap [long] | down | up | power-cycle | status | watch)
+localkeyd ctl --control PATH (tap [long] | down | up | power-cycle | status | watch
+                              | shutdown)
 
 TRANSPORT (default wire):
   [--transport wire] [--wire PATH]
   --transport uhid [--uhid-path PATH]                      (Linux)
   --transport gadget --udc NAME [--gadget-name NAME]
                      [--configfs DIR] [--ffs-dir DIR]      (Linux, root)
+  --transport vpcd [--vpcd-addr HOST:PORT]                 (needs vsmartcard vpcd)
+  --transport uhid,vpcd [--uhid-path PATH] [--vpcd-addr HOST:PORT]   (Linux)
 ```
 
 - **as built**: transport defaults `--uhid-path /dev/uhid`, `--gadget-name localkey`,
@@ -626,3 +631,61 @@ protocol is taken from the project's documentation (cite it) and checked against
 key through `--key-command` or a root-only key file, `StateDirectory=`), a udev rule giving
 the logged-in user access to the OTP hidraw node, and a short README. They are checked for
 syntax only (`systemd-analyze verify` in the guest if available).
+
+## Third step as built (binding)
+
+Implemented, adversarially reviewed and fixed like the earlier steps, then run in the guest
+(`tools/linux-guest/tests/vpcd.sh`, every step PASS) against vsmartcard-vpcd 3.3 and
+pcsc-lite 2.4.1 with OpenSC, ykman, pyscard and GnuPG.
+
+- **vpcd protocol facts** (vsmartcard docs, confirmed on the real vpcd; details and
+  sources in `crates/lk-vpcd/src/lib.rs`): the card connects to vpcd over TCP; vpcd binds
+  `0.0.0.0:35963` and `:35964` (two readers, "Virtual PCD 00 00" and "00 01"), although its
+  README says localhost; every message is a 2-byte big-endian length plus payload (at most
+  0xFFFF); a 1-byte payload is a control command (off 0, on 1, reset 2, GET ATR 4; only GET
+  ATR is answered); anything longer is an APDU answered with the response APDU. vpcd has
+  no error message: an empty answer or a failed read makes it close the connection, so
+  every APDU gets a non-empty answer. Its presence check is a GET ATR about every 450 ms.
+- **lk-vpcd as built**:
+  - GET ATR is answered from the last power-on of the current connection and powers on
+    only when there is none yet (powering on at every poll would undo pcscd's idle
+    power-down). The slot is powered on before an APDU whenever it is not known to be
+    powered (after an error reply, vpcd's power off, a new connection).
+  - A dropped command (the runner answered the marker and 5 s, `REPLY_SILENCE`, passed
+    without a time extension) is answered `6F00`. Commands and responses longer than one
+    CCID message are chained (3062 data bytes for the engine); a response over 65535 bytes
+    gets `6F00`.
+  - Every enumeration with CCID is a re-plug: the reply that caused it is written, the
+    connection closed, and remade after `REPLUG_PAUSE` (1.5 s, longer than two of pcscd's
+    polls; without it pcscd never saw the removal after `ykman config usb`). Disabling CCID
+    disconnects after the same pause.
+  - A connection lost while a command waits (checked every `PEER_CHECK`, 200 ms, with a
+    non-consuming peek) aborts the command with the CCID abort pair; `bSeq` runs on across
+    connections. Connection attempts are 1 s apart; only the first failure of a streak is
+    reported. IPv4 is preferred; a non-loopback address is warned about once.
+- **lk-run `Fanout`**: `new`, `push`, `len`, `is_empty`, `From<Vec<_>>`, `Default`; the last
+  member gets the original output, the others clones. localkeyd orders `uhid` before `vpcd`,
+  so the uhid plug-in power cycle reaches the device before vpcd's first power-on.
+- **Control `shutdown`**: `ControlServer::bind_with_shutdown(path, runner, hook)`; `bind`
+  answers `error shutdown not available`. The reply is `ok`, then, once the daemon has shut
+  down, one last line: `stopped` (exit 0) or `error <reason>`. `ctl shutdown` exits 0 only
+  on `stopped` and gives up after 30 s.
+- **localkeyd**: the transport set is kept in a fixed order and startup failures name the
+  member. The daemon refuses to start (exit 2) when the chosen transports present none of
+  the device's enabled interfaces (for example `vpcd` with CCID disabled), and warns at the
+  default level when a later re-enumeration leaves nothing presented. `--vpcd-addr` is
+  resolved before the state directory is opened.
+- **Interop notes for users** (also in `tools/service/README.md`): ykman accepts a PC/SC
+  reader only if its name contains "Yubico YubiKey", so with the YubiKey profile set
+  `FRIENDLYNAME "Yubico YubiKey OTP+FIDO+CCID"` in vpcd's `/etc/reader.conf.d/vpcd`; vpcd's
+  empty second slot makes ykman print a harmless "Failed opening device"; with `uhid,vpcd`
+  and CCID disabled, ykman counts the reader (fixed name) and the HID devices as two keys,
+  so use `ykman --device SERIAL`. Any local user can connect a card to vpcd while localkeyd
+  is not connected (vpcd listens on every IPv4 interface).
+- **Service examples** (`tools/service/`): `systemd-analyze verify` and `udevadm verify`
+  pass on systemd 259; `systemd-analyze security` exposure 1.9. Examples only.
+- **Still open**: a `ctl power-cycle` without an interface change leaves the vpcd card in
+  the reader (the next APDU gets `6F00`, then the card is powered on again); pcscd's
+  `--auto-exit` (Debian packaging) drops the card between clients; vpcd on macOS with a
+  real pcscd is untested; the program transports' own APDU/CTAP buffers are not wiped.
+

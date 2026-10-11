@@ -11,7 +11,9 @@ below describes the as-built API. Sections were written in phase order; where a 
 section refines an earlier one, the later section wins. "Final integration (as built)"
 near the end lists the last additions: the new curves, `Hasher` and `SecretBytes`, the
 complete `lk-device` API and the remaining known gaps. Public APIs grow only by
-addition; nothing that another crate uses has been renamed or removed.
+addition; nothing that another crate uses has been renamed or removed. One exception was
+made in the program phase for zeroization: `lk_codec::apdu::Command` now implements `Drop`
+(see "Program phase changes to the engine").
 
 ## Rules for every crate
 
@@ -562,18 +564,46 @@ additions; existing callers compile unchanged.
     `management::a_power_cycle_before_the_status_read_takes_the_owed_reboot_over`.
 - **Remaining known gaps** (also in `docs/STATUS.md`):
   - brainpoolP512r1 (4 OpenPGP variants, 5 deferred catalog lines).
-  - Zeroization is partial (DESIGN §8):
-    - lk-fido, lk-piv and lk-openpgp's S2K hold their secrets in `SecretBytes`.
-    - lk-hsmauth, lk-sd, lk-device and lk-openpgp's key material wipe their own
-      buffers in `Drop`, as a best effort.
-    - lk-oath (credential and access keys), lk-otp (slot secrets and access codes) and
-      lk-mgmt (lock code) keep plain buffers.
-    - lk-codec's `Command`, `CommandChain` and `ResponseQueue`, which carry PINs and key
-      material, are not wiped.
-    - Copies the compiler makes of fixed-size values returned by lk-crypto cannot be
-      wiped without `zeroize`, which only lk-crypto may use.
+  - Zeroization (DESIGN §8; completed in the program phase, see below): every engine
+    crate now wipes the secrets it holds. What is left: copies that leave a crate (an
+    `lk_otp::Ticket` is `Copy`; finished keyboard reports leave through device outputs;
+    `Management::to_record` returns a plain copy; the bytes lk-codec hands to callers),
+    lk-codec's best-effort wipe, and compiler copies of fixed-size values.
   - Every status word, timing and cadence that no public source fixes is a model policy,
     recorded in the crate's catalog file and unmeasured against a physical 5.7.4.
+
+## Program phase changes to the engine (as built, binding)
+
+The program phase (`docs/PROGRAM.md`) changed the engine only where a real host tool or a
+known gap required it.
+
+- **lk-device, OTP HID reboot timing** (found with ykman on a real kernel): see
+  "Configuration changes apply at the next enumeration" above; `OTP_REBOOT_DELAY_MS`.
+- **lk-crypto**: `wipe(&mut [u8])` (zeroize's volatile wipe) and `wipe_vec(&mut Vec<u8>)`
+  (zeroes the whole allocation, capacity included, and leaves the `Vec` empty with its
+  capacity kept).
+- **lk-codec `apdu`** (zeroization):
+  - `Command` wipes its data on drop. This is the one change that is not an addition:
+    moving `cmd.data` out is now error E0509, and `..Default::default()` construction no
+    longer compiles. `Command::into_data(self) -> Vec<u8>` hands the data over without a
+    copy. Its `Debug` shows `data_len` instead of bytes.
+  - `CommandChain` wipes on completion, clear, error and drop, and wipes the old buffer
+    when it grows. `ResponseQueue` wipes when replaced, cleared, fully served or dropped.
+    Both have a redacted `Debug`.
+  - lk-codec does not depend on lk-crypto; its wipe is zero stores kept alive with
+    `std::hint::black_box`, the same best effort as lk-sd and lk-hsmauth.
+- **lk-oath**: credential keys, the access key, the saved record, HMAC outputs and the
+  VALIDATE / SET CODE proofs are `SecretBytes`; records and code answers are allocated at
+  their final size so they never reallocate.
+- **lk-otp**: `SlotConfig` wipes `fixed`, `uid`, `key` and the access code on drop (all its
+  fields are `Copy`, so callers compile unchanged); the record is `SecretBytes`; encrypted
+  tickets, HID buffers, pending challenges and keyboard report buffers (allocated at full
+  size) are wiped. `Ticket` and `Reply` have a `Debug` without the private ID or data.
+- **lk-mgmt**: the lock code is wiped on drop; the record is saved from `SecretBytes`.
+- **Security Domain device check**: `crates/lk-device/tests/secure_channel_scp11.rs` runs
+  SCP11a and SCP11c with PIV behind the channel (protected PSO valid, failed and complete,
+  MUTUAL AUTHENTICATE handover, wrapped signatures verified, plaintext ending the channel
+  and the PIV PIN). The last deferred SD device line is tested.
 
 ## Contract change requests
 

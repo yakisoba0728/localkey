@@ -221,12 +221,14 @@ API 초안은 `crates/lk-core/src/lib.rs`와 `crates/lk-device/src/lib.rs`에 �
   공지가 있지만, 에뮬레이터 용도로는 받아들일 수 있는 위험으로 보고 기록해 둔다. 3DES는 `des`를 쓴다.
 - 비밀 값 비교는 `subtle`의 상수 시간 비교, 비밀 버퍼는 `zeroize`로 처리한다.
   - **as built**: 다른 크레이트는 `zeroize`를 직접 쓸 수 없으므로 `lk_crypto::SecretBytes`(drop 시 0으로
-    지움)에 비밀을 담는다. 이 지우기는 부분적이다.
-    - `lk-fido`, `lk-piv`, OpenPGP S2K는 `SecretBytes`를 쓴다.
-    - `lk-hsmauth`, `lk-sd`, `lk-device`, OpenPGP 키 재료는 `Drop`에서 자체적으로 지운다(최선 노력).
-    - `lk-oath`, `lk-otp`, `lk-mgmt`의 비밀과 `lk-codec`의 APDU 버퍼는 아직 지우지 않는다.
-
-    목록은 `docs/STATUS.md`에 있다.
+    지움)나 `lk_crypto::wipe`/`wipe_vec`로 비밀을 지운다.
+    - `lk-fido`, `lk-piv`, `lk-oath`, OpenPGP S2K는 `SecretBytes`를 쓴다.
+    - `lk-hsmauth`, `lk-sd`, `lk-device`, `lk-otp`, `lk-mgmt`, OpenPGP 키 재료는 `Drop`에서 지운다.
+    - `lk-codec`의 `Command`, `CommandChain`, `ResponseQueue`는 다 쓰거나 버릴 때 지운다. `lk-codec`은
+      `lk-crypto`에 의존하지 않으므로 `black_box`로 지키는 0 쓰기를 쓴다(최선 노력).
+    - 남은 것: 크레이트 밖으로 나간 복사본(`lk_otp::Ticket`은 `Copy`, 키보드 리포트, `Management::to_record`,
+      `lk-codec`이 호출자에게 넘긴 바이트), 프로그램 전송 계층의 버퍼, 컴파일러가 만드는 고정 크기 값의
+      복사본. 목록은 `docs/STATUS.md`에 있다.
 
 ## 9. 장치 정체성 프로필
 
@@ -291,7 +293,8 @@ VID/PID, 제품 문자열, AAGUID, 펌웨어 버전, 시리얼, 증명서 체인
    않는다(`docs/PROGRAM.md`).
    - **결과 (2026-10-11)**: 게스트 커널은 Ubuntu 26.04의 7.0.0-38이고, 배포판 커널에 없는 `dummy_hcd`만
      같은 소스 패키지에서 빌드했다. 도구 버전은 libfido2 1.16.0, python-fido2 2.0.0, ykman 5.8.0,
-     pcsc-lite 2.4.1, OpenSC 0.27.0rc1, GnuPG 2.4.8이다. 실제 도구가 결함 7개를 찾았고(`lk-uhid` 3,
+     pcsc-lite 2.4.1, OpenSC 0.27.0rc1, GnuPG 2.4.8, vsmartcard-vpcd 3.3, pyscard이다. 게스트는 NIC이 없고
+     루프백만 켠다(vpcd가 127.0.0.1로 연결을 받는다). 실제 도구가 결함 7개를 찾았고(`lk-uhid` 3,
      `lk-gadget` 3, 엔진 1) 모두 고쳤다. 엔진 변경은 하나로, ykman이 OTP HID로 `config usb`를 실패로
      보고한 것을 근거로 OTP HID 재부팅 시점을 상태 읽기 뒤로 옮겼다(§5).
 
@@ -302,11 +305,14 @@ VID/PID, 제품 문자열, AAGUID, 펌웨어 버전, 시리얼, 증명서 체인
 - **완료 (2026-10-11)**:
   - 데몬 `localkeyd`: 상태 디렉터리, 저장 키 파일 또는 사용자 명령, 실행 루프, 제어 소켓.
   - 전송: 비공개 유닉스 소켓(`wire`), Linux UHID(`uhid`), Linux FunctionFS/ConfigFS 복합 USB
-    장치(`gadget`).
-  - Linux 전송 둘은 네트워크 없는 QEMU 게스트에서 실제 호스트 도구로 검증했다(§12 결정 7).
+    장치(`gadget`), vsmartcard `vpcd`를 통한 PC/SC(`vpcd`). `uhid,vpcd` 조합은 USB 장치 컨트롤러 없이
+    장치 전체를 노출한다.
+  - 제어 소켓의 `shutdown`(서비스 관리자용 깨끗한 종료), systemd 유닛과 udev 규칙 예시(`tools/service/`).
+  - Linux 전송과 vpcd는 네트워크 없는 QEMU 게스트에서 실제 호스트 도구로 검증했다(§12 결정 7).
 - **남은 것**:
-  - PC/SC IFD 드라이버: CCID는 지금 `gadget` 전송으로만 호스트에 닿는다.
-  - macOS: IOHIDUserDevice, IOUSBHost. Apple의 제한된 권한과 서명이 필요하다.
+  - 자체 PC/SC IFD 드라이버: `vpcd`(vsmartcard)를 거치지 않는 드라이버는 C ABI라 `unsafe`가 필요하다.
+  - macOS: IOHIDUserDevice, IOUSBHost. Apple의 제한된 권한과 서명이 필요하다. macOS에서 vpcd 경로는
+    시험하지 않았다.
   - 키체인 직접 연동: 지금은 `--key-command`로 사용자가 연결한다.
-  - 터치 UI, 설치 패키지, 서비스 등록.
+  - 터치 UI, 설치 패키지.
   - 실물 키와의 명령 단위 차분 비교. 실물을 쓰는 시험은 사용자의 명시적 허가가 있을 때만 한다.
