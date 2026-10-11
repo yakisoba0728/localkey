@@ -14,6 +14,7 @@
 
 #![allow(dead_code)]
 
+use std::collections::VecDeque;
 use std::fmt;
 use std::io::{self, Read, Write};
 use std::net::{Shutdown, SocketAddr, TcpListener, TcpStream};
@@ -25,7 +26,10 @@ use std::time::{Duration, Instant};
 use lk_core::UsbInterfaces;
 use lk_device::{FIDO_REPORT_DESCRIPTOR, OTP_REPORT_DESCRIPTOR, Output, UsbIdentity};
 use lk_run::{Command, HostInput, Status, Transport};
-use lk_vpcd::{Connector, Observer, TcpConnector, VpcdNotice, VpcdStats, VpcdTransport};
+use lk_vpcd::{
+    Connector, Observer, PeerCheck, PeerRefusal, PeerVerdict, RemoteRefused, TcpConnector, VpcdConfig, VpcdNotice,
+    VpcdStats, VpcdTransport,
+};
 
 /// How long a test waits for something that must happen. Generous, for loaded machines.
 pub const WAIT: Duration = Duration::from_secs(10);
@@ -299,6 +303,11 @@ impl Conn {
         false
     }
 
+    /// The card's address (the transport's end of the connection).
+    pub fn peer_addr(&self) -> SocketAddr {
+        self.stream.peer_addr().expect("a connected socket")
+    }
+
     /// Close vpcd's side (vpcd ejected the card or stopped).
     pub fn close(self) {
         let _ = self.stream.shutdown(Shutdown::Both);
@@ -403,6 +412,15 @@ pub struct Counting {
     reported: Option<SocketAddr>,
 }
 
+impl Counting {
+    /// A connector to `addr` that names `reported` (if any) instead, and the receiver of
+    /// its attempt times.
+    pub fn new(addr: SocketAddr, reported: Option<SocketAddr>) -> (Counting, Receiver<Instant>) {
+        let (attempts, receiver) = mpsc::channel();
+        (Counting { inner: TcpConnector::new(addr), attempts, reported }, receiver)
+    }
+}
+
 impl Connector for Counting {
     fn connect(&mut self) -> io::Result<TcpStream> {
         let _ = self.attempts.send(Instant::now());
@@ -411,6 +429,46 @@ impl Connector for Counting {
 
     fn addr(&self) -> SocketAddr {
         self.reported.unwrap_or_else(|| self.inner.addr())
+    }
+}
+
+/// A scripted [`PeerCheck`]: it records every connection's addresses and answers the
+/// connections in turn from its script (`true` allows the peer as uid [`Scripted::UID`],
+/// `false` refuses it as owned by [`Scripted::OTHER`]), then `Unchecked` once the script
+/// is used up.
+#[derive(Debug, Default)]
+pub struct Scripted {
+    script: Mutex<VecDeque<bool>>,
+    seen: Mutex<Vec<(SocketAddr, SocketAddr)>>,
+}
+
+impl Scripted {
+    /// The uid an allowed peer is reported with.
+    pub const UID: u32 = 4242;
+    /// The uid a refused peer is reported with.
+    pub const OTHER: u32 = 1001;
+
+    pub fn new(script: &[bool]) -> Arc<Scripted> {
+        Arc::new(Scripted { script: Mutex::new(script.iter().copied().collect()), seen: Mutex::default() })
+    }
+
+    /// The (local, peer) addresses of every connection checked so far.
+    pub fn seen(&self) -> Vec<(SocketAddr, SocketAddr)> {
+        self.seen.lock().unwrap_or_else(PoisonError::into_inner).clone()
+    }
+}
+
+impl PeerCheck for Scripted {
+    fn check(&self, local: SocketAddr, peer: SocketAddr) -> PeerVerdict {
+        self.seen.lock().unwrap_or_else(PoisonError::into_inner).push((local, peer));
+        match self.script.lock().unwrap_or_else(PoisonError::into_inner).pop_front() {
+            Some(true) => PeerVerdict::Allowed { uid: Scripted::UID },
+            Some(false) => PeerVerdict::Refused(PeerRefusal::NotAllowed {
+                uid: Scripted::OTHER,
+                allowed: vec![Scripted::UID],
+            }),
+            None => PeerVerdict::Unchecked { reason: "the script is used up".to_owned() },
+        }
     }
 }
 
@@ -431,19 +489,34 @@ impl fmt::Debug for Harness {
 }
 
 impl Harness {
-    /// A transport that connects to `addr`, in a fake runner, not enumerated yet.
+    /// A transport that connects to `addr`, in a fake runner, not enumerated yet, with the
+    /// default configuration (on Linux the real peer check, which allows the fake vpcd: it
+    /// runs as this process's user).
     pub fn new(addr: SocketAddr) -> Harness {
-        Harness::with_connector(addr, None)
+        Harness::with_connector(addr, None, VpcdConfig::default()).expect("a loopback address")
     }
 
-    /// A transport that connects to `addr` but is told its address is `reported`.
+    /// A transport that connects to `addr` but is told its address is `reported`, a remote
+    /// address it is allowed to use.
     pub fn disguised(addr: SocketAddr, reported: SocketAddr) -> Harness {
-        Harness::with_connector(addr, Some(reported))
+        let config = VpcdConfig { allow_remote: true, ..VpcdConfig::default() };
+        Harness::with_connector(addr, Some(reported), config).expect("a remote address allowed")
     }
 
-    fn with_connector(addr: SocketAddr, reported: Option<SocketAddr>) -> Harness {
-        let (attempt_sender, attempts) = mpsc::channel();
-        let connector = Counting { inner: TcpConnector::new(addr), attempts: attempt_sender, reported };
+    /// A transport that connects to `addr` and asks `check` about every connection.
+    pub fn with_peer_check(addr: SocketAddr, check: Arc<dyn PeerCheck>) -> Harness {
+        let config = VpcdConfig { peer_check: check, ..VpcdConfig::default() };
+        Harness::with_connector(addr, None, config).expect("a loopback address")
+    }
+
+    /// A transport that connects to `addr`, is told its address is `reported`, and is made
+    /// with `config` (its observer replaced by the harness's own).
+    pub fn with_connector(
+        addr: SocketAddr,
+        reported: Option<SocketAddr>,
+        config: VpcdConfig,
+    ) -> Result<Harness, RemoteRefused> {
+        let (connector, attempts) = Counting::new(addr, reported);
         let (notice_sender, notices) = mpsc::channel();
         let seen = Arc::new(Mutex::new(Vec::new()));
         let log = Arc::clone(&seen);
@@ -452,7 +525,8 @@ impl Harness {
             let _ = notice_sender.send(notice.clone());
         });
         let (command_sender, commands) = mpsc::channel::<Command>();
-        let transport = VpcdTransport::with_observer(Box::new(connector), command_sender, Some(observer));
+        let config = VpcdConfig { observer: Some(observer), ..config };
+        let transport = VpcdTransport::with_config(Box::new(connector), command_sender, config)?;
         let (ops, op_receiver) = mpsc::channel();
         let forward = ops.clone();
         thread::spawn(move || {
@@ -464,7 +538,7 @@ impl Harness {
         });
         let (input_sender, inputs) = mpsc::channel();
         let runner = thread::spawn(move || run(transport, &op_receiver, &input_sender));
-        Harness { ops, inputs, notices, attempts, seen, runner: Some(runner) }
+        Ok(Harness { ops, inputs, notices, attempts, seen, runner: Some(runner) })
     }
 
     /// A harness enumerated with CCID, its connection accepted by `vpcd`.

@@ -63,6 +63,23 @@ the unit and for its commented credential variant, `udevadm verify` for the rule
   traffic to loopback only (`IPAddressAllow=localhost`; vpcd is on `127.0.0.1:35963`),
   Unix and IP sockets only, `@system-service` system calls, and the usual `Protect*=` and
   `Restrict*=` settings. `systemd-analyze security localkeyd-uhid-vpcd` shows what is left.
+  `ProtectProc=invisible` hides other users' processes only: `/proc/net/tcp`, which the
+  vpcd peer check reads, stays readable. Do not add `ProcSubset=pid`, which hides
+  `/proc/net`; every vpcd peer would then be refused.
+- The vpcd peer check: before the card talks to whatever accepted its connection, localkeyd
+  looks up the owner of vpcd's end of the connection in `/proc/net/tcp` and closes the
+  connection unused unless that uid is allowed. By default root, the local user `pcscd`
+  (looked up in `/etc/passwd`) and the daemon's own user (root here) are. Ubuntu 26.04's
+  pcscd 2.4.1-1 runs pcscd, and vpcd inside it, as the user `pcscd` (its
+  `pcscd.service` has `User=pcscd` and `PrivateUsers=identity`; the user is a locked
+  sysusers account, `u! pcscd`, so its uid differs between machines: 990 in the test
+  guest, `tools/linux-guest/tests/vpcd.sh` step 1), which the default covers without a
+  number in the unit. Where pcscd runs as some other user of its own, add
+  `--vpcd-peer-uid 0,UID` with that user's uid to `ExecStart=` (it replaces the default
+  set). A refused peer is logged once (`vpcd: the peer on 127.0.0.1:35963 is owned by uid
+  ..., not an allowed uid (0, 990); refusing the connection, retrying every second`), and
+  the daemon keeps trying every second, so the card enters the reader as soon as the real
+  vpcd listens.
 
 ### `70-localkey.rules`
 
@@ -158,9 +175,17 @@ rule, `systemctl daemon-reload`, `udevadm control --reload`. The state in
   `lk-vpcd`), and any program that connects becomes the card in its reader. Block those
   ports from the network (firewall). On a shared machine any local user can connect while
   localkeyd's connection is down (pcscd restarting) and present a card of their own.
-- **APDUs are not encrypted** between localkeyd and vpcd. Keep `--vpcd-addr` on loopback
-  (the default, and what `IPAddressAllow=localhost` enforces); localkeyd logs a warning for
-  any other address.
+- **Nothing authenticates vpcd to localkeyd either.** 35963 is not a privileged port:
+  while vpcd does not listen (pcscd stopped, restarting, or exited with `--auto-exit`),
+  any local user can, and whoever accepts localkeyd's connection drives the card (PIN
+  retry counters, OATH codes without an access key). localkeyd checks the owner of the
+  listening end on Linux (see the unit's description above) and refuses anything not
+  owned by an allowed uid; keep the default set, or name pcscd's uid exactly with
+  `--vpcd-peer-uid`. On other systems (macOS has no `/proc`) no such check exists.
+- **APDUs are not encrypted** between localkeyd and vpcd, and a remote peer cannot be
+  checked. localkeyd refuses to start with a `--vpcd-addr` that is not a loopback address
+  (exit 2) unless `--vpcd-allow-remote` is given, and then logs a warning;
+  `IPAddressAllow=localhost` blocks other addresses in the unit anyway. Keep the default.
 - **The storage key** is the only thing that protects the state at rest. Keep the file
   root-only (`localkeyd` refuses a key file that grants group or other access) or use the
   encrypted credential; never pass `--allow-unreadable` in a unit.

@@ -19,7 +19,8 @@
 //! any system other than Linux (`docs/PROGRAM.md` "Linux transports": both compile and
 //! are tested everywhere, but `localkeyd` refuses to start them elsewhere), on Linux the
 //! gadget configuration is checked as far as reading the file system can
-//! ([`gadget_config`]), and `--vpcd-addr` is resolved.
+//! ([`gadget_config`]), and `--vpcd-addr` is resolved and checked against the loopback
+//! rule ([`vpcd_plan`]).
 //!
 //! The daemon then runs until the runner stops, until a control client sends `shutdown`,
 //! or with `--exit-on-stdin-eof` until stdin reaches EOF. There is no signal handling (std
@@ -57,7 +58,19 @@
 //!     not resolve exits 2 before the state directory is touched). Nothing is opened
 //!     before the runner enumerates; then the transport connects, and retries every
 //!     second while vpcd does not listen, which is not a failure: pcscd (and with it
-//!     vpcd) may start later. A non-loopback address is logged as a warning.
+//!     vpcd) may start later.
+//!   - vpcd's link has no authentication, so ([`vpcd_plan`], `lk_vpcd::VpcdConfig`): an
+//!     address that does not resolve to a loopback address is refused before step 1 (exit
+//!     2) unless `--vpcd-allow-remote` is given, and then logged as a warning at the
+//!     default level; and every connection's peer goes through the peer check before a
+//!     byte is exchanged: on Linux the owner of vpcd's end of the connection, from
+//!     `/proc/net/tcp` (`lk_vpcd::ProcNetPeerCheck`), must be root, the local user `pcscd`
+//!     (the packaged pcscd's own user on Ubuntu 26.04) or the daemon's real uid, or one of
+//!     `--vpcd-peer-uid`, which replaces that set. A refused peer's connection is
+//!     closed unused, said once per series at the default level, and retried every
+//!     second. On other systems nothing is checked (macOS has no `/proc`; `-v` says so
+//!     once), and `--vpcd-peer-uid` is refused there (exit 2), as it is with a remote
+//!     address, whose owner no `/proc` of this machine shows.
 //!   - `uhid,vpcd` (`docs/PROGRAM.md` "Transport combinations"): both transports, in that
 //!     order, in an [`lk_run::Fanout`]; the `serving:` line names both.
 //!   - The refusal on a system other than Linux uses `cfg!(target_os = "linux")` at run
@@ -110,8 +123,9 @@
 //!   `-vv`; connections, enumerations, device lifecycle, binds, bus events and refused
 //!   host reports at `-v`; failures and the removal of a leftover gadget always. vpcd
 //!   ([`vpcd_observer`]): messages by kind and size at `-vv`; enumerations, the card
-//!   inserted and removed and ignored messages at `-v`; a non-loopback address, the first
-//!   failed connection of a series, APDUs answered `6F00` and failures always. The
+//!   inserted and removed, the peer's owner allowed or not checked, and ignored messages
+//!   at `-v`; an allowed non-loopback address, the first failed connection of a series,
+//!   the first refused peer of a series, APDUs answered `6F00` and failures always. The
 //!   `serving:` line names the transports; an enumeration after which the set presents
 //!   nothing is a default-level warning (see "Nothing presented").
 //! - The wire and control sockets must be two files: the second bind would replace the
@@ -125,9 +139,10 @@
 //!   another system, the socket paths, the lock, the state directory, the key, the
 //!   identity file, OS randomness, opening the device on the runner thread (a panic in
 //!   `Device::open`, or no thread), socket placement, a gadget configuration
-//!   `lk_gadget` refuses, a `--vpcd-addr` that does not resolve, a set that presents none
-//!   of the device's enabled interfaces, and a failure of the first enumeration of any
-//!   member of the set. Exit code 1
+//!   `lk_gadget` refuses, a `--vpcd-addr` that does not resolve, or resolves to a remote
+//!   address without `--vpcd-allow-remote`, `--vpcd-peer-uid` where it cannot be applied,
+//!   a set that presents none of the device's enabled interfaces, and a failure of the
+//!   first enumeration of any member of the set. Exit code 1
 //!   is a failure while serving: the runner could not be attached or stopped during that
 //!   enumeration, or it stopped on its own (a panic in the device or the entropy source).
 //! - Logging never blocks (see `log`); every way out of [`run`] waits at most
@@ -176,12 +191,12 @@ use lk_host::{FileStore, HostError, OsEntropy, key_from_command, load_or_create_
 use lk_gadget::{GadgetConfig, GadgetEvent, GadgetIo, GadgetTransport, KernelIo};
 use lk_run::{Command, Fanout, Runner, RunnerConfig, Transport};
 use lk_uhid::{DevUhid, UhidIo, UhidNotice, UhidTransport};
-use lk_vpcd::{TcpConnector, VpcdNotice, VpcdTransport};
+use lk_vpcd::{Connector, PeerCheck, ProcNetPeerCheck, TcpConnector, VpcdConfig, VpcdNotice, VpcdTransport};
 use lk_wire::{ControlServer, ShutdownHook, ShutdownRequest, WireEvent, WireTransport};
 
 use crate::args::{
     CONTROL_SOCKET, GadgetOptions, KeySource, Profile, RunOptions, TransportKind, TransportOptions, Transports,
-    WIRE_SOCKET,
+    VpcdOptions, WIRE_SOCKET,
 };
 use crate::log::{self, FLUSH_LIMIT, Log};
 use crate::{EXIT_RUNTIME, EXIT_STARTUP, EXIT_UNREADABLE};
@@ -231,24 +246,43 @@ enum Member {
     Uhid(PathBuf),
     /// The gadget configuration, through `lk_gadget::GadgetConfig::precheck`.
     Gadget(GadgetConfig),
-    /// `--vpcd-addr`, resolved.
-    Vpcd(SocketAddr),
+    /// The vpcd options, the address resolved and checked ([`vpcd_plan`]).
+    Vpcd(VpcdPlan),
 }
 
-/// What `serve` takes from the system besides the options: whether it is Linux, and how
-/// the Linux transports open the kernel's files (`docs/PROGRAM.md` "Linux transports": the
-/// I/O traits). [`Platform::host`] is the real one; tests pass fakes, so they can run the
-/// uhid and gadget paths of `serve` on any system without opening a device.
+/// The vpcd member of a plan: what [`vpcd_plan`] made of `args::VpcdOptions`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct VpcdPlan {
+    /// `--vpcd-addr`, resolved; a loopback address unless `allow_remote`.
+    addr: SocketAddr,
+    /// `--vpcd-allow-remote`.
+    allow_remote: bool,
+    /// `--vpcd-peer-uid`; `None` for the default check.
+    peer_uids: Option<Vec<u32>>,
+}
+
+/// What `serve` takes from the system besides the options: whether it is Linux, how the
+/// Linux transports open the kernel's files (`docs/PROGRAM.md` "Linux transports": the
+/// I/O traits), and how the vpcd transport connects and checks its peer.
+/// [`Platform::host`] is the real one; tests pass fakes, so they can run the uhid and
+/// gadget paths of `serve` on any system without opening a device, and the vpcd path
+/// with a connector that names a remote address but dials a fake vpcd on loopback.
 struct Platform {
     linux: bool,
     uhid: OpenUhid,
     gadget: OpenGadget,
+    vpcd: OpenVpcd,
+    peer_check: MakePeerCheck,
 }
 
 /// Makes the [`UhidIo`] for a `--uhid-path`.
 type OpenUhid = Box<dyn Fn(&Path) -> Box<dyn UhidIo>>;
 /// Makes the [`GadgetIo`] of the gadget transport.
 type OpenGadget = Box<dyn Fn() -> Box<dyn GadgetIo>>;
+/// Makes the vpcd transport's [`Connector`] for the resolved `--vpcd-addr`.
+type OpenVpcd = Box<dyn Fn(SocketAddr) -> Box<dyn Connector>>;
+/// Makes the vpcd transport's [`PeerCheck`] for `--vpcd-peer-uid` (`None`: not given).
+type MakePeerCheck = Box<dyn Fn(Option<&[u32]>) -> Arc<dyn PeerCheck>>;
 
 impl std::fmt::Debug for Platform {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -257,13 +291,27 @@ impl std::fmt::Debug for Platform {
 }
 
 impl Platform {
-    /// This system: `cfg!(target_os = "linux")`, `lk_uhid::DevUhid`, `lk_gadget::KernelIo`.
+    /// This system: `cfg!(target_os = "linux")`, `lk_uhid::DevUhid`, `lk_gadget::KernelIo`,
+    /// `lk_vpcd::TcpConnector`, [`peer_check`].
     fn host() -> Platform {
         Platform {
             linux: cfg!(target_os = "linux"),
             uhid: Box::new(|path| Box::new(DevUhid::new(path))),
             gadget: Box::new(|| Box::new(KernelIo)),
+            vpcd: Box::new(|addr| Box::new(TcpConnector::new(addr))),
+            peer_check: Box::new(peer_check),
         }
+    }
+}
+
+/// The vpcd peer check: `lk_vpcd::ProcNetPeerCheck` with exactly the `--vpcd-peer-uid`
+/// set when it is given (only on Linux, [`vpcd_plan`]), else `lk_vpcd::default_peer_check`
+/// (on Linux root, the local user `pcscd` and this process's real uid; elsewhere no
+/// check).
+fn peer_check(uids: Option<&[u32]>) -> Arc<dyn PeerCheck> {
+    match uids {
+        Some(uids) => Arc::new(ProcNetPeerCheck::new(uids.iter().copied())),
+        None => lk_vpcd::default_peer_check(),
     }
 }
 
@@ -592,7 +640,8 @@ fn nothing_presented(enabled: UsbInterfaces, kinds: &[TransportKind]) -> Option<
 ///
 /// - a set with `uhid` or `gadget` on a system other than Linux is refused;
 /// - the gadget configuration passes [`gadget_config`] (it reads the file system only);
-/// - `--vpcd-addr` resolves (`lk_vpcd::resolve`);
+/// - the vpcd options pass [`vpcd_plan`] (the address resolves to a loopback address, or
+///   a remote one is allowed);
 /// - the wire socket's path is settled ([`wire_socket`]).
 fn plan(transports: &Transports, state: &Path, platform: &Platform) -> Result<Vec<Member>, Failure> {
     let set = transports.name();
@@ -612,11 +661,39 @@ fn plan(transports: &Transports, state: &Path, platform: &Platform) -> Result<Ve
             TransportOptions::Wire { socket } => Ok(Member::Wire(wire_socket(socket.as_deref(), state))),
             TransportOptions::Uhid { path } => Ok(Member::Uhid(path.clone())),
             TransportOptions::Gadget(gadget) => gadget_config(gadget).map(Member::Gadget),
-            TransportOptions::Vpcd { addr } => lk_vpcd::resolve(addr)
-                .map(Member::Vpcd)
-                .map_err(|error| Failure::Startup(format!("--vpcd-addr {addr}: {error}"))),
+            TransportOptions::Vpcd(vpcd) => vpcd_plan(vpcd, platform).map(Member::Vpcd),
         })
         .collect()
+}
+
+/// The vpcd options checked before the state directory is opened: `--vpcd-addr` resolved
+/// (`lk_vpcd::resolve`) and held to the loopback rule (`lk_vpcd::check_addr`: refused
+/// unless `--vpcd-allow-remote`), and `--vpcd-peer-uid` only where it can be applied: on
+/// Linux (the owner is looked up in `/proc/net/tcp`) with a loopback address (a socket on
+/// another machine has no line there). A security option that silently did nothing would
+/// mislead, so both are startup failures.
+fn vpcd_plan(options: &VpcdOptions, platform: &Platform) -> Result<VpcdPlan, Failure> {
+    let VpcdOptions { addr: given, allow_remote, peer_uids } = options;
+    let addr = lk_vpcd::resolve(given).map_err(|error| Failure::Startup(format!("--vpcd-addr {given}: {error}")))?;
+    lk_vpcd::check_addr(addr, *allow_remote).map_err(|refused| {
+        Failure::Startup(format!("--vpcd-addr {given}: {refused}; pass --vpcd-allow-remote to use it anyway"))
+    })?;
+    if peer_uids.is_some() {
+        if !platform.linux {
+            return Err(Failure::Startup(format!(
+                "--vpcd-peer-uid: the owner of vpcd's socket is looked up in /proc/net/tcp, which only Linux has, \
+                 and this system is {}",
+                std::env::consts::OS
+            )));
+        }
+        if !lk_vpcd::is_loopback(&addr) {
+            return Err(Failure::Startup(format!(
+                "--vpcd-peer-uid: {addr} is not a loopback address, and the owner of a socket on another machine \
+                 cannot be looked up"
+            )));
+        }
+    }
+    Ok(VpcdPlan { addr, allow_remote: *allow_remote, peer_uids: peer_uids.clone() })
 }
 
 impl Member {
@@ -691,17 +768,32 @@ fn member_transport(
             let transport = gadget_transport(config, (platform.gadget)(), runner, log, check)?;
             Ok((Box::new(transport), description))
         }
-        Member::Vpcd(addr) => {
-            let vpcd = vpcd_transport(addr, runner, log, check);
-            Ok((Box::new(vpcd), format!("vpcd card for {addr}")))
+        Member::Vpcd(plan) => {
+            let description = format!("vpcd card for {}", plan.addr);
+            let vpcd = vpcd_transport(plan, runner, log, check, platform)?;
+            Ok((Box::new(vpcd), description))
         }
     }
 }
 
-/// The vpcd transport, connecting to `addr` (`docs/PROGRAM.md` "lk-vpcd").
-fn vpcd_transport(addr: SocketAddr, runner: &Runner, log: &Log, check: &Arc<StartupCheck>) -> VpcdTransport {
-    let observer = Some(vpcd_observer(log.clone(), Arc::clone(check)));
-    VpcdTransport::with_observer(Box::new(TcpConnector::new(addr)), runner.sender(), observer)
+/// The vpcd transport of `plan` (`docs/PROGRAM.md` "lk-vpcd"), connecting through the
+/// platform's connector and checking peers with the platform's peer check. The address
+/// rule holds here too (`VpcdTransport::with_config`); [`vpcd_plan`] has already applied
+/// it.
+fn vpcd_transport(
+    plan: VpcdPlan,
+    runner: &Runner,
+    log: &Log,
+    check: &Arc<StartupCheck>,
+    platform: &Platform,
+) -> Result<VpcdTransport, Failure> {
+    let config = VpcdConfig {
+        observer: Some(vpcd_observer(log.clone(), Arc::clone(check))),
+        allow_remote: plan.allow_remote,
+        peer_check: (platform.peer_check)(plan.peer_uids.as_deref()),
+    };
+    VpcdTransport::with_config((platform.vpcd)(plan.addr), runner.sender(), config)
+        .map_err(|refused| Failure::Startup(format!("vpcd: {refused}")))
 }
 
 /// The UHID transport over `io` (`DevUhid` at `--uhid-path`; a fake in tests).
@@ -970,20 +1062,25 @@ fn gadget_observer(log: Log, check: Arc<StartupCheck>) -> lk_gadget::Observer {
 }
 
 /// Log vpcd notices by level: messages from vpcd and answers by kind and size at `-vv`;
-/// enumerations, the card inserted and removed, and messages no card answers at `-v`; a
-/// non-loopback address (APDUs travel unencrypted), the first failed connection of a
-/// series (`lk_vpcd` reports one per series, then retries every second), APDUs answered
-/// with `6F00` and failures always (a failure of the first enumeration goes to `check`).
-/// No notice carries APDU or ATR bytes (`lk_vpcd::VpcdNotice`).
+/// enumerations, the card inserted and removed, the peer's owner allowed (with its uid)
+/// or not checked, and messages no card answers at `-v`; an allowed non-loopback address
+/// (APDUs travel unencrypted), the first failed connection of a series and the first
+/// refused peer of a series (`lk_vpcd` reports one per series, then retries every
+/// second), APDUs answered with `6F00` and failures always (a failure of the first
+/// enumeration goes to `check`). No notice carries APDU or ATR bytes
+/// (`lk_vpcd::VpcdNotice`).
 fn vpcd_observer(log: Log, check: Arc<StartupCheck>) -> lk_vpcd::Observer {
     Arc::new(move |notice: &VpcdNotice| match notice {
         VpcdNotice::Received { .. } | VpcdNotice::Sent { .. } => log.trace(notice),
         VpcdNotice::Enumerated { .. }
+        | VpcdNotice::PeerAllowed { .. }
+        | VpcdNotice::PeerUnchecked { .. }
         | VpcdNotice::Connected { .. }
         | VpcdNotice::Disconnected { .. }
         | VpcdNotice::Ignored { .. } => log.verbose(notice),
         VpcdNotice::Failed(reason) if check.keep(TransportKind::Vpcd, reason) => {}
         VpcdNotice::NotLoopback { .. }
+        | VpcdNotice::PeerRefused { .. }
         | VpcdNotice::Unreachable { .. }
         | VpcdNotice::ErrorResponse { .. }
         | VpcdNotice::Failed(_) => log.info(notice),
@@ -1124,10 +1221,16 @@ mod tests {
             VpcdNotice::Received { message: "APDU", size: 12 },
             VpcdNotice::Sent { message: "APDU", size: 2 },
             VpcdNotice::Enumerated { ccid: true },
+            VpcdNotice::PeerAllowed { addr, uid: 0 },
+            VpcdNotice::PeerUnchecked { addr, reason: "only Linux has /proc/net/tcp".into() },
             VpcdNotice::Connected { addr },
             VpcdNotice::Ignored { message: "empty message", size: 0 },
             VpcdNotice::Disconnected { reason: "vpcd closed the connection".into() },
             VpcdNotice::NotLoopback { addr: remote },
+            VpcdNotice::PeerRefused {
+                addr,
+                refusal: lk_vpcd::PeerRefusal::NotAllowed { uid: 1001, allowed: vec![0, 1000] },
+            },
             VpcdNotice::Unreachable { addr, reason: "connection refused".into() },
             VpcdNotice::ErrorResponse { reason: "the device dropped the command".into() },
             VpcdNotice::Failed("cannot start the connection thread".into()),
@@ -1139,7 +1242,7 @@ mod tests {
             }
         });
         let text = |notice: &VpcdNotice| notice.to_string();
-        assert_eq!(default, notices[6..].iter().map(text).collect::<Vec<_>>(), "warnings and failures always");
+        assert_eq!(default, notices[8..].iter().map(text).collect::<Vec<_>>(), "warnings and failures always");
         assert_eq!(verbose, notices[2..].iter().map(text).collect::<Vec<_>>(), "the card's comings and goings at -v");
         assert_eq!(trace, notices.iter().map(text).collect::<Vec<_>>(), "messages and sizes at -vv");
     }
@@ -1447,7 +1550,7 @@ mod tests {
         uhid: impl Fn() -> Box<dyn UhidIo> + 'static,
         gadget: impl Fn() -> Box<dyn GadgetIo> + 'static,
     ) -> Platform {
-        Platform { linux: true, uhid: Box::new(move |_| uhid()), gadget: Box::new(gadget) }
+        Platform { linux: true, uhid: Box::new(move |_| uhid()), gadget: Box::new(gadget), ..Platform::host() }
     }
 
     /// `run` options on state directory `dir/s` with a new key file `dir/key`, the control
@@ -1539,7 +1642,7 @@ mod tests {
     fn uhid_vpcd(vpcd: SocketAddr) -> Vec<TransportOptions> {
         vec![
             TransportOptions::Uhid { path: PathBuf::from(lk_uhid::DEFAULT_UHID_PATH) },
-            TransportOptions::Vpcd { addr: vpcd.to_string() },
+            TransportOptions::Vpcd(VpcdOptions::at(vpcd.to_string())),
         ]
     }
 
@@ -1558,9 +1661,9 @@ mod tests {
             message,
             format!("--transport uhid,vpcd: uhid runs on Linux only, and this system is {os}; use --transport wire or vpcd")
         );
-        let vpcd = Transports::of(vec![TransportOptions::Vpcd { addr: "127.0.0.1:35963".into() }]);
+        let vpcd = Transports::of(vec![TransportOptions::Vpcd(VpcdOptions::at("127.0.0.1:35963"))]);
         let planned = plan(&vpcd, Path::new("/s"), &elsewhere).expect("vpcd runs on every Unix");
-        assert!(matches!(planned.as_slice(), [Member::Vpcd(addr)] if addr.port() == 35963), "{planned:?}");
+        assert!(matches!(planned.as_slice(), [Member::Vpcd(plan)] if plan.addr.port() == 35963), "{planned:?}");
     }
 
     /// A listener on an ephemeral loopback port, the fake vpcd (`docs/PROGRAM.md`
@@ -1927,6 +2030,210 @@ mod tests {
         assert_eq!(interface_list(interfaces(false, false, false)), "none");
     }
 
+    /// `--vpcd-addr` options with `allow_remote` and `peer_uids`.
+    fn vpcd_options(addr: &str, allow_remote: bool, peer_uids: Option<Vec<u32>>) -> VpcdOptions {
+        VpcdOptions { addr: addr.to_owned(), allow_remote, peer_uids }
+    }
+
+    /// The loopback rule and `--vpcd-peer-uid`'s preconditions, before the state directory
+    /// (`lk_vpcd::check_addr`): a remote address needs `--vpcd-allow-remote`, which a
+    /// loopback address does not; the peer uids need Linux and a loopback address.
+    #[test]
+    fn the_vpcd_plan_holds_the_address_to_loopback_and_the_peer_uids_to_linux() {
+        let linux = Platform { linux: true, ..Platform::host() };
+        let elsewhere = Platform { linux: false, ..Platform::host() };
+        let message = |options: VpcdOptions, platform: &Platform| match vpcd_plan(&options, platform) {
+            Err(Failure::Startup(message)) => message,
+            other => panic!("{options:?} gave {other:?}"),
+        };
+        assert_eq!(
+            message(vpcd_options("192.0.2.1:35963", false, None), &linux),
+            "--vpcd-addr 192.0.2.1:35963: 192.0.2.1:35963 is not a loopback address: APDUs (PINs and keys among \
+             them) would travel to it unencrypted, and whatever listens there would drive the card unchecked; pass \
+             --vpcd-allow-remote to use it anyway"
+        );
+        assert!(message(vpcd_options("[::ffff:192.0.2.1]:1", false, None), &linux).contains("--vpcd-allow-remote"));
+        let remote = vpcd_plan(&vpcd_options("192.0.2.1:35963", true, None), &elsewhere).expect("allowed");
+        assert_eq!(remote, VpcdPlan { addr: "192.0.2.1:35963".parse().expect("valid"), allow_remote: true, peer_uids: None });
+        for loopback in ["127.0.0.1:35963", "[::1]:35963", "localhost:35963", "[::ffff:127.0.0.1]:35963"] {
+            for allow_remote in [false, true] {
+                let plan = vpcd_plan(&vpcd_options(loopback, allow_remote, None), &elsewhere).expect("loopback");
+                assert!(lk_vpcd::is_loopback(&plan.addr), "{loopback}: {plan:?}");
+            }
+        }
+        let uids = Some(vec![0, 110]);
+        let plan = vpcd_plan(&vpcd_options("127.0.0.1:35963", false, uids.clone()), &linux).expect("Linux, loopback");
+        assert_eq!(plan.peer_uids, uids);
+        let os = std::env::consts::OS;
+        assert_eq!(
+            message(vpcd_options("127.0.0.1:35963", false, uids.clone()), &elsewhere),
+            format!(
+                "--vpcd-peer-uid: the owner of vpcd's socket is looked up in /proc/net/tcp, which only Linux has, and \
+                 this system is {os}"
+            )
+        );
+        assert_eq!(
+            message(vpcd_options("192.0.2.1:35963", true, uids), &linux),
+            "--vpcd-peer-uid: 192.0.2.1:35963 is not a loopback address, and the owner of a socket on another \
+             machine cannot be looked up"
+        );
+    }
+
+    /// A connector that names one address (`named`, what the transport and the log see) and
+    /// dials another (`dial`, a fake vpcd on loopback): a remote address without anything
+    /// leaving the machine, like `Harness::disguised` in lk-vpcd's tests.
+    #[derive(Debug)]
+    struct Disguised {
+        named: SocketAddr,
+        dial: SocketAddr,
+    }
+
+    impl Connector for Disguised {
+        fn connect(&mut self) -> io::Result<TcpStream> {
+            TcpConnector::new(self.dial).connect()
+        }
+
+        fn addr(&self) -> SocketAddr {
+            self.named
+        }
+    }
+
+    /// A peer check that records each connection's (local, peer) addresses and allows the
+    /// peer as uid 4242, or refuses it as owned by uid 1001.
+    #[derive(Debug)]
+    struct Recording {
+        allow: bool,
+        seen: Mutex<Vec<(SocketAddr, SocketAddr)>>,
+    }
+
+    impl Recording {
+        fn new(allow: bool) -> Arc<Recording> {
+            Arc::new(Recording { allow, seen: Mutex::default() })
+        }
+    }
+
+    impl PeerCheck for Recording {
+        fn check(&self, local: SocketAddr, peer: SocketAddr) -> lk_vpcd::PeerVerdict {
+            lock(&self.seen).push((local, peer));
+            if self.allow {
+                lk_vpcd::PeerVerdict::Allowed { uid: 4242 }
+            } else {
+                lk_vpcd::PeerVerdict::Refused(lk_vpcd::PeerRefusal::NotAllowed { uid: 1001, allowed: vec![4242] })
+            }
+        }
+    }
+
+    /// The host platform with the vpcd connector dialling `dial` whatever the address, and
+    /// `check` as the peer check.
+    fn vpcd_platform(dial: SocketAddr, check: Arc<Recording>) -> Platform {
+        Platform {
+            vpcd: Box::new(move |named| Box::new(Disguised { named, dial })),
+            peer_check: Box::new(move |_| Arc::clone(&check) as Arc<dyn PeerCheck>),
+            ..Platform::host()
+        }
+    }
+
+    /// Without `--vpcd-allow-remote` a remote address stops `serve` before the state
+    /// directory is created and the key loaded, and nothing is dialled.
+    #[test]
+    fn a_remote_vpcd_address_without_allow_remote_stops_serve_before_the_state_directory() {
+        let dir = TempDir::new();
+        let vpcd = fake_vpcd();
+        let dial = vpcd.local_addr().expect("bound");
+        let mut options = run_options(&dir, TransportOptions::Vpcd(vpcd_options("192.0.2.1:35963", false, None)));
+        options.key = KeySource::Command("exit 1".into());
+        let log = Log::unwritten(TRACE);
+        let served = serve(&options, &log, &vpcd_platform(dial, Recording::new(true)), &Arc::default());
+        let Err(Failure::Startup(message)) = served else {
+            panic!("serving gave {served:?}");
+        };
+        assert!(message.starts_with("--vpcd-addr 192.0.2.1:35963: 192.0.2.1:35963 is not a loopback address"), "{message}");
+        assert!(!dir.join("s").exists(), "the state directory was not created");
+        assert!(accept_now(&vpcd).is_none(), "nothing was dialled");
+    }
+
+    /// The fake vpcd's next connection if one is waiting.
+    fn accept_now(listener: &TcpListener) -> Option<TcpStream> {
+        listener.accept().ok().map(|(stream, _)| stream)
+    }
+
+    /// With `--vpcd-allow-remote` the remote address is used, warned about once at the
+    /// default level, and the peer check still gets the connection's real addresses (here
+    /// the fake vpcd on loopback behind the disguise).
+    #[test]
+    fn a_remote_vpcd_address_allowed_explicitly_is_warned_about_once_and_serves() {
+        let dir = TempDir::new();
+        let vpcd = fake_vpcd();
+        let dial = vpcd.local_addr().expect("bound");
+        let mut options = run_options(&dir, TransportOptions::Vpcd(vpcd_options("192.0.2.1:35963", true, None)));
+        options.verbosity = 0;
+        let control = dir.join("s").join(CONTROL_SOCKET);
+        let check = Recording::new(true);
+        let seen = Arc::clone(&check);
+        let log = Log::unwritten(0);
+        let served_log = log.clone();
+        let shutdowns = Arc::new(Shutdowns::default());
+        let held_by_serve = Arc::clone(&shutdowns);
+        let served = thread::spawn(move || serve(&options, &served_log, &vpcd_platform(dial, check), &held_by_serve));
+
+        let mut card = accept(&vpcd).expect("the transport connects through the disguise");
+        assert_eq!(get_atr(&mut card).expect("the card answers"), DeviceProfile::own(0).atr);
+        let local = card.peer_addr().expect("connected");
+        assert_eq!(lock(&seen.seen).clone(), [(local, dial)], "the check saw the connection's own addresses");
+        drop(card);
+        let mut again = accept(&vpcd).expect("the card comes back after vpcd dropped it");
+        assert_eq!(get_atr(&mut again).expect("the card answers"), DeviceProfile::own(0).atr);
+
+        let (reply, _held) = control_request(&control, "shutdown").expect("the control socket answers");
+        assert_eq!(reply, ["ok"]);
+        let served = served.join().expect("serve does not panic");
+        assert!(served.is_ok(), "{served:?}");
+        shutdowns.answer(Outcome::Stopped);
+        let lines = log.take_lines();
+        let warning = "vpcd: warning: 192.0.2.1:35963 is not a loopback address; APDUs (PINs and keys among them) \
+                       travel to it unencrypted, and whatever listens there is not checked";
+        assert_eq!(lines.iter().filter(|line| line.contains(warning)).count(), 1, "{lines:#?}");
+        assert!(lines.iter().any(|line| line.contains("serving: vpcd card for 192.0.2.1:35963")), "{lines:#?}");
+    }
+
+    /// A refused peer at the default log level: said once for the series, its connections
+    /// closed without a byte, the card never in the reader.
+    #[test]
+    fn a_refused_vpcd_peer_is_logged_once_at_the_default_level_and_gets_no_bytes() {
+        let dir = TempDir::new();
+        let vpcd = fake_vpcd();
+        let dial = vpcd.local_addr().expect("bound");
+        let mut options = run_options(&dir, TransportOptions::Vpcd(VpcdOptions::at(dial.to_string())));
+        options.verbosity = 0;
+        let control = dir.join("s").join(CONTROL_SOCKET);
+        let log = Log::unwritten(0);
+        let served_log = log.clone();
+        let shutdowns = Arc::new(Shutdowns::default());
+        let held_by_serve = Arc::clone(&shutdowns);
+        let platform_check = Recording::new(false);
+        let served =
+            thread::spawn(move || serve(&options, &served_log, &vpcd_platform(dial, platform_check), &held_by_serve));
+
+        for _ in 0..2 {
+            let mut refused = accept(&vpcd).expect("the transport connects");
+            let mut rest = Vec::new();
+            refused.read_to_end(&mut rest).expect("the connection is closed");
+            assert!(rest.is_empty(), "a refused peer gets no byte: {rest:02X?}");
+        }
+        assert_eq!(attached(&control).as_deref(), Some("false"), "no card in the reader");
+        let (reply, _held) = control_request(&control, "shutdown").expect("the control socket answers");
+        assert_eq!(reply, ["ok"]);
+        let served = served.join().expect("serve does not panic");
+        assert!(served.is_ok(), "{served:?}");
+        shutdowns.answer(Outcome::Stopped);
+        let lines = log.take_lines();
+        let refusal = format!(
+            "vpcd: the peer on {dial} is owned by uid 1001, not an allowed uid (4242); refusing the connection, \
+             retrying every second"
+        );
+        assert_eq!(lines.iter().filter(|line| line.contains(&refusal)).count(), 1, "{lines:#?}");
+    }
+
     /// "First-enumeration failure handling must cover every member": a uhid member that
     /// cannot open its devices stops a `uhid,vpcd` startup with exit 2, the failure named
     /// with its member, and the shutdown drops the vpcd member too (its card, if it got
@@ -1939,7 +2246,7 @@ mod tests {
         let missing = dir.join("no-uhid");
         let options = run_options_with(
             &dir,
-            vec![TransportOptions::Uhid { path: missing.clone() }, TransportOptions::Vpcd { addr: addr.to_string() }],
+            vec![TransportOptions::Uhid { path: missing.clone() }, TransportOptions::Vpcd(VpcdOptions::at(addr.to_string()))],
         );
         let log = Log::unwritten(TRACE);
         let host = Platform::host();

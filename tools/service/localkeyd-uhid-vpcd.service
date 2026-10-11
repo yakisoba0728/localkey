@@ -43,7 +43,11 @@ ExecStart=/usr/local/bin/localkeyd run \
 #ExecStart=/usr/local/bin/localkeyd run --state /var/lib/localkey --transport uhid,vpcd -v --key-command 'cat "$${CREDENTIALS_DIRECTORY}/localkey-key"'
 #
 # Other run options: --profile yubikey-5c-nano-5.7.4 (Yubico's USB IDs, which ykman needs
-# for OTP over HID), --vpcd-addr HOST:PORT (vpcd's first slot 127.0.0.1:35963 by default),
+# for OTP over HID), --vpcd-addr HOST:PORT (vpcd's first slot 127.0.0.1:35963 by default;
+# a loopback address unless --vpcd-allow-remote, which IPAddressAllow= below would block
+# anyway), --vpcd-peer-uid UID[,UID...] (the owners allowed for vpcd's end of the
+# connection, replacing the default: root, the local user pcscd, which the packaged
+# pcscd.service runs pcscd as on Ubuntu 26.04, and the daemon's own user, root here),
 # --wall-clock. Never pass --allow-unreadable here: it lets the first write replace a
 # record the key could not open.
 
@@ -82,6 +86,9 @@ DeviceAllow=/dev/uhid rw
 ProtectSystem=strict
 ProtectHome=yes
 PrivateTmp=yes
+# ProtectProc=invisible hides other users' processes only; /proc/net/tcp, where the vpcd
+# peer check looks up the owner of vpcd's socket, stays readable. Do not add
+# ProcSubset=pid: it hides /proc/net, and every vpcd peer would be refused.
 ProtectProc=invisible
 ProtectKernelTunables=yes
 ProtectKernelModules=yes

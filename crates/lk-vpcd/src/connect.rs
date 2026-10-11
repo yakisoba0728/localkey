@@ -62,14 +62,44 @@ impl Connector for TcpConnector {
 }
 
 /// Whether `addr` stays on this machine: a loopback address, also as an IPv4-mapped IPv6
-/// address. Anything else carries the APDUs unencrypted over a network
-/// (`docs/PROGRAM.md` "lk-vpcd": allowed, with a warning).
+/// address. Anything else carries the APDUs unencrypted over a network, to a peer nothing
+/// on this machine can check ([`check_addr`]).
 pub fn is_loopback(addr: &SocketAddr) -> bool {
     match addr.ip() {
         IpAddr::V4(ip) => ip.is_loopback(),
         IpAddr::V6(ip) => ip.to_canonical().is_loopback(),
     }
 }
+
+/// The address rule: vpcd's address must be a loopback address ([`is_loopback`]) unless a
+/// remote one is allowed explicitly (`allow_remote`, localkeyd's `--vpcd-allow-remote`).
+/// Over a network the APDUs (PINs and keys among them) travel unencrypted, and whatever
+/// listens at the address drives the card with no check at all ([`crate::peer`] cannot
+/// look up the owner of a socket on another machine). [`crate::VpcdTransport`] cannot be
+/// made for an address this refuses.
+pub fn check_addr(addr: SocketAddr, allow_remote: bool) -> Result<(), RemoteRefused> {
+    if allow_remote || is_loopback(&addr) { Ok(()) } else { Err(RemoteRefused { addr }) }
+}
+
+/// A vpcd address that is not a loopback address and was not allowed explicitly
+/// ([`check_addr`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct RemoteRefused {
+    pub addr: SocketAddr,
+}
+
+impl fmt::Display for RemoteRefused {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{} is not a loopback address: APDUs (PINs and keys among them) would travel to it unencrypted, and \
+             whatever listens there would drive the card unchecked",
+            self.addr
+        )
+    }
+}
+
+impl std::error::Error for RemoteRefused {}
 
 /// The address of `--vpcd-addr HOST:PORT`: a numeric address, or a host name resolved
 /// once, preferring IPv4 because vpcd listens on IPv4 only (`opensock` binds an
@@ -105,6 +135,22 @@ mod tests {
             let addr: SocketAddr = text.parse().expect("a valid address");
             assert!(!is_loopback(&addr), "{text}");
         }
+    }
+
+    #[test]
+    fn a_remote_address_needs_to_be_allowed_explicitly() {
+        for text in ["127.0.0.1:35963", "[::1]:1", "[::ffff:127.0.0.1]:35963"] {
+            let addr: SocketAddr = text.parse().expect("a valid address");
+            assert_eq!(check_addr(addr, false), Ok(()), "{text}");
+            assert_eq!(check_addr(addr, true), Ok(()), "{text}");
+        }
+        for text in ["192.0.2.1:35963", "0.0.0.0:35963", "[2001:db8::1]:35963", "[::ffff:192.0.2.1]:1"] {
+            let addr: SocketAddr = text.parse().expect("a valid address");
+            assert_eq!(check_addr(addr, false), Err(RemoteRefused { addr }), "{text}");
+            assert_eq!(check_addr(addr, true), Ok(()), "{text}");
+        }
+        let refused = RemoteRefused { addr: "192.0.2.1:35963".parse().expect("a valid address") };
+        assert!(refused.to_string().starts_with("192.0.2.1:35963 is not a loopback address: "), "{refused}");
     }
 
     #[test]

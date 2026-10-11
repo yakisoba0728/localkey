@@ -8,7 +8,13 @@
 #   (a) localkeyd run --transport vpcd
 #   1 insertion         localkeyd first (vpcd not listening: retried), then pcscd: the
 #                       "Virtual PCD 00 00" reader with a card (pcsc_scan, opensc-tool -l),
-#                       the profile's ATR (opensc-tool -a), status attached=true
+#                       the profile's ATR (opensc-tool -a), status attached=true. pcscd
+#                       runs as the packaged pcscd.service runs it (User=pcscd); the peer
+#                       check accepted vpcd's end of the connection, owned by that user
+#  1b peer check        pcscd stopped, an unprivileged listener (uid 65534) on
+#                       127.0.0.1:35963: its connections are closed with no byte received,
+#                       the refusal logged once; pcscd started again: the card is back
+#                       (from step 2 on pcscd runs as root, also an allowed uid)
 #   2 CCID clients      reader renamed "Yubico YubiKey OTP+FIDO+CCID" (ykman needs that
 #                       name; pcscd restarted, the card follows): ykman info, OATH with
 #                       touch (RFC 6238), PIV keys and certificates generate, OpenPGP info,
@@ -107,13 +113,21 @@ two_hidraw() { [ "$(hidraw_count)" -ge 2 ]; }
 no_hidraw() { [ "$(hidraw_count)" = 0 ]; }
 fido_is() { local n; n=$(hidraw_of fido) && same "$(hid_id "$n")" "$1"; }
 
+# start_pcscd [packaged]: pcscd in the foreground with debug output, as root; with
+# "packaged" as the packaged pcscd.service runs it, as the user pcscd (User=pcscd), with its
+# runtime directory /run/pcscd owned by that user (RuntimeDirectory=pcscd).
 start_pcscd() {
-    local extra=
+    local extra= as=()
     pcscd --help 2>&1 | grep -q -- '--disable-polkit' && extra=--disable-polkit
     rm -f /run/pcscd/pcscd.pid /run/pcscd/pcscd.comm
-    pcscd --foreground --debug $extra >> "$W/pcscd.log" 2>&1 &
+    if [ "${1:-}" = packaged ]; then
+        mkdir -p /run/pcscd
+        chown pcscd:pcscd /run/pcscd
+        as=(setpriv --reuid=pcscd --regid=pcscd --init-groups)
+    fi
+    ${as[@]+"${as[@]}"} pcscd --foreground --debug $extra >> "$W/pcscd.log" 2>&1 &
     PCSCD_PID=$!
-    note "pcscd started (pid $PCSCD_PID${extra:+, $extra})"
+    note "pcscd started (pid $PCSCD_PID${extra:+, $extra}${as[0]:+, as the user pcscd})"
 }
 stop_pcscd() {
     gpgconf --kill scdaemon >/dev/null 2>&1
@@ -193,7 +207,7 @@ check "with nothing listening it retries, and says so once" \
     same "$(grep -c 'vpcd: cannot connect to 127.0.0.1:35963' "$(log_of va)")" 1
 check "status attached=false while vpcd does not listen" same "$(status_of va attached)" false
 mark=$(log_mark va)
-start_pcscd
+start_pcscd packaged
 check "pcscd shows the vpcd reader" wait_for 30 reader_named "Virtual PCD"
 check "the card is in the reader" wait_for 20 card_in
 run opensc-tool -l
@@ -211,8 +225,113 @@ got_atr=$(grep -i -o -E '([0-9a-f]{2}:){10,}[0-9a-f]{2}' "$W/atr" | head -n 1 | 
 check "the ATR is the profile's ($ATR)" same "$got_atr" "$ATR"
 check "status attached=true" attached va
 run lk_ctl va status
+# The peer check (lk-vpcd `peer`): vpcd's end of the card's connection, the line of
+# /proc/net/tcp with local 127.0.0.1:35963 and the card's port as remote, carries the uid
+# of the program that listens there (field 8): pcscd's. The packaged pcscd.service runs
+# pcscd as the sysusers user pcscd, whose uid localkeyd's default set takes from
+# /etc/passwd; localkeyd itself runs as root.
+unit=$(ls /usr/lib/systemd/system/pcscd.service /lib/systemd/system/pcscd.service 2>/dev/null | head -n 1)
+note "the packaged $unit: $(grep -E '^(User|Group|DynamicUser|PrivateUsers|ExecStart)=' "$unit" 2>/dev/null | paste -sd ' ')"
+note "$(cat /usr/lib/sysusers.d/pcscd.conf 2>/dev/null | grep -v '^#' | paste -sd ' ') -> $(getent passwd pcscd)"
+check "the packaged pcscd.service runs pcscd as the user pcscd" grep -q -x 'User=pcscd' "$unit"
+PCSCD_UID=$(awk '/^Uid:/ { print $2 }' "/proc/$PCSCD_PID/status")
+LK_UID=$(awk '/^Uid:/ { print $2 }' "/proc/$LK_PID_va/status")
+note "pcscd (pid $PCSCD_PID) runs as uid $PCSCD_UID ($(awk '/^Uid:/ { print $2, $3, $4, $5 }' "/proc/$PCSCD_PID/status")); localkeyd as uid $LK_UID"
+check "pcscd runs as the user pcscd (uid $(id -u pcscd))" same "$PCSCD_UID" "$(id -u pcscd)"
+# localkeyd's default allowed set as it lists it: root, the user pcscd, its own uid.
+ALLOWED=$(printf '%s\n' 0 "$(id -u pcscd)" "$LK_UID" | sort -n -u | paste -sd ',' | sed 's/,/, /g')
+note "localkeyd's default allowed set: ($ALLOWED)"
+note "35963's lines in /proc/net/tcp (local, remote, st, uid):"
+awk '$2 ~ /:8C7B$/ || $3 ~ /:8C7B$/ { print "    " $2, $3, $4, $8 }' /proc/net/tcp
+vpcd_side_uid() { awk '$2 == "0100007F:8C7B" && $3 ~ /^0100007F:/ && $4 == "01" { print $8; exit }' /proc/net/tcp; }
+check "vpcd's end of the connection is owned by pcscd's uid ($PCSCD_UID)" same "$(vpcd_side_uid)" "$PCSCD_UID"
+log_since va "$mark" | grep 'vpcd: the peer' | sed 's/^/    log: /'
+check "localkeyd accepted the peer as owned by uid $PCSCD_UID" \
+    log_has_since va "$mark" "vpcd: the peer on 127.0.0.1:35963 is owned by uid $PCSCD_UID, an allowed uid"
 events va "$mark" | sed 's/^/    log: /'
 note "vpcd messages after the connection, in order: $(log_since va "$mark" | sed -n 's/.*vpcd: <- \([a-zA-Z ]*\),.*/\1/p' | head -n 6 | paste -sd '|')"
+step_end
+
+# ---------------------------------------------------------------------------------------
+# The vpcd link has no authentication, and 35963 is not a privileged port: while vpcd does
+# not listen, any user can, and the transport (retrying every second) would connect. The
+# peer check closes such a connection before a byte is sent: the listener's uid (65534,
+# nobody) is neither root nor localkeyd's user (root here).
+step_begin 1b "the peer check: an unprivileged listener on 127.0.0.1:35963 is refused"
+mark=$(log_mark va)
+stop_pcscd
+check "the card notices that vpcd went away" wait_for 10 log_has_since va "$mark" 'card removed'
+check "nothing listens on 35963 now" sh -c "! grep -q -E '^ *[0-9]+: [0-9A-F]{8}:8C7B [0-9A-F]{8}:0000 0A' /proc/net/tcp"
+cat > "$W/impostor.py" <<'PY'
+# A listener on vpcd's address as an unprivileged user: accept for SECONDS, report what
+# each connection brought. The socket is made after dropping root (its owner is the uid
+# that creates it), whether setpriv dropped it already or this script does.
+import os, socket, sys, time
+if os.getuid() == 0:
+    os.setgroups([]); os.setgid(65534); os.setuid(65534)
+print("impostor uid", os.getuid(), flush=True)
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+s.bind(("127.0.0.1", 35963))
+s.listen(4)
+s.settimeout(0.2)
+print("listening on 127.0.0.1:35963", flush=True)
+deadline = time.time() + float(sys.argv[1])
+n = 0
+while time.time() < deadline:
+    try:
+        c, peer = s.accept()
+    except socket.timeout:
+        continue
+    n += 1
+    c.settimeout(5)
+    data, how = b"", "closed by the card"
+    try:
+        while True:
+            chunk = c.recv(4096)
+            if not chunk:
+                break
+            data += chunk
+    except socket.timeout:
+        how = "still open after 5 s"
+    except ConnectionResetError:
+        how = "reset by the card"
+    print("connection %d from %s:%d: %d bytes received, %s" % (n, peer[0], peer[1], len(data), how), flush=True)
+    c.close()
+print("connections", n, flush=True)
+PY
+chmod a+rx "$W"
+chmod a+r "$W/impostor.py"
+if command -v setpriv >/dev/null; then
+    note "the impostor runs under setpriv --reuid=65534 --regid=65534 --clear-groups"
+    setpriv --reuid=65534 --regid=65534 --clear-groups python3 -I "$W/impostor.py" 4.5 > "$W/impostor.out" 2>&1 &
+else
+    note "no setpriv: the impostor drops to uid 65534 itself before it makes its socket"
+    python3 -I "$W/impostor.py" 4.5 > "$W/impostor.out" 2>&1 &
+fi
+impostor=$!
+check "the impostor listens" wait_for 10 grep -q '^listening' "$W/impostor.out"
+sleep 1
+note "35963's lines in /proc/net/tcp while the impostor listens (local, remote, st, uid):"
+awk '$2 ~ /:8C7B$/ || $3 ~ /:8C7B$/ { print "    " $2, $3, $4, $8 }' /proc/net/tcp
+wait "$impostor"
+sed 's/^/    impostor: /' "$W/impostor.out"
+check "the impostor ran as uid 65534" grep -q '^impostor uid 65534$' "$W/impostor.out"
+nconn=$(grep -c '^connection ' "$W/impostor.out")
+check "localkeyd connected to the impostor and kept retrying ($nconn connections in 4.5 s)" sh -c "[ '$nconn' -ge 3 ]"
+check "every connection was closed by the card with 0 bytes received" sh -c \
+    "[ '$nconn' -ge 1 ] && [ \"\$(grep -c '^connection .*: 0 bytes received, closed by the card\$' '$W/impostor.out')\" = '$nconn' ]"
+log_since va "$mark" | grep -E 'vpcd: (the peer|cannot connect|connected)' | sed 's/^/    log: /'
+check "localkeyd logged the refusal" log_has_since va "$mark" \
+    "vpcd: the peer on 127.0.0.1:35963 is owned by uid 65534, not an allowed uid ($ALLOWED); refusing the connection, retrying every second"
+check "once for the series" same "$(log_since va "$mark" | grep -c 'not an allowed uid')" 1
+check "no card was inserted for the impostor" sh -c "! tail -n +$((mark + 1)) '$(log_of va)' | grep -q 'card inserted'"
+check "status attached=false" same "$(status_of va attached)" false
+mark=$(log_mark va)
+start_pcscd packaged
+check "with pcscd back, the card is in the reader again" wait_for 30 card_in
+check "accepted as owned by uid $PCSCD_UID" log_has_since va "$mark" "vpcd: the peer on 127.0.0.1:35963 is owned by uid $PCSCD_UID, an allowed uid"
+check "status attached=true" attached va
 step_end
 
 # ---------------------------------------------------------------------------------------
@@ -228,6 +347,8 @@ check "the card notices that vpcd went away" wait_for 10 log_has_since va "$mark
 start_pcscd
 check "pcscd shows the renamed reader" wait_for 30 reader_named "$YUBICO_NAME"
 check "the card is in it" wait_for 20 card_in
+check "a pcscd running as root is accepted too (uid 0)" \
+    log_has_since va "$mark" "vpcd: the peer on 127.0.0.1:35963 is owned by uid 0, an allowed uid"
 run opensc-tool -l
 run ykman --reader "$R" info | tee "$W/ykman-info"
 check "ykman info over vpcd: YubiKey 5C Nano 5.7.4" sh -c "grep -q 'YubiKey 5C Nano' '$W/ykman-info' && grep -q 'Firmware version: 5.7.4' '$W/ykman-info'"

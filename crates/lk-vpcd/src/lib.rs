@@ -5,8 +5,13 @@
 //! - [`protocol`]: vpcd's framing and control commands. Pure.
 //! - [`ccid`]: the host side of USB CCID (IccPowerOn, IccPowerOff, XfrBlock with extended
 //!   APDU chaining; DataBlock and SlotStatus replies, time extensions, `bSeq`). Pure.
-//! - [`Connector`], [`TcpConnector`]: connecting to vpcd, the I/O seam.
-//! - [`VpcdTransport`]: the [`lk_run::Transport`], with one connection thread.
+//! - [`Connector`], [`TcpConnector`]: connecting to vpcd, the I/O seam; [`check_addr`]:
+//!   the loopback-only rule.
+//! - [`peer`]: who is on the other end of a new connection ([`PeerCheck`]; on Linux
+//!   [`ProcNetPeerCheck`], the owner of the peer's socket from `/proc/net/tcp`). The
+//!   parsing is pure.
+//! - [`VpcdTransport`]: the [`lk_run::Transport`], with one connection thread; made with a
+//!   [`VpcdConfig`].
 //! - The check against the real vpcd and pcscd is `tools/linux-guest/tests/vpcd.sh`, which
 //!   runs `localkeyd --transport vpcd` and `uhid,vpcd` in the disposable guest (see
 //!   "Checked against the real vpcd" below).
@@ -111,9 +116,25 @@
 //!   retried at once; one attempt waits at most [`CONNECT_TIMEOUT`] (2 s). Only the first
 //!   failure of a series is reported.
 //! - **Addresses.** [`resolve`] turns `HOST:PORT` into one address, preferring IPv4
-//!   (vpcd listens on IPv4 only). A non-loopback address (IPv4-mapped loopback counts as
-//!   loopback) is reported once with [`VpcdNotice::NotLoopback`] when the transport is
-//!   made.
+//!   (vpcd listens on IPv4 only). The transport cannot be made for an address that is not
+//!   a loopback address (IPv4-mapped loopback counts as loopback) unless
+//!   [`VpcdConfig::allow_remote`] allows it explicitly ([`check_addr`], [`RemoteRefused`]):
+//!   the link has no authentication and no encryption. An allowed remote address is
+//!   reported once with [`VpcdNotice::NotLoopback`] when the transport is made.
+//! - **The peer.** The link has no authentication, and vpcd's port is not privileged: any
+//!   local user can listen on it while vpcd does not (pcscd stopped, restarting, or exited
+//!   with `--auto-exit`), and the transport, retrying every second, would connect and let
+//!   that program drive the card. So every new connection goes to the
+//!   [`VpcdConfig::peer_check`] before a byte is read or written, and a refused peer gets
+//!   the connection closed unused (it receives nothing), reported once per series
+//!   ([`VpcdNotice::PeerRefused`]), and retried on the normal schedule. On Linux the
+//!   default ([`default_peer_check`]) looks up the owner of the peer's socket in
+//!   `/proc/net/tcp` and `/proc/net/tcp6` and allows root, the local user `pcscd` (Ubuntu
+//!   26.04's packaged pcscd runs as that user: `User=pcscd`, uid 990 in the test guest)
+//!   and this process's real uid; elsewhere (macOS has no `/proc`) nothing is checked,
+//!   which the transport reports once ([`VpcdNotice::PeerUnchecked`]). See
+//!   [`peer`] for the table format (from the kernel's `net/ipv4/tcp_ipv4.c` and
+//!   `net/ipv6/tcp_ipv6.c`) and the rules.
 //! - **Blocking reads.** The connection thread blocks in `read()`; `enumerate` wakes it by
 //!   shutting down the read half (so a queued answer can still be written), drop by
 //!   shutting down both. Writes time out after [`WRITE_TIMEOUT`].
@@ -168,6 +189,16 @@
 //! - **vpcd down first**: one "cannot connect" notice, attempts every second, connected
 //!   within a second of pcscd's start. When the card program ends, pcscd sees the card
 //!   removed.
+//! - **The peer check** (`vpcd.sh` steps 1, 1b and 2; [`peer`]): Ubuntu 26.04's packaged
+//!   `pcscd.service` (pcsc-lite 2.4.1-1) runs pcscd as the sysusers user `pcscd`
+//!   (`User=pcscd`, `PrivateUsers=identity`, `/usr/lib/sysusers.d/pcscd.conf`: `u! pcscd`;
+//!   uid 990 in the guest). Run that way, vpcd's listener and its end of the card's
+//!   connection show uid 990 in `/proc/net/tcp`, and with root alone allowed the transport
+//!   refused it (`owned by uid 990, not an allowed uid (0)`), hence the user `pcscd` in the
+//!   default set; with it the card goes in, and so it does with pcscd run as root (uid 0).
+//!   A listener on `127.0.0.1:35963` as uid 65534 while pcscd was stopped got 4
+//!   connections in 4.5 s, each closed with 0 bytes received, and one notice (`owned by
+//!   uid 65534, not an allowed uid (0, 990)`); pcscd started again, the card was back.
 //! - The guest has no NIC and its loopback interface starts down: a connection to
 //!   `127.0.0.1` fails with `ENETUNREACH` until `lo` is brought up (the script does).
 //!   OpenSC's PIV driver, which claims this ATR, selects PIV again whenever it takes the
@@ -179,11 +210,13 @@
 
 pub mod ccid;
 mod connect;
+pub mod peer;
 pub mod protocol;
 mod transport;
 
-pub use crate::connect::{CONNECT_TIMEOUT, Connector, TcpConnector, is_loopback, resolve};
+pub use crate::connect::{CONNECT_TIMEOUT, Connector, RemoteRefused, TcpConnector, check_addr, is_loopback, resolve};
+pub use crate::peer::{NoPeerCheck, PeerCheck, PeerRefusal, PeerVerdict, ProcNetPeerCheck, default_peer_check};
 pub use crate::transport::{
     DROP_TIMEOUT, ERROR_RESPONSE, OUTPUT_QUEUE, Observer, PEER_CHECK, REPLUG_PAUSE, REPLY_SILENCE, RETRY_INTERVAL,
-    VpcdNotice, VpcdStats, VpcdTransport, WRITE_TIMEOUT,
+    VpcdConfig, VpcdNotice, VpcdStats, VpcdTransport, WRITE_TIMEOUT,
 };

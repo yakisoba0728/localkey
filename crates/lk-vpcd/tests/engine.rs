@@ -46,7 +46,8 @@ fn serve(vpcd: &FakeVpcd) -> (Runner, Conn) {
         RunnerConfig::default(),
     )
     .expect("the device opens");
-    let transport = VpcdTransport::new(Box::new(TcpConnector::new(vpcd.addr())), runner.sender());
+    let transport =
+        VpcdTransport::new(Box::new(TcpConnector::new(vpcd.addr())), runner.sender()).expect("a loopback address");
     runner.serve(Box::new(transport)).expect("the runner takes the transport");
     let conn = vpcd.accept();
     (runner, conn)

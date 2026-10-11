@@ -191,6 +191,22 @@ fn configure_over_the_wire(dir: &TestDir, config: &[u8], interfaces: &str) -> Te
     Ok(())
 }
 
+/// This process's real uid (the first number of `Uid:` in `/proc/self/status`), on Linux.
+fn own_uid() -> Result<u32, Box<dyn Error>> {
+    let status = std::fs::read_to_string("/proc/self/status")?;
+    let line = status.lines().find_map(|line| line.strip_prefix("Uid:")).ok_or("no Uid line")?;
+    Ok(line.split_whitespace().next().ok_or("an empty Uid line")?.parse()?)
+}
+
+/// Whether the card's connection is closed without a byte from the daemon (a refused
+/// peer), within [`WAIT`].
+#[cfg(target_os = "linux")]
+fn closed_unused(card: &mut Card) -> io::Result<bool> {
+    let mut rest = Vec::new();
+    card.stream.read_to_end(&mut rest)?;
+    Ok(rest.is_empty())
+}
+
 /// Whether no card connects to `vpcd` for `time`.
 fn nothing_connects(vpcd: &FakeVpcd, time: Duration) -> bool {
     thread::sleep(time);
@@ -230,6 +246,13 @@ fn a_vpcd_daemon_is_a_card_in_the_reader_and_ctl_shutdown_removes_it() -> TestRe
         "vpcd: <- APDU, ".to_owned(),
         "vpcd: -> response, 2 bytes".to_owned(),
         format!("vpcd: -> ATR, {} bytes", atr.len()),
+        // The peer check (lk-vpcd `peer`): on Linux the fake vpcd is this user's, one of the
+        // default allowed uids; elsewhere nothing is checked, which -v says once.
+        if cfg!(target_os = "linux") {
+            format!("vpcd: the peer on {addr} is owned by uid {}, an allowed uid", own_uid()?)
+        } else {
+            format!("vpcd: the peer on {addr} is not checked: ")
+        },
     ] {
         daemon.wait_log(&expected)?;
     }
@@ -359,6 +382,127 @@ fn disabling_ccid_over_vpcd_warns_at_the_default_level_that_nothing_is_presented
     wait_status(&dir, "attached", "false")?;
     // Twice the re-plug pause: a card would be back by now.
     assert!(nothing_connects(&vpcd, Duration::from_secs(3)), "the card stays out");
+    assert_eq!(daemon.stop()?.code(), Some(0), "{}", daemon.log());
+    Ok(())
+}
+
+/// The vpcd options belong to `--transport vpcd` (usage errors elsewhere), and their
+/// values are checked: all exit 2 with the usage.
+#[test]
+fn the_vpcd_options_are_usage_errors_without_the_vpcd_transport_or_with_bad_values() -> TestResult {
+    let run = ["run", "--state", "/nonexistent", "--key-file", "/k"];
+    for (extra, message) in [
+        (&["--vpcd-allow-remote"][..], "--vpcd-allow-remote applies to --transport vpcd only (the transport is wire)"),
+        (&["--transport", "uhid", "--vpcd-peer-uid", "0"], "--vpcd-peer-uid applies to --transport vpcd only"),
+        (&["--transport", "gadget", "--udc", "u", "--vpcd-allow-remote"], "--vpcd-allow-remote applies to"),
+        (&["--transport", "vpcd", "--vpcd-peer-uid", "root"], "--vpcd-peer-uid \"root\": expected user ids"),
+        (&["--transport", "vpcd", "--vpcd-peer-uid", "0,"], "--vpcd-peer-uid \"0,\": expected user ids"),
+        (&["--transport", "vpcd", "--vpcd-allow-remote=1"], "--vpcd-allow-remote takes no value"),
+    ] {
+        let output = localkeyd(run.iter().chain(extra))?;
+        assert_eq!(output.status.code(), Some(2), "{extra:?}");
+        let stderr = text(&output.stderr);
+        assert!(stderr.contains(message) && stderr.contains("usage:"), "{extra:?}: {stderr}");
+    }
+    Ok(())
+}
+
+/// The loopback rule (lk-vpcd `check_addr`): a `--vpcd-addr` that is not a loopback
+/// address is a startup failure (exit 2) before the state directory is created, unless
+/// `--vpcd-allow-remote` is given. Nothing is dialled. A host name counts by what it
+/// resolves to, and `--vpcd-allow-remote` with a loopback address changes nothing.
+#[test]
+fn a_remote_vpcd_address_is_refused_before_the_state_directory_unless_allowed() -> TestResult {
+    let dir = TestDir::new();
+    keygen(&dir.key())?;
+    let key = dir.key();
+    let key = key.to_str().ok_or("the key path is not UTF-8")?;
+    for remote in ["192.0.2.1:35963", "[2001:db8::1]:35963", "[::ffff:192.0.2.1]:35963"] {
+        let mut daemon = Daemon::spawn(&dir, &["--key-file", key, "--transport", "vpcd", "--vpcd-addr", remote])?;
+        assert_eq!(daemon.wait_exit()?.code(), Some(2), "{}", daemon.log());
+        let log = daemon.log();
+        assert!(log.contains(&format!("localkeyd: --vpcd-addr {remote}: ")), "{log}");
+        assert!(
+            log.contains(
+                "is not a loopback address: APDUs (PINs and keys among them) would travel to it unencrypted, and \
+                 whatever listens there would drive the card unchecked; pass --vpcd-allow-remote to use it anyway"
+            ),
+            "{log}"
+        );
+        assert!(!dir.state().exists(), "the state directory was not created: {log}");
+    }
+
+    let vpcd = FakeVpcd::bind()?;
+    let port = vpcd.addr()?.port();
+    let named = format!("localhost:{port}");
+    let mut daemon = Daemon::with_key(&dir, &["--transport", "vpcd", "--vpcd-addr", &named, "--vpcd-allow-remote"])?;
+    let mut card = vpcd.accept()?;
+    assert_eq!(card.atr()?, DeviceProfile::own(0).atr);
+    assert!(daemon.log().contains(&format!("serving: vpcd card for 127.0.0.1:{port}")), "{}", daemon.log());
+    assert!(!daemon.log().contains("not a loopback address"), "loopback is not warned about: {}", daemon.log());
+    assert_eq!(daemon.stop()?.code(), Some(0), "{}", daemon.log());
+    Ok(())
+}
+
+/// `--vpcd-peer-uid` can be applied on Linux only: elsewhere it is a startup failure
+/// (exit 2) before the state directory, not an option that silently does nothing.
+#[cfg(not(target_os = "linux"))]
+#[test]
+fn vpcd_peer_uid_is_refused_where_there_is_no_proc() -> TestResult {
+    let dir = TestDir::new();
+    keygen(&dir.key())?;
+    let key = dir.key();
+    let key = key.to_str().ok_or("the key path is not UTF-8")?;
+    let mut daemon = Daemon::spawn(&dir, &["--key-file", key, "--transport", "vpcd", "--vpcd-peer-uid", "0"])?;
+    assert_eq!(daemon.wait_exit()?.code(), Some(2), "{}", daemon.log());
+    let log = daemon.log();
+    assert!(
+        log.contains(&format!(
+            "localkeyd: --vpcd-peer-uid: the owner of vpcd's socket is looked up in /proc/net/tcp, which only Linux \
+             has, and this system is {}",
+            std::env::consts::OS
+        )),
+        "{log}"
+    );
+    assert!(!dir.state().exists(), "{log}");
+    Ok(())
+}
+
+/// The peer check on a real kernel (lk-vpcd `ProcNetPeerCheck`): the fake vpcd listens as
+/// this user. With `--vpcd-peer-uid` naming another uid, every connection is closed
+/// without a byte, the refusal is logged once at the default level and the daemon keeps
+/// trying every second; with this user's uid the card is inserted.
+#[cfg(target_os = "linux")]
+#[test]
+fn a_vpcd_peer_owned_by_a_uid_not_allowed_is_refused_and_one_allowed_gets_the_card() -> TestResult {
+    let dir = TestDir::new();
+    keygen(&dir.key())?;
+    let own = own_uid()?;
+    let other = own.wrapping_add(1).to_string();
+    let vpcd = FakeVpcd::bind()?;
+    let addr = vpcd.addr()?.to_string();
+    let mut daemon = Daemon::with_key(&dir, &["--transport", "vpcd", "--vpcd-addr", &addr, "--vpcd-peer-uid", &other])?;
+    for _ in 0..2 {
+        let mut card = vpcd.accept()?;
+        assert!(closed_unused(&mut card)?, "a refused peer gets no byte");
+    }
+    let refusal = format!(
+        "localkeyd: vpcd: the peer on {addr} is owned by uid {own}, not an allowed uid ({other}); refusing the \
+         connection, retrying every second"
+    );
+    daemon.wait_log(&refusal)?;
+    let output = ctl(&dir.control(), &["status"])?;
+    assert_eq!(status_value(&text(&output.stdout), "attached").as_deref(), Some("false"), "no card");
+    assert_eq!(daemon.stop()?.code(), Some(0), "{}", daemon.log());
+    let log = daemon.log();
+    assert_eq!(log.matches("not an allowed uid").count(), 1, "one notice for the series: {log}");
+
+    let allowed = format!("{other},{own}");
+    let mut daemon =
+        Daemon::with_key(&dir, &["--transport", "vpcd", "--vpcd-addr", &addr, "--vpcd-peer-uid", &allowed, "-v"])?;
+    let mut card = vpcd.accept()?;
+    assert_eq!(card.atr()?, DeviceProfile::own(0).atr);
+    daemon.wait_log(&format!("vpcd: the peer on {addr} is owned by uid {own}, an allowed uid"))?;
     assert_eq!(daemon.stop()?.code(), Some(0), "{}", daemon.log());
     Ok(())
 }

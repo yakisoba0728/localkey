@@ -244,7 +244,7 @@ a real kernel").
 
 ## The vpcd scenario (`tests/vpcd.sh`)
 
-`guest-run.sh -t 1500 -f tools/service vpcd.sh` (about 3 minutes) runs `localkeyd run
+`guest-run.sh -t 1500 -f tools/service vpcd.sh` (about 3.5 minutes) runs `localkeyd run
 --transport vpcd` and `--transport uhid,vpcd` with `--profile yubikey-5c-nano-5.7.4`
 against Ubuntu's vsmartcard-vpcd 3.3 and pcsc-lite 2.4.1 in the guest, with real host
 software, tmpfs state directories and touches through the control socket:
@@ -253,7 +253,19 @@ software, tmpfs state directories and touches through the control socket:
    every second, `attached=false`), then pcscd; "Virtual PCD 00 00" with a card in
    `opensc-tool -l` and `pcsc_scan`, the profile's ATR (`opensc-tool -a`), vpcd listening
    on `0.0.0.0:35963` and the card's connection from `127.0.0.1` (`/proc/net/tcp`),
-   `attached=true`;
+   `attached=true`; pcscd runs here as the packaged `pcscd.service` runs it, as the
+   sysusers user `pcscd` (`User=pcscd`; uid 990 in this image; `setpriv --reuid=pcscd
+   --regid=pcscd --init-groups`, `/run/pcscd` owned by that user), and the peer check
+   accepted vpcd's end of the connection, owned by that uid (`/proc/net/tcp` field 8,
+   against `/proc/<pid>/status`; the `-v` log names the uid);
+   then step 1b, the peer check against an impostor: pcscd stopped, a listener on
+   `127.0.0.1:35963` as uid 65534 (`setpriv --reuid=65534 --regid=65534 --clear-groups
+   python3`, the socket made after the drop): every connection `localkeyd` makes to it
+   (one a second) is closed with 0 bytes received, the log says once "the peer on
+   127.0.0.1:35963 is owned by uid 65534, not an allowed uid (0, 990); refusing the
+   connection, retrying every second", no card is inserted, `attached=false`; pcscd started
+   again as `pcscd`: the card is back. From step 2 on pcscd runs as root (as before),
+   accepted as uid 0;
 2. CCID clients: the reader renamed to "Yubico YubiKey OTP+FIDO+CCID" (pcscd restarted; the
    card leaves and comes back by itself), ykman info, OATH with touch (the code checked
    against RFC 6238), PIV key and certificate generation (the device's signature

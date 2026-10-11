@@ -71,6 +71,26 @@
 //! Dropping the transport shuts the connection down in both directions and waits at most
 //! [`DROP_TIMEOUT`] for the thread; a thread still inside a connection attempt (at most
 //! `CONNECT_TIMEOUT`) is left behind and ends by itself.
+//!
+//! # Who is connected
+//!
+//! The link has no authentication, so two rules keep the card from whoever happens to
+//! listen on vpcd's address (see [`crate::peer`] for the threat):
+//!
+//! - **The address.** The transport cannot be made for an address that is not a loopback
+//!   address unless [`VpcdConfig::allow_remote`] is set ([`crate::check_addr`]); with it, the
+//!   address is reported once ([`VpcdNotice::NotLoopback`]).
+//! - **The peer.** After each successful connect, before anything is read or written, the
+//!   connection's own addresses go to [`VpcdConfig::peer_check`] (on Linux by default the
+//!   owner of the peer's socket from `/proc/net/tcp`, which must be root, the local user
+//!   `pcscd` or this process's user). A refused peer gets the connection shut down and closed unused: it receives no
+//!   byte, the attempt counts in [`VpcdStats::refused`] (not in `connections`), and the next
+//!   attempt follows on the normal schedule ([`RETRY_INTERVAL`] after the start of this
+//!   one), because vpcd may come up later. A refusal is reported
+//!   ([`VpcdNotice::PeerRefused`]) once per series of refusals, which ends with an accepted
+//!   peer or a failed connection attempt; an allowed peer is reported with its uid
+//!   ([`VpcdNotice::PeerAllowed`]), an unchecked one once for the transport's life
+//!   ([`VpcdNotice::PeerUnchecked`]).
 
 use std::fmt;
 use std::io::{self, Write};
@@ -85,7 +105,8 @@ use lk_device::{Output, UsbIdentity};
 use lk_run::{Command, HostInput, Transport};
 
 use crate::ccid::{self, ApduExchange, Next, Reply, Response, Sequence};
-use crate::connect::{Connector, is_loopback};
+use crate::connect::{Connector, RemoteRefused, check_addr, is_loopback};
+use crate::peer::{PeerCheck, PeerRefusal, PeerVerdict, default_peer_check};
 use crate::protocol::{self, Control, MAX_PAYLOAD, Message};
 
 /// How often a connection is attempted while vpcd does not accept one, and the shortest
@@ -144,6 +165,7 @@ const POLL: Duration = Duration::from_millis(20);
 /// How often the connection thread, while a message waits for its reply, checks whether
 /// vpcd closed or reset the connection (see the module docs, "A connection lost while a
 /// command waits"). Three system calls per check; a reply within this time needs none.
+/// (Not the check of who the peer is: that is [`VpcdConfig::peer_check`].)
 pub const PEER_CHECK: Duration = Duration::from_millis(200);
 
 /// How often a bounded join checks whether the thread has ended.
@@ -153,6 +175,37 @@ const JOIN_POLL: Duration = Duration::from_millis(5);
 /// the runner thread, so it must be quick and must not call into the transport.
 pub type Observer = Arc<dyn Fn(&VpcdNotice) + Send + Sync>;
 
+/// How a [`VpcdTransport`] is made ([`VpcdTransport::with_config`]); the module docs, "Who
+/// is connected", say what the rules are for.
+#[derive(Clone)]
+pub struct VpcdConfig {
+    /// Receives the transport's notices.
+    pub observer: Option<Observer>,
+    /// Whether vpcd's address may be other than a loopback address ([`crate::check_addr`]).
+    /// Default false.
+    pub allow_remote: bool,
+    /// Asked about every new connection before it is used. Default
+    /// [`crate::default_peer_check`]: the owner of the peer's socket on Linux, no check
+    /// elsewhere.
+    pub peer_check: Arc<dyn PeerCheck>,
+}
+
+impl Default for VpcdConfig {
+    fn default() -> Self {
+        VpcdConfig { observer: None, allow_remote: false, peer_check: default_peer_check() }
+    }
+}
+
+impl fmt::Debug for VpcdConfig {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("VpcdConfig")
+            .field("observer", &self.observer.is_some())
+            .field("allow_remote", &self.allow_remote)
+            .field("peer_check", &self.peer_check)
+            .finish()
+    }
+}
+
 /// What happened on the vpcd connection (`docs/PROGRAM.md` "localkeyd" logging).
 /// `Received` and `Sent` are per message (the `-vv` level); the rest are connection
 /// lifecycle and problems. Never carries APDU or ATR bytes.
@@ -160,9 +213,19 @@ pub type Observer = Arc<dyn Fn(&VpcdNotice) + Send + Sync>;
 pub enum VpcdNotice {
     /// The runner enumerated the device; with CCID the transport connects.
     Enumerated { ccid: bool },
-    /// The address is not a loopback address: the APDUs travel unencrypted over a
-    /// network. Sent once, when the transport is made.
+    /// The address is not a loopback address (allowed explicitly): the APDUs travel
+    /// unencrypted over a network. Sent once, when the transport is made.
     NotLoopback { addr: SocketAddr },
+    /// The peer of a new connection is owned by `uid`, an allowed uid; the connection is
+    /// used.
+    PeerAllowed { addr: SocketAddr, uid: u32 },
+    /// The peer of a new connection was not checked, for `reason`; the connection is used.
+    /// Sent once for the transport's life.
+    PeerUnchecked { addr: SocketAddr, reason: String },
+    /// The peer of a new connection was refused: the connection was closed before anything
+    /// was sent or read, and the transport retries every second. Sent for the first refusal
+    /// of a series (see the module docs).
+    PeerRefused { addr: SocketAddr, refusal: PeerRefusal },
     /// A connection to vpcd was made: the card is in the reader.
     Connected { addr: SocketAddr },
     /// A connection attempt failed. Sent for the first failure after a connection (or the
@@ -192,8 +255,15 @@ impl fmt::Display for VpcdNotice {
             VpcdNotice::NotLoopback { addr } => write!(
                 f,
                 "vpcd: warning: {addr} is not a loopback address; APDUs (PINs and keys among them) \
-                 travel to it unencrypted"
+                 travel to it unencrypted, and whatever listens there is not checked"
             ),
+            VpcdNotice::PeerAllowed { addr, uid } => {
+                write!(f, "vpcd: the peer on {addr} is owned by uid {uid}, an allowed uid")
+            }
+            VpcdNotice::PeerUnchecked { addr, reason } => write!(f, "vpcd: the peer on {addr} is not checked: {reason}"),
+            VpcdNotice::PeerRefused { addr, refusal } => {
+                write!(f, "vpcd: the peer on {addr} {refusal}; refusing the connection, retrying every second")
+            }
             VpcdNotice::Connected { addr } => write!(f, "vpcd: connected to {addr}; card inserted"),
             VpcdNotice::Unreachable { addr, reason } => {
                 write!(f, "vpcd: cannot connect to {addr}: {reason}; retrying every second")
@@ -223,6 +293,8 @@ pub struct VpcdStats {
     pub time_extensions: u64,
     /// APDUs answered with [`ERROR_RESPONSE`].
     pub errors: u64,
+    /// Connections closed unused because the peer check refused the peer.
+    pub refused: u64,
 }
 
 /// An item of the queue from the runner thread to the connection thread.
@@ -250,6 +322,7 @@ struct Shared {
     runner: Sender<Command>,
     observer: Option<Observer>,
     addr: SocketAddr,
+    peer_check: Arc<dyn PeerCheck>,
     /// Raised by every enumeration and by drop, always under the lock; a connection of an
     /// earlier generation ends.
     generation: AtomicU64,
@@ -261,6 +334,7 @@ struct Shared {
     stale: AtomicU64,
     time_extensions: AtomicU64,
     errors: AtomicU64,
+    refused: AtomicU64,
 }
 
 impl Shared {
@@ -314,6 +388,17 @@ impl Shared {
         control.stream = Some(clone);
         self.connected.store(true, Ordering::SeqCst);
         Ok(true)
+    }
+
+    /// Ask the peer check about a new connection, with the connection's own addresses (not
+    /// the configured one: a host name resolved once, a test connector's disguise).
+    fn check_peer(&self, stream: &TcpStream) -> PeerVerdict {
+        match (stream.local_addr(), stream.peer_addr()) {
+            (Ok(local), Ok(peer)) => self.peer_check.check(local, peer),
+            (Err(error), _) | (_, Err(error)) => {
+                PeerVerdict::Refused(PeerRefusal::Failed(format!("the connection's addresses are unknown: {error}")))
+            }
+        }
     }
 
     fn unregister(&self) {
@@ -383,10 +468,14 @@ impl fmt::Display for End {
     }
 }
 
-/// The connection thread: connect while CCID is enabled, serve each connection, retry.
+/// The connection thread: connect while CCID is enabled, check the peer, serve each
+/// connection, retry.
 fn run(shared: &Shared, mut connector: Box<dyn Connector>, outputs: &Receiver<Msg>) {
     let mut next_attempt = Instant::now();
+    // In a series of failed attempts, of refused peers (each reported once per series).
     let mut failing = false;
+    let mut refusing = false;
+    let mut told_unchecked = false;
     // Runs on across connections (see the module docs).
     let mut seq = Sequence::default();
     while let Some((generation, max_data)) = shared.wait_for_attempt(next_attempt) {
@@ -394,6 +483,7 @@ fn run(shared: &Shared, mut connector: Box<dyn Connector>, outputs: &Receiver<Ms
         let stream = match connector.connect() {
             Ok(stream) => stream,
             Err(error) => {
+                refusing = false;
                 if !failing {
                     shared.notify(VpcdNotice::Unreachable { addr: shared.addr, reason: error.to_string() });
                     failing = true;
@@ -402,6 +492,30 @@ fn run(shared: &Shared, mut connector: Box<dyn Connector>, outputs: &Receiver<Ms
             }
         };
         failing = false;
+        // Before a byte is read or written (see the module docs, "Who is connected").
+        match shared.check_peer(&stream) {
+            PeerVerdict::Allowed { uid } => {
+                refusing = false;
+                shared.notify(VpcdNotice::PeerAllowed { addr: shared.addr, uid });
+            }
+            PeerVerdict::Unchecked { reason } => {
+                refusing = false;
+                if !told_unchecked {
+                    told_unchecked = true;
+                    shared.notify(VpcdNotice::PeerUnchecked { addr: shared.addr, reason });
+                }
+            }
+            PeerVerdict::Refused(refusal) => {
+                let _ = stream.shutdown(Shutdown::Both);
+                drop(stream);
+                Shared::count(&shared.refused);
+                if !refusing {
+                    refusing = true;
+                    shared.notify(VpcdNotice::PeerRefused { addr: shared.addr, refusal });
+                }
+                continue;
+            }
+        }
         match shared.register(&stream, generation) {
             Ok(true) => {}
             Ok(false) => {
@@ -782,6 +896,7 @@ impl fmt::Debug for VpcdTransport {
         let control = self.shared.lock();
         f.debug_struct("VpcdTransport")
             .field("addr", &self.shared.addr)
+            .field("peer_check", &self.shared.peer_check)
             .field("ccid", &control.ccid)
             .field("connected", &self.shared.connected.load(Ordering::SeqCst))
             .field("generation", &self.shared.generation())
@@ -793,26 +908,43 @@ impl fmt::Debug for VpcdTransport {
 
 impl VpcdTransport {
     /// A transport that connects through `connector` (`TcpConnector` for vpcd's address)
-    /// and feeds the runner through `runner` (`lk_run::Runner::sender`). Nothing is opened
-    /// before the first enumeration with CCID. The runner must answer `Command::Status`
-    /// (`lk_run::Runner` does): the connection thread learns from it when a message was
-    /// handled.
-    pub fn new(connector: Box<dyn Connector>, runner: Sender<Command>) -> VpcdTransport {
-        VpcdTransport::with_observer(connector, runner, None)
+    /// and feeds the runner through `runner` (`lk_run::Runner::sender`), with the default
+    /// [`VpcdConfig`]: a loopback address only, the default peer check, no observer.
+    /// Nothing is opened before the first enumeration with CCID. The runner must answer
+    /// `Command::Status` (`lk_run::Runner` does): the connection thread learns from it when
+    /// a message was handled.
+    ///
+    /// Fails when `connector.addr()` is not a loopback address ([`crate::check_addr`]).
+    pub fn new(connector: Box<dyn Connector>, runner: Sender<Command>) -> Result<VpcdTransport, RemoteRefused> {
+        VpcdTransport::with_config(connector, runner, VpcdConfig::default())
     }
 
-    /// [`VpcdTransport::new`] with an observer for connection events. A non-loopback
-    /// address is reported to it at once ([`VpcdNotice::NotLoopback`]).
+    /// [`VpcdTransport::new`] with an observer for connection events.
     pub fn with_observer(
         connector: Box<dyn Connector>,
         runner: Sender<Command>,
         observer: Option<Observer>,
-    ) -> VpcdTransport {
+    ) -> Result<VpcdTransport, RemoteRefused> {
+        VpcdTransport::with_config(connector, runner, VpcdConfig { observer, ..VpcdConfig::default() })
+    }
+
+    /// A transport made with `config`. Fails when `connector.addr()` is not a loopback
+    /// address and `config.allow_remote` is false ([`crate::check_addr`]); a non-loopback
+    /// address that is allowed is reported to the observer at once
+    /// ([`VpcdNotice::NotLoopback`]).
+    pub fn with_config(
+        connector: Box<dyn Connector>,
+        runner: Sender<Command>,
+        config: VpcdConfig,
+    ) -> Result<VpcdTransport, RemoteRefused> {
         let addr = connector.addr();
+        check_addr(addr, config.allow_remote)?;
+        let VpcdConfig { observer, allow_remote: _, peer_check } = config;
         let shared = Shared {
             runner,
             observer,
             addr,
+            peer_check,
             generation: AtomicU64::new(0),
             connected: AtomicBool::new(false),
             control: Mutex::new(State {
@@ -827,18 +959,19 @@ impl VpcdTransport {
             stale: AtomicU64::new(0),
             time_extensions: AtomicU64::new(0),
             errors: AtomicU64::new(0),
+            refused: AtomicU64::new(0),
         };
         if !is_loopback(&addr) {
             shared.notify(VpcdNotice::NotLoopback { addr });
         }
         let (outputs, receiver) = mpsc::sync_channel(OUTPUT_QUEUE);
-        VpcdTransport {
+        Ok(VpcdTransport {
             shared: Arc::new(shared),
             connector: Some(connector),
             outputs,
             receiver: Some(receiver),
             thread: None,
-        }
+        })
     }
 
     /// vpcd's address.
@@ -855,6 +988,7 @@ impl VpcdTransport {
             stale: load(&self.shared.stale),
             time_extensions: load(&self.shared.time_extensions),
             errors: load(&self.shared.errors),
+            refused: load(&self.shared.refused),
         }
     }
 
@@ -967,6 +1101,24 @@ mod tests {
             "vpcd: disconnected (the device re-enumerated); card removed"
         );
         assert!(VpcdNotice::Unreachable { addr, reason: "refused".into() }.to_string().contains("retrying"));
+        let local: SocketAddr = "127.0.0.1:35963".parse().expect("valid");
+        assert_eq!(
+            VpcdNotice::PeerRefused {
+                addr: local,
+                refusal: PeerRefusal::NotAllowed { uid: 1001, allowed: vec![0, 1000] }
+            }
+            .to_string(),
+            "vpcd: the peer on 127.0.0.1:35963 is owned by uid 1001, not an allowed uid (0, 1000); refusing the \
+             connection, retrying every second"
+        );
+        assert_eq!(
+            VpcdNotice::PeerAllowed { addr: local, uid: 0 }.to_string(),
+            "vpcd: the peer on 127.0.0.1:35963 is owned by uid 0, an allowed uid"
+        );
+        assert_eq!(
+            VpcdNotice::PeerUnchecked { addr: local, reason: "no /proc".into() }.to_string(),
+            "vpcd: the peer on 127.0.0.1:35963 is not checked: no /proc"
+        );
     }
 
     #[test]

@@ -11,8 +11,10 @@
 //!   [--transport wire] [--wire PATH]
 //!   --transport uhid [--uhid-path PATH]
 //!   --transport gadget --udc NAME [--gadget-name NAME] [--configfs DIR] [--ffs-dir DIR]
-//!   --transport vpcd [--vpcd-addr HOST:PORT]
-//!   --transport uhid,vpcd [--uhid-path PATH] [--vpcd-addr HOST:PORT]
+//!   --transport vpcd [VPCD]
+//!   --transport uhid,vpcd [--uhid-path PATH] [VPCD]
+//!
+//! VPCD: [--vpcd-addr HOST:PORT] [--vpcd-allow-remote] [--vpcd-peer-uid UID[,UID...]]
 //! ```
 //!
 //! The transports are `docs/PROGRAM.md` "lk-wire", "lk-uhid", "lk-gadget" and "lk-vpcd",
@@ -42,8 +44,8 @@
 //! - `run` collects every option before it looks at `--transport`, so an option that
 //!   belongs to a transport outside the set (`--wire` without the wire transport,
 //!   `--uhid-path` without uhid, `--udc`, `--gadget-name`, `--configfs` or `--ffs-dir`
-//!   without gadget, `--vpcd-addr` without vpcd) is the same usage error wherever it stands
-//!   on the line. `--control` belongs to every transport: the control socket is how a
+//!   without gadget, `--vpcd-addr`, `--vpcd-allow-remote` or `--vpcd-peer-uid` without
+//!   vpcd) is the same usage error wherever it stands on the line. `--control` belongs to every transport: the control socket is how a
 //!   touch reaches the device.
 //! - The transport defaults are resolved here, so [`RunOptions`] holds the paths the
 //!   daemon uses: `--uhid-path` [`DEFAULT_UHID_PATH`], `--gadget-name`
@@ -62,7 +64,15 @@
 //! - `--vpcd-addr` must be UTF-8 `HOST:PORT` with a host and a port from 1 to 65535 (an
 //!   IPv6 address in brackets, `[::1]:35963`). Only the form is checked here; `run`
 //!   resolves the address (`lk_vpcd::resolve`) before the state directory is opened, so a
-//!   name that does not resolve is a startup failure (exit 2), not a usage error.
+//!   name that does not resolve is a startup failure (exit 2), not a usage error, and so
+//!   is an address that is not a loopback address without `--vpcd-allow-remote`
+//!   (`lk_vpcd::check_addr`: what it resolves to decides, not how it is written).
+//! - `--vpcd-allow-remote` is a flag. `--vpcd-peer-uid` is one argument, a comma-separated
+//!   set of decimal uids from 0 to 4294967294 (`--vpcd-peer-uid 0,1000`), like the
+//!   `--transport` set and for the same rule (every option given once); it is kept sorted
+//!   without duplicates. 4294967295 is `(uid_t)-1`, no user. An empty item and anything
+//!   that is not a decimal number are usage errors. Where it means nothing (a system other
+//!   than Linux, a remote address) `run` refuses to start (exit 2).
 
 use std::ffi::{OsStr, OsString};
 use std::fmt;
@@ -86,10 +96,16 @@ TRANSPORT, how the device reaches a USB host (default wire):
       the FIDO and OTP HID interfaces as kernel HID devices (Linux, /dev/uhid access)
   --transport gadget --udc NAME [--gadget-name NAME] [--configfs DIR] [--ffs-dir DIR]
       the whole device as a USB gadget on the device controller NAME (Linux, root)
-  --transport vpcd [--vpcd-addr HOST:PORT]
+  --transport vpcd [VPCD]
       the CCID interface as a card in pcscd's vsmartcard vpcd reader (needs vpcd)
-  --transport uhid,vpcd [--uhid-path PATH] [--vpcd-addr HOST:PORT]
+  --transport uhid,vpcd [--uhid-path PATH] [VPCD]
       FIDO and OTP through UHID, CCID through vpcd: the whole device (Linux)
+VPCD: [--vpcd-addr HOST:PORT] [--vpcd-allow-remote] [--vpcd-peer-uid UID[,UID...]]
+  The address must be a loopback address unless --vpcd-allow-remote is given: APDUs
+  travel unencrypted, and whatever listens there drives the card. On Linux the program
+  listening there must run as root, as the user pcscd or as this daemon's user (or as
+  one of --vpcd-peer-uid, which replaces that set); any other gets its connection
+  closed unused.
 The control socket is served with every transport: ctl tap is the touch, ctl
 shutdown stops the daemon cleanly (as --exit-on-stdin-eof does at EOF) and returns
 once it has: it prints ok, then stopped (exit 0) or the daemon's error (exit 1).
@@ -236,11 +252,7 @@ pub enum TransportOptions {
     /// `gadget`.
     Gadget(GadgetOptions),
     /// `vpcd`.
-    Vpcd {
-        /// `--vpcd-addr` as given (`HOST:PORT`, resolved by `run`), [`DEFAULT_VPCD_ADDR`]
-        /// when not given.
-        addr: String,
-    },
+    Vpcd(VpcdOptions),
 }
 
 impl TransportOptions {
@@ -249,7 +261,7 @@ impl TransportOptions {
             TransportOptions::Wire { .. } => TransportKind::Wire,
             TransportOptions::Uhid { .. } => TransportKind::Uhid,
             TransportOptions::Gadget(_) => TransportKind::Gadget,
-            TransportOptions::Vpcd { .. } => TransportKind::Vpcd,
+            TransportOptions::Vpcd(_) => TransportKind::Vpcd,
         }
     }
 }
@@ -294,6 +306,28 @@ pub struct GadgetOptions {
     pub configfs: PathBuf,
     /// `--ffs-dir`: where FunctionFS is mounted.
     pub ffs_dir: PathBuf,
+}
+
+/// The options of `--transport vpcd` (`lk_vpcd::VpcdConfig`).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct VpcdOptions {
+    /// `--vpcd-addr` as given (`HOST:PORT`, resolved by `run`), [`DEFAULT_VPCD_ADDR`] when
+    /// not given.
+    pub addr: String,
+    /// `--vpcd-allow-remote`: the address may be other than a loopback address.
+    pub allow_remote: bool,
+    /// `--vpcd-peer-uid`: the uids allowed to own vpcd's end of the connection, sorted,
+    /// without duplicates; `None` for the default (root, the local user `pcscd` and the
+    /// daemon's own user, `lk_vpcd::ProcNetPeerCheck::default_uids`).
+    pub peer_uids: Option<Vec<u32>>,
+}
+
+impl VpcdOptions {
+    /// `addr` with the other options at their defaults, for tests.
+    #[cfg(test)]
+    pub fn at(addr: impl Into<String>) -> VpcdOptions {
+        VpcdOptions { addr: addr.into(), allow_remote: false, peer_uids: None }
+    }
 }
 
 /// The options of `run`.
@@ -521,6 +555,8 @@ fn parse_run(args: &[OsString]) -> Result<Invocation, UsageError> {
     let mut configfs = None;
     let mut ffs_dir = None;
     let mut vpcd_addr = None;
+    let mut vpcd_allow_remote = false;
+    let mut vpcd_peer_uids = None;
     let mut control = None;
     let mut wall_clock = false;
     let mut allow_unreadable = false;
@@ -580,6 +616,11 @@ fn parse_run(args: &[OsString]) -> Result<Invocation, UsageError> {
                 }
                 once(&mut vpcd_addr, &name, value.to_owned())?;
             }
+            "--vpcd-allow-remote" => flag(&mut vpcd_allow_remote, &name, inline)?,
+            "--vpcd-peer-uid" => {
+                let value = utf8(&name, args.value(&name, inline)?)?;
+                once(&mut vpcd_peer_uids, &name, uid_set(value)?)?;
+            }
             "--control" => once(&mut control, &name, PathBuf::from(args.value(&name, inline)?))?,
             "--wall-clock" => flag(&mut wall_clock, &name, inline)?,
             "--allow-unreadable" => flag(&mut allow_unreadable, &name, inline)?,
@@ -612,6 +653,8 @@ fn parse_run(args: &[OsString]) -> Result<Invocation, UsageError> {
         ("--configfs", configfs.is_some(), TransportKind::Gadget),
         ("--ffs-dir", ffs_dir.is_some(), TransportKind::Gadget),
         ("--vpcd-addr", vpcd_addr.is_some(), TransportKind::Vpcd),
+        ("--vpcd-allow-remote", vpcd_allow_remote, TransportKind::Vpcd),
+        ("--vpcd-peer-uid", vpcd_peer_uids.is_some(), TransportKind::Vpcd),
     ];
     if let Some((option, _, owner)) = owned.iter().find(|(_, given, owner)| *given && !kinds.contains(owner)) {
         return Err(usage(format!(
@@ -633,9 +676,11 @@ fn parse_run(args: &[OsString]) -> Result<Invocation, UsageError> {
                 let configfs = configfs.take().unwrap_or_else(|| PathBuf::from(DEFAULT_CONFIGFS));
                 TransportOptions::Gadget(GadgetOptions { udc, name, configfs, ffs_dir })
             }
-            TransportKind::Vpcd => {
-                TransportOptions::Vpcd { addr: vpcd_addr.take().unwrap_or_else(|| DEFAULT_VPCD_ADDR.to_owned()) }
-            }
+            TransportKind::Vpcd => TransportOptions::Vpcd(VpcdOptions {
+                addr: vpcd_addr.take().unwrap_or_else(|| DEFAULT_VPCD_ADDR.to_owned()),
+                allow_remote: vpcd_allow_remote,
+                peer_uids: vpcd_peer_uids.take(),
+            }),
         };
         members.push(member);
     }
@@ -684,6 +729,28 @@ fn valid_host_port(value: &str) -> bool {
     value.rsplit_once(':').is_some_and(|(host, port)| {
         !host.is_empty() && !host.contains(char::is_whitespace) && port.parse::<u16>().is_ok_and(|port| port != 0)
     })
+}
+
+/// The uids of a `--vpcd-peer-uid` value, sorted, without duplicates (see the module's "As
+/// built" notes).
+fn uid_set(value: &str) -> Result<Vec<u32>, UsageError> {
+    let mut uids = Vec::new();
+    for item in value.split(',') {
+        let uid = (!item.is_empty() && item.bytes().all(|byte| byte.is_ascii_digit()))
+            .then(|| item.parse::<u32>().ok())
+            .flatten()
+            .filter(|&uid| uid != u32::MAX)
+            .ok_or_else(|| {
+                usage(format!(
+                    "--vpcd-peer-uid {value:?}: expected user ids from 0 to 4294967294, separated by commas, \
+                     such as 0,1000"
+                ))
+            })?;
+        uids.push(uid);
+    }
+    uids.sort_unstable();
+    uids.dedup();
+    Ok(uids)
 }
 
 /// 1 to [`MAX_GADGET_NAME`] of `[A-Za-z0-9_-]` (see the module's "As built" notes).
@@ -951,8 +1018,24 @@ mod tests {
             assert_eq!(run_error(&before), expected, "{before:?}");
             assert_eq!(run_error(&after), expected, "{after:?}");
         }
+        // The vpcd options without a value, and with one.
+        for chosen in ["wire", "uhid", "gadget"] {
+            let required: &[&str] = if chosen == "gadget" { &["--udc", "u0"] } else { &[] };
+            for option in [&["--vpcd-allow-remote"][..], &["--vpcd-peer-uid", "0"], &["--vpcd-peer-uid=0,1000"]] {
+                let name = option[0].split('=').next().unwrap_or_default();
+                let expected = format!("{name} applies to --transport vpcd only (the transport is {chosen})");
+                let before = [option, &["--transport", chosen], required].concat();
+                let after = [&["--transport", chosen][..], required, option].concat();
+                assert_eq!(run_error(&before), expected, "{before:?}");
+                assert_eq!(run_error(&after), expected, "{after:?}");
+            }
+        }
         // Without --transport the transport is the wire.
         assert_eq!(run_error(&["--udc", "u"]), "--udc applies to --transport gadget only (the transport is wire)");
+        assert_eq!(
+            run_error(&["--vpcd-allow-remote"]),
+            "--vpcd-allow-remote applies to --transport vpcd only (the transport is wire)"
+        );
         assert_eq!(
             run_error(&["--uhid-path", "/u"]),
             "--uhid-path applies to --transport uhid only (the transport is wire)"
@@ -962,13 +1045,61 @@ mod tests {
     #[test]
     fn the_vpcd_transport_defaults_to_vpcds_own_port_on_loopback_and_takes_an_address() {
         let vpcd = transport(&["--transport", "vpcd"]);
-        assert_eq!(vpcd, TransportOptions::Vpcd { addr: "127.0.0.1:35963".into() });
+        assert_eq!(vpcd, TransportOptions::Vpcd(VpcdOptions::at("127.0.0.1:35963")));
         assert_eq!(vpcd.kind(), TransportKind::Vpcd);
         assert_eq!(DEFAULT_VPCD_ADDR, lk_vpcd::protocol::DEFAULT_ADDR, "the crate's own default");
         for addr in ["127.0.0.1:40000", "[::1]:35963", "localhost:35963", "192.0.2.7:1", "vpcd.example:65535"] {
             let given = transport(&["--vpcd-addr", addr, "--transport=vpcd"]);
-            assert_eq!(given, TransportOptions::Vpcd { addr: addr.into() }, "{addr}");
+            assert_eq!(given, TransportOptions::Vpcd(VpcdOptions::at(addr)), "{addr}");
         }
+    }
+
+    #[test]
+    fn the_vpcd_transport_takes_allow_remote_and_a_set_of_peer_uids() {
+        let vpcd = transport(&["--transport", "vpcd", "--vpcd-addr", "192.0.2.7:35963", "--vpcd-allow-remote"]);
+        let expected = VpcdOptions { addr: "192.0.2.7:35963".into(), allow_remote: true, peer_uids: None };
+        assert_eq!(vpcd, TransportOptions::Vpcd(expected));
+        for (value, uids) in [
+            ("0", vec![0]),
+            ("1000,0", vec![0, 1000]),
+            ("0,1000,0", vec![0, 1000]),
+            ("4294967294", vec![4_294_967_294]),
+            ("007", vec![7]),
+        ] {
+            let vpcd = transport(&["--vpcd-peer-uid", value, "--transport=vpcd"]);
+            let expected = VpcdOptions { addr: DEFAULT_VPCD_ADDR.into(), allow_remote: false, peer_uids: Some(uids) };
+            assert_eq!(vpcd, TransportOptions::Vpcd(expected), "{value}");
+        }
+        let set = transports(&["--transport", "uhid,vpcd", "--vpcd-peer-uid=110", "--vpcd-allow-remote"]);
+        let expected = VpcdOptions { addr: DEFAULT_VPCD_ADDR.into(), allow_remote: true, peer_uids: Some(vec![110]) };
+        assert_eq!(set.members()[1], TransportOptions::Vpcd(expected));
+    }
+
+    #[test]
+    fn vpcd_peer_uids_must_be_decimal_user_ids_and_the_options_are_given_once() {
+        for value in ["", "x", "-1", "+5", "0,", ",0", "0,,1", "0 1", "1.5", "4294967295", "4294967296", "0x10"] {
+            let line = ["--transport", "vpcd", &format!("--vpcd-peer-uid={value}")].map(str::to_owned);
+            let line: Vec<&str> = line.iter().map(String::as_str).collect();
+            let expected = if value.is_empty() {
+                "--vpcd-peer-uid needs a value".to_owned()
+            } else {
+                format!(
+                    "--vpcd-peer-uid {value:?}: expected user ids from 0 to 4294967294, separated by commas, such as 0,1000"
+                )
+            };
+            assert_eq!(run_error(&line), expected, "{value:?}");
+        }
+        assert_eq!(
+            run_error(&["--transport", "vpcd", "--vpcd-peer-uid", "0", "--vpcd-peer-uid", "1"]),
+            "--vpcd-peer-uid given twice"
+        );
+        assert_eq!(
+            run_error(&["--transport", "vpcd", "--vpcd-allow-remote", "--vpcd-allow-remote"]),
+            "--vpcd-allow-remote given twice"
+        );
+        assert_eq!(run_error(&["--transport", "vpcd", "--vpcd-allow-remote=yes"]), "--vpcd-allow-remote takes no value");
+        // A forgotten value is reported, not taken from the next option.
+        assert_eq!(run_error(&["--transport", "vpcd", "--vpcd-peer-uid", "--vpcd-allow-remote"]), "--vpcd-peer-uid needs a value");
     }
 
     #[test]
@@ -989,7 +1120,7 @@ mod tests {
     fn uhid_and_vpcd_combine_in_either_order_with_their_own_options() {
         let expected = [
             TransportOptions::Uhid { path: PathBuf::from("/dev/uhid") },
-            TransportOptions::Vpcd { addr: "127.0.0.1:35963".into() },
+            TransportOptions::Vpcd(VpcdOptions::at("127.0.0.1:35963")),
         ];
         for value in ["uhid,vpcd", "vpcd,uhid"] {
             let set = transports(&["--transport", value]);
@@ -1000,7 +1131,7 @@ mod tests {
         let set = transports(&["--vpcd-addr", "127.0.0.1:9", "--transport=vpcd,uhid", "--uhid-path", "/u", "--control", "/c"]);
         assert_eq!(
             set.members(),
-            [TransportOptions::Uhid { path: PathBuf::from("/u") }, TransportOptions::Vpcd { addr: "127.0.0.1:9".into() }]
+            [TransportOptions::Uhid { path: PathBuf::from("/u") }, TransportOptions::Vpcd(VpcdOptions::at("127.0.0.1:9"))]
         );
     }
 

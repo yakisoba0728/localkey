@@ -7,14 +7,18 @@
 mod common;
 
 use std::net::SocketAddr;
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use lk_device::Output;
 use lk_run::HostInput;
-use lk_vpcd::{DROP_TIMEOUT, PEER_CHECK, REPLUG_PAUSE, REPLY_SILENCE, RETRY_INTERVAL, VpcdNotice, VpcdStats};
+use lk_vpcd::{
+    DROP_TIMEOUT, PEER_CHECK, PeerCheck, PeerRefusal, PeerVerdict, REPLUG_PAUSE, REPLY_SILENCE, RETRY_INTERVAL,
+    RemoteRefused, VpcdConfig, VpcdNotice, VpcdStats,
+};
 
 use common::{
-    ABORT, ATR, Card, FakeVpcd, Harness, ICC_POWER_OFF, ICC_POWER_ON, PowerOn, QUIET, WAIT, XFR_BLOCK, Xfr,
+    ABORT, ATR, Card, FakeVpcd, Harness, ICC_POWER_OFF, ICC_POWER_ON, PowerOn, QUIET, Scripted, WAIT, XFR_BLOCK, Xfr,
     data_block, identity, time_extension, with_ccid, without_ccid,
 };
 
@@ -202,7 +206,8 @@ fn time_extensions_keep_a_command_alive_past_the_reply_silence() {
         ignored: 0,
         stale: 0,
         time_extensions: 1 + sent,
-        errors: 0
+        errors: 0,
+        refused: 0
     });
 }
 
@@ -401,7 +406,7 @@ fn outputs_other_than_ccid_bulk_in_are_ignored() {
     harness.deliver(Output::OtpFeature([0; 8]));
     harness.deliver(Output::CcidInterrupt(vec![0x50, 0x03]));
     harness.deliver(Output::PresenceIndicator(true));
-    assert_eq!(harness.stats(), VpcdStats { connections: 1, ignored: 4, stale: 0, time_extensions: 0, errors: 0 });
+    assert_eq!(harness.stats(), VpcdStats { connections: 1, ignored: 4, stale: 0, time_extensions: 0, errors: 0, refused: 0 });
     harness.no_input();
 }
 
@@ -670,6 +675,12 @@ fn a_non_loopback_address_is_reported_once_when_the_transport_is_made() {
     harness.enumerate(&with_ccid());
     vpcd.accept().close();
     let mut second = vpcd.accept();
+    // Re-plug once the second connection is in use: a re-enumeration while the attempt is
+    // still being made (the peer check reads /proc/net/tcp on Linux) makes the transport
+    // drop that attempt and connect again at once, and the count below would be 2.
+    for _ in 0..2 {
+        harness.notice(|notice| matches!(notice, VpcdNotice::Connected { .. }));
+    }
     harness.enumerate(&with_ccid());
     assert!(second.ends());
     let mut third = vpcd.accept();
@@ -680,6 +691,145 @@ fn a_non_loopback_address_is_reported_once_when_the_transport_is_made() {
     assert_eq!(log.iter().filter(|line| line.starts_with("Connected")).count(), 3, "{log:#?}");
     let loopback = Harness::new(FakeVpcd::bind().addr());
     assert!(loopback.notice_log().is_empty(), "loopback is not reported");
+}
+
+#[test]
+fn a_non_loopback_address_cannot_be_used_unless_it_is_allowed() {
+    let vpcd = FakeVpcd::bind();
+    let remote: SocketAddr = "192.0.2.1:35963".parse().expect("a valid address");
+    let refused = Harness::with_connector(vpcd.addr(), Some(remote), VpcdConfig::default()).err();
+    assert_eq!(refused, Some(RemoteRefused { addr: remote }), "the transport is not made");
+    vpcd.no_connection(QUIET);
+    let mapped: SocketAddr = "[::ffff:192.0.2.1]:35963".parse().expect("a valid address");
+    let refused = Harness::with_connector(vpcd.addr(), Some(mapped), VpcdConfig::default()).err();
+    assert_eq!(refused, Some(RemoteRefused { addr: mapped }));
+    // IPv4-mapped loopback is loopback.
+    let loopback: SocketAddr = format!("[::ffff:127.0.0.1]:{}", vpcd.addr().port()).parse().expect("valid");
+    let harness = Harness::with_connector(vpcd.addr(), Some(loopback), VpcdConfig::default()).expect("loopback");
+    assert!(harness.notice_log().is_empty(), "not reported as remote");
+}
+
+/// The peer check's refusal (`docs/PROGRAM.md` "lk-vpcd" hardening): a refused peer gets
+/// the connection closed without a byte, nothing reaches the runner, the attempts go on
+/// every second, one notice per series of refusals, and an allowed peer later gets the
+/// card. A new series after an accepted connection is reported again.
+#[test]
+fn a_refused_peer_gets_no_bytes_and_the_transport_retries_until_an_allowed_peer() {
+    let vpcd = FakeVpcd::bind();
+    let check = Scripted::new(&[false, false, true, false, true]);
+    let harness = Harness::with_peer_check(vpcd.addr(), Arc::clone(&check) as Arc<dyn PeerCheck>);
+    harness.enumerate(&with_ccid());
+    for _ in 0..2 {
+        let mut refused = vpcd.accept();
+        assert!(refused.ends_silently(), "a refused peer gets the connection closed without a byte");
+    }
+    let times = harness.attempts(3);
+    for pair in times.windows(2) {
+        let gap = pair[1] - pair[0];
+        assert!(gap >= RETRY_INTERVAL - Duration::from_millis(50), "attempts {gap:?} apart");
+    }
+    // The third attempt's peer is allowed: the card is in the reader.
+    let mut conn = vpcd.accept();
+    assert_eq!(conn.atr(), ATR);
+    assert_eq!(harness.input().kind, ICC_POWER_ON, "the first message the runner sees");
+    assert!(harness.attached_becomes(true));
+    let stats = harness.stats();
+    assert_eq!((stats.connections, stats.refused), (1, 2), "{stats:?}");
+    let log = harness.notice_log();
+    let refusals: Vec<&String> = log.iter().filter(|line| line.starts_with("PeerRefused")).collect();
+    assert_eq!(refusals.len(), 1, "one notice for the series: {log:#?}");
+    let expected = VpcdNotice::PeerRefused {
+        addr: vpcd.addr(),
+        refusal: PeerRefusal::NotAllowed { uid: Scripted::OTHER, allowed: vec![Scripted::UID] },
+    };
+    assert_eq!(refusals[0], &format!("{expected:?}"));
+    assert!(log.contains(&format!("{:?}", VpcdNotice::PeerAllowed { addr: vpcd.addr(), uid: Scripted::UID })));
+    assert!(!log.iter().any(|line| line.starts_with("Unreachable")), "a refusal is not a failed attempt");
+
+    // vpcd drops the card; the next peer is refused (a new series, reported again), the
+    // one after that allowed.
+    conn.close();
+    let mut refused = vpcd.accept();
+    assert!(refused.ends_silently());
+    let mut conn = vpcd.accept();
+    assert_eq!(conn.atr(), ATR);
+    let stats = harness.stats();
+    assert_eq!((stats.connections, stats.refused), (2, 3), "{stats:?}");
+    let log = harness.notice_log();
+    assert_eq!(log.iter().filter(|line| line.starts_with("PeerRefused")).count(), 2, "{log:#?}");
+    assert_eq!(log.iter().filter(|line| line.starts_with("Connected")).count(), 2, "{log:#?}");
+}
+
+/// The check gets the connection's own addresses, not the configured address (here a
+/// disguise: the transport is told it talks to a remote address, allowed explicitly).
+#[test]
+fn the_peer_check_sees_the_connections_own_addresses() {
+    let vpcd = FakeVpcd::bind();
+    let remote: SocketAddr = "192.0.2.1:35963".parse().expect("a valid address");
+    let check = Scripted::new(&[true]);
+    let peer_check = Arc::clone(&check) as Arc<dyn PeerCheck>;
+    let config = VpcdConfig { allow_remote: true, peer_check, ..VpcdConfig::default() };
+    let harness = Harness::with_connector(vpcd.addr(), Some(remote), config).expect("allowed explicitly");
+    harness.enumerate(&with_ccid());
+    let mut conn = vpcd.accept();
+    assert_eq!(conn.atr(), ATR);
+    assert_eq!(check.seen(), [(conn.peer_addr(), vpcd.addr())], "(local, peer) of the transport's socket");
+    let log = harness.notice_log();
+    assert_eq!(log[0], format!("{:?}", VpcdNotice::NotLoopback { addr: remote }), "{log:#?}");
+    assert!(log.contains(&format!("{:?}", VpcdNotice::PeerAllowed { addr: remote, uid: Scripted::UID })), "{log:#?}");
+}
+
+/// A check that never checks.
+#[derive(Debug)]
+struct NeverChecks;
+
+impl PeerCheck for NeverChecks {
+    fn check(&self, _local: SocketAddr, _peer: SocketAddr) -> PeerVerdict {
+        PeerVerdict::Unchecked { reason: "no way to look".to_owned() }
+    }
+}
+
+#[test]
+fn an_unchecked_peer_is_used_and_reported_once() {
+    let vpcd = FakeVpcd::bind();
+    let harness = Harness::with_peer_check(vpcd.addr(), Arc::new(NeverChecks));
+    harness.enumerate(&with_ccid());
+    vpcd.accept().close();
+    let mut conn = vpcd.accept();
+    assert_eq!(conn.atr(), ATR);
+    let log = harness.notice_log();
+    let unchecked = format!("{:?}", VpcdNotice::PeerUnchecked { addr: vpcd.addr(), reason: "no way to look".into() });
+    assert_eq!(log.iter().filter(|line| **line == unchecked).count(), 1, "{log:#?}");
+    assert_eq!(harness.stats().connections, 2);
+}
+
+/// The real check on a real kernel: the fake vpcd runs as this process's user, so a set
+/// without that uid refuses it (no byte sent) and a set with it allows it.
+#[cfg(target_os = "linux")]
+#[test]
+fn the_proc_net_check_refuses_a_peer_of_another_uid_and_allows_its_own() {
+    let status = std::fs::read_to_string("/proc/self/status").expect("Linux has /proc/self/status");
+    let own = lk_vpcd::peer::real_uid(&status).expect("a Uid line");
+    let other = own.wrapping_add(1);
+    let vpcd = FakeVpcd::bind();
+    let harness = Harness::with_peer_check(vpcd.addr(), Arc::new(lk_vpcd::ProcNetPeerCheck::new([other])));
+    harness.enumerate(&with_ccid());
+    let mut refused = vpcd.accept();
+    assert!(refused.ends_silently(), "refused without a byte");
+    let notice = harness.notice(|notice| matches!(notice, VpcdNotice::PeerRefused { .. }));
+    let expected = VpcdNotice::PeerRefused {
+        addr: vpcd.addr(),
+        refusal: PeerRefusal::NotAllowed { uid: own, allowed: vec![other] },
+    };
+    assert_eq!(notice, expected);
+    drop(harness);
+
+    let harness = Harness::with_peer_check(vpcd.addr(), Arc::new(lk_vpcd::ProcNetPeerCheck::new([own])));
+    harness.enumerate(&with_ccid());
+    let mut conn = vpcd.accept();
+    assert_eq!(conn.atr(), ATR);
+    let notice = harness.notice(|notice| matches!(notice, VpcdNotice::PeerAllowed { .. }));
+    assert_eq!(notice, VpcdNotice::PeerAllowed { addr: vpcd.addr(), uid: own });
 }
 
 #[test]
