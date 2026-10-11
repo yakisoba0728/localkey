@@ -49,7 +49,9 @@ fn usb_reset_during_a_pending_make_credential() {
 
     let request = ctap::make_credential(&[3; 32], RP, b"user", true, &PinAuth::Token(token.clone()));
     let out = rig.ctaphid_send(cid, CTAPHID_CBOR, &request);
-    assert_eq!((keepalives(&out), indicators(&out)), (vec![2], vec![true]));
+    // Waiting, with no KEEPALIVE at once (docs/MEASUREMENT.md, probe
+    // selection-keepalive-cancel; an immediate one was expected before the measurement).
+    assert_eq!((keepalives(&out), indicators(&out)), (vec![], vec![true]));
     rig.run_until(rig.now + 450);
     let out = rig.bus(BusEvent::Reset);
     assert_eq!(out, vec![Output::PresenceIndicator(false)]);

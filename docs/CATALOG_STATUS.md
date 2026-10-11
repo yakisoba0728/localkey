@@ -11,9 +11,11 @@ label:
 
 "Tested" means tested against the specifications, published vectors and the public bytes
 in `reference/yubikey-5c-nano-5.7.4/`. It does not mean the engine was compared with a
-physical YubiKey: no command-by-command comparison with a real device has been made, and
-every status word or timing that no public source fixes is a model policy recorded in the
-crate's file (`docs/DESIGN.md` §2, §13).
+physical YubiKey. One read-only command-by-command measurement of a YubiKey 5C Nano 5.7.4
+was made (`docs/MEASUREMENT.md`); the lines it settled say "measured on a YubiKey 5C Nano
+5.7.4" with the probe, and four lines it contradicted are now intentional differences.
+Every other status word or timing that no public source fixes is a model policy recorded
+in the crate's file (`docs/DESIGN.md` §2, §13).
 
 ## Summary
 
@@ -33,16 +35,16 @@ label or this table is stale. The rule is the same for every file:
 <!-- BEGIN tools/catalog_status.py -->
 | Area | Crate | Tested | of which partly deferred or different | Intentional difference | Deferred | Lines | Mapping |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| FIDO2 / U2F | `lk-fido` | 43 | 0 | 2 | 0 | 45 | [catalog/fido.md](catalog/fido.md) |
+| FIDO2 / U2F | `lk-fido` | 42 | 0 | 3 | 0 | 45 | [catalog/fido.md](catalog/fido.md) |
 | OTP | `lk-otp` | 37 | 0 | 5 | 2 | 44 | [catalog/otp.md](catalog/otp.md) |
 | OATH | `lk-oath` | 22 | 1 | 3 | 0 | 25 | [catalog/oath.md](catalog/oath.md) |
 | Management | `lk-mgmt` | 8 | 1 | 2 | 0 | 10 | [catalog/mgmt.md](catalog/mgmt.md) |
 | PIV | `lk-piv` | 29 | 1 | 3 | 0 | 32 | [catalog/piv.md](catalog/piv.md) |
-| OpenPGP | `lk-openpgp` | 52 | 0 | 3 | 5 | 60 | [catalog/openpgp.md](catalog/openpgp.md) |
+| OpenPGP | `lk-openpgp` | 50 | 0 | 5 | 5 | 60 | [catalog/openpgp.md](catalog/openpgp.md) |
 | YubiHSM Auth | `lk-hsmauth` | 17 | 3 | 0 | 0 | 17 | [catalog/hsmauth.md](catalog/hsmauth.md) |
 | Security Domain / SCP03 / SCP11 | `lk-sd` | 100 | 0 | 9 | 11 | 120 | [catalog/sd.md](catalog/sd.md) |
-| Device / transports / storage | `lk-device` | 70 | 2 | 4 | 24 | 98 | [catalog/device.md](catalog/device.md) |
-| **All files** | | **378** | **8** | **31** | **42** | **451** | |
+| Device / transports / storage | `lk-device` | 69 | 4 | 5 | 24 | 98 | [catalog/device.md](catalog/device.md) |
+| **All files** | | **374** | **10** | **35** | **42** | **451** | |
 
 Bullets owned by another crate's file (not counted above): 3. Unlabelled bullets: 0.
 <!-- END tools/catalog_status.py -->

@@ -93,11 +93,11 @@ fn application_related_data_layout_matches_observation() {
         &[0x01, 0x7F, 0x7F, 0x7F, 0x03, 0x00, 0x03]
     );
     // Key information DE: references 01, 02, 03, 81 (spec §4.4.3.8); only the factory
-    // attestation key is present, generated on the card (values are model policy, the
-    // observation keeps only the length).
+    // attestation key is present, with status 02 (imported), as measured on a YubiKey 5C
+    // Nano 5.7.4 (docs/MEASUREMENT.md, probe openpgp-get-006e; the model said 01 before).
     assert_eq!(
         tlv::find(&discretionary, 0xDE).unwrap().value,
-        &[0x01, 0x00, 0x02, 0x00, 0x03, 0x00, 0x81, 0x01]
+        &[0x01, 0x00, 0x02, 0x00, 0x03, 0x00, 0x81, 0x02]
     );
     for tag in [0xD6, 0xD7, 0xD8, 0xD9] {
         assert_eq!(tlv::find(&discretionary, tag).unwrap().value, &[0x00, 0x20]);

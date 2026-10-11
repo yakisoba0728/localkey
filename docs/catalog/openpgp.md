@@ -5,8 +5,9 @@ One line per bullet of the `## OpenPGP`, `## OpenPGP_algorithms` and
 Test names refer to `crates/lk-openpgp`: the scenario tests in `tests/applet/`
 (`public_objects`, `passwords`, `data_objects`, `framing`, `lifecycle`, `kdf`,
 `generation`, `import`, `operations`, `touch`, `attestation`, `variants`, `curves`,
-`robustness`, `review`, the first independent reviewer's scenarios, and `interop`, the
-second reviewer's host request shapes of GnuPG scdaemon, OpenSC and yubikit)
+`robustness`, `review`, the first independent reviewer's scenarios, `interop`, the
+second reviewer's host request shapes of GnuPG scdaemon, OpenSC and yubikit, and
+`measured`, the answers measured on a YubiKey 5C Nano 5.7.4, docs/MEASUREMENT.md)
 and the unit tests in `src/` (`objects::tests::`, `state::tests::`, `kdf::tests::`,
 `keys::tests::`, `attest::tests::`, `tests::` in `lib.rs`).
 
@@ -37,7 +38,7 @@ The other 39 variants are fully usable.
 - read-only PC/SC observation of public firmware-5.7.4 metadata; no PIN or persistent writes: tested: `public_objects_match_observation` (the bullet describes how the reference was captured; the engine reproduces the captured bytes)
 - exact captured C0/5F52/7F66/7F74 bytes and direct-C0 6B00 response: tested: `public_objects_match_observation`, `direct_c0_answers_6b00`, `application_related_data_layout_matches_observation`, `extended_capabilities_fields`
 - captured application-related tag layout/lengths, discretionary 7F66 and public RSA2048 attributes: tested: `application_related_data_layout_matches_observation`; the AID 4F (alone and inside 6E) carries `DeviceProfile::openpgp_manufacturer` as its manufacturer ID, `0006` in the compatibility profile and `FF00` in the own profile, never inferred from the manufacturer string (docs/CONTRACTS.md "lk-core additions"): `aid_contains_profile_serial_and_manufacturer`, `aid_manufacturer_follows_the_profile_field`, `objects::tests::full_aid_layout`, `objects::tests::manufacturer_comes_from_the_profile_field_not_the_string`
-- fresh independent own RSA2048 attestation issuer; legacy own EC issuer and user keys preserved: tested: `fresh_applet_provisions_rsa2048_issuer`, `issuer_survives_failed_first_save`; preserving legacy issuers and keys is an intentional difference (no legacy state is migrated, docs/DESIGN.md §1)
+- fresh independent own RSA2048 attestation issuer; legacy own EC issuer and user keys preserved: tested: `fresh_applet_provisions_rsa2048_issuer`, `issuer_survives_failed_first_save`, `factory_attestation_key_status_is_imported` (its key information status is `02`, imported, measured on a YubiKey 5C Nano 5.7.4: docs/MEASUREMENT.md, probe `openpgp-get-006e`); preserving legacy issuers and keys is an intentional difference (no legacy state is migrated, docs/DESIGN.md §1)
 - observed 3070-byte challenge, 2048-byte certificate and 255-byte special-object ceiling model: tested: `get_challenge`, `certificate_size_limit`, `special_do_limit`, `extended_length`, `oversized_attestation_rejected`
 - private-use write access requires PW1 reference 82 or PW3; protected reads remain PIN scoped: tested: `private_do_access_rules`, `pw1_mode_access_matrix`
 - name 39, language eight bytes in pairs, ASCII sex, fingerprint 20 and generation-time four-byte checks: tested: `name_language_sex_checks`, `fingerprint_and_generation_time_checks`
@@ -49,9 +50,9 @@ The other 39 variants are fully usable.
 - OpenPGP 3.4.1 VERIFY and CHANGE REFERENCE DATA P1/data validation before PIN retry or state mutation over socket and direct IFD; exact physical statuses unmeasured: tested: `verify_header_validation_before_retry`, `change_reference_data_validation_before_retry`
 - explicit Le guards on VERIFY/CHANGE and zero P1/P2 guard on INTERNAL AUTHENTICATE over socket and direct IFD; physical 5.7.4 status/tolerance unmeasured: tested: `verify_header_validation_before_retry`, `change_reference_data_validation_before_retry`, `internal_authenticate_rules`
 - RESET RETRY COUNTER, PUT DATA, GENERATE, PSO SIGN and INTERNAL AUTHENTICATE Le mutation guards verified over private socket and direct IFD: tested: `reset_retry_counter_wrong_code_and_headers`, `put_data_le_guard`, `import_access_and_header_rules`, `generate_le_guard_keeps_previous_key`, `cds_header_and_input_rules`, `internal_authenticate_rules`, `touch_requested_after_access_and_input_checks`, `chained_signature_le_guard_keeps_counter`; an Le equal to the result passes, which GnuPG relies on (its GENERATE Le `determine_rsa_response` is exactly the 7F49 length, 270/398/526 for RSA 2048/3072/4096, and its PSO:CDS / INTERNAL AUTHENTICATE Le is exactly n/8): `gnupg_generate_rsa2048_with_exact_le`, `gnupg_rsa3072_and_4096_le_values`
-- GET RESPONSE rejects unsupported plaintext CLA before consuming a pending response; unmodified YubiKit chaining and private socket/direct IFD pass: tested: `get_response_rejects_bad_cla_without_consuming`
-- OpenPGP GET RESPONSE during unfinished command chaining returns 6883; unmodified YubiKit chained PUT DATA and subsequent SDK read pass over private CCID socket and direct IFD: tested: `get_response_during_chain_returns_6883`, `terminate_drops_pending_work`
-- OpenPGP GET DATA rejects unsupported command-chain CLA 10 with 6E00, leaving the next YubiKit GET DATA unaffected over private CCID socket and direct IFD: tested: `get_data_chained_cla_rejected`
+- GET RESPONSE rejects unsupported plaintext CLA before consuming a pending response; unmodified YubiKit chaining and private socket/direct IFD pass: tested: `get_response_rejects_bad_cla_without_consuming` (with `A0` and `90`: CLA `80` is a supported class since it was measured on a YubiKey 5C Nano 5.7.4, docs/MEASUREMENT.md, probe `cla-variants-openpgp`, and serves the pending response like `00`, `class_variants`)
+- OpenPGP GET RESPONSE during unfinished command chaining returns 6883; unmodified YubiKit chained PUT DATA and subsequent SDK read pass over private CCID socket and direct IFD: intentional difference: measured on a YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probe `cla-variants-openpgp`), GET RESPONSE during an unfinished chain answers 6D00, not the catalog's 6883 (the physical measurement ranks above the legacy catalog, docs/DESIGN.md §2); the chain is still dropped (model policy, unmeasured) and a later chained PUT DATA, as YubiKit sends it, works: `get_response_during_chain_returns_6d00`, `class_variants`, `terminate_drops_pending_work`
+- OpenPGP GET DATA rejects unsupported command-chain CLA 10 with 6E00, leaving the next YubiKit GET DATA unaffected over private CCID socket and direct IFD: intentional difference: measured on a YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probe `cla-variants-openpgp`), GET DATA with CLA 10 answers 9000 with no data and leaves the chain open, not the catalog's 6E00; the next GET DATA of the same object completes the chain and is answered as usual, one of another object answers 6883 and is not executed, and a SELECT clears it: `get_data_accepts_chaining_cla_10`, `class_variants`; the other data-less commands keep 6E00 (model policy, unmeasured)
 - GET NEXT DATA with unexpected command data returns 6700 before advancing certificate occurrence, verified over private CCID socket and direct IFD: tested: `get_next_data_with_data_rejected`
 - Exhausted GET NEXT DATA returns 6A88 without clearing the current certificate occurrence, preventing subsequent PUT DATA from writing an unreachable object; private socket and direct IFD pass: tested: `exhausted_get_next_data_keeps_selection`
 - GET ATTESTATION with explicit Le=1 is rejected before replacing a SIG certificate; private CCID socket/direct IFD and unmodified YubiKit attestation verified.: tested: `attest_header_rules`
@@ -118,3 +119,40 @@ not count them as catalog lines):
 3. attestation extensions `.10` (FIPS) and `.11` (CSPN): Yubico's OpenPGP attestation page
   lists them as markers of certified devices; this uncertified engine omits them and keeps
   the certification bits of `.9` zero (the catalog's "uncertified flags are zero").
+
+## Model policies replaced by measurement (YubiKey 5C Nano 5.7.4)
+
+Differential measurement of 2026-10-11 (docs/MEASUREMENT.md): the same read-only probes
+(`tools/measure/probes.py`) sent to the physical key and to the engine. Each answer below
+was a model policy and now follows the key; "derived" marks the cases the read-only probes
+could not send. The two catalog lines the measurement contradicts (GET RESPONSE during a
+chain, GET DATA with CLA 10) are marked as intentional differences above. A numbered list,
+so that assembling `docs/CATALOG_STATUS.md` does not count these as catalog lines:
+
+1. GET RESPONSE with nothing to serve answers 6D00, right after SELECT and after a long
+  response was read to its end: measured on a YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md,
+  probes `get-response-idle-openpgp`, `chain-61xx`); it was 6985. During an unfinished
+  chain it is 6D00 too (probe `cla-variants-openpgp`), and the chain is dropped (model
+  policy). P1-P2 other than `0000` (6A86) and command data (6700) stay model policy.
+  Tests: `get_response_with_nothing_pending_answers_6d00`,
+  `response_chaining_and_the_end_of_it`, `class_variants`,
+  `get_response_serves_long_data`, `other_command_discards_pending_response`,
+  `terminate_drops_pending_work`.
+2. CLA `80` is taken like `00` by every command: measured on a YubiKey 5C Nano 5.7.4 for
+  GET DATA (docs/MEASUREMENT.md, probe `cla-variants-openpgp`: `80 CA 00 C4` answers the
+  PW status bytes with 9000); it was 6E00. The other commands follow by extension (derived);
+  GET ATTESTATION keeps its CLA `80`-only rule, and `90` (`80` with the chaining bit) and
+  the other proprietary classes keep 6E00 (unmeasured). Tests: `class_variants`,
+  `unsupported_cla_and_ins`, `get_response_rejects_bad_cla_without_consuming`,
+  `header_change_mid_chain_returns_6883`.
+3. GET DATA with CLA `10` is a chain part (9000, no data): measured on a YubiKey 5C Nano
+  5.7.4 (docs/MEASUREMENT.md, probe `cla-variants-openpgp`); see the catalog line above.
+4. The factory attestation key's key information status (DE, tag `81`) is `02`
+  ("imported"): measured on a YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probes
+  `openpgp-get-006e`, `chain-61xx`, `chain-extended-le`: `DE 08 01 00 02 00 03 00 81 02`);
+  the model said `01` (generated). Only the attested slot's status decides whether a key
+  can be attested, so the issuer keeps signing. A stored state that already holds `01`
+  for its factory issuer keeps it (it cannot be told apart from an attestation key
+  generated on the card). Tests: `factory_attestation_key_status_is_imported`,
+  `application_related_data_layout_matches_observation`,
+  `fresh_applet_provisions_rsa2048_issuer`.

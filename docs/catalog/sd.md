@@ -73,7 +73,9 @@ Model decisions that apply throughout (sources in the crate docs):
 - **Plaintext response chaining.** A long plaintext answer is served in pieces of at
   most Ne with `61xx` and GET RESPONSE `00 C0` (ISO/IEC 7816-4 §5.1.3). Any other
   command, handshakes included, discards what is left (§7.6.1), after which GET RESPONSE
-  answers `6985` (model status).
+  answers `6982`: measured on a YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probe
+  `get-response-idle-sd`; it was the model status `6985`; see "Model policies replaced
+  by measurement" at the end).
 - **Certificate policies.** A critical certificatePolicies extension is processed as
   RFC 5280 §6.1 does with initial policy anyPolicy: any identifier is accepted and
   qualifiers are refused. GP role policy identifiers (CA-KLOC, KA-KLOC, OCE, SD) are not
@@ -129,7 +131,7 @@ Totals: 100 tested, 9 intentional differences, 11 deferred (120 bullets).
 
 ## SecurityDomain_metadata
 
-- observation of fixed public SELECT and GET DATA 0066/E0/9F7F: tested: `select_response_matches_reference`, `card_recognition_data_matches_reference`, `key_information_matches_reference_schema`, `cplc_layout_and_stability`
+- observation of fixed public SELECT and GET DATA 0066/E0/9F7F: tested: `select_response_matches_reference`, `card_recognition_data_matches_reference`, `key_information_matches_reference_schema`, `cplc_layout_and_stability`, `proprietary_class_card_data_has_the_66_template` (`80 CA 00 66` in plaintext answers the recognition data inside its `66` template, 65 bytes: measured on a YubiKey 5C Nano 5.7.4, docs/MEASUREMENT.md, probe `cla-variants-sd`)
 - exact SELECT 25 bytes and recognition 63 bytes; GP 2.3.1, SCP03 option 60, SCP11 option 9b06: tested: `select_response_matches_reference`, `card_recognition_data_matches_reference`, `init_update_response_matches_independent_known_answer` (INITIALIZE UPDATE reports `03 60`)
 - reference option advertises SCP11a/b/c, transient OCE, chains, S8, X509; no BF20: tested: `card_recognition_data_matches_reference`, `scp11a_and_scp11c_match_independent_known_answers`, `scp11b_matches_independent_known_answers`, `scp11a_with_full_omitted_root_and_direct_chains`, `oce_cache_invalidation` (the OCE is transient: SELECT and restart drop it)
 - unsupported BF20 X509 extension denied with 6A81 before chain/authentication: deferred: the encoding of the GP `BF20` element is not in the available sources, so it is not recognised; a certificate carrying an unrecognised critical extension is refused with `6982` (`certificate_chain_checks`)
@@ -242,3 +244,39 @@ Totals: 100 tested, 9 intentional differences, 11 deferred (120 bullets).
 - empty clear list has no restriction; restart keeps policy/key/SKI/cert/CPLC: tested: `allowlist_rules`, `restart_keeps_scp11_material`
 - 81 checks per socket/IFD; v22 ZIP fails omitted-root check: intentional difference: legacy release-artifact and transport checks, not device behaviour; the omitted-root rule is tested by `allowlist_rules`
 - vendor prose model; physical serial scope and timing unmeasured: tested: `allowlist_rules` (every presented certificate checked when its PSO arrives; `6982` model status)
+
+## Model policies replaced by measurement (YubiKey 5C Nano 5.7.4)
+
+Differential measurement of 2026-10-11 (docs/MEASUREMENT.md): the same read-only probes
+(`tools/measure/probes.py`) sent to the physical key and to the engine, with the Security
+Domain selected and no secure channel (the read-only guard refuses every handshake). Each
+answer below was a model policy and now follows the key. A numbered list, so that
+`tools/catalog_status.py` does not count these as catalog lines:
+
+1. An instruction the Security Domain does not know answers `6982` outside a secure
+  channel: measured on a YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probe
+  `undefined-ins-sd`: INS `5E`, `6E`, `93`); it was `6D00`. Inside a channel it stays
+  `6D00` (unmeasured, model policy), and so do the known-but-refused arms (SET STATUS
+  `6D00`, a known instruction in the wrong class `6E00`). Tests:
+  `unserved_plaintext_commands_are_6982`, `unknown_get_data_tag`, lk-device
+  `ccid::security_domain_and_hsm_auth_statuses_as_measured`.
+2. Plaintext GET RESPONSE with nothing pending answers `6982`, also right after a chained
+  part (`10 CA 00 66`, `9000`) left a plaintext chain open, which it drops: measured on a
+  YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probes `get-response-idle-sd`,
+  `cla-variants-sd`); it was `6985`, and `6883` during a chain. Tests:
+  `unserved_plaintext_commands_are_6982`, `get_response_is_discarded_by_an_intervening_command`,
+  `random_scp11_inputs_never_panic` (its plaintext tail), lk-device
+  `ccid::security_domain_and_hsm_auth_statuses_as_measured`.
+3. Plaintext `80 CA 00 66` answers the card recognition data inside its `66` template,
+  65 bytes `66 3F 73 3D ...` (GP 2.3.1 Annex H.2), while `00 CA 00 66` keeps the bare
+  63-byte `73` template of the reference observation: measured on a YubiKey 5C Nano 5.7.4
+  (docs/MEASUREMENT.md, probe `cla-variants-sd`); both classes got the bare template
+  before. Measured for `0066` only and only in plaintext: GET DATA `00E0`/`9F7F` with CLA
+  `80`, and `0066` through a secure channel (`84`, unwrapped to `80`), keep the bare form
+  (model policy; this also keeps the independent SCP03/SCP11 known-answer vectors, which
+  wrap `80 CA 00 66`). Tests: `proprietary_class_card_data_has_the_66_template`, lk-device
+  `scenario_ccid::select_routes_between_all_seven_applications`,
+  `ccid::security_domain_and_hsm_auth_statuses_as_measured`.
+
+CLA `0C` came back without a status word on the physical side (`none`, docs/MEASUREMENT.md
+"Host artifacts") and keeps `6982`.

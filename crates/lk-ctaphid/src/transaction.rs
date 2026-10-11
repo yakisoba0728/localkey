@@ -13,13 +13,17 @@ pub(crate) enum Transaction {
     Assembling(Assembly),
     /// A complete request was handed to the application, which has not answered yet.
     Processing { cid: u32, cmd: u8 },
+    /// A `CTAPHID_CBOR` request with BCNT 0 holds the device without ever being answered
+    /// or handed to the application; only `CTAPHID_INIT` on `cid` or a USB reset ends it
+    /// (measured on a YubiKey 5C Nano 5.7.4: `docs/MEASUREMENT.md`, probe `empty-cbor`).
+    Stalled { cid: u32 },
 }
 
 impl Transaction {
     pub(crate) fn cid(&self) -> u32 {
         match self {
             Self::Assembling(assembly) => assembly.cid,
-            Self::Processing { cid, .. } => *cid,
+            Self::Processing { cid, .. } | Self::Stalled { cid } => *cid,
         }
     }
 }
@@ -53,8 +57,8 @@ fn deadline_after(now: Millis) -> Millis {
 
 impl Assembly {
     /// Starts reassembling a `total`-byte message from its initialization packet data.
-    /// The caller has checked `total` against `MAX_PAYLOAD` and that it exceeds one
-    /// initialization packet.
+    /// The caller has checked `total` against `MAX_MESSAGE_LEN` (at most `MAX_PAYLOAD`)
+    /// and that it exceeds one initialization packet.
     pub(crate) fn start(now: Millis, cid: u32, cmd: u8, total: usize, first: &[u8]) -> Self {
         let mut buf = Vec::with_capacity(total);
         buf.extend_from_slice(first.get(..total).unwrap_or(first));
@@ -146,7 +150,9 @@ mod tests {
 
     #[test]
     fn maximum_message_completes_on_seq_127() {
-        // 7609 = 57 + 128 * 59 (CTAP 2.1 §11.2.4).
+        // 7609 = 57 + 128 * 59 (CTAP 2.1 §11.2.4). The framer never starts an assembly
+        // this long (requests stop at `MAX_MESSAGE_LEN`, 1536, measured: docs/MEASUREMENT.md
+        // probe ping-max); the reassembler itself still handles the full SEQ range.
         let mut assembly = Assembly::start(0, 5, 0x01, MAX_PAYLOAD, &[0u8; INIT_DATA_LEN]);
         for seq in 0..0x7F {
             assert_eq!(assembly.push(0, seq, &[0u8; CONT_DATA_LEN]), Progress::More);

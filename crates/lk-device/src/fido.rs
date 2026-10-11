@@ -2,9 +2,11 @@
 //! authenticator (`lk-fido`) and the Management CTAPHID vendor commands (`lk-mgmt`).
 //!
 //! - `CTAPHID_CBOR` (`0x10`) goes to `Authenticator::cbor`. A command that needs a touch
-//!   stays outstanding; the device sends `CTAPHID_KEEPALIVE` with `STATUS_UPNEEDED` at
-//!   once and every [`crate::KEEPALIVE_INTERVAL_MS`] (CTAP 2.1 §11.2.9.1.7) until a
-//!   touch, a timeout, a cancel or an abort ends it.
+//!   stays outstanding; the device sends `CTAPHID_KEEPALIVE` with `STATUS_UPNEEDED`
+//!   every [`crate::KEEPALIVE_INTERVAL_MS`] (CTAP 2.1 §11.2.9.1.7), the first one an
+//!   interval after the request (measured, `docs/MEASUREMENT.md`, probe
+//!   `selection-keepalive-cancel`), until a touch, a timeout, a cancel or an abort ends
+//!   it.
 //! - `CTAPHID_MSG` (`0x03`) goes to `Authenticator::u2f` with the latched touch
 //!   (`docs/CONTRACTS.md` "lk-fido" U2F presence).
 //! - Vendor commands (`0x40..=0x7F`, CTAP 2.1 §11.2.9.3): Management READ/WRITE CONFIG
@@ -105,7 +107,7 @@ impl Device {
         match command {
             cmd::CBOR => match self.apps.fido.cbor(payload, &mut self.host) {
                 Outcome::Done(response) => self.fido_respond(cid, cmd::CBOR, &response, out),
-                Outcome::NeedTouch { timeout_ms } => self.wait_fido(cid, timeout_ms, out),
+                Outcome::NeedTouch { timeout_ms } => self.wait_fido(cid, timeout_ms),
             },
             cmd::MSG => {
                 let latched = self.u2f_latch.is_some_and(|until| now < until);

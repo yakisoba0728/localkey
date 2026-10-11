@@ -108,8 +108,10 @@ fn get_key_agreement_returns_a_cose_key_per_power_cycle() {
 #[test]
 fn parameter_types_and_subcommands() {
     // CTAP 2.1 §6.5.4 parameter types → CTAP2_ERR_CBOR_UNEXPECTED_TYPE; missing
-    // subCommand → MISSING_PARAMETER; getPinUvAuthTokenUsingUvWithPermissions (0x06) and
-    // getUVRetries (0x07) need built-in UV, absent from GetInfo; unknown subcommands.
+    // subCommand → MISSING_PARAMETER; getPinUvAuthTokenUsingUvWithPermissions (0x06) needs
+    // built-in UV, absent from GetInfo; unknown subcommands. getUVRetries (0x07) is
+    // CTAP2_ERR_PIN_AUTH_INVALID on the measured key (docs/MEASUREMENT.md, probe
+    // client-pin-uv-retries); it was in the INVALID_SUBCOMMAND list before the measurement.
     let (mut auth, mut host) = device();
     let send = |auth: &mut Authenticator, host: &mut TestHost, m: Value| {
         send_untouched(auth, host, &encode_request(0x06, &m))
@@ -142,7 +144,7 @@ fn parameter_types_and_subcommands() {
         send(&mut auth, &mut host, m),
         vec![status::CBOR_UNEXPECTED_TYPE]
     );
-    for subcommand in [0x06u64, 0x07, 0x08, 0x0A, 0xFF] {
+    for subcommand in [0x06u64, 0x08, 0x0A, 0xFF] {
         assert_eq!(
             send_untouched(
                 &mut auth,
@@ -154,6 +156,15 @@ fn parameter_types_and_subcommands() {
         );
     }
     assert_eq!(
+        send_untouched(
+            &mut auth,
+            &mut host,
+            &client_pin(Some(2), sub::GET_UV_RETRIES).request()
+        ),
+        vec![status::PIN_AUTH_INVALID],
+        "getUVRetries"
+    );
+    assert_eq!(
         send_untouched(&mut auth, &mut host, &[0x06]),
         vec![status::INVALID_CBOR]
     );
@@ -161,15 +172,35 @@ fn parameter_types_and_subcommands() {
 
 #[test]
 fn get_pin_retries_reports_retries_and_power_cycle_state() {
-    // CTAP 2.1 §6.5.5.2: {3: pinRetries, 4: powerCycleState}; pinUvAuthProtocol not needed.
+    // CTAP 2.1 §6.5.5.2: {3: pinRetries, 4: powerCycleState (optional)};
+    // pinUvAuthProtocol not needed. Without a soft block the measured key leaves
+    // powerCycleState out (docs/MEASUREMENT.md, probe client-pin-retries); this test
+    // expected `4: false` before the measurement. `4: true` while soft-blocked is in
+    // `three_wrong_pins_soft_block_until_a_power_cycle`.
     let (mut auth, mut host) = device();
-    assert_eq!(retries(&mut auth, &mut host), (8, false));
+    assert_eq!(retries(&mut auth, &mut host), (8, None));
     let r = send_untouched(
         &mut auth,
         &mut host,
         &client_pin(None, sub::GET_PIN_RETRIES).request(),
     );
     assert_eq!(body(&r).map_get_int(3).and_then(Value::as_u64), Some(8));
+    assert_eq!(body(&r).map_get_int(4), None);
+}
+
+#[test]
+fn get_pin_retries_with_a_pin_set_is_byte_identical_to_the_measured_key() {
+    // docs/MEASUREMENT.md, probe client-pin-retries: getPINRetries with protocol 2
+    // (`06 A2 01 02 02 01`) on the key with a PIN set and 8 retries is answered
+    // `00 A1 03 08`, 4 bytes ({3: 8}); the engine answered `00 A2 03 08 04 F4`
+    // ({3: 8, 4: false}) before the measurement.
+    let (mut auth, mut host) = device_with_pin(2);
+    let request = client_pin(Some(2), sub::GET_PIN_RETRIES).request();
+    assert_eq!(request, vec![0x06, 0xA2, 0x01, 0x02, 0x02, 0x01]);
+    assert_eq!(
+        send_untouched(&mut auth, &mut host, &request),
+        vec![0x00, 0xA1, 0x03, 0x08]
+    );
 }
 
 #[test]
@@ -284,7 +315,7 @@ fn three_wrong_pins_soft_block_until_a_power_cycle() {
         status::PIN_AUTH_BLOCKED
     );
     assert_eq!(persisted_state(&host).pin.retries, 5);
-    assert_eq!(retries(&mut auth, &mut host), (5, true));
+    assert_eq!(retries(&mut auth, &mut host), (5, Some(true)));
     let attempts = host.persist_attempts();
     // Even the correct PIN is refused, without consuming a retry.
     assert_eq!(
@@ -304,11 +335,11 @@ fn three_wrong_pins_soft_block_until_a_power_cycle() {
     assert_eq!(persisted_state(&host).pin.retries, 5);
 
     auth.power_cycle(&mut host);
-    assert_eq!(retries(&mut auth, &mut host), (5, false));
+    assert_eq!(retries(&mut auth, &mut host), (5, None));
     assert_eq!(token_status(&mut auth, &mut host, PIN), status::OK);
     assert_eq!(
         retries(&mut auth, &mut host),
-        (8, false),
+        (8, None),
         "a match restores the retries"
     );
     assert_eq!(persisted_state(&host).pin.retries, 8);
@@ -331,7 +362,7 @@ fn a_correct_pin_resets_the_consecutive_mismatch_count() {
             status::PIN_INVALID
         );
     }
-    assert_eq!(retries(&mut auth, &mut host), (6, false));
+    assert_eq!(retries(&mut auth, &mut host), (6, None));
 }
 
 #[test]
@@ -354,7 +385,7 @@ fn eight_failures_across_power_cycles_hard_block() {
     }
     use status::{PIN_AUTH_BLOCKED as AB, PIN_BLOCKED as B, PIN_INVALID as I};
     assert_eq!(statuses, vec![I, I, AB, I, I, AB, I, B]);
-    assert_eq!(retries(&mut auth, &mut host), (0, false));
+    assert_eq!(retries(&mut auth, &mut host), (0, None));
     auth.power_cycle(&mut host);
     let attempts = host.persist_attempts();
     assert_eq!(token_status(&mut auth, &mut host, PIN), status::PIN_BLOCKED);
@@ -369,7 +400,7 @@ fn eight_failures_across_power_cycles_hard_block() {
     // Only authenticatorReset recovers (CTAP 2.1 §6.6).
     auth.power_cycle(&mut host);
     assert_eq!(send(&mut auth, &mut host, &[0x07]), vec![status::OK]);
-    assert_eq!(retries(&mut auth, &mut host), (8, false));
+    assert_eq!(retries(&mut auth, &mut host), (8, None));
     set_pin(&mut auth, &mut host, 2, PIN);
     assert_eq!(token_status(&mut auth, &mut host, PIN), status::OK);
 }
@@ -382,7 +413,7 @@ fn the_retry_decrement_is_persisted_before_the_pin_is_checked() {
     let (mut auth, mut host) = device_with_pin(2);
     host.fail_next_saves(1);
     assert_eq!(token_status(&mut auth, &mut host, "0000"), status::OTHER);
-    assert_eq!(retries(&mut auth, &mut host), (8, false));
+    assert_eq!(retries(&mut auth, &mut host), (8, None));
     let before = host.persist_count();
     assert_eq!(
         token_status(&mut auth, &mut host, "0000"),
@@ -396,7 +427,7 @@ fn the_retry_decrement_is_persisted_before_the_pin_is_checked() {
     );
     // A restart keeps the decrement.
     let mut auth = restart(&mut host);
-    assert_eq!(retries(&mut auth, &mut host), (7, false));
+    assert_eq!(retries(&mut auth, &mut host), (7, None));
 }
 
 #[test]
@@ -429,10 +460,10 @@ fn malformed_pin_proofs_cost_a_retry_and_count_toward_the_soft_block() {
                 status::PIN_AUTH_BLOCKED
             ]
         );
-        assert_eq!(retries(&mut auth, &mut host), (5, true));
+        assert_eq!(retries(&mut auth, &mut host), (5, Some(true)));
         auth.power_cycle(&mut host);
         assert_eq!(token_status(&mut auth, &mut host, PIN), status::OK);
-        assert_eq!(retries(&mut auth, &mut host), (8, false));
+        assert_eq!(retries(&mut auth, &mut host), (8, None));
     }
 }
 

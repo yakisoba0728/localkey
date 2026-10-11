@@ -49,7 +49,11 @@ fn metadata_for_factory_references() {
     // SP 800-73-4 Part 1 Table 4 biometric reference this card does not hold: 6A88, which
     // python yubikit get_bio_metadata() needs (tests/interop.rs).
     assert_eq!(card.metadata(0x96).1, 0x6A88);
-    assert_eq!(card.cmd(0xF7, 0x01, 0x80, &[], None).1, 0x6A86);
+    // P1 is ignored: measured for P1 01 on the empty slot 9A (6A88, docs/MEASUREMENT.md,
+    // probe bad-p1p2-piv; was 6A86); P1 01 P2 80 returning the PIN metadata is the
+    // derived half of that reading (tests/measured.rs).
+    assert_eq!(card.cmd(0xF7, 0x01, 0x9A, &[], None).1, 0x6A88);
+    assert_eq!(card.cmd(0xF7, 0x01, 0x80, &[], None), (hex("0101FF 050101 06020303"), 0x9000));
 }
 
 #[test]

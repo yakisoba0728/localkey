@@ -127,13 +127,18 @@ fn late_host(rig: &mut Rig, mut late: impl FnMut() -> Millis, stop: impl Fn(&[Ou
     batches
 }
 
-/// CTAP 2.1 §11.2.9.1.7: KEEPALIVE "should be sent at least every 100ms". A host whose
-/// timer always fires 7 ms late must not stretch the cadence: the deadlines stay on the
-/// grid `start + k * 100 ms` (`presence.rs` module documentation), so the k-th KEEPALIVE
-/// goes out at `start + k * 100 + 7` and no gap after the first exceeds 100 ms.
-/// Rescheduling from the processing time would put the k-th at `start + k * 107` and
-/// stretch every gap to 107 ms. The wait ends with the timeout answer at 30 s
-/// (lk-fido `TOUCH_TIMEOUT_MS`), after the KEEPALIVE due at the same instant.
+/// CTAP 2.1 §11.2.9.1.7: KEEPALIVE "should be sent at least every 100ms"; the measured
+/// key sends one every 94.86 ms, the first about one interval after the request and none
+/// at once (docs/MEASUREMENT.md, probes selection-keepalive-cancel and selection-no-touch;
+/// the engine uses 95 ms). A host whose timer always fires 7 ms late must not stretch the
+/// cadence: the deadlines stay on the grid `start + k * 95 ms`, k ≥ 1 (`presence.rs`
+/// module documentation), so the k-th KEEPALIVE goes out at `start + k * 95 + 7` and no
+/// gap exceeds 95 ms. Rescheduling from the processing time would put the k-th at
+/// `start + k * 102` and stretch every gap to 102 ms. The wait ends with the timeout
+/// answer at 28.5 s (lk-fido `TOUCH_TIMEOUT_MS`, measured 28 451.8 ms in probe
+/// selection-no-touch) right after the 300th KEEPALIVE, due at the same instant, exactly
+/// as on the key. Before the measurement this test expected an immediate KEEPALIVE,
+/// a 100 ms grid and 301 KEEPALIVEs up to a 30 s timeout.
 #[test]
 fn keepalive_cadence_stays_on_the_grid_with_a_late_host() {
     const LATE: Millis = 7;
@@ -141,27 +146,67 @@ fn keepalive_cadence_stays_on_the_grid_with_a_late_host() {
     let cid = rig.ctaphid_init();
     rig.now = 1_000;
     let start = rig.now;
-    assert_eq!(keepalives(&rig.ctaphid_send(cid, CTAPHID_CBOR, &SELECTION)), vec![2]);
+    assert_eq!(keepalives(&rig.ctaphid_send(cid, CTAPHID_CBOR, &SELECTION)), Vec::<u8>::new(), "none at once");
     let batches = late_host(&mut rig, || LATE, |out| !responses(out).is_empty());
-    let mut sent = vec![start];
+    let mut sent = Vec::new();
     for (at, out) in &batches {
         assert!((at - LATE - start).is_multiple_of(KEEPALIVE_INTERVAL_MS), "Tick at {at} was not for a grid point");
         sent.extend(keepalives(out).iter().map(|_| *at));
     }
-    for (k, &at) in sent.iter().enumerate().skip(1) {
-        assert_eq!(at, start + k as Millis * KEEPALIVE_INTERVAL_MS + LATE, "KEEPALIVE {k}");
+    for (k, &at) in sent.iter().enumerate() {
+        let k = k as Millis + 1;
+        assert_eq!(at, start + k * KEEPALIVE_INTERVAL_MS + LATE, "KEEPALIVE {k}");
     }
-    assert!(sent.windows(2).skip(1).all(|pair| pair[1] - pair[0] <= KEEPALIVE_INTERVAL_MS));
-    assert_eq!(sent.len(), 301, "one at once and one per 100 ms up to the timeout instant");
+    assert!(sent.windows(2).all(|pair| pair[1] - pair[0] <= KEEPALIVE_INTERVAL_MS));
+    assert_eq!(sent.len(), 300, "one per 95 ms up to the timeout instant, as measured");
+    assert_eq!(FIDO_TIMEOUT_MS, 300 * KEEPALIVE_INTERVAL_MS);
     let (at, last) = batches.last().unwrap();
     assert_eq!(*at, start + FIDO_TIMEOUT_MS + LATE);
     assert_eq!(labels(last), ["ka", "fido:10", "off"]);
     assert_eq!(responses(last), vec![(CTAPHID_CBOR, vec![CTAP2_ERR_USER_ACTION_TIMEOUT])]);
 }
 
+/// docs/MEASUREMENT.md, probe selection-no-touch, end to end: selection without a touch
+/// gets 300 KEEPALIVE(UPNEEDED) reports and then CTAP2_ERR_USER_ACTION_TIMEOUT; on the key
+/// the first came 85.9 ms after the request, the interval was 94.86 ms and the answer came
+/// 28 451.8 ms after the request, 2 ms after the 300th KEEPALIVE. The engine: the k-th
+/// KEEPALIVE at `start + k * 95` ms, the answer at 28 500 ms in the same Tick as the
+/// 300th (the timer order of `presence.rs` puts the KEEPALIVE first). A host that wakes
+/// late for that last deadline (190 ms here) still sees 300, not more.
+#[test]
+fn measured_probe_selection_without_touch_sends_300_keepalives_then_times_out() {
+    for late_last in [0, 190] {
+        let mut rig = Rig::new();
+        let cid = rig.ctaphid_init();
+        let start = rig.now;
+        let out = rig.ctaphid_send(cid, CTAPHID_CBOR, &SELECTION);
+        assert_eq!(labels(&out), ["on"], "no CTAPHID report at once");
+        let mut sent = Vec::new();
+        let last = loop {
+            let deadline = rig.dev.next_deadline().expect("the request is waiting");
+            rig.now = if deadline == start + FIDO_TIMEOUT_MS { deadline + late_last } else { deadline };
+            let out = rig.input(Input::Tick);
+            sent.extend(keepalives(&out).into_iter().map(|status| (rig.now, status)));
+            if !responses(&out).is_empty() {
+                break out;
+            }
+        };
+        assert_eq!(sent.len(), 300, "late by {late_last} ms");
+        assert!(sent.iter().all(|&(_, status)| status == 2), "STATUS_UPNEEDED");
+        assert_eq!(sent[0].0, start + 95, "the first one interval after the request");
+        assert_eq!(sent[298].0, start + 299 * 95);
+        assert_eq!(rig.now, start + 28_500 + late_last);
+        assert_eq!(labels(&last), ["ka", "fido:10", "off"]);
+        assert_eq!(responses(&last), vec![(CTAPHID_CBOR, vec![CTAP2_ERR_USER_ACTION_TIMEOUT])]);
+        assert_eq!(rig.dev.next_deadline(), None);
+    }
+}
+
 /// The same cadence with a seeded jitter of 0–60 ms on every Tick: each KEEPALIVE stays
-/// within the jitter of its grid point (no drift accumulates), and the 30 s wait still
-/// carries 301 of them (CTAP 2.1 §11.2.9.1.7).
+/// within the jitter of its grid point (no drift accumulates), and the 28.5 s wait
+/// carries 300 of them (CTAP 2.1 §11.2.9.1.7; measured: docs/MEASUREMENT.md, probe
+/// selection-no-touch; it was 300 after an immediate one in a 30 s wait before the
+/// measurement).
 #[test]
 fn keepalive_cadence_survives_jitter() {
     let mut rig = Rig::new();
@@ -335,7 +380,10 @@ fn race() -> Race {
     rig.otp_send_frame(slot::CHAL_HMAC2, &[0x01; 64]);
     assert_eq!(rig.otp_feature()[7] & 0xE0, 0x20, "OTP HID waits for the touch");
     rig.now += 10;
-    assert_eq!(keepalives(&rig.ctaphid_send(fido, CTAPHID_CBOR, &SELECTION)), vec![2]);
+    // The CTAP2 command waits without a KEEPALIVE at once (docs/MEASUREMENT.md, probe
+    // selection-keepalive-cancel; an immediate one was expected before the measurement).
+    let out = rig.ctaphid_send(fido, CTAPHID_CBOR, &SELECTION);
+    assert!(keepalives(&out).is_empty() && responses(&out).is_empty());
     Race { rig, seq, fido, u2f, start }
 }
 
@@ -415,7 +463,7 @@ fn touch_at_the_earliest_requests_timeout_goes_to_the_next_one() {
 /// two timeout answers in deadline order, whichever interface the earlier one is on.
 #[test]
 fn overdue_deadlines_are_processed_in_time_order() {
-    // The card command times out first (15 s after it started, the CTAP2 one at 30 s).
+    // The card command times out first (15 s after it started, the CTAP2 one at 28.5 s).
     let mut rig = Rig::new();
     oath_touch_credential(&mut rig);
     let cid = rig.ctaphid_init();
@@ -470,9 +518,11 @@ fn ended_requests_never_answer_late() {
         let (seq, _) = rig.xfr(&oath_calculate(b"t"));
         rig.now += 10;
         rig.ctaphid_send(cid, CTAPHID_CBOR, &SELECTION);
-        // The host's timer loop runs to an instant where nothing is due, so the outputs
-        // of the ending event are its own.
-        let at = rig.now + 1_045;
+        // The host's timer loop runs to an instant where nothing is due (not a 95 ms
+        // KEEPALIVE or 500 ms time-extension grid point; 1 045 ms was one on the 95 ms grid
+        // measured in docs/MEASUREMENT.md, probe selection-no-touch), so the outputs of the
+        // ending event are its own.
+        let at = rig.now + 1_050;
         wait_until(&mut rig, at);
         let out = match end {
             End::BulkAbort => rig.bulk_abort(seq),

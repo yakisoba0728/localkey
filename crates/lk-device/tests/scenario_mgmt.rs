@@ -136,7 +136,8 @@ fn disabling_ccid_reenumerates_and_ignores_ccid_until_reenabled() {
         }]
     );
     assert_eq!(rig.power_on(), rig.profile.atr);
-    assert_eq!(rig.select(AID_MGMT), b"5.7.4\x90\x00".to_vec());
+    // The Management SELECT text as measured (docs/MEASUREMENT.md, probe `select-mgmt`).
+    assert_eq!(rig.select(AID_MGMT), b"Virtual mgr - FW version 5.7.4\x90\x00".to_vec());
 }
 
 /// yubikit `DeviceConfig` REBOOT (`0C`) over CCID WRITE CONFIG: the answer, then

@@ -11,7 +11,7 @@ use common::json::{self, Json};
 use common::*;
 use lk_codec::cbor::{self, MapBuilder, Value};
 use lk_crypto::sha256;
-use lk_device::{BusEvent, Output};
+use lk_device::{BusEvent, KEEPALIVE_INTERVAL_MS, Output};
 use lk_testkit::SeededEntropy;
 
 const RP: &str = "example.com";
@@ -165,7 +165,10 @@ fn get_info_equals_the_reference_observation() {
 }
 
 /// CTAP 2.1 §6.1 with §11.2.9.1.7: MakeCredential waits for user presence, sending
-/// KEEPALIVE(STATUS_UPNEEDED) at once and every 100 ms until Touch(Down); the packed
+/// KEEPALIVE(STATUS_UPNEEDED) every 95 ms from one interval after the request until
+/// Touch(Down) (measured on a YubiKey 5C Nano 5.7.4: docs/MEASUREMENT.md, probes
+/// selection-keepalive-cancel and selection-no-touch; at once and every 100 ms before
+/// the measurement); the packed
 /// attestation (WebAuthn L2 §8.2) verifies under the x5c certificate's key; then
 /// GetAssertion (§6.2) waits the same way and its signature verifies under the new
 /// credential's public key, with a growing signature counter (WebAuthn L2 §6.1.1).
@@ -177,7 +180,8 @@ fn make_credential_and_get_assertion_with_touch_verify() {
     let mc_hash = cdh("make-credential");
     let request = ctap::make_credential(&mc_hash, RP, b"user-1", false, &PinAuth::None);
     let (response, keepalive_times) = rig.cbor_touch(cid, &request, 1_000);
-    let expected: Vec<u64> = (0..=10).map(|i| 1_000 + 100 * i).collect();
+    assert_eq!(KEEPALIVE_INTERVAL_MS, 95);
+    let expected: Vec<u64> = (1..=10).map(|i| 1_000 + KEEPALIVE_INTERVAL_MS * i).collect();
     assert_eq!(keepalive_times, expected, "KEEPALIVE cadence");
 
     let attestation = ctap::ok_value(&response);
@@ -224,8 +228,12 @@ fn cancel_during_pending_make_credential() {
     let cid = rig.ctaphid_init();
     let request = ctap::make_credential(&cdh("cancel"), RP, b"user-1", true, &PinAuth::None);
     let out = rig.ctaphid_send(cid, CTAPHID_CBOR, &request);
-    assert_eq!(keepalives(&out), vec![2]);
-    rig.run_until(rig.now + 350);
+    // Waiting, without a KEEPALIVE at once (docs/MEASUREMENT.md, probe
+    // selection-keepalive-cancel; this looked for an immediate one before the measurement).
+    assert!(responses(&out).is_empty());
+    assert_eq!(indicators(&out), vec![true]);
+    let waited = rig.run_until(rig.now + 350);
+    assert_eq!(keepalives(&waited.into_iter().map(|(_, o)| o).collect::<Vec<_>>()), vec![2, 2, 2]);
     let out = rig.ctaphid_send(cid, CTAPHID_CANCEL, &[]);
     assert_eq!(responses(&out), vec![(CTAPHID_CBOR, vec![status::KEEPALIVE_CANCEL])]);
     assert_eq!(indicators(&out), vec![false]);
@@ -281,10 +289,14 @@ fn other_channel_is_busy_while_make_credential_waits() {
     assert_eq!(get_info(&mut rig, first).as_map().unwrap().len(), 17);
 }
 
-/// lk-fido `TOUCH_TIMEOUT_MS` (30 s) with CTAP 2.1 §6.1.2 step 14 ("If the user declines
+/// lk-fido `TOUCH_TIMEOUT_MS` (28.5 s) with CTAP 2.1 §6.1.2 step 14 ("If the user declines
 /// permission, or the operation times out, then end the operation by returning
 /// CTAP2_ERR_OPERATION_DENIED"): without a touch the MakeCredential ends exactly when the
-/// timeout passes, after a KEEPALIVE every 100 ms; a touch afterwards does nothing.
+/// timeout passes, after a KEEPALIVE every 95 ms; a touch afterwards does nothing.
+/// Measured on a YubiKey 5C Nano 5.7.4 for selection (docs/MEASUREMENT.md, probe
+/// selection-no-touch: 300 KEEPALIVEs, then the timeout answer 28 451.8 ms after the
+/// request); before the measurement this test expected 30 000 ms and 300 KEEPALIVEs
+/// after an immediate one, every 100 ms.
 #[test]
 fn make_credential_presence_timeout() {
     let mut rig = Rig::new();
@@ -305,10 +317,12 @@ fn make_credential_presence_timeout() {
             }
         }
     }
-    assert_eq!(answer, Some((start + 30_000, CTAPHID_CBOR, vec![status::OPERATION_DENIED])));
-    // One every 100 ms after the immediate one; at 30 000 ms the keepalive timer fires
-    // just before the timeout (`presence.rs`: equal times fire in `Timer` order).
-    let expected: Vec<u64> = (1..=300).map(|i| start + 100 * i).collect();
+    assert_eq!(lk_fido::TOUCH_TIMEOUT_MS, 28_500);
+    assert_eq!(answer, Some((start + 28_500, CTAPHID_CBOR, vec![status::OPERATION_DENIED])));
+    // One every 95 ms, the first one interval after the request; at 28 500 ms the
+    // keepalive timer fires just before the timeout (`presence.rs`: equal times fire in
+    // `Timer` order), so exactly 300 are sent.
+    let expected: Vec<u64> = (1..=300).map(|i| start + KEEPALIVE_INTERVAL_MS * i).collect();
     assert_eq!(keepalive_times, expected);
     assert!(rig.tap().iter().all(|o| !matches!(o, Output::FidoReport(_))));
 }
@@ -545,39 +559,36 @@ fn get_next_assertion_returns_every_discoverable_credential() {
     assert_eq!(status_byte, 0x30, "CTAP2_ERR_NOT_ALLOWED: no more assertions");
 }
 
-/// CTAP 2.1 §11.2.9.2.2 CTAPHID_LOCK ("As long as the lock is active, any other channel
-/// trying to send a message will fail"): other channels get ERR_CHANNEL_BUSY (`0x06`,
-/// §11.2.9.1.6 "The client SHOULD retry the request after a short delay"; lk-ctaphid
-/// framer check order, step 3: ERR_LOCK_REQUIRED means "Command requires channel lock",
-/// and Chromium and python-fido2 retry only CHANNEL_BUSY) until the lock expires — a
-/// device deadline the program's timer loop reaches — or is released with a zero lock
-/// time.
+/// CTAP 2.1 §11.2.9.2.2 CTAPHID_LOCK is not implemented. Measured on a YubiKey 5C Nano
+/// 5.7.4 (docs/MEASUREMENT.md, probes lock and lock-expiry): LOCK with 0, 1 or 2 seconds is
+/// answered ERR_INVALID_CMD (`0x01`), and another channel's PING and a new client's
+/// broadcast INIT right after it are served; no deadline is set. Before the measurement
+/// this test (`ctaphid_lock_reserves_the_device_until_it_expires`) expected the lock to
+/// keep other channels out with ERR_CHANNEL_BUSY until it lapsed.
 #[test]
-fn ctaphid_lock_reserves_the_device_until_it_expires() {
+fn ctaphid_lock_is_invalid_cmd_and_reserves_nothing() {
     let mut rig = Rig::new();
     let first = rig.ctaphid_init();
     let second = rig.ctaphid_init();
-    assert_eq!(rig.ctaphid(first, 0x04, &[2]), (0x04, vec![]));
-    assert_eq!(rig.ctaphid(second, CTAPHID_PING, b"p"), (CTAPHID_ERROR, vec![0x06]));
+    for seconds in [1u8, 2, 10, 0] {
+        assert_eq!(rig.ctaphid(first, 0x04, &[seconds]), (CTAPHID_ERROR, vec![0x01]), "LOCK {seconds} s");
+        assert_eq!(rig.dev.next_deadline(), None, "LOCK {seconds} s sets no timer");
+        assert_eq!(rig.ctaphid(second, CTAPHID_PING, b"p"), (CTAPHID_PING, b"p".to_vec()));
+    }
     let probe = Rig::ctaphid_packets(BROADCAST, CTAPHID_INIT, &[9; 8]);
-    let refused = parse_fido(&rig.input(lk_device::Input::FidoReport(&probe[0])));
-    assert_eq!(refused, vec![(CTAPHID_ERROR, vec![0x06])], "a new client's broadcast INIT is busy too");
-    assert_eq!(rig.ctaphid(first, CTAPHID_PING, b"p"), (CTAPHID_PING, b"p".to_vec()), "the owner works");
-    let start = rig.now;
-    assert_eq!(rig.dev.next_deadline(), Some(start + 2_000), "the lock expiry is a deadline");
-    rig.run_until(start + 2_000);
-    assert_eq!(rig.ctaphid(second, CTAPHID_PING, b"p"), (CTAPHID_PING, b"p".to_vec()));
-
-    assert_eq!(rig.ctaphid(second, 0x04, &[10]), (0x04, vec![]));
-    assert_eq!(rig.ctaphid(first, CTAPHID_PING, b"p"), (CTAPHID_ERROR, vec![0x06]));
-    assert_eq!(rig.ctaphid(second, 0x04, &[0]), (0x04, vec![]), "release");
+    let answer = parse_fido(&rig.input(lk_device::Input::FidoReport(&probe[0])));
+    assert_eq!(answer.len(), 1);
+    assert_eq!(answer[0].0, CTAPHID_INIT, "a new client's broadcast INIT is served");
     assert_eq!(rig.ctaphid(first, CTAPHID_PING, b"p"), (CTAPHID_PING, b"p".to_vec()));
 }
 
 /// GetInfo `maxMsgSize` 1536 (`reference-observation.json`): a 1536-byte CTAP2 message
 /// spread over 27 CTAPHID packets is processed (here a GetAssertion for an RP with no
-/// credentials: CTAP2_ERR_NO_CREDENTIALS), a 1537-byte one is CTAP1_ERR_INVALID_LENGTH
-/// (lk-fido `cbor`: an over-long request is the CTAPHID over-length status).
+/// credentials: CTAP2_ERR_NO_CREDENTIALS). A 1537-byte one never reaches lk-fido: the
+/// framer answers CTAPHID ERR_INVALID_LEN (`0x03`) at its first packet and ignores the
+/// rest, as the measured key does for PING (docs/MEASUREMENT.md, probe ping-max; CBOR
+/// itself was not measured). Before the measurement lk-fido answered it with the CTAP
+/// status CTAP1_ERR_INVALID_LENGTH (also `0x03`) in a CBOR response.
 #[test]
 fn max_message_size_boundary() {
     let mut rig = Rig::new();
@@ -603,5 +614,12 @@ fn max_message_size_boundary() {
     }
     assert_eq!(answer, vec![(CTAPHID_CBOR, vec![status::NO_CREDENTIALS])]);
     let too_long = request(1537);
-    assert_eq!(rig.ctaphid(cid, CTAPHID_CBOR, &too_long), (CTAPHID_CBOR, vec![0x03]));
+    assert_eq!(rig.ctaphid(cid, CTAPHID_CBOR, &too_long), (CTAPHID_ERROR, vec![0x03]));
+    assert_eq!(rig.dev.next_deadline(), None, "the late packets started nothing");
+    let out = rig.ctaphid_send(cid, CTAPHID_CBOR, &fits);
+    let mut answer = responses(&out);
+    if answer.is_empty() {
+        answer = responses(&rig.tap());
+    }
+    assert_eq!(answer, vec![(CTAPHID_CBOR, vec![status::NO_CREDENTIALS])], "the channel still works");
 }

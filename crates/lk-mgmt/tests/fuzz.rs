@@ -185,15 +185,22 @@ fn check_invariants(m: &Management, host: &TestHost) {
     assert_ne!(e, 0);
     assert_eq!(e & !s, 0);
     // The three read forms agree: bare TLVs (lk-otp bridge), len || TLVs (CCID,
-    // CTAPHID) and the single page holding the whole DeviceInfo.
-    let page = m.device_info_page(0, host).expect("page 0");
-    assert_eq!(page, info);
-    let encoded = m.read_config(0, host).expect("page 0");
-    assert_eq!(
-        encoded.split_first(),
-        Some((&(info.len() as u8), &info[..]))
-    );
-    assert_eq!(m.device_info_page(1, host), None);
+    // CTAPHID) and the two pages holding the whole DeviceInfo (docs/MEASUREMENT.md,
+    // probe `mgmt-read-config`: page 0 ends with MORE_DATA, page 1 is the last).
+    let page0 = m.device_info_page(0, host).expect("page 0");
+    let page1 = m.device_info_page(1, host).expect("page 1");
+    assert!(page0.ends_with(&[0x10, 0x01, 0x01]));
+    let mut merged = page0[..page0.len() - 3].to_vec();
+    merged.extend_from_slice(&page1);
+    assert_eq!(merged, info);
+    for (p, page) in [(0u8, &page0), (1, &page1)] {
+        let encoded = m.read_config(p, host).expect("page");
+        assert_eq!(
+            encoded.split_first(),
+            Some((&(page.len() as u8), &page[..]))
+        );
+    }
+    assert_eq!(m.device_info_page(2, host), None);
 }
 
 /// How often the deep paths were reached, so the test proves it covers them.

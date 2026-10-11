@@ -279,8 +279,9 @@ fn random_scp11_inputs_never_panic() {
         }
         sd.deselect();
     }
-    // Plaintext management and GET RESPONSE without pending data.
-    assert_eq!(status(&done(sd.process(&hex("00C0000000"), &mut host))), 0x6985);
+    // Plaintext management and GET RESPONSE without pending data: 6982
+    // (docs/MEASUREMENT.md, probe `get-response-idle-sd`; 6985 before the measurement).
+    assert_eq!(status(&done(sd.process(&hex("00C0000000"), &mut host))), 0x6982);
 }
 
 /// Mutated records of a fully provisioned domain (CA keys, certificate stores, CA

@@ -196,7 +196,8 @@ fn activate_restores_every_factory_value() {
     let objects: Vec<Vec<u8>> =
         [0x006E, 0x0065, 0x007A, 0x00C4, 0x00F9, 0x5F50, 0x005E, 0x0101, 0x0102].map(|t| card.get_ok(t)).to_vec();
     assert_eq!(objects, factory_objects);
-    assert_eq!(card.key_status(), [0x00, 0x00, 0x00, 0x01]);
+    // Factory attestation key status 02 (was 01): docs/MEASUREMENT.md, probe openpgp-get-006e.
+    assert_eq!(card.key_status(), [0x00, 0x00, 0x00, 0x02]);
     assert_eq!(card.public_key(crt::ATT), att_public);
     assert_eq!(card.get_ok(0x00FC), att_certificate);
     for occurrence in 0..3 {
@@ -224,7 +225,8 @@ fn terminate_drops_pending_work() {
     assert_eq!(card.send(&hex("00E60000")).1, 0x9000);
     assert_eq!(card.send(&hex("00C0000000")).1, 0x6285);
     assert_eq!(card.send(&hex("00440000")).1, 0x9000);
-    assert_eq!(card.send(&hex("00C0000000")).1, 0x6985);
+    // Nothing pending: 6D00 (docs/MEASUREMENT.md, probe get-response-idle-openpgp).
+    assert_eq!(card.send(&hex("00C0000000")).1, 0x6D00);
     // An open chain.
     card.admin();
     assert_eq!(card.apdu(0x10, 0xDA, 0x5F, 0x50, b"https://", None).1, 0x9000);

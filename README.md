@@ -156,7 +156,7 @@ loop {
   - `Input::Ccid(bulk-out 메시지)`, `Input::CcidControlAbort { slot, seq }`
   - `Input::Touch(TouchEdge::Down | Up)`, `Input::Tick`
   - `Input::Bus(BusEvent::Reset | Suspend | Resume | PowerCycle)`
-- **시간**: 마감 시각이 지난 일은 다음 `handle` 호출의 입력보다 먼저 처리됩니다. KEEPALIVE(100 ms),
+- **시간**: 마감 시각이 지난 일은 다음 `handle` 호출의 입력보다 먼저 처리됩니다. KEEPALIVE(95 ms),
   CCID 시간 연장(500 ms), 터치 대기 시간 초과가 여기에 해당합니다.
 - **벽시계**: 신뢰할 수 있는 벽시계가 있으면 `dev.set_unix_time(Some(초))`를 시계가 움직일 때마다 다시
   부릅니다. Security Domain의 증명서 유효기간 검사에만 쓰입니다.

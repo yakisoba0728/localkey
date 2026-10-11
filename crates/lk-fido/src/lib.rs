@@ -16,8 +16,10 @@
 //! - Packed self-issued attestation (WebAuthn L2 §8.2).
 //!
 //! Not supported, as GetInfo states: built-in user verification (no `uv` option, so no
-//! getPinUvAuthTokenUsingUvWithPermissions or getUVRetries), bio enrollment, enterprise
-//! attestation (no `ep`) and vendor prototype config commands.
+//! getPinUvAuthTokenUsingUvWithPermissions or getUVRetries; the latter is answered
+//! `CTAP2_ERR_PIN_AUTH_INVALID` like on the measured key, `docs/MEASUREMENT.md` probe
+//! `client-pin-uv-retries`), bio enrollment, enterprise attestation (no `ep`) and vendor
+//! prototype config commands.
 //!
 //! # Contract
 //!
@@ -59,9 +61,17 @@ use crate::request::{CtapResult, pin_protocol_supported};
 use crate::state::State;
 
 /// How long a command waits for a touch before the device resolves it as not granted.
-/// CTAP 2.1 leaves the value to the authenticator; 30 s is the CTAPHID-era convention
-/// (the catalog states no other value).
-pub const TOUCH_TIMEOUT_MS: Millis = 30_000;
+/// CTAP 2.1 leaves the value to the authenticator.
+///
+/// Measured on a YubiKey 5C Nano 5.7.4 (`docs/MEASUREMENT.md`, probe `selection-no-touch`):
+/// authenticatorSelection without a touch is answered `CTAP2_ERR_USER_ACTION_TIMEOUT`
+/// 28 451.8 ms after the request, 2 ms after the 300th KEEPALIVE. The engine uses
+/// 28 500 ms, exactly 300 KEEPALIVE intervals of 95 ms (`lk-device`
+/// `KEEPALIVE_INTERVAL_MS`), so the device sends 300 KEEPALIVEs and then the answer (the
+/// KEEPALIVE due at the timeout instant goes first). The key's clock runs about 5.4 %
+/// fast; this is the nominal 30 s as a host observes it. It was the model policy 30 s
+/// before the measurement. Only selection was measured; every waiting command uses it.
+pub const TOUCH_TIMEOUT_MS: Millis = 28_500;
 
 /// `authenticatorReset` is accepted only this long after power-up (CTAP 2.1 §6.6: "request
 /// MUST have come to the authenticator within 10 seconds of powering up").

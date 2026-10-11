@@ -119,7 +119,8 @@ fn rsa_spki(n: &[u8], e: &[u8]) -> Vec<u8> {
 fn fresh_applet_provisions_rsa2048_issuer() {
     let mut card = Card::fresh(TestHost::new().seeded(4242));
     assert!(card.host.persisted(Record::OpenPgp).is_some());
-    assert_eq!(card.key_status(), [0, 0, 0, 0x01]);
+    // Factory attestation key status 02 (was 01): docs/MEASUREMENT.md, probe openpgp-get-006e.
+    assert_eq!(card.key_status(), [0, 0, 0, 0x02]);
     assert_eq!(card.get_ok(0x00DA), hex(attr::RSA2048));
     let (n, e) = issuer_rsa(&mut card);
     assert_eq!(n.len(), 256);
@@ -344,7 +345,8 @@ fn reset_retains_issuer_and_signs_new_keys() {
     assert_eq!(card.send(&hex("00E60000")).1, 0x9000);
     assert_eq!(card.send(&hex("00440000")).1, 0x9000);
     card.reload();
-    assert_eq!(card.key_status(), [0, 0, 0, 0x01]);
+    // Factory attestation key status 02 (was 01): docs/MEASUREMENT.md, probe openpgp-get-006e.
+    assert_eq!(card.key_status(), [0, 0, 0, 0x02]);
     assert_eq!(card.get_ok(0x00FC), issuer_certificate);
     assert_eq!(issuer_rsa(&mut card), (n.clone(), e.clone()));
     card.admin();

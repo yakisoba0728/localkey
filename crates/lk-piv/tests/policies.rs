@@ -109,7 +109,7 @@ fn pin_always_needs_the_verify_immediately_before() {
     let once = card.generate(0x9A, P256, Some(PIN_ONCE), None);
     let rsa = card.generate(0x9D, RSA2048, Some(PIN_ALWAYS), None);
     type Between = fn(&mut Card);
-    let interrupting: [(&str, Between); 8] = [
+    let interrupting: [(&str, Between); 9] = [
         ("GET DATA", |c| assert_eq!(c.send("00CB3FFF035C017E00").1, 0x9000)),
         ("GET VERSION", |c| assert_eq!(c.send("00FD0000").1, 0x9000)),
         ("operation on another slot", |c| assert_eq!(sign(c, 0x9A).1, 0x9000)),
@@ -118,7 +118,9 @@ fn pin_always_needs_the_verify_immediately_before() {
         }),
         ("SELECT command", |c| assert_eq!(c.send("00A4040005A00000030800").1, 0x9000)),
         ("malformed APDU", |c| assert_eq!(c.raw(&[0x00, 0x20]).1, 0x6700)),
-        ("wrong class", |c| assert_eq!(c.send("80FD0000").1, 0x6E00)),
+        // CLA 80 is a valid class since docs/MEASUREMENT.md (probe cla-variants-piv).
+        ("wrong class", |c| assert_eq!(c.send("A0FD0000").1, 0x6E00)),
+        ("CLA 80 GET VERSION", |c| assert_eq!(c.send("80FD0000").1, 0x9000)),
         ("VERIFY P1 FF", |c| assert_eq!(c.send("0020FF80").1, 0x9000)),
     ];
     for (what, between) in interrupting {
@@ -144,7 +146,8 @@ fn pin_always_needs_the_verify_immediately_before() {
     assert_eq!(lk_crypto::rsa_public_op(rsa.modulus(), &[1, 0, 1], &s).unwrap(), m);
     // GET RESPONSE after the VERIFY does not drop it either.
     card.verify_default_pin();
-    assert_eq!(card.send("00C0000000").1, 0x6985, "nothing pending");
+    // Nothing pending: 6A80 (docs/MEASUREMENT.md, probe get-response-idle-piv).
+    assert_eq!(card.send("00C0000000").1, 0x6A80, "nothing pending");
     assert!(signs(&mut card, 0x9C, &always));
 }
 

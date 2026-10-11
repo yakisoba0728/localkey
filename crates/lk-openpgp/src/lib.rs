@@ -24,16 +24,25 @@
 //! Framing rules (ISO/IEC 7816-4 §5.1 and the behaviour catalog's OpenPGP section):
 //! - CLA must be interindustry on the basic channel without secure messaging (`6E00` for
 //!   other classes, `6882` for the secure-messaging bits, `6881` for a logical channel),
-//!   except GET ATTESTATION, which takes the proprietary CLA 80 only (`84`, its
-//!   secure-messaging form, is `6882`). `lk-device` unwraps a secure channel and clears
+//!   or the proprietary `80`, which every command takes like `00` (measured on a YubiKey
+//!   5C Nano 5.7.4 for GET DATA: `80 CA 00 C4` answers the PW status bytes,
+//!   docs/MEASUREMENT.md, probe `cla-variants-openpgp`; the other commands follow by
+//!   extension; `90` and the other proprietary classes are unmeasured and stay `6E00`).
+//!   GET ATTESTATION takes the proprietary CLA 80 only (`84`, its secure-messaging form,
+//!   is `6882`). `lk-device` unwraps a secure channel and clears
 //!   those bits before the applet sees the command, so a command that still carries them
 //!   was never verified; C0 announces no secure messaging either (docs/CONTRACTS.md
 //!   "APDU conventions"; ISO 7816-4 §5.1.1, the order of lk-piv). A command rejected for
 //!   its CLA or INS leaves a pending response and a pending command chain untouched.
-//! - Command chaining (CLA bit `10`, ISO 7816-4 §5.1.1.1) is accepted only for commands
-//!   that carry data; GET DATA and the other data-less commands answer `6E00` to it.
+//! - Command chaining (CLA bit `10`, ISO 7816-4 §5.1.1.1) is accepted for the commands
+//!   that carry data and for GET DATA: measured, `10 CA 00 C4` answers `9000` with no data
+//!   and leaves the chain open (docs/MEASUREMENT.md, probe `cla-variants-openpgp`; the
+//!   legacy catalog's `6E00` is contradicted). The other data-less commands answer `6E00`
+//!   to it (model policy, unmeasured).
 //! - GET RESPONSE (`C0`) serves the rest of a long response; any other command discards
-//!   it. GET RESPONSE during an unfinished chain answers `6883` and drops the chain.
+//!   it. With nothing to serve, and during an unfinished chain, it answers `6D00`
+//!   (measured: probes `get-response-idle-openpgp`, `chain-61xx`, `cla-variants-openpgp`);
+//!   the chain is dropped (model policy: whether the key keeps it is unmeasured).
 //! - Commands that return no data reject an explicit non-zero Le with `6700` before they
 //!   change any state (catalog: VERIFY/CHANGE/RESET RETRY COUNTER/PUT DATA/SELECT DATA/
 //!   SET RETRIES/GET ATTESTATION/lifecycle "explicit Le" guards). `Le = 00` stays
@@ -99,7 +108,8 @@ mod ins {
     pub const GET_ATTESTATION: u8 = 0xFB;
 }
 
-/// The proprietary class of the Yubico GET ATTESTATION command.
+/// The proprietary class of the Yubico GET ATTESTATION command, which every other command
+/// takes like `00` (`check_class`).
 const CLA_PROPRIETARY: u8 = 0x80;
 /// The same class with the secure-messaging bit b3 set (GP 2.3.1 §11.1.4).
 const CLA_PROPRIETARY_SM: u8 = 0x84;
@@ -212,8 +222,8 @@ impl OpenPgp {
         if !known_ins(cmd.ins) {
             return Outcome::Done(apdu::status(sw::INS_NOT_SUPPORTED));
         }
-        // Catalog: GET DATA (and every data-less command) rejects chaining CLA 10 with
-        // 6E00 and leaves the next command unaffected.
+        // Data-less commands other than GET DATA reject chaining CLA 10 with 6E00 and
+        // leave the next command unaffected (`chainable`).
         if cmd.is_chained() && !chainable(cmd.ins) {
             return Outcome::Done(apdu::status(sw::CLA_NOT_SUPPORTED));
         }
@@ -280,11 +290,18 @@ impl OpenPgp {
 
     /// GET RESPONSE (ISO 7816-4 §7.6.1). The CLA was checked before this point, so an
     /// unsupported CLA never consumes the pending data (catalog).
+    ///
+    /// Measured on a YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md): with nothing to serve the
+    /// answer is `6D00`, right after SELECT (probe `get-response-idle-openpgp`) and after
+    /// a long response was read to its end (probe `chain-61xx`); during an unfinished
+    /// command chain it is `6D00` too (probe `cla-variants-openpgp`, which replaced the
+    /// legacy catalog's `6883`). The chain is dropped, as before (whether the key keeps it
+    /// is unmeasured). P1-P2 other than `0000` (`6A86`) and command data (`6700`) are
+    /// model policy.
     fn get_response(&mut self, cmd: &Command) -> Vec<u8> {
         if self.chain.is_active() {
-            // Catalog: GET RESPONSE during unfinished command chaining returns 6883.
             self.chain.clear();
-            return apdu::status(sw::LAST_COMMAND_EXPECTED);
+            return apdu::status(sw::INS_NOT_SUPPORTED);
         }
         if cmd.p1 != 0 || cmd.p2 != 0 {
             return apdu::status(sw::INCORRECT_P1P2);
@@ -294,7 +311,7 @@ impl OpenPgp {
         }
         self.responses
             .next(chunk_len(cmd))
-            .unwrap_or_else(|| apdu::status(sw::CONDITIONS))
+            .unwrap_or_else(|| apdu::status(sw::INS_NOT_SUPPORTED))
     }
 
     /// MANAGE SECURITY ENVIRONMENT (spec §7.2.18): P1 41, P2 A4 (authentication, used by
@@ -438,8 +455,11 @@ fn get_challenge(cmd: &Command, host: &mut dyn Host) -> Reply {
 
 /// ISO 7816-4 §5.1.1 / §5.4.1: interindustry class on the basic logical channel without
 /// secure messaging; the Yubico GET ATTESTATION uses the proprietary class 80 and only that
-/// (catalog: "proprietary CLA/header validation"). Secure-messaging bits that reach the
-/// applet are `6882` (module documentation; docs/CONTRACTS.md "APDU conventions").
+/// (catalog: "proprietary CLA/header validation"). Every other command also takes the
+/// proprietary class 80 like 00: measured for GET DATA (docs/MEASUREMENT.md, probe
+/// `cla-variants-openpgp`), extended to the other commands as on the key's PIV and
+/// Management applications. Secure-messaging bits that reach the applet are `6882` (module
+/// documentation; docs/CONTRACTS.md "APDU conventions").
 fn check_class(cmd: &Command) -> Result<(), u16> {
     if cmd.ins == ins::GET_ATTESTATION {
         return match cmd.cla {
@@ -448,6 +468,9 @@ fn check_class(cmd: &Command) -> Result<(), u16> {
             CLA_PROPRIETARY_SM => Err(sw::SM_NOT_SUPPORTED),
             _ => Err(sw::CLA_NOT_SUPPORTED),
         };
+    }
+    if cmd.cla == CLA_PROPRIETARY {
+        return Ok(());
     }
     if cmd.cla & 0xE0 != 0 {
         return Err(sw::CLA_NOT_SUPPORTED);
@@ -486,11 +509,14 @@ fn known_ins(code: u8) -> bool {
     )
 }
 
-/// Commands that carry a data field and may therefore be chained.
+/// Commands that may be chained: those that carry a data field, and GET DATA, which the
+/// key accepts as a chain part (measured: `10 CA 00 C4` answers `9000` with no data,
+/// docs/MEASUREMENT.md, probe `cla-variants-openpgp`).
 fn chainable(code: u8) -> bool {
     matches!(
         code,
-        ins::SELECT_DATA
+        ins::GET_DATA
+            | ins::SELECT_DATA
             | ins::VERIFY
             | ins::CHANGE_REFERENCE_DATA
             | ins::RESET_RETRY_COUNTER

@@ -267,7 +267,11 @@ fn store_failure_leaves_state_unchanged() {
     let fido_before = rig.store.get(Record::Fido);
     let request = ctap::make_credential(&[2; 32], RP, b"user", true, &PinAuth::None);
     let out = rig.ctaphid_send(cid, CTAPHID_CBOR, &request);
-    assert_eq!(keepalives(&out), vec![2]);
+    // Waiting for the touch: no answer and no KEEPALIVE at once (docs/MEASUREMENT.md,
+    // probe selection-keepalive-cancel; an immediate KEEPALIVE was expected before the
+    // measurement).
+    assert!(responses(&out).is_empty() && keepalives(&out).is_empty());
+    assert_eq!(indicators(&out), vec![true]);
     rig.store.fail_all(true);
     let out = rig.tap();
     assert_eq!(responses(&out), vec![(CTAPHID_CBOR, vec![status::OTHER])]);

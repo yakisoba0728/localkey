@@ -312,13 +312,14 @@ fn list_longer_than_256_bytes_uses_get_response() {
     assert_eq!(status, 0x6100);
     let (rest, status) = card.send_raw(&[0, ins::GET_RESPONSE, 0, 0, 0, 0, 0]);
     assert_eq!((rest.len(), status), (32 * 69 - 256, sw::OK));
-    // GET RESPONSE with nothing pending.
-    assert_eq!(card.send_raw(&[0, ins::GET_RESPONSE, 0, 0, 0]).1, sw::CONDITIONS);
+    // GET RESPONSE with nothing pending: 6D00 (docs/MEASUREMENT.md, probe
+    // `get-response-idle-hsmauth`; 6985 before the measurement).
+    assert_eq!(card.send_raw(&[0, ins::GET_RESPONSE, 0, 0, 0]).1, sw::INS_NOT_SUPPORTED);
     // Another command drops pending response data.
     let (_, status) = card.send_raw(&apdu(ins::LIST, 0, 0, &[]));
     assert_eq!(status, 0x6100);
     assert_eq!(card.cmd(ins::GET_VERSION, &[]).1, sw::OK);
-    assert_eq!(card.send_raw(&[0, ins::GET_RESPONSE, 0, 0, 0]).1, sw::CONDITIONS);
+    assert_eq!(card.send_raw(&[0, ins::GET_RESPONSE, 0, 0, 0]).1, sw::INS_NOT_SUPPORTED);
 }
 
 /// yubikit `put_management_key`; yubikey-manager `test_hsmauth.py` checks the retry
@@ -402,13 +403,31 @@ fn change_credential_password_is_not_supported_on_5_7_4() {
     assert_eq!(card.cmd(lk_hsmauth::ins::CHANGE_CREDENTIAL_PASSWORD, &d).1, sw::INS_NOT_SUPPORTED);
 }
 
+/// docs/MEASUREMENT.md, probes `cla-variants-hsmauth` and `get-response-idle-hsmauth`:
+/// the key answers `80 5E 00 00` with `6D00`, as it answers `00 5E 00 00`, and
+/// `00 C0 00 00 00` with nothing pending with `6D00`. Before the measurement the engine
+/// answered `6E00` and `6985`.
+#[test]
+fn proprietary_class_80_is_served_like_00() {
+    let mut card = Card::new();
+    assert_eq!(card.send_raw(&[0x80, 0x5E, 0, 0]).1, sw::INS_NOT_SUPPORTED);
+    assert_eq!(card.send_raw(&[0x00, 0x5E, 0, 0]).1, sw::INS_NOT_SUPPORTED);
+    assert_eq!(card.send_raw(&[0x00, ins::GET_RESPONSE, 0, 0, 0]).1, sw::INS_NOT_SUPPORTED);
+    // Defined instructions answer the same in both classes (unmeasured beyond `5E`).
+    assert_eq!(card.send_raw(&[0x80, ins::GET_VERSION, 0, 0]), card.send_raw(&[0x00, ins::GET_VERSION, 0, 0]));
+    assert_eq!(card.put_symmetric("a", [1; 16], [2; 16], pw("p")), sw::OK);
+    assert_eq!(card.send_raw(&[0x80, ins::LIST, 0, 0]), card.send_raw(&[0x00, ins::LIST, 0, 0]));
+}
+
 #[test]
 fn unknown_instruction_class_and_malformed_apdus() {
     let mut card = Card::new();
     for unknown in [0x00, 0x0C, 0x20, 0xA4, 0xCA, 0xFF] {
         assert_eq!(card.cmd(unknown, &[]).1, sw::INS_NOT_SUPPORTED, "INS {unknown:02x}");
     }
-    for cla in [0x80, 0x84, 0x20, 0x40, 0xFF] {
+    // CLA 80 is served like 00 (docs/MEASUREMENT.md, probe `cla-variants-hsmauth`;
+    // `proprietary_class_80_is_served_like_00`); the other classes stay 6E00.
+    for cla in [0x84, 0x90, 0x20, 0x40, 0xFF] {
         assert_eq!(card.send_raw(&[cla, ins::LIST, 0, 0]).1, sw::CLA_NOT_SUPPORTED, "CLA {cla:02x}");
     }
     // `docs/CONTRACTS.md` "APDU conventions": secure-messaging bits are `6882` — the

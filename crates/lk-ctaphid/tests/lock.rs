@@ -1,8 +1,10 @@
-//! `CTAPHID_LOCK` (CTAP 2.1 §11.2.9.2.2): 0..=10 seconds, others answered
-//! `ERR_CHANNEL_BUSY` while the lock holds (CTAP 2.1 §11.2.9.1.6: "The device is busy
-//! for the requesting channel. The client SHOULD retry the request after a short
-//! delay"; `ERR_LOCK_REQUIRED` is "Command requires channel lock", which no command
-//! here does; sources on the lock check in `src/framer.rs`).
+//! `CTAPHID_LOCK` (CTAP 2.1 §11.2.9.2.2) is not implemented.
+//!
+//! Measured on a YubiKey 5C Nano 5.7.4 (`docs/MEASUREMENT.md`, probes `lock` and
+//! `lock-expiry`): LOCK with 0, 1 or 2 seconds (BCNT 1) is answered `ERR_INVALID_CMD`
+//! (`01`), and another channel's PING and a broadcast INIT sent right after it are
+//! answered normally. Before the measurement the engine implemented the lock (0..=10 s,
+//! other channels `ERR_CHANNEL_BUSY` until it lapsed); these tests replace those.
 
 mod common;
 
@@ -13,192 +15,117 @@ fn lock(cid: u32, seconds: u8) -> Report {
     init_packet(cid, LOCK, 1, &[seconds])
 }
 
-/// The LOCK response: CMD 0x84, BCNT 0 (CTAP 2.1 §11.2.9.2.2).
-fn lock_ok(cid: u32) -> Vec<Event> {
-    vec![Event::Send(init_packet(cid, LOCK, 0, &[]))]
-}
-
 #[test]
-fn lock_keeps_other_channels_out_until_it_lapses() {
+fn lock_is_invalid_cmd_for_every_duration() {
+    // docs/MEASUREMENT.md, probes lock and lock-expiry: 0, 1 and 2 seconds were sent;
+    // the other durations, including those CTAP 2.1 does not allow, get the same answer.
     let mut dev = device();
     let a = allocate(&mut dev, 0);
-    let b = allocate(&mut dev, 0);
-    assert_eq!(dev.report(1000, &lock(a, 5)), lock_ok(a));
-    assert_eq!(dev.next_deadline(), Some(6000));
-    for (cid, cmd, bcnt) in [
-        (b, PING, 1u16),
-        (b, CBOR, 1),
-        (b, WINK, 0),
-        (b, INIT, 8),
-        (BROADCAST, INIT, 8),
-    ] {
+    for seconds in [0u8, 1, 2, 5, 10, 11, 0x7F, 0xFF] {
         assert_eq!(
-            dev.report(5999, &init_packet(cid, cmd, bcnt, &[1; 8])),
-            error_events(cid, ERR_CHANNEL_BUSY),
-            "CID {cid:#x} command {cmd:#x}"
-        );
-    }
-    // The holder keeps full use of the device.
-    assert_ping_echo(&mut dev, 5999, a, 200);
-    start_cbor(&mut dev, 5999, a, &[0x04]);
-    dev.respond(a, CBOR, &[0x00]);
-    // At the deadline the lock lapses, whether through tick() or the next report.
-    assert_eq!(dev.tick(6000), vec![]);
-    assert_eq!(dev.next_deadline(), None);
-    assert_ping_echo(&mut dev, 6000, b, 1);
-}
-
-#[test]
-fn lapsed_lock_is_released_by_the_next_report_without_a_tick() {
-    let mut dev = device();
-    let a = allocate(&mut dev, 0);
-    let b = allocate(&mut dev, 0);
-    assert_eq!(dev.report(0, &lock(a, 1)), lock_ok(a));
-    assert_ping_echo(&mut dev, 1000, b, 1);
-}
-
-#[test]
-fn ten_seconds_is_the_longest_lock() {
-    let mut dev = device();
-    let a = allocate(&mut dev, 0);
-    let b = allocate(&mut dev, 0);
-    assert_eq!(dev.report(0, &lock(a, 10)), lock_ok(a));
-    assert_eq!(dev.next_deadline(), Some(10_000));
-    assert_eq!(
-        dev.report(9_999, &init_packet(b, PING, 0, &[])),
-        error_events(b, ERR_CHANNEL_BUSY)
-    );
-    assert_ping_echo(&mut dev, 10_000, b, 0);
-}
-
-#[test]
-fn lock_longer_than_ten_seconds_is_invalid_par() {
-    let mut dev = device();
-    let a = allocate(&mut dev, 0);
-    let b = allocate(&mut dev, 0);
-    for seconds in [11u8, 12, 0x7F, 0xFF] {
-        assert_eq!(
-            dev.report(0, &lock(a, seconds)),
-            error_events(a, ERR_INVALID_PAR),
+            dev.report(1, &lock(a, seconds)),
+            error_events(a, ERR_INVALID_CMD),
             "{seconds} s"
         );
+        assert_eq!(dev.next_deadline(), None, "{seconds} s sets no timer");
     }
-    assert_eq!(dev.next_deadline(), None);
-    assert_ping_echo(&mut dev, 1, b, 1);
+    assert_ping_echo(&mut dev, 2, a, 1);
 }
 
 #[test]
-fn lock_request_must_carry_exactly_one_byte() {
+fn lock_is_invalid_cmd_whatever_its_length() {
+    // The command is unknown, so its BCNT is never looked at (framer check order: the
+    // command before the length). Only BCNT 1 was measured.
     let mut dev = device();
     let a = allocate(&mut dev, 0);
-    for bcnt in [0u16, 2, 57, 58] {
+    for bcnt in [0u16, 1, 2, 57, 58, 1537, 0xFFFF] {
         assert_eq!(
-            dev.report(0, &init_packet(a, LOCK, bcnt, &[5, 5])),
-            error_events(a, ERR_INVALID_LEN),
+            dev.report(1, &init_packet(a, LOCK, bcnt, &[5, 5])),
+            error_events(a, ERR_INVALID_CMD),
             "BCNT {bcnt}"
         );
+        assert_eq!(dev.next_deadline(), None);
     }
-    assert_eq!(dev.next_deadline(), None);
+    // A multi-packet LOCK starts no message: its continuation packets are orphans.
+    assert_eq!(dev.report(2, &cont_packet(a, 0, &[5; 59])), vec![]);
+    assert_ping_echo(&mut dev, 3, a, 1);
 }
 
 #[test]
-fn lock_zero_releases_and_the_holder_can_renew() {
+fn measured_probe_other_channels_are_served_right_after_a_lock() {
+    // docs/MEASUREMENT.md, probe lock: LOCK 1 s on A is ERR_INVALID_CMD; B's PING,
+    // a broadcast INIT and A's PING right after are answered normally; LOCK 1 and LOCK 0
+    // again are ERR_INVALID_CMD and B's PING still works.
     let mut dev = device();
     let a = allocate(&mut dev, 0);
     let b = allocate(&mut dev, 0);
-    assert_eq!(dev.report(0, &lock(a, 2)), lock_ok(a));
-    assert_eq!(dev.report(1500, &lock(a, 3)), lock_ok(a));
-    assert_eq!(dev.next_deadline(), Some(4500));
+    assert_eq!(dev.report(0, &lock(a, 1)), error_events(a, ERR_INVALID_CMD));
     assert_eq!(
-        dev.report(4499, &init_packet(b, PING, 0, &[])),
-        error_events(b, ERR_CHANNEL_BUSY)
+        dev.report(4, &init_packet(b, PING, 1, &[0x5A])),
+        vec![Event::Send(init_packet(b, PING, 1, &[0x5A]))]
     );
-    assert_eq!(dev.report(4499, &lock(a, 0)), lock_ok(a));
+    let c = allocate(&mut dev, 8);
+    assert_eq!(c, b + 1, "the broadcast INIT allocated a channel");
+    assert_ping_echo(&mut dev, 12, a, 1);
+    assert_ping_echo(&mut dev, 1250, b, 1);
+    assert_eq!(
+        dev.report(1254, &lock(a, 1)),
+        error_events(a, ERR_INVALID_CMD)
+    );
+    assert_eq!(
+        dev.report(1258, &lock(a, 0)),
+        error_events(a, ERR_INVALID_CMD)
+    );
+    assert_ping_echo(&mut dev, 1262, b, 1);
     assert_eq!(dev.next_deadline(), None);
-    assert_ping_echo(&mut dev, 4499, b, 1);
-    // Releasing when no lock is held is harmless.
-    assert_eq!(dev.report(4500, &lock(b, 0)), lock_ok(b));
 }
 
 #[test]
-fn another_channel_cannot_take_or_release_the_lock() {
+fn measured_probe_lock_expiry_a_polling_client_gets_through_at_the_first_poll() {
+    // docs/MEASUREMENT.md, probe lock-expiry: after LOCK 1 s and LOCK 2 s (both
+    // ERR_INVALID_CMD) B's first PING poll gets through (about 4 ms later), with no
+    // ERR_CHANNEL_BUSY at all; before the measurement the engine kept B busy for
+    // 1010 ms and 2015 ms.
     let mut dev = device();
-    let a = allocate(&mut dev, 0);
-    let b = allocate(&mut dev, 0);
-    assert_eq!(dev.report(0, &lock(a, 5)), lock_ok(a));
-    for seconds in [0u8, 5] {
+    for seconds in [1u8, 2] {
+        let a = allocate(&mut dev, 0);
+        let b = allocate(&mut dev, 0);
         assert_eq!(
-            dev.report(1, &lock(b, seconds)),
-            error_events(b, ERR_CHANNEL_BUSY)
+            dev.report(8, &lock(a, seconds)),
+            error_events(a, ERR_INVALID_CMD)
         );
+        let ping = init_packet(b, PING, 4, b"poll");
+        assert_eq!(
+            dev.report(12, &ping),
+            vec![Event::Send(ping)],
+            "{seconds} s"
+        );
+        assert_eq!(dev.next_deadline(), None);
     }
-    assert_eq!(dev.next_deadline(), Some(5000));
 }
 
 #[test]
-fn unknown_channel_is_invalid_channel_even_under_a_lock() {
-    // Channel validity is checked before the lock (model policy, see framer docs).
-    let mut dev = device();
-    let a = allocate(&mut dev, 0);
-    assert_eq!(dev.report(0, &lock(a, 5)), lock_ok(a));
-    assert_eq!(
-        dev.report(1, &init_packet(a + 1, PING, 0, &[])),
-        error_events(a + 1, ERR_INVALID_CHANNEL)
-    );
-}
-
-#[test]
-fn lock_and_partial_message_deadlines_combine() {
-    let mut dev = device();
-    let a = allocate(&mut dev, 0);
-    assert_eq!(dev.report(0, &lock(a, 10)), lock_ok(a));
-    assert_eq!(
-        dev.report(100, &init_packet(a, PING, 100, &[0; 57])),
-        vec![]
-    );
-    assert_eq!(dev.next_deadline(), Some(100 + TIMEOUT_MS));
-    assert_eq!(dev.tick(100 + TIMEOUT_MS), error_events(a, ERR_MSG_TIMEOUT));
-    assert_eq!(dev.next_deadline(), Some(10_000));
-}
-
-#[test]
-fn holder_resynchronising_with_init_keeps_the_lock() {
-    // Model policy (spec silent): INIT resynchronisation ends the holder's transaction
-    // but not its lock.
+fn lock_never_causes_lock_required() {
+    // CTAP 2.1 §11.2.9.1.6 ERR_LOCK_REQUIRED ("Command requires channel lock"): with no
+    // lock implemented no command requires one; a LOCK from another channel while a
+    // request is outstanding is ERR_CHANNEL_BUSY like any other command (framer check
+    // order, busy before command; which error the key gives a busy LOCK was not measured).
     let mut dev = device();
     let a = allocate(&mut dev, 0);
     let b = allocate(&mut dev, 0);
-    assert_eq!(dev.report(0, &lock(a, 5)), lock_ok(a));
-    assert_eq!(dev.report(1, &init_packet(a, INIT, 8, &[1; 8])).len(), 1);
+    start_cbor(&mut dev, 1, a, &[0x01]);
     assert_eq!(
-        dev.report(2, &init_packet(b, PING, 0, &[])),
+        dev.report(2, &lock(b, 1)),
         error_events(b, ERR_CHANNEL_BUSY)
     );
-    assert_eq!(dev.next_deadline(), Some(5000));
-}
-
-#[test]
-fn locked_out_client_retrying_on_busy_gets_through_when_the_lock_lapses() {
-    // Interop regression: Chromium (`FidoHidDevice`, 100 ms retry on kChannelBusy) and
-    // python-fido2 (`CtapHidDevice.call`, 100 ms retry on CHANNEL_BUSY) retry only
-    // CHANNEL_BUSY and abandon the request on any other error, so a channel kept out by
-    // a lock must get CHANNEL_BUSY, never LOCK_REQUIRED, and a retrying client then
-    // succeeds once the lock lapses (CTAP 2.1 §11.2.9.2.2: at most 10 s).
-    let mut dev = device();
-    let holder = allocate(&mut dev, 0);
-    let client = allocate(&mut dev, 0);
-    assert_eq!(dev.report(0, &lock(holder, 1)), lock_ok(holder));
-    let mut now = 0;
-    loop {
-        now += 100;
-        let events = dev.report(now, &init_packet(client, PING, 1, &[0x5A]));
-        if events == error_events(client, ERR_CHANNEL_BUSY) {
-            assert!(now < 1000, "still locked out at {now} ms");
-            continue;
-        }
-        assert_ne!(events, error_events(client, ERR_LOCK_REQUIRED));
-        assert_eq!(events, vec![Event::Send(init_packet(client, PING, 1, &[0x5A]))]);
-        break;
+    assert_eq!(
+        dev.report(2, &lock(a, 1)),
+        error_events(a, ERR_CHANNEL_BUSY)
+    );
+    assert_eq!(dev.respond(a, CBOR, &[0x00]).len(), 1);
+    for cid in [a, b] {
+        let events = dev.report(3, &lock(cid, 1));
+        assert_ne!(events, error_events(cid, ERR_LOCK_REQUIRED));
+        assert_eq!(events, error_events(cid, ERR_INVALID_CMD));
     }
-    assert_eq!(now, 1000, "served at the first retry after the lock lapsed");
 }

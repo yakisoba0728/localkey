@@ -6,7 +6,7 @@ unit tests in `crates/lk-mgmt/src/`.
 
 ## Management
 
-- CCID and OTP HID device information/configuration — tested: `select_returns_version_string`, `device_info_own_profile_matches_expected_bytes`, `device_info_yubikey_profile_matches_expected_bytes`, `device_info_follows_the_profile`, `read_config_is_length_prefixed_device_info`, `read_config_serves_at_most_ne_with_get_response`, `secure_channel_collection_reaches_the_whole_page`, `unread_response_data_is_discarded_by_other_commands`, `select_serves_at_most_ne`, `apdu_header_errors`, `real_device_info_pages_at_small_limits`, `write_config_round_trips_every_field`, `yubikit_get_bytes_requests_are_accepted_byte_exact`, `yubikit_parse_tlvs_decodes_every_field`, `ykman_config_usb_mode_and_lock_flows_byte_exact`, `write_config_accepts_case_4_apdus`, `malformed_length_prefixes_are_rejected_on_every_transport`, `device_info_page_is_read_config_without_length_byte`, `otp_read_config_with_crc_frame`, `otp_write_config_from_padded_slot_data`, `otp_padded_write_length_edges`, `otp_device_info_fits_the_otp_response_capacity`. On OTP HID, `lk-otp` owns the feature-report framing, the programming-sequence counter, the response length byte and the CRC. `lk-device` implements `lk_otp::MgmtBridge` with `Management::device_info_page` (bare TLVs), `Management::write_config` (`len || TLVs`), `Management::serial`, `Management::challenge_response_timeout_secs` and `Management::legacy_set_mode`. The mapping table is in `crates/lk-mgmt/src/transport.rs`.
+- CCID and OTP HID device information/configuration — tested: `select_returns_version_string`, `device_info_own_profile_matches_expected_bytes`, `device_info_yubikey_profile_matches_expected_bytes`, `device_info_follows_the_profile`, `read_config_is_length_prefixed_device_info`, `read_config_serves_at_most_ne_with_get_response`, `secure_channel_collection_reaches_the_whole_page`, `unread_response_data_is_discarded_by_other_commands`, `select_serves_at_most_ne`, `apdu_header_errors`, `read_config_paging_bounds`, `config::tests::read_config_serves_the_two_measured_pages`, `info::tests::pages_match_the_measured_layout`, `cla_80_is_served_like_00`, `get_response_without_pending_data_is_6d00`, `write_config_round_trips_every_field`, `yubikit_get_bytes_requests_are_accepted_byte_exact`, `yubikit_parse_tlvs_decodes_every_field`, `ykman_config_usb_mode_and_lock_flows_byte_exact`, `write_config_accepts_case_4_apdus`, `malformed_length_prefixes_are_rejected_on_every_transport`, `device_info_page_is_read_config_without_length_byte`, `otp_read_config_with_crc_frame`, `otp_write_config_from_padded_slot_data`, `otp_padded_write_length_edges`, `otp_device_info_fits_the_otp_response_capacity`. On OTP HID, `lk-otp` owns the feature-report framing, the programming-sequence counter, the response length byte and the CRC. `lk-device` implements `lk_otp::MgmtBridge` with `Management::device_info_page` (bare TLVs), `Management::write_config` (`len || TLVs`), `Management::serial`, `Management::challenge_response_timeout_secs` and `Management::legacy_set_mode`. The mapping table is in `crates/lk-mgmt/src/transport.rs`. The SELECT text, the DeviceInfo pages, CLA `80`, READ CONFIG P1/P2 and GET RESPONSE with nothing pending are measured on a YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probes `select-mgmt`, `mgmt-read-config`, `bad-p1p2-mgmt`, `cla-variants-mgmt`, `get-response-idle-mgmt`; see "Model policies replaced by measurement" below).
 - CTAPHID vendor 0x42 / 0x43 commands — tested: `ctaphid_read_config`, `ctaphid_write_config`, `ctaphid_other_vendor_commands_are_not_management`, `malformed_length_prefixes_are_rejected_on_every_transport`, `disabling_every_application_is_rejected_on_every_transport`, `yubikit_parse_tlvs_decodes_every_field` (yubikit `_ManagementCtapBackend.read_config` sends `int2bytes(page)`), `ykman_config_usb_mode_and_lock_flows_byte_exact`, `storage_failure_is_rejected_on_every_transport`.
 - shared own serial and USB application flags — tested: `configuration_is_shared_across_transports`, `device_info_yubikey_profile_matches_expected_bytes`, `device_info_follows_the_profile`, `yubikit_parse_tlvs_decodes_every_field`. The serial always comes from `DeviceProfile` and is never stored. One `Management` value serves CCID, OTP HID and CTAPHID.
 - configuration lock/unlock — tested: `lock_code_protects_configuration`, `lock_is_checked_before_values_and_covers_reboot`, `locked_device_rejects_lock_changes_without_the_code`, `lock_rejection_owes_no_reboot`, `unlock_tag_while_unlocked_must_be_the_zero_code`, `yubikit_get_bytes_requests_are_accepted_byte_exact` (set and `--clear` with `CLEAR_LOCK_CODE`), `ykman_config_usb_mode_and_lock_flows_byte_exact` (`config set-lock-code`, `config usb -L`, a wrong code, `config mode` while locked, `--clear`, on CCID, CTAPHID and OTP HID), `non_minimal_tlv_lengths_are_accepted`, `lock_survives_reload`, `storage_failure_while_clearing_lock_keeps_lock`.
@@ -46,27 +46,95 @@ The request shapes the tests send come from the host source:
 
 `yubikit_parse_tlvs_decodes_every_field` and `ykman_config_usb_mode_and_lock_flows_byte_exact` reimplement these rules and run them against the engine on every transport.
 
+## Model policies replaced by measurement (YubiKey 5C Nano 5.7.4)
+
+Differential measurement of 2026-10-11 (docs/MEASUREMENT.md): the same read-only probes
+(`tools/measure/probes.py`) sent to the physical key and to the engine. Each answer below
+was a model policy and now follows the key. A numbered list, so that
+`tools/catalog_status.py` does not count these as catalog lines:
+
+1. SELECT answers the 30 ASCII bytes `Virtual mgr - FW version 5.7.4` (the profile's
+  firmware version), with or without Le `00`: measured on a YubiKey 5C Nano 5.7.4
+  (docs/MEASUREMENT.md, probes `select-mgmt`, `select-odd-p2`); it was the bare `5.7.4`.
+  yubikit's `Version.from_string` finds the version in either text. Tests:
+  `select_returns_version_string`, `select_serves_at_most_ne`,
+  `device_info_follows_the_profile`, `yubikit_version_search_reads_both_select_texts`,
+  `yubikit_parse_tlvs_decodes_every_field`.
+2. DeviceInfo comes in two fixed pages: measured on a YubiKey 5C Nano 5.7.4
+  (docs/MEASUREMENT.md, probe `mgmt-read-config`). Page 0 holds `01 03 02 04 05 06 07 08
+  0A 0F 20 21` and ends with `MORE_DATA` (`10 01 01`), 52 bytes with the length byte `33`;
+  page 1 holds `11 12 13 14 15 16 17 18`, 42 bytes with `29`, and no `MORE_DATA`. The
+  tags the engine has no state for carry the measured values: `0F 01 00`, `20 03 000000`,
+  `21 03 000000`, `11 04 00000000`, `12 01 00`, `14 02 0000`, `15 02 0000`, `16 01 00`,
+  `17 01 00`, `18 02 0000`; yubikit decodes each like an absent tag. It was one page
+  `01 02 03 04 05 06 07 08 0A 14 15 16 18` filled greedily up to 255 bytes, without
+  `0F`, `11`, `12`, `13`, `17`, `20`, `21`. Probe `lc-le-mgmt` follows: Le `01` gives the
+  length byte and `6133`. The part number (`13`) is `DeviceProfile::part_number`: the key
+  sent 12 ASCII bytes; the compatibility profile sends twelve ASCII zeros (the measured
+  length, not the measured value, which may identify a production batch) and the own
+  profile an empty value (yubikit: no part number). The same pages are served over
+  CTAPHID `0x42` and OTP HID (unmeasured there). Tests:
+  `info::tests::pages_match_the_measured_layout`,
+  `info::tests::merged_is_both_pages_without_more_data`,
+  `info::tests::empty_part_number_is_an_empty_value`,
+  `config::tests::read_config_serves_the_two_measured_pages`,
+  `device_info_own_profile_matches_expected_bytes`,
+  `device_info_yubikey_profile_matches_expected_bytes`,
+  `read_config_is_length_prefixed_device_info`, `device_info_has_no_nfc_tags_and_no_duplicates`,
+  `device_info_page_is_read_config_without_length_byte`, `ctaphid_read_config`,
+  `otp_read_config_with_crc_frame`, `otp_device_info_fits_the_otp_response_capacity`,
+  `yubikit_parse_tlvs_decodes_every_field` (two pages on all three transports).
+3. A fresh device stores the challenge-response timeout `0F` (15 s): measured on a YubiKey
+  5C Nano 5.7.4 (docs/MEASUREMENT.md, probe `mgmt-read-config`, DeviceInfo `07 01 0F`); it
+  was `00`. A host may still write `00`, which `Management::challenge_response_timeout_secs`
+  reads as the 15-second default (model policy); a stored record keeps its own value.
+  Tests: `factory_challenge_response_timeout_means_default`,
+  `malformed_length_prefixes_are_rejected_on_every_transport`, `yubikit_parse_tlvs_decodes_every_field`.
+4. READ CONFIG over CCID: P1 alone selects the page (P2 is ignored), and a page past the
+  last answers `9000` with no data at all, not even a length byte: measured on a YubiKey 5C
+  Nano 5.7.4 (docs/MEASUREMENT.md, probe `bad-p1p2-mgmt`: `00 1D 00 01` is page 0,
+  `00 1D 02 00` and `00 1D FF 00` are a bare `9000`); all three were `6A86`.
+  `Management::read_config` itself (CTAPHID `0x42`, OTP HID slot `0x13`, both unmeasured)
+  keeps answering a page past the last with `6A86` (CTAPHID `ERR_INVALID_PAR`; model
+  policy). Tests: `read_config_paging_bounds`, `ctaphid_read_config`,
+  `otp_read_config_with_crc_frame`.
+5. CLA `80` is served exactly like `00`: measured on a YubiKey 5C Nano 5.7.4
+  (docs/MEASUREMENT.md, probe `cla-variants-mgmt`: `80 1D 00 00` answers page 0); it was
+  `6E00`. `90` (`80` with the chaining bit), `84` and the other proprietary classes keep
+  `6E00` (unmeasured). Tests: `cla_80_is_served_like_00`, `apdu_header_errors`.
+6. GET RESPONSE with nothing pending answers `6D00`, also right after a chained part
+  (`10 1D 00 00`, `9000`) left a chain open, which it drops: measured on a YubiKey 5C Nano
+  5.7.4 (docs/MEASUREMENT.md, probes `get-response-idle-mgmt`, `cla-variants-mgmt`); it was
+  `6985`, and `6883` during a chain. With data pending, P1/P2 other than `00 00` stays
+  `6A86` (model policy). Tests: `get_response_without_pending_data_is_6d00`,
+  `apdu_header_errors`, `read_config_serves_at_most_ne_with_get_response`,
+  `unread_response_data_is_discarded_by_other_commands`.
+
+These replace the `docs/CONTRACTS.md` "Applications B" conventions `6E00` for CLA `80`
+and `6985` for an idle GET RESPONSE for this application. CLA `0C` came back without a
+status word on the physical side (`none`, docs/MEASUREMENT.md "Host artifacts") and keeps
+`6882`.
+
 ## Model policies (not measured on the 5.7.4 reference key)
 
-`reference/yubikey-5c-nano-5.7.4/` holds no Management bytes, so every item below is this engine's choice.
+`reference/yubikey-5c-nano-5.7.4/` holds no Management bytes, and the measurement above
+covered only CCID reads, so every item below is this engine's choice.
 
-- SELECT answers the bare version text `5.7.4`. yubikit's `Version.from_string` searches the text for `\b(\d+).(\d).(\d)\b` (`yubikit/core/__init__.py`), so a longer text containing the version would parse the same way. The exact text the 5.7.4 firmware sends is unmeasured.
-- APDU conventions, from `docs/CONTRACTS.md` "Applications B" (binding):
+- APDU conventions, from `docs/CONTRACTS.md` "Applications B" (binding), with the measured exceptions above:
   - Secure-messaging CLA bits are `6882`.
   - A logical channel number is `6881` (ISO/IEC 7816-4 §5.6, as in lk-piv and lk-oath).
-  - Any other class from `20` to `FF` is `6E00`.
-  - A response gives at most Ne bytes. Without Le that is 256 for a short command and 65 536 for an extended one. The rest follows with `61xx` and GET RESPONSE (`C0`, P1 = P2 = `00`, otherwise `6A86`; with nothing pending `6985`). This also applies to the SELECT text.
+  - Any other class from `20` to `FF` except `80` is `6E00`.
+  - A response gives at most Ne bytes. Without Le that is 256 for a short command and 65 536 for an extended one. The rest follows with `61xx` and GET RESPONSE (`C0`; with data pending P1 = P2 = `00`, otherwise `6A86`; with nothing pending `6D00`, measured). This also applies to the SELECT text.
   - Any other command, SELECT, deselect or reset discards unread data.
-  - While a command chain is open, `C0` is part of the chain check (`6883`).
+  - `C0` while a command chain is open drops the chain and is answered like an idle GET RESPONSE (measured, item 6 above).
   - lk-device depends on `C0`: under a secure channel it collects a `61xx` response with `00 C0 00 00 00`.
   - Tested by `apdu_header_errors`, `read_config_serves_at_most_ne_with_get_response`, `secure_channel_collection_reaches_the_whole_page`, `unread_response_data_is_discarded_by_other_commands` and `select_serves_at_most_ne`.
   - The first review had answered `6E00` for every non-`00` class, ignored Le and had no `C0`; the second review fixed this.
-- DeviceInfo reports these tags in this order: `01 02 03 04 05 06 07 08 0A 14 15 16 18`. A USB-only device has no NFC tags (`0D 0E 17`) and no Lightning tag (`0F`). Tags `14`, `15` and `18` are sent as two zero bytes and `16` as one zero byte. yubikit decodes these the same way as a missing tag (`yubikit_parse_tlvs_decodes_every_field`). Whether a non-FIPS 5.7.4 key actually sends them has not been measured.
-- deferred: part number (`13`), version qualifier (`19`), free form (`11`) and HID init delay (`12`) are not reported, because their values on the real device are unknown.
-- yubikit also knows capability bits `0x0004` ("general CCID") and `0x0400` ("Management over CCID") in `CAPABILITY.usb_interfaces`. The engine neither reports them nor accepts them on write (`6A80`). No ykman path sends them to this device: `set_mode` masks its `0x400` with USB_SUPPORTED, and `config usb` starts from the reported enabled set.
-- On a fresh device the challenge-response timeout byte is `00`, the auto-eject timeout is `0000` and the device flags are `00`. `Management::challenge_response_timeout_secs` reads `0` as the documented 15-second default. A host writing `07 01 00` sets this same default value.
+- DeviceInfo tag order, page split and values: measured (item 2 above). No NFC capability tags (`0D`, `0E`) and no version qualifier (`19`) are sent, as on the measured key.
+- yubikit also knows capability bits `0x0004` ("general CCID") and `0x0400` ("Management over CCID") in `CAPABILITY.usb_interfaces`. The engine neither reports them nor accepts them on write (`6A80`). The measured key reports supported and enabled `031E`, which includes `0004` (docs/MEASUREMENT.md, "State of the key"; state-dependent, not adopted). No ykman path sends them to this device: `set_mode` masks its `0x400` with USB_SUPPORTED, and `config usb` starts from the reported enabled set.
+- On a fresh device the auto-eject timeout is `0000` and the device flags are `00` (the challenge-response timeout byte `0F` is measured, item 3 above). `Management::challenge_response_timeout_secs` reads a written `0` as the documented 15-second default.
 - deferred: the device flags touch-eject (`0x80`) and remote wakeup (`0x40`) and the auto-eject timeout are stored, persisted and reported, but nothing acts on them yet. Touch-eject would toggle CCID card presence on a touch; remote wakeup belongs to the program stage. Neither `lk-device` nor `lk-ccid` reads them.
-- READ CONFIG pages hold up to 255 TLV bytes, which is the limit of the length byte. Asking for a page after the last one returns `6A86`. This device's DeviceInfo (50 bytes) always fits page 0. `real_device_info_pages_at_small_limits` tests the page split on the real DeviceInfo with smaller page sizes. On OTP HID, the 51-byte page plus its CRC stays well inside the 224-byte limit of that response (`otp_device_info_fits_the_otp_response_capacity`).
+- READ CONFIG pages are the two measured pages (item 2 above), well within the 255 TLV bytes the length byte can express (`PAGE_LIMIT`). Over CTAPHID and OTP HID a page after the last one returns `6A86` (`ERR_INVALID_PAR` on CTAPHID); over CCID it is the measured bare `9000` (item 4). On OTP HID, each page plus its CRC (54 and 44 bytes) stays well inside the 224-byte limit of that response (`otp_device_info_fits_the_otp_response_capacity`).
 - WRITE CONFIG checks run in this order:
   1. Framing: no data is `6700`. A length byte that does not equal the number of TLV bytes is `6A80`. On OTP HID the length byte selects the TLVs out of the zero-padded slot data, and the bytes after them are ignored.
   2. TLV structure: an unknown, read-only, NFC or repeated tag is `6A80`. Long length forms (`81`/`82`) are accepted.

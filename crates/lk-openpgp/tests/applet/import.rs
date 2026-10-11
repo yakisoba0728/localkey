@@ -194,7 +194,8 @@ fn ec_import_with_and_without_public_key() {
     assert_eq!(card.import(&import_data(crt::DEC, &[(0x92, dec.scalar()), (0x99, &dec_public)])), 0x9000);
     assert_eq!(card_point(&mut card, crt::SIG), sig.public_uncompressed());
     assert_eq!(card_point(&mut card, crt::DEC), dec_public);
-    assert_eq!(card.key_status(), [0x02, 0x02, 0x00, 0x01]);
+    // Factory attestation key status 02 (was 01): docs/MEASUREMENT.md, probe openpgp-get-006e.
+    assert_eq!(card.key_status(), [0x02, 0x02, 0x00, 0x02]);
     assert_eq!(card.verify(0x81, b"123456"), 0x9000);
     let digest = lk_crypto::sha256(b"ec import");
     let (signature, sw) = card.sign(&digest);
@@ -261,7 +262,8 @@ fn ec_import_rejections() {
         assert_eq!(card.import(&import_data(crt::SIG, &components)), 0x6A80, "{what}");
     }
     assert_eq!(card.import(&import_data(crt::DEC, &[(0x92, &[1; 31])])), 0x6A80);
-    assert_eq!(card.key_status(), [0, 0, 0, 1]);
+    // Factory attestation key status 02 (was 01): docs/MEASUREMENT.md, probe openpgp-get-006e.
+    assert_eq!(card.key_status(), [0, 0, 0, 2]);
 }
 
 /// Import resets the signature counter for SIG only (spec §4.4.3.14) and goes to the

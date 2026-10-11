@@ -144,16 +144,20 @@ impl Rig {
         out
     }
 
-    /// Send a CTAP2 request that waits for user presence: check the immediate
-    /// KEEPALIVE(UPNEEDED), run the timer loop for `wait` ms (a KEEPALIVE every
-    /// 100 ms, CTAP 2.1 §11.2.9.1.7), touch, and return the response and the times of
-    /// the keepalives seen.
+    /// Send a CTAP2 request that waits for user presence: check that nothing is sent at
+    /// once, run the timer loop for `wait` ms (a KEEPALIVE(UPNEEDED) every
+    /// `KEEPALIVE_INTERVAL_MS`, 95 ms, the first one interval after the request; CTAP 2.1
+    /// §11.2.9.1.7), touch, and return the response and the times of the keepalives seen.
+    /// Measured on a YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probe
+    /// selection-keepalive-cancel); before the measurement the helper expected an
+    /// immediate KEEPALIVE and listed the request time first.
     pub fn cbor_touch(&mut self, cid: u32, request: &[u8], wait: Millis) -> (Vec<u8>, Vec<Millis>) {
         let start = self.now;
         let out = self.ctaphid_send(cid, CTAPHID_CBOR, request);
         assert!(responses(&out).is_empty(), "answered without a touch: {:02X?}", responses(&out));
-        assert_eq!(keepalives(&out), vec![2], "immediate KEEPALIVE(UPNEEDED)");
-        let mut times = vec![start];
+        assert_eq!(keepalives(&out), Vec::<u8>::new(), "no KEEPALIVE at once");
+        assert_eq!(self.dev.next_deadline(), Some(start + lk_device::KEEPALIVE_INTERVAL_MS), "first KEEPALIVE one interval later");
+        let mut times = Vec::new();
         for (at, o) in self.run_until(start + wait) {
             let messages = parse_fido(std::slice::from_ref(&o));
             for (command, payload) in messages {

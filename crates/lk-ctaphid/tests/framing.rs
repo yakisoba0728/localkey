@@ -2,17 +2,27 @@
 //! (CTAP 2.1 §11.2.4, §11.2.5.4).
 //!
 //! Boundaries: 57 bytes fill the initialization packet, 58 and 116 need one
-//! continuation packet, 117 needs two, 7550 = 57 + 127 * 59 ends on SEQ 126, 7551 is the
-//! first length that needs SEQ 127, and 7609 = 57 + 128 * 59 is the maximum
-//! (`reference/BEHAVIOR_CATALOG.md` FIDO: "CTAPHID final legal sequence 127 completes a
-//! maximum 7609-byte PING; 7550/7551/7609-byte boundaries verified").
+//! continuation packet, 117 needs two.
+//!
+//! Requests stop at 1536 bytes, measured on a YubiKey 5C Nano 5.7.4
+//! (`docs/MEASUREMENT.md`, probe `ping-max`): 1532 = 57 + 25 * 59 ends on SEQ 24, 1533
+//! is the first length that needs SEQ 25, 1536 is the longest PING echoed, and 1537 and
+//! longer are `ERR_INVALID_LEN` at the initialization packet. Before the measurement the
+//! engine echoed requests up to 7609 bytes (`reference/BEHAVIOR_CATALOG.md` FIDO:
+//! "CTAPHID final legal sequence 127 completes a maximum 7609-byte PING; 7550/7551/7609-byte
+//! boundaries verified", a legacy-emulator item not checked against the key).
+//!
+//! The device's own responses still use the whole sequence range: 7550 = 57 + 127 * 59
+//! ends on SEQ 126, 7551 is the first length that needs SEQ 127, and 7609 = 57 + 128 * 59
+//! is the framing maximum (CTAP 2.1 §11.2.4).
 
 mod common;
 
 use common::*;
 use lk_ctaphid::Event;
 
-const BOUNDARIES: [(usize, usize); 11] = [
+/// Request lengths and their packet counts, up to the measured 1536-byte maximum.
+const REQUEST_BOUNDARIES: [(usize, usize); 11] = [
     // (message length, packets)
     (0, 1),
     (1, 1),
@@ -22,6 +32,24 @@ const BOUNDARIES: [(usize, usize); 11] = [
     (116, 2),
     (117, 3),
     (175, 3),
+    (1532, 26),
+    (1533, 27),
+    (1536, 27),
+];
+
+/// Response lengths and their packet counts, up to the 7609-byte framing maximum.
+const RESPONSE_BOUNDARIES: [(usize, usize); 13] = [
+    // (message length, packets)
+    (0, 1),
+    (1, 1),
+    (57, 1),
+    (58, 2),
+    (59, 2),
+    (116, 2),
+    (117, 3),
+    (175, 3),
+    (1536, 27),
+    (1537, 27),
     (7550, 128),
     (7551, 129),
     (7609, 129),
@@ -31,7 +59,7 @@ const BOUNDARIES: [(usize, usize); 11] = [
 fn ping_echoes_every_boundary_length() {
     let mut dev = device();
     let cid = allocate(&mut dev, 0);
-    for (len, packets) in BOUNDARIES {
+    for (len, packets) in REQUEST_BOUNDARIES {
         let payload = pattern(len, len as u8);
         let request = message(cid, PING, &payload);
         assert_eq!(request.len(), packets, "request packets for {len}");
@@ -45,59 +73,97 @@ fn ping_echoes_every_boundary_length() {
 }
 
 #[test]
-fn maximum_ping_ends_on_sequence_127() {
+fn maximum_ping_is_1536_bytes_and_ends_on_sequence_25() {
+    // docs/MEASUREMENT.md, probe ping-max: the longest PING echoed is 1536 bytes; the
+    // echo is one initialization packet and continuation packets SEQ 0..=25.
     let mut dev = device();
     let cid = allocate(&mut dev, 0);
-    let payload = pattern(7609, 9);
+    let payload = pattern(MAX_REQUEST, 9);
     let request = message(cid, PING, &payload);
-    assert_eq!(request[128][4], 0x7F);
+    assert_eq!(request.len(), 27);
+    assert_eq!(request[26][4], 25);
     let reports = sends(&feed(&mut dev, 1, &request));
-    assert_eq!(reports.len(), 129);
-    assert_eq!(reports[128][4], 0x7F, "last response SEQ");
-    // The final packet carries 59 bytes exactly: no padding.
-    assert_eq!(&reports[128][5..], &payload[7609 - 59..]);
+    assert_eq!(reports.len(), 27);
+    assert_eq!(reports[26][4], 25, "last response SEQ");
+    // 1536 - 1532 = 4 bytes in the last packet, then zero padding.
+    assert_eq!(&reports[26][5..9], &payload[1532..]);
+    assert!(reports[26][9..].iter().all(|&b| b == 0));
     assert_eq!(reassemble(&reports).2, payload);
 }
 
 #[test]
-fn length_7550_ends_on_sequence_126_with_a_full_packet() {
+fn bcnt_above_1536_is_invalid_len_at_once_and_the_late_fragments_are_ignored() {
+    // docs/MEASUREMENT.md, probes ping-max and ping-7609: every PING longer than 1536
+    // bytes that was tried (1537, 1539, 1546, 1561, 1591, 1709, 1945, 3833, 7609) is
+    // answered ERR_INVALID_LEN (03) right after the initialization packet, while the
+    // host is still writing the continuation packets; those are ignored and the next
+    // request works. BCNT 7610 and 0xFFFF (probes ping-7610, ping-bcnt-ffff) as well.
+    // This test replaces `bcnt_above_7609_is_invalid_len_at_once` (the framing limit 7609
+    // was the engine's maximum before the measurement).
     let mut dev = device();
     let cid = allocate(&mut dev, 0);
+    for len in [
+        1537usize, 1539, 1546, 1561, 1591, 1709, 1945, 3833, 7609, 7610, 8000, 0xFFFF,
+    ] {
+        let request = message(cid, PING, &pattern(len, 0xAB));
+        assert_eq!(
+            dev.report(1, &request[0]),
+            error_events(cid, ERR_INVALID_LEN),
+            "BCNT {len}"
+        );
+        // No transaction was started: the continuation packets are orphans, no timer runs.
+        assert_eq!(feed(&mut dev, 2, &request[1..]), vec![], "BCNT {len}");
+        assert_eq!(dev.next_deadline(), None);
+        assert_eq!(dev.outstanding(), None);
+        assert_ping_echo(&mut dev, 3, cid, 57);
+    }
+    assert_ping_echo(&mut dev, 4, cid, MAX_REQUEST);
+}
+
+#[test]
+fn maximum_response_ends_on_sequence_127() {
+    // CTAP 2.1 §11.2.4: 7609 = 57 + 128 * 59 is the longest message SEQ 0..=127 can carry.
+    // Requests stop at 1536 bytes (docs/MEASUREMENT.md, probe ping-max), so this framing
+    // limit applies to the device's responses; this test sent a 7609-byte PING before.
+    let mut dev = device();
+    let cid = allocate(&mut dev, 0);
+    start_cbor(&mut dev, 1, cid, &[0x04]);
+    let payload = pattern(MAX_FRAMED, 9);
+    let reports = dev.respond(cid, CBOR, &payload);
+    assert_eq!(reports.len(), 129);
+    assert_eq!(reports[128][4], 0x7F, "last response SEQ");
+    // The final packet carries 59 bytes exactly: no padding.
+    assert_eq!(&reports[128][5..], &payload[MAX_FRAMED - 59..]);
+    assert_eq!(reassemble(&reports), (cid, CBOR, payload));
+}
+
+#[test]
+fn response_of_7550_bytes_ends_on_sequence_126_with_a_full_packet() {
+    // Response side of the 7550-byte boundary (requests stop at 1536 bytes:
+    // docs/MEASUREMENT.md, probe ping-max; this test sent a 7550-byte PING before).
+    let mut dev = device();
+    let cid = allocate(&mut dev, 0);
+    start_cbor(&mut dev, 1, cid, &[0x04]);
     let payload = pattern(7550, 3);
-    let reports = sends(&feed(&mut dev, 1, &message(cid, PING, &payload)));
+    let reports = dev.respond(cid, CBOR, &payload);
     assert_eq!(reports.len(), 128);
     assert_eq!(reports[127][4], 126);
     assert_eq!(&reports[127][5..], &payload[7550 - 59..]);
 }
 
 #[test]
-fn length_7551_needs_sequence_127_for_one_byte() {
+fn response_of_7551_bytes_needs_sequence_127_for_one_byte() {
+    // Response side of the 7551-byte boundary (requests stop at 1536 bytes:
+    // docs/MEASUREMENT.md, probe ping-max; this test sent a 7551-byte PING before).
     let mut dev = device();
     let cid = allocate(&mut dev, 0);
+    start_cbor(&mut dev, 1, cid, &[0x04]);
     let payload = pattern(7551, 4);
-    let reports = sends(&feed(&mut dev, 1, &message(cid, PING, &payload)));
+    let reports = dev.respond(cid, CBOR, &payload);
     assert_eq!(reports.len(), 129);
     assert_eq!(reports[128][4], 0x7F);
     assert_eq!(reports[128][5], payload[7550]);
     assert!(reports[128][6..].iter().all(|&b| b == 0));
-}
-
-#[test]
-fn bcnt_above_7609_is_invalid_len_at_once() {
-    // 7610 bytes cannot be carried by SEQ 0..=127 (CTAP 2.1 §11.2.4).
-    let mut dev = device();
-    let cid = allocate(&mut dev, 0);
-    for bcnt in [7610u16, 8000, 0xFFFF] {
-        assert_eq!(
-            dev.report(1, &init_packet(cid, PING, bcnt, &[0xAB; 57])),
-            error_events(cid, ERR_INVALID_LEN),
-            "BCNT {bcnt}"
-        );
-        // No transaction was started: continuation packets are orphans, no timer runs.
-        assert_eq!(dev.report(1, &cont_packet(cid, 0, &[0xAB; 59])), vec![]);
-        assert_eq!(dev.next_deadline(), None);
-    }
-    assert_ping_echo(&mut dev, 2, cid, 7609);
 }
 
 #[test]
@@ -182,9 +248,11 @@ fn same_channel_initialization_packet_mid_message_is_invalid_seq() {
 
 #[test]
 fn cbor_request_reassembly_at_boundaries() {
+    // Up to the measured 1536-byte maximum (docs/MEASUREMENT.md, probe ping-max; the
+    // list ended with 7609 before the measurement).
     let mut dev = device();
     let cid = allocate(&mut dev, 0);
-    for len in [1usize, 57, 58, 116, 117, 1536, 7609] {
+    for len in [1usize, 57, 58, 116, 117, 1532, 1533, MAX_REQUEST] {
         let payload = pattern(len, 0x10);
         let events = feed(&mut dev, 1, &message(cid, CBOR, &payload));
         assert_eq!(
@@ -208,7 +276,7 @@ fn cbor_request_reassembly_at_boundaries() {
 fn respond_fragments_responses_at_boundaries() {
     let mut dev = device();
     let cid = allocate(&mut dev, 0);
-    for (len, packets) in BOUNDARIES {
+    for (len, packets) in RESPONSE_BOUNDARIES {
         start_cbor(&mut dev, 1, cid, &[0x04]);
         let payload = pattern(len, 0x77);
         let reports = dev.respond(cid, CBOR, &payload);

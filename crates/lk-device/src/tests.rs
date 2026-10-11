@@ -34,17 +34,44 @@ fn aid_table_matches_the_applets() {
 }
 
 /// `card.rs` step 4: the longest matching AID wins, a longer DF name still selects,
-/// and an application whose capability is disabled is not found.
+/// and an application whose capability is disabled is not found. A DF name that is a
+/// prefix of an applet's AID selects the first such applet in `AppId::ALL` order
+/// (docs/MEASUREMENT.md, probe `select-partial-aid`; before the measurement truncated
+/// names were not supported and `A00000052721` was not found).
 #[test]
 fn applet_lookup_by_df_name() {
     let mut dev = device();
     assert_eq!(dev.find_applet_for_test(&[0xA0, 0x00, 0x00, 0x03, 0x08, 0x00, 0x00, 0x10, 0x00, 0x01, 0x00]), Some(AppId::Piv));
     assert_eq!(dev.find_applet_for_test(&[0xD2, 0x76, 0x00, 0x01, 0x24, 0x01, 0x03, 0x04]), Some(AppId::OpenPgp));
-    assert_eq!(dev.find_applet_for_test(&[0xA0, 0x00, 0x00, 0x05, 0x27, 0x21]), None, "truncated names are not supported");
+    assert_eq!(dev.find_applet_for_test(&[0xA0, 0x00, 0x00, 0x05, 0x27, 0x21]), Some(AppId::Oath), "OATH comes before HSM Auth");
     assert_eq!(dev.find_applet_for_test(&[0xA0, 0x00, 0x00, 0x01, 0x51, 0x00, 0x00, 0x00]), Some(AppId::SecurityDomain));
+    assert_eq!(dev.find_applet_for_test(&[0xA0, 0x00, 0x00, 0x01, 0x51]), Some(AppId::SecurityDomain));
+    assert_eq!(dev.find_applet_for_test(&[]), None, "an empty DF name selects nothing");
+    assert_eq!(dev.find_applet_for_test(&[0xA0, 0x00, 0x00, 0x05, 0x27, 0x99]), None);
     dev.caps = Capabilities(Capabilities::ALL.0 & !Capabilities::OATH);
     assert_eq!(dev.find_applet_for_test(lk_oath::AID), None);
+    assert_eq!(dev.find_applet_for_test(&[0xA0, 0x00, 0x00, 0x05, 0x27, 0x21]), Some(AppId::HsmAuth), "OATH disabled");
     assert_eq!(dev.find_applet_for_test(lk_mgmt::AID), Some(AppId::Management));
+}
+
+/// docs/MEASUREMENT.md, probe `select-partial-aid`, with the key's enabled set (`031A`:
+/// OTP and OATH disabled): `A0000005` and `A000000527` select Management, `A0000003`
+/// PIV, `D276000124` OpenPGP and `A0000005272107` HSM Auth (whose AID is the 8-byte
+/// `A000000527210701`).
+#[test]
+fn partial_df_names_select_as_measured() {
+    let mut dev = device();
+    dev.caps = Capabilities(0x031A);
+    for (name, want) in [
+        (&[0xA0, 0x00, 0x00, 0x05][..], AppId::Management),
+        (&[0xA0, 0x00, 0x00, 0x05, 0x27], AppId::Management),
+        (&[0xA0, 0x00, 0x00, 0x03], AppId::Piv),
+        (&[0xD2, 0x76, 0x00, 0x01, 0x24], AppId::OpenPgp),
+        (&[0xA0, 0x00, 0x00, 0x05, 0x27, 0x21, 0x07], AppId::HsmAuth),
+    ] {
+        assert_eq!(dev.find_applet_for_test(name), Some(want), "{name:02X?}");
+    }
+    assert_eq!(dev.find_applet_for_test(&[0xA0, 0x00, 0x00, 0x05, 0x27, 0x20]), None, "OTP disabled");
 }
 
 /// CTAP 2.1 §11.2.9.1.3 capability flags per enabled FIDO application (`fido.rs`).

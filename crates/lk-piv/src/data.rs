@@ -12,7 +12,8 @@ const P1P2_DATA: (u8, u8) = (0x3F, 0xFF);
 
 /// Parse the leading `5C` tag list of a GET/PUT DATA data field and return the named
 /// object with the bytes after the tag list. A missing or malformed `5C`, or a tag that
-/// names no object, is `6A80` (SP 800-73-4 Part 2 §3.1.2 status words).
+/// names no object, is `6A80` (SP 800-73-4 Part 2 §3.1.2 status words). GET DATA first
+/// answers a tag list cut short `6A82` ([`tag_list_cut_short`]).
 fn parse_tag_list(data: &[u8]) -> Result<(ObjectId, &[u8]), u16> {
     let (list, rest) = tlv::parse_one(data).map_err(|_| sw::INCORRECT_DATA)?;
     if list.tag != TAG_TAG_LIST {
@@ -22,11 +23,28 @@ fn parse_tag_list(data: &[u8]) -> Result<(ObjectId, &[u8]), u16> {
     Ok((id, rest))
 }
 
+/// Whether `data` starts with a `5C` tag list whose one-byte length announces more value
+/// bytes than the data field holds, as in `5C 01` with the tag missing. GET DATA answers
+/// it `6A82`: measured on a YubiKey 5C Nano 5.7.4 for `00 CB 3F FF 02 5C 01 7E`
+/// (docs/MEASUREMENT.md, probe `lc-le-piv-get-data`). Other malformed tag lists (no
+/// length byte, a long-form length, a bad tag) are unmeasured and stay `6A80`.
+fn tag_list_cut_short(data: &[u8]) -> bool {
+    match data {
+        [tag, len, value @ ..] if u32::from(*tag) == TAG_TAG_LIST && *len < 0x80 => {
+            usize::from(*len) > value.len()
+        }
+        _ => false,
+    }
+}
+
 impl Piv {
     /// GET DATA (`INS CB`, SP 800-73-4 Part 2 §3.1.2).
     ///
-    /// - P1-P2 must be `3FFF` (`6A86`). The data field must be exactly one `5C` tag list
-    ///   (`6A80`). Le may be present or absent.
+    /// - P1-P2 must be `3FFF`; any other value is `6A82` (measured on a YubiKey 5C Nano
+    ///   5.7.4 for `3FFE` and `0000`, docs/MEASUREMENT.md, probe `bad-p1p2-piv`; Part 2
+    ///   §3.1.2 does not name a status for it). A tag list cut short is `6A82`
+    ///   ([`tag_list_cut_short`]); otherwise the data field must be exactly one `5C` tag
+    ///   list (`6A80`). Le may be present or absent.
     /// - `7E` returns the fixed Discovery Object as is; `7F61` (BIT group template) is not
     ///   supported and returns `6A82`.
     /// - A container returns `53 L value`, or `6A82` when nothing is stored. A stored
@@ -37,7 +55,10 @@ impl Piv {
     ///   PIN not verified". Part 2 §3.1.2 lists both status words without an order.
     pub(crate) fn get_data(&self, cmd: &Command) -> Reply {
         if (cmd.p1, cmd.p2) != P1P2_DATA {
-            return Err(sw::INCORRECT_P1P2);
+            return Err(sw::FILE_NOT_FOUND);
+        }
+        if tag_list_cut_short(&cmd.data) {
+            return Err(sw::FILE_NOT_FOUND);
         }
         let (id, rest) = parse_tag_list(&cmd.data)?;
         if !rest.is_empty() {
@@ -60,7 +81,8 @@ impl Piv {
     ///
     /// Checks, in order, each leaving the stored state untouched:
     ///
-    /// 1. P1-P2 `3FFF` (`6A86`); no non-zero Le (`6700`; Part 2 §3.3.1 lists Le as
+    /// 1. P1-P2 `3FFF` (`6A86`, model policy: unlike GET DATA's measured `6A82`, PUT
+    ///    DATA was not measured); no non-zero Le (`6700`; Part 2 §3.3.1 lists Le as
     ///    empty; catalog "PIV generate/import/PUT DATA absent-Le guards", in the device
     ///    section). Le `00`, which yubico-piv-tool appends on T=1, is accepted
     ///    (`crate::explicit_le`).

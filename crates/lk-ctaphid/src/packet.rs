@@ -72,7 +72,7 @@ fn cont_packet(cid: u32, seq: u8, chunk: &[u8]) -> [u8; REPORT_LEN] {
 /// Frames a message that fits in one initialization packet (at most 57 bytes).
 ///
 /// Longer data is cut to 57 bytes; callers only pass the fixed short payloads of
-/// `CTAPHID_ERROR`, `CTAPHID_KEEPALIVE`, `CTAPHID_INIT`, `CTAPHID_WINK` and `CTAPHID_LOCK`.
+/// `CTAPHID_ERROR`, `CTAPHID_KEEPALIVE`, `CTAPHID_INIT` and `CTAPHID_WINK`.
 pub(crate) fn single(cid: u32, command: u8, data: &[u8]) -> [u8; REPORT_LEN] {
     let data = data.get(..INIT_DATA_LEN).unwrap_or(data);
     // `data.len() <= 57`, so the conversion cannot fail.

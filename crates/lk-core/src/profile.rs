@@ -130,6 +130,11 @@ pub struct DeviceProfile {
     /// Validity of generated certificates as X.509 GeneralizedTime (`YYYYMMDDHHMMSSZ`).
     pub cert_not_before: String,
     pub cert_not_after: String,
+    /// Management DeviceInfo part number (tag `13`, ASCII). A YubiKey 5C Nano 5.7.4
+    /// sends a 12-byte ASCII part number (`docs/MEASUREMENT.md`, probe
+    /// `mgmt-read-config`); an empty string is sent as an empty value, which yubikit
+    /// reads as "no part number".
+    pub part_number: String,
 }
 
 impl DeviceProfile {
@@ -168,6 +173,7 @@ impl DeviceProfile {
             openpgp_manufacturer: 0xFF00,
             cert_not_before: "20260101000000Z".into(),
             cert_not_after: "99991231235959Z".into(),
+            part_number: String::new(),
         }
     }
 
@@ -195,6 +201,10 @@ impl DeviceProfile {
             aaguid: [
                 0xff, 0x4d, 0xac, 0x45, 0xed, 0xe8, 0x4e, 0xc2, 0xac, 0xed, 0xcf, 0x66, 0x10, 0x3f, 0x43, 0x35,
             ],
+            // The measured key sends 12 ASCII bytes here (`docs/MEASUREMENT.md`, probe
+            // `mgmt-read-config`). The value it sent may identify a production batch, so it
+            // is not reproduced: this placeholder keeps the measured length and layout.
+            part_number: "000000000000".into(),
             ..Self::own(serial)
         }
     }

@@ -29,7 +29,11 @@
 //! 4. **SELECT** (`xx A4 04 xx` only; `00 A4 00 0x` is OATH CALCULATE ALL,
 //!    `docs/CONTRACTS.md` "Applications A"). The applet whose AID is a prefix of the
 //!    DF name is selected (the longest such AID; ISO/IEC 7816-4 §5.3.1 selection by DF
-//!    name, with right-truncated PIV and OpenPGP AIDs). Re-selecting the selected
+//!    name, with right-truncated PIV and OpenPGP AIDs). If there is none, a non-empty
+//!    DF name that is itself a prefix of an applet's AID selects that applet, the first
+//!    in `AppId::ALL` order (Management, OTP, OATH, PIV, OpenPGP, HSM Auth, Security
+//!    Domain) whose AID starts with it (measured on a YubiKey 5C Nano 5.7.4,
+//!    `docs/MEASUREMENT.md` probe `select-partial-aid`). Re-selecting the selected
 //!    applet calls `select()` without `deselect()` (SP 800-73-4 Part 2 §3.1.1 keeps the
 //!    PIV security status); selecting another one deselects the previous one first.
 //!    `9000`, `61xx`, `62xx` and `63xx` count as success (`docs/CONTRACTS.md`: OpenPGP
@@ -328,12 +332,27 @@ impl Device {
         response
     }
 
-    /// The enabled applet whose AID is the longest prefix of `name`.
+    /// The enabled applet whose AID is the longest prefix of `name`; failing that, for a
+    /// non-empty `name`, the first enabled applet in [`AppId::ALL`] order whose AID
+    /// starts with `name` (selection by a partial DF name).
+    ///
+    /// Measured on a YubiKey 5C Nano 5.7.4 (`docs/MEASUREMENT.md`, probe
+    /// `select-partial-aid`, OTP and OATH disabled, Management selected before):
+    /// `A0000005` and `A000000527` select Management, `A0000003` PIV, `D276000124`
+    /// OpenPGP and `A0000005272107` HSM Auth. Model policy: whether the key prefers
+    /// table order or the current applet when several AIDs start with the name
+    /// (Management, OTP, OATH and HSM Auth for `A000000527`) is not established; table
+    /// order reproduces the measurement.
     fn find_applet(&self, name: &[u8]) -> Option<AppId> {
         AppId::ALL
             .into_iter()
             .filter(|&id| name.starts_with(id.aid()) && self.app_enabled(id))
             .max_by_key(|id| id.aid().len())
+            .or_else(|| {
+                AppId::ALL
+                    .into_iter()
+                    .find(|&id| !name.is_empty() && id.aid().starts_with(name) && self.app_enabled(id))
+            })
     }
 
     /// [`Device::find_applet`] for unit tests.

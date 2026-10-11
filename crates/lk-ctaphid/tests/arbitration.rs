@@ -175,24 +175,27 @@ fn ping_on_one_channel_then_another_is_served_in_turn() {
 #[test]
 fn delayed_host_reads_four_maximum_pings_come_back_complete_and_in_order() {
     // `reference/BEHAVIOR_CATALOG.md` appendix A: "echoes four 7609-byte PINGs after
-    // delayed host reads". At engine level the host reads nothing until all four
-    // requests are sent; each request's 129 reports must still be complete, in order,
-    // and not mixed with another response. Bounding the report queue (256 reports in
-    // the legacy bridge) is the program layer's job.
+    // delayed host reads". The longest PING is 1536 bytes on the measured key
+    // (docs/MEASUREMENT.md, probe ping-max), so the four maximum PINGs are 1536 bytes
+    // (27 reports each); they were 7609 bytes (129 reports) before the measurement. At
+    // engine level the host reads nothing until all four requests are sent; each
+    // request's reports must still be complete, in order, and not mixed with another
+    // response. Bounding the report queue (256 reports in the legacy bridge) is the
+    // program layer's job.
     let mut dev = device();
     let a = allocate(&mut dev, 0);
     let b = allocate(&mut dev, 0);
     let payloads: Vec<(u32, Vec<u8>)> = [(a, 1u8), (b, 2), (a, 3), (b, 4)]
         .into_iter()
-        .map(|(cid, salt)| (cid, pattern(7609, salt)))
+        .map(|(cid, salt)| (cid, pattern(MAX_REQUEST, salt)))
         .collect();
     let mut unread = Vec::new();
     for (cid, payload) in &payloads {
         unread.extend(feed(&mut dev, 1, &message(*cid, PING, payload)));
     }
     let reports = sends(&unread);
-    assert_eq!(reports.len(), 4 * 129);
-    for (chunk, (cid, payload)) in reports.chunks(129).zip(&payloads) {
+    assert_eq!(reports.len(), 4 * 27);
+    for (chunk, (cid, payload)) in reports.chunks(27).zip(&payloads) {
         assert_eq!(reassemble(chunk), (*cid, PING, payload.clone()));
     }
 }

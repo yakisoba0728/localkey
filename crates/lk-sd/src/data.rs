@@ -18,7 +18,9 @@ pub(crate) const SELECT_FCI: [u8; 25] = [
 ];
 
 /// GET DATA `0066`: card recognition data (GP Card Specification v2.3.1 Annex H.2).
-/// As observed, the device returns the `73` template itself, without a `66` wrapper:
+/// As observed for `00 CA 00 66`, the device returns the `73` template itself, without a
+/// `66` wrapper (`80 CA 00 66` gets the `66` wrapper, `docs/MEASUREMENT.md`, probe
+/// `cla-variants-sd`; see `SecurityDomain::get_data`):
 /// GP 2.3.1 (`60`), card identification scheme (`63`), SCP03 with `i = 60` (`64`) and
 /// SCP11 with option `9B06` (`64`). 63 bytes.
 pub(crate) const CARD_RECOGNITION: [u8; 63] = [

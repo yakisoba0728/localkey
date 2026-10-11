@@ -11,18 +11,27 @@
 //! 2. Channel: channel 0, an identifier never allocated (or allocated before the last
 //!    USB reset), and the broadcast channel with any command but INIT are answered
 //!    `ERR_INVALID_CHANNEL`.
-//! 3. Lock: while another channel holds a `CTAPHID_LOCK`, `ERR_CHANNEL_BUSY`, the
-//!    same answer as a transaction in progress (sources on the lock check in
-//!    `Ctaphid::admit`).
-//! 4. Busy: while a transaction is active on another channel, `ERR_CHANNEL_BUSY`
+//! 3. Busy: while a transaction is active on another channel, `ERR_CHANNEL_BUSY`
 //!    (§11.2.5.1). On the transaction's own channel, `CTAPHID_INIT` resynchronises
 //!    (§11.2.5.3). Any other command gets `ERR_CHANNEL_BUSY` while the request is with
 //!    the application. While a message is still arriving it gets `ERR_INVALID_SEQ`, and
 //!    the partial message is dropped.
-//! 5. Command: unknown or unadvertised commands `ERR_INVALID_CMD`, then a BCNT that
-//!    the command does not allow `ERR_INVALID_LEN` (above 7609, or outside the request
-//!    layout of the command: an empty MSG or CBOR request, a WINK with data, a LOCK
-//!    without exactly one byte), then bad parameters `ERR_INVALID_PAR`.
+//! 4. Command: unknown or unadvertised commands `ERR_INVALID_CMD` (`CTAPHID_LOCK`
+//!    included: the measured device does not implement it, `docs/MEASUREMENT.md`, probes
+//!    `lock` and `lock-expiry`; whether a busy device answers LOCK with `CHANNEL_BUSY` or
+//!    `INVALID_CMD` was not measured), then a BCNT that the command does not allow
+//!    `ERR_INVALID_LEN` (above [`MAX_MESSAGE_LEN`], 1536, measured on a YubiKey 5C Nano
+//!    5.7.4 with probe `ping-max`; or outside the request layout of the command: an empty
+//!    MSG request, a WINK with data).
+//!
+//! A `CTAPHID_CBOR` request with BCNT 0 is never answered: the device stays busy with it
+//! on that channel, so other channels get `ERR_CHANNEL_BUSY`, `CTAPHID_CANCEL` on the
+//! channel changes nothing and no message timeout applies; only `CTAPHID_INIT` on that
+//! channel (or a USB reset) frees the device. Measured on a YubiKey 5C Nano 5.7.4
+//! (`docs/MEASUREMENT.md`, probe `empty-cbor`, and "The stuck-channel incident"). The
+//! application sees none of it: no [`Event::Request`], and no [`Event::Cancel`] or
+//! [`Event::Abort`] for it; [`Ctaphid::outstanding`] stays `None`. An empty
+//! `CTAPHID_MSG` was not measured and stays `ERR_INVALID_LEN`.
 //!
 //! Continuation packets are never answered unless they belong to the message being
 //! assembled. A packet out of sequence there is answered `ERR_INVALID_SEQ` and ends
@@ -32,11 +41,9 @@ use lk_core::{Millis, Version};
 
 use crate::channel::CidAllocator;
 use crate::event::Event;
-use crate::lock::ChannelLock;
 use crate::packet::{self, Packet};
 use crate::protocol::{
-    BROADCAST_CID, MAX_LOCK_SECONDS, MAX_PAYLOAD, PROTOCOL_VERSION, REPORT_LEN, capability, cmd,
-    err,
+    BROADCAST_CID, MAX_MESSAGE_LEN, PROTOCOL_VERSION, REPORT_LEN, capability, cmd, err,
 };
 use crate::transaction::{Assembly, Progress, Transaction};
 
@@ -50,7 +57,6 @@ pub struct Ctaphid {
     capabilities: u8,
     cids: CidAllocator,
     active: Option<Transaction>,
-    lock: Option<ChannelLock>,
 }
 
 fn send_error(out: &mut Vec<Event>, cid: u32, code: u8) {
@@ -67,7 +73,6 @@ impl Ctaphid {
             capabilities,
             cids: CidAllocator::new(),
             active: None,
-            lock: None,
         }
     }
 
@@ -100,8 +105,8 @@ impl Ctaphid {
     /// invalid and never reused. After INIT resynchronisation the channel stays the
     /// same, so a stale answer that arrives after the host has started a new request on
     /// it would be framed as the new answer; the device must therefore drop its pending
-    /// operation when it sees [`Event::Abort`]. A payload longer than [`MAX_PAYLOAD`]
-    /// is answered `ERR_OTHER`.
+    /// operation when it sees [`Event::Abort`]. A payload longer than
+    /// [`crate::MAX_PAYLOAD`] is answered `ERR_OTHER`.
     pub fn respond(&mut self, cid: u32, cmd: u8, payload: &[u8]) -> Vec<[u8; REPORT_LEN]> {
         match self.active {
             Some(Transaction::Processing { cid: owner, .. }) if owner == cid => {
@@ -120,13 +125,9 @@ impl Ctaphid {
     }
 
     /// Applies the passage of time: an incomplete message whose next packet is overdue
-    /// is abandoned with `ERR_MSG_TIMEOUT` on its channel (CTAP 2.1 §11.2.5.2), and a
-    /// lapsed channel lock is released.
+    /// is abandoned with `ERR_MSG_TIMEOUT` on its channel (CTAP 2.1 §11.2.5.2).
     pub fn tick(&mut self, now: Millis) -> Vec<Event> {
         let mut out = Vec::new();
-        if self.lock.is_some_and(|lock| lock.expired(now)) {
-            self.lock = None;
-        }
         if let Some(Transaction::Assembling(assembly)) = &self.active
             && now >= assembly.deadline()
         {
@@ -138,22 +139,17 @@ impl Ctaphid {
 
     /// The earliest time at which [`Ctaphid::tick`] has work to do, if any.
     pub fn next_deadline(&self) -> Option<Millis> {
-        let assembly = match &self.active {
+        match &self.active {
             Some(Transaction::Assembling(assembly)) => Some(assembly.deadline()),
             _ => None,
-        };
-        [assembly, self.lock.map(|lock| lock.until())]
-            .into_iter()
-            .flatten()
-            .min()
+        }
     }
 
-    /// USB bus reset: drops any partial message, outstanding request and channel
-    /// lock, and forgets every allocated channel. The device must drop its own pending
-    /// operation as well; a later `respond` for it sends nothing.
+    /// USB bus reset: drops any partial message and outstanding request, and forgets
+    /// every allocated channel. The device must drop its own pending operation as well;
+    /// a later `respond` for it sends nothing.
     pub fn reset(&mut self) {
         self.active = None;
-        self.lock = None;
         self.cids.forget_all();
     }
 
@@ -193,7 +189,7 @@ impl Ctaphid {
         // `data` holds the 57 initialization-packet bytes: a message that fits is
         // complete now; a longer one waits for continuation packets.
         match data.get(..bcnt) {
-            Some(payload) => self.execute(now, cid, command, payload.to_vec(), out),
+            Some(payload) => self.execute(cid, command, payload.to_vec(), out),
             None => {
                 self.active = Some(Transaction::Assembling(Assembly::start(
                     now, cid, command, bcnt, data,
@@ -202,7 +198,7 @@ impl Ctaphid {
         }
     }
 
-    /// Steps 2 to 4 of the module-level check order: channel, lock, busy.
+    /// Steps 2 and 3 of the module-level check order: channel, busy.
     fn admit(&mut self, cid: u32, command: u8) -> Result<(), u8> {
         let is_init = command == cmd::INIT;
         let valid = if cid == BROADCAST_CID {
@@ -213,26 +209,13 @@ impl Ctaphid {
         if !valid {
             return Err(err::INVALID_CHANNEL);
         }
-        // CTAP 2.1 names no error for a channel kept out by another channel's lock
-        // (§11.2.9.2.2: "any other channel trying to send a message will fail").
-        // `ERR_LOCK_REQUIRED` means "Command requires channel lock" (§11.2.9.1.6), a
-        // command the requester could only run after locking itself, which it cannot
-        // do here. `ERR_CHANNEL_BUSY` ("The device is busy for the requesting channel.
-        // The client SHOULD retry the request after a short delay") is the state the
-        // lock creates (§11.2.6, like §11.2.5.1's busy device), and the lock lapses
-        // within 10 s. Interop: Chromium (`fido_hid_device.cc`) and python-fido2
-        // (`CtapHidDevice.call`) retry `CHANNEL_BUSY` every 100 ms but fail on any other
-        // error; Google OpenSK answers `ChannelBusy` under a lock and never sends
-        // `LockRequired`; libfido2 treats every error the same. The reference device
-        // was not measured.
-        if self.lock.is_some_and(|lock| lock.excludes(cid)) {
-            return Err(err::CHANNEL_BUSY);
-        }
         match &self.active {
             None => Ok(()),
             Some(active) if active.cid() != cid => Err(err::CHANNEL_BUSY),
             Some(_) if is_init => Ok(()),
-            Some(Transaction::Processing { .. }) => Err(err::CHANNEL_BUSY),
+            Some(Transaction::Processing { .. } | Transaction::Stalled { .. }) => {
+                Err(err::CHANNEL_BUSY)
+            }
             Some(Transaction::Assembling(_)) => {
                 self.active = None;
                 Err(err::INVALID_SEQ)
@@ -240,24 +223,23 @@ impl Ctaphid {
         }
     }
 
-    /// Step 5 of the module-level check order for a request other than INIT/CANCEL.
+    /// Step 4 of the module-level check order for a request other than INIT/CANCEL.
     ///
-    /// Request lengths (CTAP 2.1): MSG and CBOR carry `BCNT 1..(n+1)`, a command byte
-    /// then data (§11.2.9.1.1, §11.2.9.1.2); WINK carries `BCNT 0` (§11.2.9.2.1); LOCK
-    /// carries `BCNT 1` (§11.2.9.2.2). PING and vendor commands take any length up to
-    /// [`MAX_PAYLOAD`].
+    /// Request lengths (CTAP 2.1): MSG carries `BCNT 1..(n+1)`, a command byte then data
+    /// (§11.2.9.1.1); WINK carries `BCNT 0` (§11.2.9.2.1). CBOR takes `BCNT 0` too, which
+    /// stalls the device (module documentation). Every request is at most
+    /// [`MAX_MESSAGE_LEN`] bytes. `CTAPHID_LOCK` falls through to `ERR_INVALID_CMD`.
     fn check_request(&self, command: u8, bcnt: usize) -> Result<(), u8> {
         let advertises = |flag: u8| self.capabilities & flag != 0;
         let length_ok = match command {
             cmd::PING => true,
             cmd::MSG if !advertises(capability::NMSG) => bcnt > 0,
-            cmd::CBOR if advertises(capability::CBOR) => bcnt > 0,
+            cmd::CBOR if advertises(capability::CBOR) => true,
             cmd::WINK if advertises(capability::WINK) => bcnt == 0,
-            cmd::LOCK => bcnt == 1,
             cmd::VENDOR_FIRST..=cmd::VENDOR_LAST => true,
             _ => return Err(err::INVALID_CMD),
         };
-        if length_ok && bcnt <= MAX_PAYLOAD {
+        if length_ok && bcnt <= MAX_MESSAGE_LEN {
             Ok(())
         } else {
             Err(err::INVALID_LEN)
@@ -328,21 +310,14 @@ impl Ctaphid {
             Progress::Complete => {
                 if let Some(Transaction::Assembling(done)) = self.active.take() {
                     let (command, payload) = done.into_message();
-                    self.execute(now, cid, command, payload, out);
+                    self.execute(cid, command, payload, out);
                 }
             }
         }
     }
 
     /// Carries out a complete, validated request message.
-    fn execute(
-        &mut self,
-        now: Millis,
-        cid: u32,
-        command: u8,
-        payload: Vec<u8>,
-        out: &mut Vec<Event>,
-    ) {
+    fn execute(&mut self, cid: u32, command: u8, payload: Vec<u8>, out: &mut Vec<Event>) {
         match command {
             cmd::PING => out.extend(
                 packet::fragment(cid, cmd::PING, &payload)
@@ -353,7 +328,9 @@ impl Ctaphid {
                 out.push(Event::Wink);
                 out.push(Event::Send(packet::single(cid, cmd::WINK, &[])));
             }
-            cmd::LOCK => self.on_lock(now, cid, &payload, out),
+            // The stall of the module documentation: busy, never answered, no request
+            // for the application.
+            cmd::CBOR if payload.is_empty() => self.active = Some(Transaction::Stalled { cid }),
             _ => {
                 self.active = Some(Transaction::Processing { cid, cmd: command });
                 out.push(Event::Request {
@@ -363,20 +340,6 @@ impl Ctaphid {
                 });
             }
         }
-    }
-
-    /// `CTAPHID_LOCK` (CTAP 2.1 §11.2.9.2.2): 1 to 10 seconds locks the device to
-    /// `cid` (a holder may renew it), 0 releases it, anything else is
-    /// `ERR_INVALID_PAR`.
-    fn on_lock(&mut self, now: Millis, cid: u32, payload: &[u8], out: &mut Vec<Event>) {
-        let &[seconds] = payload else {
-            return send_error(out, cid, err::INVALID_LEN);
-        };
-        if seconds > MAX_LOCK_SECONDS {
-            return send_error(out, cid, err::INVALID_PAR);
-        }
-        self.lock = (seconds > 0).then(|| ChannelLock::new(cid, now, seconds));
-        out.push(Event::Send(packet::single(cid, cmd::LOCK, &[])));
     }
 }
 

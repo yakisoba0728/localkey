@@ -28,12 +28,86 @@ fn power_on_returns_the_profile_atr() {
     }
 }
 
-/// lk-mgmt: SELECT answers the firmware version text.
+/// lk-mgmt: SELECT answers the firmware version text, 30 ASCII bytes as the key sends
+/// them (docs/MEASUREMENT.md, probe `select-mgmt`; the engine sent the bare `5.7.4`
+/// before the measurement).
 #[test]
 fn select_management() {
     let mut rig = Rig::new();
     rig.power_on();
-    assert_eq!(rig.select(AID_MGMT), b"5.7.4\x90\x00".to_vec());
+    assert_eq!(rig.select(AID_MGMT), b"Virtual mgr - FW version 5.7.4\x90\x00".to_vec());
+}
+
+/// docs/MEASUREMENT.md, probe `select-partial-aid`: a SELECT by a partial DF name
+/// selects the applet whose AID starts with it (the first in table order). The key
+/// answered `A0000005` and `A000000527` with Management's 30-byte text, `A0000003` with
+/// PIV's 19-byte template, `D276000124` with OpenPGP's empty `9000` and
+/// `A0000005272107` with HSM Auth's `79 03 050704`; the engine answered `6A82` to all
+/// five before the measurement.
+#[test]
+fn select_by_partial_df_name() {
+    let mut rig = Rig::new();
+    rig.power_on();
+    let mgmt = b"Virtual mgr - FW version 5.7.4\x90\x00".to_vec();
+    assert_eq!(rig.select(&[0xA0, 0x00, 0x00, 0x05]), mgmt);
+    assert_eq!(rig.select(&[0xA0, 0x00, 0x00, 0x05, 0x27]), mgmt);
+    let piv = rig.select(&[0xA0, 0x00, 0x00, 0x03]);
+    assert_eq!((piv.len(), piv[0], sw(&piv)), (19 + 2, 0x61, 0x9000));
+    assert_eq!(rig.select(&[0xD2, 0x76, 0x00, 0x01, 0x24]), vec![0x90, 0x00]);
+    assert_eq!(rig.select(&[0xA0, 0x00, 0x00, 0x05, 0x27, 0x21, 0x07]), vec![0x79, 0x03, 5, 7, 4, 0x90, 0x00]);
+    // The selection took effect: HSM Auth GET VERSION.
+    assert_eq!(rig.apdu(&[0x00, 0x07, 0x00, 0x00, 0x00]), vec![5, 7, 4, 0x90, 0x00]);
+    // A name no AID starts with is still not found and keeps the selection.
+    assert_eq!(rig.select(&[0xA0, 0x00, 0x00, 0x05, 0x27, 0x99]), vec![0x6A, 0x82]);
+    assert_eq!(rig.apdu(&[0x00, 0x07, 0x00, 0x00, 0x00]), vec![5, 7, 4, 0x90, 0x00]);
+}
+
+/// docs/MEASUREMENT.md, probes `mgmt-read-config`, `bad-p1p2-mgmt`, `cla-variants-mgmt`
+/// and `get-response-idle-mgmt`, end to end over CCID: READ CONFIG page 0 is 52 bytes
+/// (`33 || ...`, ending with MORE_DATA) and page 1 42 bytes (`29 || ...`); P2 is
+/// ignored; a page past the last is a bare `9000`; CLA 80 reads like CLA 00; GET
+/// RESPONSE with nothing pending is `6D00`.
+#[test]
+fn management_reads_as_measured() {
+    let mut rig = Rig::new();
+    rig.power_on();
+    rig.select(AID_MGMT);
+    let page0 = rig.apdu(&[0x00, 0x1D, 0x00, 0x00, 0x00]);
+    assert_eq!((page0.len(), page0[0], sw(&page0)), (52 + 2, 0x33, 0x9000));
+    assert_eq!(&page0[page0.len() - 5..page0.len() - 2], &[0x10, 0x01, 0x01]);
+    let page1 = rig.apdu(&[0x00, 0x1D, 0x01, 0x00, 0x00]);
+    assert_eq!((page1.len(), page1[0], sw(&page1)), (42 + 2, 0x29, 0x9000));
+    assert_eq!(rig.apdu(&[0x00, 0x1D, 0x00, 0x01]), page0);
+    assert_eq!(rig.apdu(&[0x00, 0x1D, 0x02, 0x00]), vec![0x90, 0x00]);
+    assert_eq!(rig.apdu(&[0x00, 0x1D, 0xFF, 0x00]), vec![0x90, 0x00]);
+    assert_eq!(rig.apdu(&[0x80, 0x1D, 0x00, 0x00]), page0);
+    assert_eq!(rig.apdu(&[0x00, 0xC0, 0x00, 0x00, 0x00]), vec![0x6D, 0x00]);
+    // Le 01: the length byte and 6133.
+    assert_eq!(rig.apdu(&[0x00, 0x1D, 0x00, 0x00, 0x01]), vec![0x33, 0x61, 0x33]);
+}
+
+/// docs/MEASUREMENT.md, probes `undefined-ins-sd`, `get-response-idle-sd`,
+/// `cla-variants-sd` and `get-response-idle-hsmauth`, `cla-variants-hsmauth`, end to end
+/// over CCID without a secure channel.
+#[test]
+fn security_domain_and_hsm_auth_statuses_as_measured() {
+    let mut rig = Rig::new();
+    rig.power_on();
+    assert_eq!(sw(&rig.select(AID_SD)), 0x9000);
+    for ins in [0x5E, 0x6E, 0x93] {
+        assert_eq!(rig.apdu(&[0x00, ins, 0x00, 0x00]), vec![0x69, 0x82], "INS {ins:02X}");
+    }
+    assert_eq!(rig.apdu(&[0x00, 0xC0, 0x00, 0x00, 0x00]), vec![0x69, 0x82]);
+    let wrapped = rig.apdu(&[0x80, 0xCA, 0x00, 0x66]);
+    assert_eq!((wrapped.len(), &wrapped[..4], sw(&wrapped)), (65 + 2, &[0x66, 0x3F, 0x73, 0x3D][..], 0x9000));
+    let bare = rig.apdu(&[0x00, 0xCA, 0x00, 0x66]);
+    assert_eq!(&wrapped[2..], &bare[..]);
+    assert_eq!(rig.apdu(&[0x10, 0xCA, 0x00, 0x66]), vec![0x90, 0x00]);
+    assert_eq!(rig.apdu(&[0x00, 0xC0, 0x00, 0x00, 0x00]), vec![0x69, 0x82]);
+
+    assert_eq!(sw(&rig.select(AID_HSMAUTH)), 0x9000);
+    assert_eq!(rig.apdu(&[0x80, 0x5E, 0x00, 0x00]), vec![0x6D, 0x00]);
+    assert_eq!(rig.apdu(&[0x00, 0xC0, 0x00, 0x00, 0x00]), vec![0x6D, 0x00]);
 }
 
 /// ISO/IEC 7816-4 §5.6 `6A82` for an unknown AID (here the FIDO AID, which this USB

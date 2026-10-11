@@ -9,17 +9,20 @@ use lk_codec::tlv;
 use lk_core::{Capabilities, DeviceProfile, Host, Record};
 use lk_crypto::{SecretBytes, ct_eq};
 
-use crate::info::{self, InfoFields, PAGE_LIMIT, tag};
+use crate::info::{self, InfoFields, tag};
 
 /// Length of the configuration lock code (YubiKey 5 Series Technical Manual,
 /// "Configuration lock"; yubikit-python `write_device_config` rejects other lengths).
 pub const LOCK_CODE_LEN: usize = 16;
 
-/// The challenge-response touch timeout a host-visible value of `0` stands for.
+/// The factory challenge-response touch timeout, and the value a configured `0` stands
+/// for.
 ///
-/// Model policy: the YubiKey documentation gives 15 seconds as the default touch wait
-/// for OTP challenge-response; DeviceInfo reports the configured byte, which is `0`
-/// ("use the default") on a fresh device. See [`Management::challenge_response_timeout_secs`].
+/// A YubiKey 5C Nano 5.7.4 reports `0F` (15 seconds) in DeviceInfo tag `07`
+/// (`docs/MEASUREMENT.md`, probe `mgmt-read-config`), so a fresh device stores 15. The
+/// YubiKey documentation gives 15 seconds as the default touch wait for OTP
+/// challenge-response; a host may still write `0`, which
+/// [`Management::challenge_response_timeout_secs`] reads as this default (model policy).
 pub const DEFAULT_CHALRESP_TIMEOUT_SECS: u8 = 15;
 
 /// Version byte of the persisted record (`docs/CONTRACTS.md`, "Persisted state").
@@ -89,13 +92,14 @@ impl Drop for Config {
 }
 
 impl Config {
-    /// Factory state: the profile's default applications, zero timeouts and flags, no
-    /// lock code.
+    /// Factory state: the profile's default applications, no auto-eject timeout, the
+    /// 15-second challenge-response timeout (measured, see
+    /// [`DEFAULT_CHALRESP_TIMEOUT_SECS`]), no flags and no lock code.
     fn factory(profile: &DeviceProfile) -> Self {
         Self {
             usb_enabled: default_enabled(profile),
             auto_eject_timeout: 0,
-            chalresp_timeout: 0,
+            chalresp_timeout: DEFAULT_CHALRESP_TIMEOUT_SECS,
             device_flags: 0,
             lock_code: [0; LOCK_CODE_LEN],
             unknown: Vec::new(),
@@ -267,8 +271,10 @@ impl Management {
     /// state"): `01` USB enabled (2 bytes), `02` auto-eject timeout (2), `03`
     /// challenge-response timeout (1), `04` device flags (1), `05` lock code (16).
     /// Unknown fields are kept and written back. `None` or an unreadable record gives
-    /// the factory state: the profile's default applications, zero timeouts and flags,
-    /// no lock code.
+    /// the factory state: the profile's default applications, auto-eject off, a
+    /// challenge-response timeout of 15 seconds (`0F`, as measured on a YubiKey 5C Nano
+    /// 5.7.4), no flags and no lock code. A stored record keeps its own value, `0`
+    /// included.
     pub fn new(stored: Option<&[u8]>, host: &mut dyn Host) -> Self {
         let profile = host.profile();
         let config = stored
@@ -354,13 +360,15 @@ impl Management {
             chalresp_timeout: self.config.chalresp_timeout,
             device_flags: self.config.device_flags,
             locked: self.config.is_locked(),
+            part_number: profile.part_number.as_bytes().to_vec(),
         }
     }
 
-    /// The complete DeviceInfo as one BER-TLV list, without the length prefix or
-    /// paging (tag order and values: [`crate::tag`]).
+    /// The complete DeviceInfo as one BER-TLV list: the objects of every page in page
+    /// order, without the length prefixes and without `MORE_DATA` (the list yubikit
+    /// merges from the pages; tags: [`crate::tag`]).
     pub fn device_info(&self, host: &dyn Host) -> Vec<u8> {
-        info::encode_items(&self.info_fields(host)).concat()
+        info::merged(&self.info_fields(host))
     }
 
     /// The bare TLVs of DeviceInfo page `page` (no length byte, no CRC), or `None`
@@ -369,38 +377,29 @@ impl Management {
     /// This is the form `lk_otp::MgmtBridge::device_info` expects: `lk-otp` adds the
     /// length byte itself and its HID layer appends the OTP CRC (yubikit-python
     /// `_ManagementOtpBackend.read_config` checks `check_crc` over `len || TLVs ||
-    /// CRC`). Every page but the last ends with `MORE_DATA` (`10 01 01`); see
-    /// [`crate::PAGE_LIMIT`].
+    /// CRC`). There are two pages, laid out as a YubiKey 5C Nano 5.7.4 sends them
+    /// (`docs/MEASUREMENT.md`, probe `mgmt-read-config`); page 0 ends with `MORE_DATA`
+    /// (`10 01 01`).
     pub fn device_info_page(&self, page: u8, host: &dyn Host) -> Option<Vec<u8>> {
-        self.page_with_limit(page, PAGE_LIMIT, host)
-    }
-
-    fn page_with_limit(&self, page: u8, limit: usize, host: &dyn Host) -> Option<Vec<u8>> {
-        let items = info::encode_items(&self.info_fields(host));
-        info::paginate(&items, usize::from(page), limit)
+        let [page0, page1] = info::pages(&self.info_fields(host));
+        match page {
+            0 => Some(page0),
+            1 => Some(page1),
+            _ => None,
+        }
     }
 
     /// One READ CONFIG page: `len || TLVs` (yubikit-python `read_device_info`, which
-    /// checks `len(encoded) - 1 == encoded[0]`), as CCID INS `1D` and CTAPHID `0x42`
-    /// answer it.
+    /// checks `len(encoded) - 1 == encoded[0]`), as CCID INS `1D`, CTAPHID `0x42` and
+    /// OTP HID slot `0x13` answer it (pages: [`Management::device_info_page`]).
     ///
-    /// Every page but the last ends with `MORE_DATA` (`10 01 01`); see
-    /// [`crate::PAGE_LIMIT`]. A page past the last is `6A86` (model policy: the host
-    /// only asks for a further page after `MORE_DATA`).
+    /// A page past the last is `Err(6A86)`. Over CCID the key answers such a page with
+    /// a bare `9000` (`docs/MEASUREMENT.md`, probe `bad-p1p2-mgmt`), which
+    /// [`crate::MgmtApplet`] does; CTAPHID and OTP HID were not measured and keep the
+    /// error (model policy: `ERR_INVALID_PAR` on CTAPHID).
     pub fn read_config(&self, page: u8, host: &dyn Host) -> Result<Vec<u8>, u16> {
-        self.read_config_with_limit(page, PAGE_LIMIT, host)
-    }
-
-    /// [`Management::read_config`] with an explicit page size, so the paging of the
-    /// real DeviceInfo can be tested although it fits one page at [`PAGE_LIMIT`].
-    pub(crate) fn read_config_with_limit(
-        &self,
-        page: u8,
-        limit: usize,
-        host: &dyn Host,
-    ) -> Result<Vec<u8>, u16> {
         let tlvs = self
-            .page_with_limit(page, limit, host)
+            .device_info_page(page, host)
             .ok_or(sw::INCORRECT_P1P2)?;
         let len = u8::try_from(tlvs.len()).map_err(|_| sw::UNKNOWN)?;
         let mut out = Vec::with_capacity(1 + tlvs.len());
@@ -575,101 +574,28 @@ mod tests {
         }
     }
 
-    /// The TLVs of every page from 0 until `read_config_with_limit` refuses, each
-    /// checked against yubikit-python `read_device_info`: `len || TLVs` with
-    /// `len(encoded) - 1 == encoded[0]`, `MORE_DATA` (`10 01 01`) last on every page
-    /// but the last and nowhere else.
-    fn pages(m: &Management, limit: usize, host: &TestHost) -> Vec<Vec<u8>> {
-        let mut pages = Vec::new();
-        for page in 0..=u8::MAX {
-            let Ok(encoded) = m.read_config_with_limit(page, limit, host) else {
-                assert_eq!(
-                    m.read_config_with_limit(page, limit, host),
-                    Err(sw::INCORRECT_P1P2)
-                );
-                break;
-            };
-            let (&len, tlvs) = encoded.split_first().expect("length byte");
-            assert_eq!(usize::from(len), tlvs.len(), "page {page}");
-            assert_eq!(m.page_with_limit(page, limit, host).as_deref(), Some(tlvs));
-            pages.push(tlvs.to_vec());
-        }
-        let last = pages.len().saturating_sub(1);
-        for (i, page) in pages.iter().enumerate() {
-            let items = tlv::parse_all(page).expect("page parses");
-            let more: Vec<usize> = items
-                .iter()
-                .enumerate()
-                .filter(|(_, t)| t.tag == tag::MORE_DATA)
-                .map(|(j, _)| j)
-                .collect();
-            if i == last {
-                assert!(more.is_empty(), "last page {i} has MORE_DATA");
-            } else {
-                assert_eq!(more, vec![items.len() - 1], "page {i}");
-                assert!(page.ends_with(&[0x10, 0x01, 0x01]));
-            }
-        }
-        pages
-    }
-
-    fn merged(pages: &[Vec<u8>]) -> Vec<u8> {
-        pages
-            .iter()
-            .flat_map(|p| {
-                tlv::parse_all(p)
-                    .expect("page parses")
-                    .into_iter()
-                    .filter(|t| t.tag != tag::MORE_DATA)
-                    .flat_map(|t| t.raw.to_vec())
-                    .collect::<Vec<u8>>()
-            })
-            .collect()
-    }
-
-    // Source: yubikit-python `ManagementSession.read_device_info` asks for the next
-    // page (P1 / payload byte) while a page carries MORE_DATA = 01 and merges the TLVs
-    // of all pages. The real DeviceInfo (50 bytes) fits one page at PAGE_LIMIT, so
-    // the split is exercised with smaller page sizes.
+    // docs/MEASUREMENT.md, probe `mgmt-read-config`: READ CONFIG page 0 is 52 bytes
+    // (`33 || 51 TLV bytes` ending with MORE_DATA) and page 1 is 42 bytes (`29 || 41
+    // TLV bytes`, the 12-byte part number included); a third page does not exist.
+    // yubikit-python `read_device_info` merges the pages without MORE_DATA.
     #[test]
-    fn real_device_info_pages_at_small_limits() {
-        let mut host = TestHost::new();
+    fn read_config_serves_the_two_measured_pages() {
+        let mut host = TestHost::with_profile(DeviceProfile::yubikey_5c_nano_5_7_4(1));
         let m = Management::new(None, &mut host);
-        let info = m.device_info(&host);
-        assert_eq!(info.len(), 50);
-
-        // At the engine's limit: one page, the whole info, page 1 refused.
-        assert_eq!(pages(&m, PAGE_LIMIT, &host), vec![info.clone()]);
-        assert_eq!(m.device_info_page(0, &host), Some(info.clone()));
-        assert_eq!(m.device_info_page(1, &host), None);
-
-        // A 20-byte page (17 bytes of objects before MORE_DATA): page 0 holds
-        // 01 02 03 04 (17 bytes) + 10 01 01, page 1 holds 05 06 07 08 (15 bytes) +
-        // 10 01 01, and page 2 holds the remaining 0A 14 15 16 18 (18 bytes, no
-        // marker).
-        let p = pages(&m, 20, &host);
-        assert_eq!(p.len(), 3);
-        assert_eq!(p[0].len(), 20);
-        assert_eq!(p[0].get(..17), info.get(..17));
-        assert_eq!(p[1].len(), 18);
-        assert_eq!(p[1].get(..15), info.get(17..32));
-        assert_eq!(p[2], info.get(32..).expect("tail").to_vec());
-        assert_eq!(
-            m.read_config_with_limit(3, 20, &host),
-            Err(sw::INCORRECT_P1P2)
-        );
-        // A 30-byte page: 26 bytes (01..06) + marker, then the last 24 bytes fit.
-        let p = pages(&m, 30, &host);
-        assert_eq!(p.len(), 2);
-        assert_eq!(p[1], info.get(26..).expect("tail").to_vec());
-
-        // Every limit that holds the largest object (6 bytes) plus MORE_DATA: no page
-        // exceeds the limit and the merged pages give the DeviceInfo back.
-        for limit in 9..=60 {
-            let p = pages(&m, limit, &host);
-            assert!(p.iter().all(|page| page.len() <= limit), "limit {limit}");
-            assert_eq!(merged(&p), info, "limit {limit}");
+        let p0 = m.read_config(0, &host).expect("page 0");
+        let p1 = m.read_config(1, &host).expect("page 1");
+        assert_eq!((p0.len(), p0.first().copied()), (52, Some(0x33)));
+        assert_eq!((p1.len(), p1.first().copied()), (42, Some(0x29)));
+        assert!(p0.ends_with(&[0x10, 0x01, 0x01]));
+        assert_eq!(m.device_info_page(0, &host).as_deref(), p0.get(1..));
+        assert_eq!(m.device_info_page(1, &host).as_deref(), p1.get(1..));
+        for page in [2u8, 3, 0xFF] {
+            assert_eq!(m.read_config(page, &host), Err(sw::INCORRECT_P1P2));
+            assert_eq!(m.device_info_page(page, &host), None);
         }
+        let mut merged = p0.get(1..p0.len() - 3).expect("page 0 objects").to_vec();
+        merged.extend_from_slice(p1.get(1..).expect("page 1 objects"));
+        assert_eq!(m.device_info(&host), merged);
     }
 
     #[test]

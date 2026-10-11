@@ -128,7 +128,8 @@ fn failing_loads_give_factory_state() {
     let mut rig = Rig::with_store(DeviceProfile::yubikey_5c_nano_5_7_4(SERIAL), store, 3);
     assert_eq!(rig.dev.unreadable_records(), &ALL);
     rig.power_on();
-    assert_eq!(rig.select(AID_MGMT), b"5.7.4\x90\x00".to_vec());
+    // The Management SELECT text as measured (docs/MEASUREMENT.md, probe `select-mgmt`).
+    assert_eq!(rig.select(AID_MGMT), b"Virtual mgr - FW version 5.7.4\x90\x00".to_vec());
 }
 
 /// A restart reads the identities created at first start and writes nothing back

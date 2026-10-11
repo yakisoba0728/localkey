@@ -265,12 +265,14 @@ impl Bench {
         u32::from_be_bytes([payload[8], payload[9], payload[10], payload[11]])
     }
 
-    /// authenticatorSelection on `cid`: the immediate KEEPALIVE(UPNEEDED), then the
-    /// indicator.
+    /// authenticatorSelection on `cid`: the indicator at once, then the first
+    /// KEEPALIVE(UPNEEDED) one interval (95 ms) later. Measured on a YubiKey 5C Nano 5.7.4
+    /// (docs/MEASUREMENT.md, probe selection-keepalive-cancel: no KEEPALIVE at once); the
+    /// KEEPALIVE came first, at once, before the measurement.
     fn request_presence(&self, cid: u32) {
         self.fido(cid, CTAPHID_CBOR, &SELECTION);
-        assert_eq!(message(&self.next()), (cid, CTAPHID_KEEPALIVE, vec![KEEPALIVE_UPNEEDED]));
         assert_eq!(self.next(), Event::Deliver(Output::PresenceIndicator(true)));
+        assert_eq!(message(&self.next()), (cid, CTAPHID_KEEPALIVE, vec![KEEPALIVE_UPNEEDED]));
     }
 
     /// The answer to authenticatorSelection, then the indicator going out.
@@ -350,7 +352,9 @@ fn inputs_before_serve_are_ignored() {
 }
 
 /// The deadline loop: a request that waits for user presence gets a KEEPALIVE every
-/// 100 ms (CTAP 2.1 §11.2.9.1.7) with no further input, and a tap answers it.
+/// 95 ms (CTAP 2.1 §11.2.9.1.7; measured on a YubiKey 5C Nano 5.7.4, docs/MEASUREMENT.md,
+/// probe selection-no-touch; 100 ms before the measurement) with no further input, and a
+/// tap answers it.
 #[test]
 fn a_pending_presence_request_gets_keepalives_without_input_and_a_tap_answers_it() {
     let bench = Bench::serving(RunnerConfig::default());
@@ -362,8 +366,10 @@ fn a_pending_presence_request_gets_keepalives_without_input_and_a_tap_answers_it
     for _ in 0..3 {
         assert_eq!(message(&bench.next()), (cid, CTAPHID_KEEPALIVE, vec![KEEPALIVE_UPNEEDED]));
     }
-    // The third keepalive after the immediate one is due 300 ms into the grid.
-    assert!(asked.elapsed() >= Duration::from_millis(250), "{:?}", asked.elapsed());
+    // `request_presence` took the first keepalive (95 ms into the grid); the fourth is due
+    // 380 ms into it (4 x 95 ms; it was the third after an immediate one, at 300 ms, before
+    // the measurement), so with the same 50 ms slack as before at least 330 ms have passed.
+    assert!(asked.elapsed() >= Duration::from_millis(330), "{:?}", asked.elapsed());
     assert!(bench.sync().presence_pending);
     bench.tap(TAP_SHORT_MS);
     bench.expect_presence_granted(cid);

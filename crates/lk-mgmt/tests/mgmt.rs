@@ -29,39 +29,99 @@ const LOCK: [u8; 16] = [
 ];
 const OTHER_LOCK: [u8; 16] = [0x5A; 16];
 
-/// DeviceInfo of a factory `DeviceProfile::own(12345678)` device.
-const OWN_INFO: [u8; 50] = [
+// DeviceInfo pages laid out as a YubiKey 5C Nano 5.7.4 sends them
+// (docs/MEASUREMENT.md, probe `mgmt-read-config`: page 0 tags `01 03 02 04 05 06 07 08
+// 0A 0F 20 21` ending with MORE_DATA `10 01 01`, page 1 tags `11 12 13 14 15 16 17 18`).
+// Before the measurement the engine sent one page `01 02 03 04 05 06 07 08 0A 14 15 16
+// 18` with challenge-response timeout `00`; the key sends `0F`.
+
+/// READ CONFIG page 0 TLVs of a factory `DeviceProfile::own(12345678)` device.
+const OWN_PAGE0: [u8; 51] = [
     0x01, 0x02, 0x03, 0x3B, // USB supported: all seven applications
-    0x02, 0x04, 0x00, 0xBC, 0x61, 0x4E, // serial 12345678
     0x03, 0x02, 0x03, 0x3B, // USB enabled
+    0x02, 0x04, 0x00, 0xBC, 0x61, 0x4E, // serial 12345678
     0x04, 0x01, 0x04, // form factor USB-C Nano
     0x05, 0x03, 0x05, 0x07, 0x04, // version 5.7.4
     0x06, 0x02, 0x00, 0x00, // auto-eject timeout
-    0x07, 0x01, 0x00, // challenge-response timeout
+    0x07, 0x01, 0x0F, // challenge-response timeout 15 s (measured factory value)
     0x08, 0x01, 0x00, // device flags
     0x0A, 0x01, 0x00, // not locked
+    0x0F, 0x01, 0x00, // IAP detection
+    0x20, 0x03, 0x00, 0x00, 0x00, // FPS version: none
+    0x21, 0x03, 0x00, 0x00, 0x00, // STM version: none
+    0x10, 0x01, 0x01, // MORE_DATA
+];
+
+/// READ CONFIG page 1 TLVs of a factory `DeviceProfile::own` device (empty part number).
+const OWN_PAGE1: [u8; 29] = [
+    0x11, 0x04, 0x00, 0x00, 0x00, 0x00, // free form
+    0x12, 0x01, 0x00, // HID init delay
+    0x13, 0x00, // part number: the own profile has none
     0x14, 0x02, 0x00, 0x00, // FIPS capable: none
     0x15, 0x02, 0x00, 0x00, // FIPS approved: none
     0x16, 0x01, 0x00, // PIN complexity off
+    0x17, 0x01, 0x00, // NFC restricted: no
     0x18, 0x02, 0x00, 0x00, // reset blocked: none
 ];
 
-/// DeviceInfo of a factory `DeviceProfile::yubikey_5c_nano_5_7_4(31415926)` device.
-const YK_INFO: [u8; 50] = [
+/// READ CONFIG page 0 TLVs of a factory `DeviceProfile::yubikey_5c_nano_5_7_4(31415926)`.
+const YK_PAGE0: [u8; 51] = [
     0x01, 0x02, 0x03, 0x3B, //
-    0x02, 0x04, 0x01, 0xDF, 0x5E, 0x76, // serial 31415926
     0x03, 0x02, 0x03, 0x3B, //
+    0x02, 0x04, 0x01, 0xDF, 0x5E, 0x76, // serial 31415926
     0x04, 0x01, 0x04, //
     0x05, 0x03, 0x05, 0x07, 0x04, //
     0x06, 0x02, 0x00, 0x00, //
-    0x07, 0x01, 0x00, //
+    0x07, 0x01, 0x0F, //
     0x08, 0x01, 0x00, //
     0x0A, 0x01, 0x00, //
+    0x0F, 0x01, 0x00, //
+    0x20, 0x03, 0x00, 0x00, 0x00, //
+    0x21, 0x03, 0x00, 0x00, 0x00, //
+    0x10, 0x01, 0x01, //
+];
+
+/// READ CONFIG page 1 TLVs of the YubiKey profile: 41 bytes as measured, with the
+/// profile's placeholder part number (12 ASCII bytes, the measured length).
+const YK_PAGE1: [u8; 41] = [
+    0x11, 0x04, 0x00, 0x00, 0x00, 0x00, //
+    0x12, 0x01, 0x00, //
+    0x13, 0x0C, b'0', b'0', b'0', b'0', b'0', b'0', b'0', b'0', b'0', b'0', b'0', b'0', //
     0x14, 0x02, 0x00, 0x00, //
     0x15, 0x02, 0x00, 0x00, //
     0x16, 0x01, 0x00, //
+    0x17, 0x01, 0x00, //
     0x18, 0x02, 0x00, 0x00, //
 ];
+
+/// The merged DeviceInfo (`Management::device_info`): page 0 without MORE_DATA, then
+/// page 1.
+fn merged_info(page0: &[u8], page1: &[u8]) -> Vec<u8> {
+    let mut out = page0[..page0.len() - 3].to_vec();
+    out.extend_from_slice(page1);
+    out
+}
+
+/// DeviceInfo of a factory `DeviceProfile::own(12345678)` device.
+fn own_info() -> Vec<u8> {
+    merged_info(&OWN_PAGE0, &OWN_PAGE1)
+}
+
+/// DeviceInfo of a factory `DeviceProfile::yubikey_5c_nano_5_7_4(31415926)` device.
+fn yk_info() -> Vec<u8> {
+    merged_info(&YK_PAGE0, &YK_PAGE1)
+}
+
+/// `len || tlvs`, one READ CONFIG page as yubikit reads it.
+fn framed(tlvs: &[u8]) -> Vec<u8> {
+    let mut out = vec![u8::try_from(tlvs.len()).expect("page fits")];
+    out.extend_from_slice(tlvs);
+    out
+}
+
+/// The Management SELECT text of firmware 5.7.4 with `9000` (docs/MEASUREMENT.md, probe
+/// `select-mgmt`; before the measurement the engine sent the bare `5.7.4`).
+const SELECT_TEXT_OK: &[u8] = b"Virtual mgr - FW version 5.7.4\x90\x00";
 
 fn applet(host: &mut TestHost) -> MgmtApplet {
     let stored = host.persisted(Record::Device);
@@ -127,16 +187,30 @@ fn info_value(info: &[u8], t: u32) -> Option<Vec<u8>> {
 
 #[test]
 fn select_returns_version_string() {
-    // yubikit `_ManagementSmartCardBackend`: Version.from_string(SELECT response).
+    // docs/MEASUREMENT.md, probe `select-mgmt`: the key answers SELECT with the 30
+    // ASCII bytes `Virtual mgr - FW version 5.7.4` and `9000` (the engine sent the bare
+    // `5.7.4` before). yubikit `_ManagementSmartCardBackend` reads the version with
+    // `Version.from_string` (see `yubikit_version_from_string`).
     let mut host = TestHost::new();
     let mut a = applet(&mut host);
     let select = Command::new(0x00, 0xA4, 0x04, 0x00)
         .with_data(AID)
         .to_bytes();
-    assert_eq!(a.select(&select, &mut host), b"5.7.4\x90\x00".to_vec());
+    assert_eq!(a.select(&select, &mut host), SELECT_TEXT_OK.to_vec());
+    assert_eq!(SELECT_TEXT_OK.len(), 30 + 2);
+    assert_eq!(
+        yubikit_version_from_string(&data(&a.select(&select, &mut host))),
+        vec![5, 7, 4]
+    );
     assert_eq!(a.aid(), &[0xA0, 0x00, 0x00, 0x05, 0x27, 0x47, 0x11, 0x17]);
+    // Probe `select-odd-p2`: the same text with Le 00.
+    let with_le = Command::new(0x00, 0xA4, 0x04, 0x00)
+        .with_data(AID)
+        .with_le(0)
+        .to_bytes();
+    assert_eq!(a.select(&with_le, &mut host), SELECT_TEXT_OK.to_vec());
     // A re-SELECT through process answers the same; another AID is not found.
-    assert_eq!(run(&mut a, &select, &mut host), b"5.7.4\x90\x00".to_vec());
+    assert_eq!(run(&mut a, &select, &mut host), SELECT_TEXT_OK.to_vec());
     let other = Command::new(0x00, 0xA4, 0x04, 0x00)
         .with_data(vec![0xA0, 0x00, 0x00, 0x03, 0x08])
         .to_bytes();
@@ -147,18 +221,31 @@ fn select_returns_version_string() {
 fn device_info_own_profile_matches_expected_bytes() {
     let mut host = TestHost::new();
     let a = applet(&mut host);
-    assert_eq!(a.management().device_info(&host), OWN_INFO.to_vec());
+    assert_eq!(a.management().device_info(&host), own_info());
+    assert_eq!(
+        a.management().device_info_page(0, &host),
+        Some(OWN_PAGE0.to_vec())
+    );
+    assert_eq!(
+        a.management().device_info_page(1, &host),
+        Some(OWN_PAGE1.to_vec())
+    );
 }
 
 #[test]
 fn device_info_yubikey_profile_matches_expected_bytes() {
+    // docs/MEASUREMENT.md, probe `mgmt-read-config`: page 0 is 52 bytes (`33 || ...`)
+    // and page 1 42 bytes (`29 || ...`).
     let mut host = TestHost::with_profile(DeviceProfile::yubikey_5c_nano_5_7_4(31_415_926));
     let mut a = applet(&mut host);
-    assert_eq!(a.management().device_info(&host), YK_INFO.to_vec());
+    assert_eq!(a.management().device_info(&host), yk_info());
     let resp = run(&mut a, &read_apdu(0), &mut host);
-    let mut want = vec![50u8];
-    want.extend_from_slice(&YK_INFO);
-    assert_eq!(data(&resp), want);
+    assert_eq!(data(&resp), framed(&YK_PAGE0));
+    assert_eq!((data(&resp).len(), data(&resp)[0]), (52, 0x33));
+    assert_eq!(status(&resp), sw::OK);
+    let resp = run(&mut a, &read_apdu(1), &mut host);
+    assert_eq!(data(&resp), framed(&YK_PAGE1));
+    assert_eq!((data(&resp).len(), data(&resp)[0]), (42, 0x29));
     assert_eq!(status(&resp), sw::OK);
 }
 
@@ -170,72 +257,84 @@ fn read_config_is_length_prefixed_device_info() {
     // `yubikit/core/smartcard/__init__.py`: `ShortApduFormatter` sends a data-less,
     // Le-less command as `00 1D 00 00 00` (explicit Lc 0, parsed as Le = 00); after
     // `configure()` on USB, `ExtendedApduFormatter` sends it as the case 1
-    // `00 1D 00 00`. Le = 0x33 is exactly the 51-byte page; an extended Le of 0000.
+    // `00 1D 00 00`. Le = 0x34 is exactly the 52-byte page; an extended Le of 0000.
+    // docs/MEASUREMENT.md, probe `lc-le-mgmt`: Le 00, extended Le 0000 and Lc 1 with
+    // one data byte all give page 0.
     for apdu in [
         read_apdu(0),
         vec![0x00, 0x1D, 0x00, 0x00, 0x00],
         Command::new(0x00, 0x1D, 0x00, 0x00).with_le(0).to_bytes(),
         Command::new(0x00, 0x1D, 0x00, 0x00)
-            .with_le(0x33)
+            .with_le(0x34)
             .to_bytes(),
         vec![0x00, 0x1D, 0x00, 0x00, 0x00, 0x00, 0x00],
+        vec![0x00, 0x1D, 0x00, 0x00, 0x01, 0x00],
     ] {
         let resp = run(&mut a, &apdu, &mut host);
         assert_eq!(status(&resp), sw::OK, "{apdu:02x?}");
         let body = data(&resp);
-        assert_eq!(body.first().copied(), Some(OWN_INFO.len() as u8));
-        assert_eq!(body.get(1..), Some(&OWN_INFO[..]));
+        assert_eq!(body.first().copied(), Some(OWN_PAGE0.len() as u8));
+        assert_eq!(body.get(1..), Some(&OWN_PAGE0[..]));
     }
+    // Probe `lc-le-mgmt`: Le 01 gives the length byte and `6133` (51 bytes left).
+    let resp = run(&mut a, &[0x00, 0x1D, 0x00, 0x00, 0x01], &mut host);
+    assert_eq!((data(&resp), status(&resp)), (vec![0x33], 0x6133));
 }
 
 #[test]
 fn device_info_has_no_nfc_tags_and_no_duplicates() {
-    // A USB-only device reports no NFC tags (yubikit `DeviceInfo.parse_tlvs` only
-    // creates an NFC transport when tag 0x0D is present).
+    // A USB-only device reports no NFC capability tags (yubikit `DeviceInfo.parse_tlvs`
+    // only creates an NFC transport when tag 0x0D is present). docs/MEASUREMENT.md,
+    // probe `mgmt-read-config`: the key does send IAP detection `0F 01 00` and NFC
+    // restricted `17 01 00` (the engine left both out before the measurement).
     let mut host = TestHost::new();
     let m = Management::new(None, &mut host);
     let info = m.device_info(&host);
     let items = tlv::parse_all(&info).expect("parses");
     let mut tags: Vec<u32> = items.iter().map(|i| i.tag).collect();
-    for t in [
-        tag::NFC_SUPPORTED,
-        tag::NFC_ENABLED,
-        tag::NFC_RESTRICTED,
-        tag::IAP_DETECTION,
-        tag::MORE_DATA,
-    ] {
+    for t in [tag::NFC_SUPPORTED, tag::NFC_ENABLED, tag::MORE_DATA] {
         assert!(!tags.contains(&t), "tag {t:#04x} must not be reported");
     }
+    assert_eq!(info_value(&info, tag::IAP_DETECTION), Some(vec![0x00]));
+    assert_eq!(info_value(&info, tag::NFC_RESTRICTED), Some(vec![0x00]));
     let n = tags.len();
     tags.sort_unstable();
     tags.dedup();
     assert_eq!(tags.len(), n);
-    assert!(info.len() <= PAGE_LIMIT);
+    for page in 0..2 {
+        let p = m.device_info_page(page, &host).expect("page");
+        assert!(p.len() <= PAGE_LIMIT);
+    }
 }
 
 #[test]
 fn read_config_paging_bounds() {
-    // The DeviceInfo fits one page: page 0 carries no MORE_DATA; a further page is
-    // past the end (model policy 6A86), as is a non-zero P2.
+    // docs/MEASUREMENT.md, probe `mgmt-read-config`: page 0 ends with MORE_DATA and
+    // page 1 has none. Probe `bad-p1p2-mgmt`: P2 is ignored (`00 1D 00 01` is page 0)
+    // and a page past the last is `9000` with no data at all (`00 1D 02 00`,
+    // `00 1D FF 00`); the engine answered `6A86` for all three before the measurement.
     let mut host = TestHost::new();
     let mut a = applet(&mut host);
     let page0 = data(&run(&mut a, &read_apdu(0), &mut host));
     assert_eq!(
         info_value(page0.get(1..).expect("tlvs"), tag::MORE_DATA),
+        Some(vec![0x01])
+    );
+    let page1 = data(&run(&mut a, &read_apdu(1), &mut host));
+    assert_eq!(
+        info_value(page1.get(1..).expect("tlvs"), tag::MORE_DATA),
         None
     );
-    assert_eq!(
-        status(&run(&mut a, &read_apdu(1), &mut host)),
-        sw::INCORRECT_P1P2
-    );
-    assert_eq!(
-        status(&run(&mut a, &read_apdu(0xFF), &mut host)),
-        sw::INCORRECT_P1P2
-    );
+    for page in [2u8, 0xFF] {
+        assert_eq!(run(&mut a, &read_apdu(page), &mut host), vec![0x90, 0x00]);
+    }
     let p2 = Command::new(0x00, 0x1D, 0x00, 0x01).to_bytes();
-    assert_eq!(status(&run(&mut a, &p2, &mut host)), sw::INCORRECT_P1P2);
+    assert_eq!(data(&run(&mut a, &p2, &mut host)), page0);
+    assert_eq!(status(&run(&mut a, &p2, &mut host)), sw::OK);
+    // The transport-independent read (also CTAPHID 0x42 and OTP HID, unmeasured) keeps
+    // refusing a page past the last.
     assert_eq!(
-        a.management().read_config(1, &host),
+        a.management().read_config(2, &host),
         Err(sw::INCORRECT_P1P2)
     );
 }
@@ -282,17 +381,39 @@ fn write_config_round_trips_every_field() {
 
     // A device rebuilt from the persisted record reports the same.
     let reloaded = applet(&mut host);
-    assert_eq!(reloaded.management().device_info(&host), info);
+    assert_eq!(reloaded.management().device_info_page(0, &host), Some(info));
+    assert_eq!(
+        reloaded.management().device_info(&host),
+        a.management().device_info(&host)
+    );
 }
 
 #[test]
 fn factory_challenge_response_timeout_means_default() {
+    // docs/MEASUREMENT.md, probe `mgmt-read-config`: the key reports DeviceInfo `07 01
+    // 0F`, so the factory byte is 15 (it was `00`, "use the default", before the
+    // measurement). A written `00` still means the 15-second default (model policy).
     let mut host = TestHost::new();
-    let m = Management::new(None, &mut host);
+    let mut m = Management::new(None, &mut host);
+    assert_eq!(m.challenge_response_timeout(), 0x0F);
+    assert_eq!(
+        m.challenge_response_timeout_secs(),
+        lk_mgmt::DEFAULT_CHALRESP_TIMEOUT_SECS
+    );
+    assert_eq!(
+        info_value(&m.device_info(&host), tag::CHALRESP_TIMEOUT),
+        Some(vec![0x0F])
+    );
+    let zero = config(&tlv::encode(tag::CHALRESP_TIMEOUT, &[0x00]));
+    assert_eq!(m.write_config(&zero, &mut host), Ok(ConfigEffect::None));
     assert_eq!(m.challenge_response_timeout(), 0);
     assert_eq!(
         m.challenge_response_timeout_secs(),
         lk_mgmt::DEFAULT_CHALRESP_TIMEOUT_SECS
+    );
+    assert_eq!(
+        info_value(&m.device_info(&host), tag::CHALRESP_TIMEOUT),
+        Some(vec![0x00])
     );
 }
 
@@ -396,7 +517,7 @@ fn write_config_rejects_malformed_framing() {
     assert_eq!(status(&run(&mut a, &p1, &mut host)), sw::INCORRECT_P1P2);
     assert_eq!(a.take_effect(), ConfigEffect::None);
     assert_eq!(host.persist_attempts(), 0);
-    assert_eq!(a.management().device_info(&host), OWN_INFO.to_vec());
+    assert_eq!(a.management().device_info(&host), own_info());
 }
 
 #[test]
@@ -423,7 +544,7 @@ fn write_config_rejects_read_only_unknown_and_nfc_tags() {
         );
     }
     assert_eq!(host.persist_attempts(), 0);
-    assert_eq!(m.device_info(&host), OWN_INFO.to_vec());
+    assert_eq!(m.device_info(&host), own_info());
 }
 
 #[test]
@@ -849,10 +970,10 @@ fn unreadable_record_is_factory_state() {
     let mut host = TestHost::new();
     host.set_persisted(Record::Device, &[0x02, 0x01, 0x02, 0x02, 0x00]);
     let a = applet(&mut host);
-    assert_eq!(a.management().device_info(&host), OWN_INFO.to_vec());
+    assert_eq!(a.management().device_info(&host), own_info());
     host.set_persisted(Record::Device, &[0x01, 0x05, 0x03, 0x01, 0x02, 0x03]);
     let a = applet(&mut host);
-    assert_eq!(a.management().device_info(&host), OWN_INFO.to_vec());
+    assert_eq!(a.management().device_info(&host), own_info());
 }
 
 // ---------------------------------------------------------------------------
@@ -863,8 +984,7 @@ fn unreadable_record_is_factory_state() {
 fn ctaphid_read_config() {
     let mut host = TestHost::new();
     let mut m = Management::new(None, &mut host);
-    let mut want = vec![50u8];
-    want.extend_from_slice(&OWN_INFO);
+    let want = framed(&OWN_PAGE0);
     // Older yubikit sends no payload, newer sends the page byte.
     for payload in [&[][..], &[0x00][..]] {
         let reply = m
@@ -884,9 +1004,15 @@ fn ctaphid_read_config() {
         .ctaphid_vendor(0xC2, &[], &mut host)
         .expect("mgmt command");
     assert_eq!(reply.cmd, 0x42);
-    // Past the last page / too long a payload.
+    // Page 1 (the second measured page, docs/MEASUREMENT.md probe `mgmt-read-config`).
     let reply = m
         .ctaphid_vendor(0x42, &[0x01], &mut host)
+        .expect("mgmt command");
+    assert_eq!((reply.cmd, reply.payload), (0x42, framed(&OWN_PAGE1)));
+    // Past the last page (model policy on CTAPHID: only CCID was measured) / too long a
+    // payload.
+    let reply = m
+        .ctaphid_vendor(0x42, &[0x02], &mut host)
         .expect("mgmt command");
     assert_eq!(
         (reply.cmd, reply.payload),
@@ -975,8 +1101,7 @@ fn otp_read_config_with_crc_frame() {
     // the 64-byte slot data; response checked with check_crc over len + 3 bytes.
     let slot_data = [0u8; 64];
     let plain = m.otp_read_config(&slot_data, &host).expect("page 0");
-    assert_eq!(plain.first().copied(), Some(50));
-    assert_eq!(plain.get(1..), Some(&OWN_INFO[..]));
+    assert_eq!(plain, framed(&OWN_PAGE0));
     assert_eq!(m.otp_read_config(&[], &host), Ok(plain.clone()));
     let frame = m.otp_read_config_frame(&slot_data, &host).expect("page 0");
     let r_len = usize::from(*frame.first().expect("len"));
@@ -985,7 +1110,11 @@ fn otp_read_config_with_crc_frame() {
     assert_eq!(frame.get(..r_len + 1), Some(&plain[..]));
     let mut page1 = [0u8; 64];
     page1[0] = 1;
-    assert_eq!(m.otp_read_config(&page1, &host), Err(sw::INCORRECT_P1P2));
+    assert_eq!(m.otp_read_config(&page1, &host), Ok(framed(&OWN_PAGE1)));
+    // Past the last page (model policy on OTP HID: only CCID was measured).
+    let mut page2 = [0u8; 64];
+    page2[0] = 2;
+    assert_eq!(m.otp_read_config(&page2, &host), Err(sw::INCORRECT_P1P2));
 }
 
 #[test]
@@ -1079,7 +1208,9 @@ fn apdu_header_errors() {
     // (binding): "Applets answer 6882 for secure-messaging CLA bits and 6E00 for CLA
     // >= 0x80". A logical channel number is 6881 and the RFU / further interindustry
     // classes are 6E00, as in lk-piv and lk-oath (ISO/IEC 7816-4 §5.1.1, §5.6).
-    for cla in [0x80u8, 0x84, 0x90, 0x40, 0x60, 0x20, 0xFF] {
+    // Exception, docs/MEASUREMENT.md probe `cla-variants-mgmt`: the key serves CLA 80
+    // like 00 (`cla_80_is_served_like_00`); the other proprietary classes are unmeasured.
+    for cla in [0x84u8, 0x90, 0x40, 0x60, 0x20, 0xFF] {
         assert_eq!(
             status(&run(&mut a, &[cla, 0x1D, 0x00, 0x00], &mut host)),
             sw::CLA_NOT_SUPPORTED,
@@ -1100,10 +1231,15 @@ fn apdu_header_errors() {
             "{cla:#x}"
         );
     }
-    // GET RESPONSE (C0) exists; with nothing pending it is 6985.
+    // GET RESPONSE (C0) with nothing pending is 6D00 (docs/MEASUREMENT.md, probe
+    // `get-response-idle-mgmt`; the engine answered 6985 before the measurement).
     assert_eq!(
         status(&run(&mut a, &[0x00, 0xC0, 0x00, 0x00], &mut host)),
-        sw::CONDITIONS
+        sw::INS_NOT_SUPPORTED
+    );
+    assert_eq!(
+        status(&run(&mut a, &[0x00, 0xC0, 0x00, 0x00, 0x00], &mut host)),
+        sw::INS_NOT_SUPPORTED
     );
     for ins in [0x16u8, 0x1F, 0x00, 0xCA, 0x01] {
         assert_eq!(
@@ -1113,6 +1249,63 @@ fn apdu_header_errors() {
         );
     }
     assert_eq!(a.touch_resolved(true, &mut host), vec![0x69, 0x85]);
+}
+
+#[test]
+fn cla_80_is_served_like_00() {
+    // docs/MEASUREMENT.md, probe `cla-variants-mgmt`: `80 1D 00 00` answers page 0 with
+    // `9000`, the same 52 bytes as `00 1D 00 00` (the engine answered 6E00 before).
+    let mut host = TestHost::with_profile(DeviceProfile::yubikey_5c_nano_5_7_4(31_415_926));
+    let mut a = applet(&mut host);
+    let plain = run(&mut a, &[0x00, 0x1D, 0x00, 0x00], &mut host);
+    let proprietary = run(&mut a, &[0x80, 0x1D, 0x00, 0x00], &mut host);
+    assert_eq!(proprietary, plain);
+    assert_eq!(data(&proprietary), framed(&YK_PAGE0));
+    assert_eq!(status(&proprietary), sw::OK);
+    // Page 1 and Ne/GET RESPONSE work alike.
+    assert_eq!(
+        data(&run(&mut a, &[0x80, 0x1D, 0x01, 0x00], &mut host)),
+        framed(&YK_PAGE1)
+    );
+    let r = run(&mut a, &[0x80, 0x1D, 0x00, 0x00, 0x10], &mut host);
+    assert_eq!((data(&r).len(), status(&r)), (16, 0x6124));
+    // Classes next to 80 (unmeasured) keep the docs/CONTRACTS.md answers.
+    assert_eq!(
+        status(&run(&mut a, &[0x90, 0x1D, 0x00, 0x00], &mut host)),
+        sw::CLA_NOT_SUPPORTED
+    );
+    assert_eq!(
+        status(&run(&mut a, &[0x84, 0x1D, 0x00, 0x00], &mut host)),
+        sw::CLA_NOT_SUPPORTED
+    );
+}
+
+#[test]
+fn get_response_without_pending_data_is_6d00() {
+    // docs/MEASUREMENT.md, probes `get-response-idle-mgmt` and `cla-variants-mgmt`:
+    // `00 C0 00 00 00` with nothing pending is 6D00, also right after `10 1D 00 00`
+    // (a chained part, answered 9000) left a chain open (the engine answered 6985 and,
+    // during the chain, 6883 before the measurement).
+    let mut host = TestHost::new();
+    let mut a = applet(&mut host);
+    let get = [0x00u8, 0xC0, 0x00, 0x00, 0x00];
+    assert_eq!(run(&mut a, &get, &mut host), vec![0x6D, 0x00]);
+    assert_eq!(
+        run(&mut a, &[0x10, 0x1D, 0x00, 0x00], &mut host),
+        vec![0x90, 0x00]
+    );
+    assert_eq!(run(&mut a, &get, &mut host), vec![0x6D, 0x00]);
+    // The chain is gone: a following READ CONFIG is a fresh command.
+    assert_eq!(
+        data(&run(&mut a, &read_apdu(0), &mut host)),
+        framed(&OWN_PAGE0)
+    );
+    // Pending data is still served, then 6D00 again.
+    let r = run(&mut a, &[0x00, 0x1D, 0x00, 0x00, 0x30], &mut host);
+    assert_eq!(status(&r), 0x6104);
+    let r = run(&mut a, &get, &mut host);
+    assert_eq!((data(&r).len(), status(&r)), (4, sw::OK));
+    assert_eq!(run(&mut a, &get, &mut host), vec![0x6D, 0x00]);
 }
 
 #[test]
@@ -1341,7 +1534,8 @@ fn malformed_length_prefixes_are_rejected_on_every_transport() {
         Ok(ConfigEffect::None)
     );
     assert_eq!(host.persist_attempts(), 0);
-    assert_eq!(a.management().challenge_response_timeout(), 0);
+    // Still the factory byte `0F` (docs/MEASUREMENT.md, probe `mgmt-read-config`).
+    assert_eq!(a.management().challenge_response_timeout(), 0x0F);
 }
 
 #[test]
@@ -1592,7 +1786,10 @@ fn device_info_follows_the_profile() {
     let select = Command::new(0x00, 0xA4, 0x04, 0x00)
         .with_data(AID)
         .to_bytes();
-    assert_eq!(a.select(&select, &mut host), b"5.4.3\x90\x00".to_vec());
+    assert_eq!(
+        a.select(&select, &mut host),
+        b"Virtual mgr - FW version 5.4.3\x90\x00".to_vec()
+    );
     let info = a.management().device_info(&host);
     assert_eq!(info_value(&info, tag::FORM_FACTOR), Some(vec![0x01]));
     assert_eq!(info_value(&info, tag::VERSION), Some(vec![5, 4, 3]));
@@ -1609,12 +1806,12 @@ fn device_info_page_is_read_config_without_length_byte() {
     ] {
         let mut host = TestHost::with_profile(profile);
         let m = Management::new(None, &mut host);
-        let page = m.device_info_page(0, &host).expect("page 0");
-        assert_eq!(page, m.device_info(&host));
-        let mut framed = vec![u8::try_from(page.len()).expect("fits")];
-        framed.extend_from_slice(&page);
-        assert_eq!(m.read_config(0, &host), Ok(framed));
-        for p in [1u8, 2, 0xFF] {
+        let page0 = m.device_info_page(0, &host).expect("page 0");
+        let page1 = m.device_info_page(1, &host).expect("page 1");
+        assert_eq!(merged_info(&page0, &page1), m.device_info(&host));
+        assert_eq!(m.read_config(0, &host), Ok(framed(&page0)));
+        assert_eq!(m.read_config(1, &host), Ok(framed(&page1)));
+        for p in [2u8, 3, 0xFF] {
             assert_eq!(m.device_info_page(p, &host), None);
         }
     }
@@ -1643,7 +1840,11 @@ fn otp_device_info_fits_the_otp_response_capacity() {
             assert!(m.is_locked());
         }
         let frame = m.otp_read_config_frame(&[0], &host).expect("page 0");
-        assert_eq!(frame.len(), 1 + 50 + 2);
+        assert_eq!(frame.len(), 1 + 51 + 2);
+        assert!(frame.len() <= 32 * 7);
+        assert_eq!(otp_crc16(&frame), 0xF0B8);
+        let frame = m.otp_read_config_frame(&[1], &host).expect("page 1");
+        assert_eq!(frame.len(), 1 + OWN_PAGE1.len() + 2);
         assert!(frame.len() <= 32 * 7);
         assert_eq!(otp_crc16(&frame), 0xF0B8);
     }
@@ -1676,18 +1877,16 @@ fn set_mode_is_not_implemented_on_any_transport() {
         None
     );
     assert_eq!(host.persist_attempts(), 0);
-    assert_eq!(a.management().device_info(&host), OWN_INFO.to_vec());
+    assert_eq!(a.management().device_info(&host), own_info());
 }
 
 // ---------------------------------------------------------------------------
 // Second review: Ne and GET RESPONSE, yubikit DeviceInfo decoding, ykman flows
 // ---------------------------------------------------------------------------
 
-/// `len || OWN_INFO`, the READ CONFIG page 0 of a factory own-profile device.
+/// `len || OWN_PAGE0`, the READ CONFIG page 0 of a factory own-profile device.
 fn own_page() -> Vec<u8> {
-    let mut page = vec![OWN_INFO.len() as u8];
-    page.extend_from_slice(&OWN_INFO);
-    page
+    framed(&OWN_PAGE0)
 }
 
 #[test]
@@ -1699,38 +1898,38 @@ fn read_config_serves_at_most_ne_with_get_response() {
     let mut host = TestHost::new();
     let mut a = applet(&mut host);
     let page = own_page();
-    assert_eq!(page.len(), 51);
+    assert_eq!(page.len(), 52);
 
-    // Le = 0x10: 16 bytes, 35 (0x23) left.
+    // Le = 0x10: 16 bytes, 36 (0x24) left.
     let r = run(&mut a, &[0x00, 0x1D, 0x00, 0x00, 0x10], &mut host);
-    assert_eq!(status(&r), 0x6123);
+    assert_eq!(status(&r), 0x6124);
     let mut got = data(&r);
     assert_eq!(got, page[..16].to_vec());
-    // GET RESPONSE with Le = 0x10: 16 more, 19 (0x13) left.
+    // GET RESPONSE with Le = 0x10: 16 more, 20 (0x14) left.
     let r = run(&mut a, &[0x00, 0xC0, 0x00, 0x00, 0x10], &mut host);
-    assert_eq!(status(&r), 0x6113);
+    assert_eq!(status(&r), 0x6114);
     got.extend_from_slice(&data(&r));
     // GET RESPONSE in yubikit's extended case 1 form (no Le: up to 256): the rest.
     let r = run(&mut a, &[0x00, 0xC0, 0x00, 0x00], &mut host);
     assert_eq!(status(&r), sw::OK);
     got.extend_from_slice(&data(&r));
     assert_eq!(got, page);
-    // Nothing left.
+    // Nothing left: 6D00 (docs/MEASUREMENT.md, probe `get-response-idle-mgmt`).
     assert_eq!(
         status(&run(&mut a, &[0x00, 0xC0, 0x00, 0x00, 0x00], &mut host)),
-        sw::CONDITIONS
+        sw::INS_NOT_SUPPORTED
     );
 
-    // One byte short of the page: 50 bytes and 6101.
-    let r = run(&mut a, &[0x00, 0x1D, 0x00, 0x00, 0x32], &mut host);
-    assert_eq!((data(&r).len(), status(&r)), (50, 0x6101));
+    // One byte short of the page: 51 bytes and 6101.
+    let r = run(&mut a, &[0x00, 0x1D, 0x00, 0x00, 0x33], &mut host);
+    assert_eq!((data(&r).len(), status(&r)), (51, 0x6101));
     // GET RESPONSE P1/P2 must be zero (6A86) and does not drop the pending byte.
     assert_eq!(
         status(&run(&mut a, &[0x00, 0xC0, 0x01, 0x00], &mut host)),
         sw::INCORRECT_P1P2
     );
     let r = run(&mut a, &[0x00, 0xC0, 0x00, 0x00, 0x00], &mut host);
-    assert_eq!(r, vec![page[50], 0x90, 0x00]);
+    assert_eq!(r, vec![page[51], 0x90, 0x00]);
 
     // An extended Le smaller than the page is honoured too.
     let r = run(
@@ -1738,7 +1937,7 @@ fn read_config_serves_at_most_ne_with_get_response() {
         &[0x00, 0x1D, 0x00, 0x00, 0x00, 0x00, 0x20],
         &mut host,
     );
-    assert_eq!((data(&r).len(), status(&r)), (32, 0x6113));
+    assert_eq!((data(&r).len(), status(&r)), (32, 0x6114));
     let r = run(
         &mut a,
         &[0x00, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00],
@@ -1800,39 +1999,48 @@ fn unread_response_data_is_discarded_by_other_commands() {
             )
         },
         &|a, h| assert_eq!(status(&run(a, &[0x00, 0x1D], h)), sw::WRONG_LENGTH),
-        &|a, h| assert_eq!(a.select(&select, h), b"5.7.4\x90\x00".to_vec()),
+        &|a, h| assert_eq!(a.select(&select, h), SELECT_TEXT_OK.to_vec()),
         &|a, _| a.deselect(),
         &|a, _| a.reset(ResetKind::CardPowerOff),
     ];
+    // With nothing left, GET RESPONSE is 6D00 (docs/MEASUREMENT.md, probe
+    // `get-response-idle-mgmt`; 6985 before the measurement).
     for (i, discard) in discards.iter().enumerate() {
         assert_eq!(
             status(&run(&mut a, &partial, &mut host)),
-            0x612F,
+            0x6130,
             "case {i}"
         );
         discard(&mut a, &mut host);
         assert_eq!(
             status(&run(&mut a, &get, &mut host)),
-            sw::CONDITIONS,
+            sw::INS_NOT_SUPPORTED,
             "case {i}"
         );
     }
     // A new READ CONFIG replaces the pending data with its own.
-    assert_eq!(status(&run(&mut a, &partial, &mut host)), 0x612F);
+    assert_eq!(status(&run(&mut a, &partial, &mut host)), 0x6130);
     let r = run(&mut a, &read_apdu(0), &mut host);
     assert_eq!(status(&r), sw::OK);
-    assert_eq!(data(&r).len(), 51);
-    assert_eq!(status(&run(&mut a, &get, &mut host)), sw::CONDITIONS);
-    // While a command chain is open, C0 is part of the chain check (6883), as in
-    // lk-piv and lk-hsmauth, and the chain is dropped.
+    assert_eq!(data(&r).len(), 52);
+    assert_eq!(status(&run(&mut a, &get, &mut host)), sw::INS_NOT_SUPPORTED);
+    // While a command chain is open, C0 drops the chain and is answered like an idle
+    // GET RESPONSE (6D00), as the key answers it after `10 1D 00 00`
+    // (docs/MEASUREMENT.md, probe `cla-variants-mgmt`; the engine answered 6883, the
+    // chain check, before the measurement).
     let first = Command::new(0x10, 0x1C, 0x00, 0x00)
-        .with_data(vec![0x03])
+        .with_data(vec![0x02])
         .to_bytes();
     assert_eq!(status(&run(&mut a, &first, &mut host)), sw::OK);
-    assert_eq!(
-        status(&run(&mut a, &get, &mut host)),
-        sw::LAST_COMMAND_EXPECTED
-    );
+    assert_eq!(status(&run(&mut a, &get, &mut host)), sw::INS_NOT_SUPPORTED);
+    // The dropped chain does not continue: chained, `02 || 0C 00` would be a valid
+    // REBOOT request; alone, `0C 00` is a WRITE CONFIG whose length byte does not
+    // match its data.
+    let last = Command::new(0x00, 0x1C, 0x00, 0x00)
+        .with_data(vec![0x0C, 0x00])
+        .to_bytes();
+    assert_eq!(status(&run(&mut a, &last, &mut host)), sw::INCORRECT_DATA);
+    assert_eq!(a.take_effect(), ConfigEffect::None);
 }
 
 #[test]
@@ -1845,18 +2053,19 @@ fn select_serves_at_most_ne() {
         .with_data(AID)
         .with_le(2)
         .to_bytes();
-    assert_eq!(a.select(&select, &mut host), b"5.\x61\x03".to_vec());
+    // The 30-byte text (docs/MEASUREMENT.md, probe `select-mgmt`): 2 bytes, 28 left.
+    assert_eq!(a.select(&select, &mut host), b"Vi\x61\x1C".to_vec());
     assert_eq!(
         run(&mut a, &[0x00, 0xC0, 0x00, 0x00, 0x00], &mut host),
-        b"7.4\x90\x00".to_vec()
+        b"rtual mgr - FW version 5.7.4\x90\x00".to_vec()
     );
     // yubikit `SmartCardProtocol.select` sends `00 A4 04 00 08 <AID>` (no Le).
     let plain = Command::new(0x00, 0xA4, 0x04, 0x00)
         .with_data(AID)
         .to_bytes();
-    assert_eq!(a.select(&plain, &mut host), b"5.7.4\x90\x00".to_vec());
+    assert_eq!(a.select(&plain, &mut host), SELECT_TEXT_OK.to_vec());
     // A re-SELECT through process uses the same rule.
-    assert_eq!(run(&mut a, &select, &mut host), b"5.\x61\x03".to_vec());
+    assert_eq!(run(&mut a, &select, &mut host), b"Vi\x61\x1C".to_vec());
 }
 
 /// What yubikit-python derives from a DeviceInfo (`yubikit/management.py`,
@@ -2007,8 +2216,9 @@ fn yubikit_parse_tlvs(
     }
 }
 
-/// yubikit's view of a factory 5C Nano 5.7.4 (USB-only, all seven applications).
-fn factory_view(serial: u64) -> YubikitInfo {
+/// yubikit's view of a factory 5C Nano 5.7.4 (USB-only, all seven applications) whose
+/// profile has the part number `part_number` (`None` for an empty one).
+fn factory_view(serial: u64, part_number: Option<&str>) -> YubikitInfo {
     YubikitInfo {
         is_locked: false,
         serial: Some(serial),
@@ -2017,13 +2227,15 @@ fn factory_view(serial: u64) -> YubikitInfo {
         is_sky: false,
         version: vec![5, 7, 4],
         auto_eject_timeout: 0,
-        challenge_response_timeout: 0,
+        // The measured factory byte `0F` (docs/MEASUREMENT.md, probe
+        // `mgmt-read-config`; `0` before the measurement).
+        challenge_response_timeout: 15,
         device_flags: 0,
         usb_supported: 0x033B,
         usb_enabled: Some(0x033B),
         nfc: None,
         nfc_restricted: false,
-        part_number: None,
+        part_number: part_number.map(str::to_string),
         fips_capable: 0,
         fips_approved: 0,
         pin_complexity: false,
@@ -2041,18 +2253,58 @@ fn yubikit_ccid_info(a: &mut MgmtApplet, host: &mut TestHost) -> YubikitInfo {
         .with_data(AID)
         .to_bytes();
     let text = data(&a.select(&select, host));
-    let text = String::from_utf8(text).expect("SELECT text is UTF-8");
-    let version: Vec<u8> = text
-        .split('.')
-        .map(|p| p.parse::<u8>().expect("decimal"))
-        .collect();
+    String::from_utf8(text.clone()).expect("SELECT text is UTF-8");
+    let version = yubikit_version_from_string(&text);
     let (map, pages) = yubikit_read_pages(|page| {
         let r = run(a, &[0x00, 0x1D, page, 0x00], host);
         assert_eq!(status(&r), sw::OK);
         data(&r)
     });
-    assert_eq!(pages, 1);
+    // Two pages, as the key sends them (docs/MEASUREMENT.md, probe `mgmt-read-config`).
+    assert_eq!(pages, 2);
     yubikit_parse_tlvs(&map, &version)
+}
+
+/// yubikit-python `Version.from_string`: the first match of `_VERSION_STRING_PATTERN`,
+/// `\b(\d+).(\d).(\d)\b` (`yubikit/core/__init__.py`; `.` matches any character and
+/// `\d+` backtracks); no match is a `ValueError`.
+fn yubikit_version_from_string(text: &[u8]) -> Vec<u8> {
+    let word = |b: u8| b.is_ascii_alphanumeric() || b == b'_';
+    for start in 0..text.len() {
+        if start > 0 && word(text[start - 1]) {
+            continue;
+        }
+        let digits = text[start..]
+            .iter()
+            .take_while(|b| b.is_ascii_digit())
+            .count();
+        for n in (1..=digits).rev() {
+            if let [_, minor, _, patch, tail @ ..] = &text[start + n..]
+                && minor.is_ascii_digit()
+                && patch.is_ascii_digit()
+                && tail.first().is_none_or(|&b| !word(b))
+            {
+                let major = std::str::from_utf8(&text[start..start + n])
+                    .expect("ASCII digits")
+                    .parse::<u8>()
+                    .expect("major fits");
+                return vec![major, minor - b'0', patch - b'0'];
+            }
+        }
+    }
+    panic!("ValueError: no version in {text:02x?}");
+}
+
+#[test]
+fn yubikit_version_search_reads_both_select_texts() {
+    // The bare text the engine sent before the measurement and the measured text
+    // (docs/MEASUREMENT.md, probe `select-mgmt`) give the same version.
+    assert_eq!(yubikit_version_from_string(b"5.7.4"), vec![5, 7, 4]);
+    assert_eq!(
+        yubikit_version_from_string(b"Virtual mgr - FW version 5.7.4"),
+        vec![5, 7, 4]
+    );
+    assert_eq!(yubikit_version_from_string(b"v 15.4.3"), vec![15, 4, 3]);
 }
 
 #[test]
@@ -2066,9 +2318,10 @@ fn yubikit_parse_tlvs_decodes_every_field() {
         (DeviceProfile::own(12_345_678), 12_345_678u64),
         (DeviceProfile::yubikey_5c_nano_5_7_4(31_415_926), 31_415_926),
     ] {
+        let part_number = Some(profile.part_number.clone()).filter(|p| !p.is_empty());
         let mut host = TestHost::with_profile(profile);
         let mut a = applet(&mut host);
-        let want = factory_view(serial);
+        let want = factory_view(serial, part_number.as_deref());
         assert_eq!(yubikit_ccid_info(&mut a, &mut host), want);
 
         // CTAPHID: the session version comes from CTAPHID INIT (5.7.4 here).
@@ -2080,7 +2333,7 @@ fn yubikit_parse_tlvs_decodes_every_field() {
             assert_eq!(reply.cmd, ctaphid::READ_CONFIG);
             reply.payload
         });
-        assert_eq!(pages, 1);
+        assert_eq!(pages, 2);
         assert_eq!(yubikit_parse_tlvs(&map, &[5, 7, 4]), want);
 
         // OTP HID: `send_and_receive` pads `int2bytes(page)` to 64 bytes.
@@ -2095,7 +2348,7 @@ fn yubikit_parse_tlvs_decodes_every_field() {
             assert_eq!(otp_crc16(&frame[..r_len + 3]), 0xF0B8, "check_crc");
             frame[..=r_len].to_vec()
         });
-        assert_eq!(pages, 1);
+        assert_eq!(pages, 2);
         assert_eq!(yubikit_parse_tlvs(&map, &[5, 7, 4]), want);
 
         // ykman `config usb` refuses to toggle applications while `reset_blocked` is
@@ -2121,7 +2374,7 @@ fn yubikit_parse_tlvs_decodes_every_field() {
         auto_eject_timeout: 300,
         challenge_response_timeout: 45,
         device_flags: 0xC0,
-        ..factory_view(12_345_678)
+        ..factory_view(12_345_678, None)
     };
     assert_eq!(yubikit_ccid_info(&mut a, &mut host), want);
 }

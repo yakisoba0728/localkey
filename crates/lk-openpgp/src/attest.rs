@@ -51,8 +51,14 @@ use crate::state::State;
 /// Yubico OpenPGP attestation extension arc 1.3.6.1.4.1.41482.5.
 const ARC: [u64; 8] = [1, 3, 6, 1, 4, 1, 41482, 5];
 
-/// DE status of the factory attestation key: generated on the card (spec §4.4.3.8, 01).
-pub(crate) const FACTORY_ISSUER_STATUS: u8 = 0x01;
+/// DE status of the factory attestation key: `02`, "imported" (spec §4.4.3.8). Measured on
+/// a YubiKey 5C Nano 5.7.4: the factory key information reads `81 02`
+/// (docs/MEASUREMENT.md, probe `openpgp-get-006e`; the model used to say `01`, generated).
+/// Only the attested slot's status decides whether a key can be attested
+/// (`attestation_certificate`), so the issuer's own status does not matter for signing.
+/// A stored state that already holds `01` for its factory issuer keeps it: it cannot be
+/// told apart from an attestation key generated on the card.
+pub(crate) const FACTORY_ISSUER_STATUS: u8 = 0x02;
 
 /// The factory attestation key size: RSA 2048, as the observed factory DA
 /// (`01 0800 0011 00`) announces.

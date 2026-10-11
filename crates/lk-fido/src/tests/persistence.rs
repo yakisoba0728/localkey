@@ -227,6 +227,24 @@ fn selection_waits_for_a_touch() {
 }
 
 #[test]
+fn touch_timeout_is_the_measured_28_5_seconds() {
+    // docs/MEASUREMENT.md, probe selection-no-touch: selection without a touch is answered
+    // CTAP2_ERR_USER_ACTION_TIMEOUT 28 451.8 ms after the request, after 300 KEEPALIVEs;
+    // the engine waits 28 500 ms = 300 x 95 ms (lk-device KEEPALIVE_INTERVAL_MS). It was
+    // the model policy 30 000 ms before the measurement.
+    assert_eq!(crate::TOUCH_TIMEOUT_MS, 28_500);
+    let (mut auth, mut host) = device();
+    assert_eq!(
+        auth.cbor(&[0x0B], &mut host),
+        Outcome::NeedTouch { timeout_ms: 28_500 }
+    );
+    assert_eq!(
+        auth.presence_resolved(false, &mut host),
+        vec![status::USER_ACTION_TIMEOUT]
+    );
+}
+
+#[test]
 fn power_cycle_drops_a_waiting_command() {
     // docs/CONTRACTS.md power_cycle; lk_core::Outcome::NeedTouch ("the session is reset").
     let (mut auth, mut host) = device();

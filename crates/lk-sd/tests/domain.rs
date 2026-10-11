@@ -120,7 +120,9 @@ fn unknown_get_data_tag() {
     }
     assert_eq!(plain(&mut sd, &mut host, &hex("00CABF2100")), hex("6A80"));
     assert_eq!(plain(&mut sd, &mut host, &hex("00CABF2106A6048302130200")), hex("6A88"));
-    assert_eq!(plain(&mut sd, &mut host, &hex("00EE000000")), hex("6D00"));
+    // An unknown instruction outside a secure channel is 6982 (docs/MEASUREMENT.md,
+    // probe `undefined-ins-sd`; 6D00 before the measurement).
+    assert_eq!(plain(&mut sd, &mut host, &hex("00EE000000")), hex("6982"));
     assert_eq!(plain(&mut sd, &mut host, &hex("A0CA006600")), hex("6E00"));
     assert_eq!(plain(&mut sd, &mut host, &hex("01CA006600")), hex("6881"));
 }
@@ -138,7 +140,9 @@ fn get_response_is_discarded_by_an_intervening_command() {
     assert_eq!(first, [&reference[..16], &[0x61, 0x2F]].concat());
     let rest = plain(&mut sd, &mut host, &hex("00C0000000"));
     assert_eq!(rest, [&reference[16..], &[0x90, 0x00]].concat());
-    assert_eq!(plain(&mut sd, &mut host, &hex("00C0000000")), hex("6985"), "nothing left");
+    // Nothing left: 6982 (docs/MEASUREMENT.md, probe `get-response-idle-sd`; 6985
+    // before the measurement).
+    assert_eq!(plain(&mut sd, &mut host, &hex("00C0000000")), hex("6982"), "nothing left");
 
     let interveners: [Vec<u8>; 3] = [
         init_update_apdu(0xFF, &[7; 8]),
@@ -152,8 +156,48 @@ fn get_response_is_discarded_by_an_intervening_command() {
         } else {
             plain(&mut sd, &mut host, intervening);
         }
-        assert_eq!(plain(&mut sd, &mut host, &hex("00C0000000")), hex("6985"), "{intervening:02X?}");
+        assert_eq!(plain(&mut sd, &mut host, &hex("00C0000000")), hex("6982"), "{intervening:02X?}");
     }
+}
+
+/// docs/MEASUREMENT.md, probes `undefined-ins-sd`, `get-response-idle-sd` and
+/// `cla-variants-sd`: with the Security Domain selected and no secure channel, the key
+/// answers INS `5E`, `6E` and `93` with `6982`, GET RESPONSE with nothing pending with
+/// `6982`, and GET RESPONSE right after `10 CA 00 66` (a chained part, `9000`) with
+/// `6982` as well. Before the measurement the engine answered `6D00`, `6985` and `6883`.
+#[test]
+fn unserved_plaintext_commands_are_6982() {
+    let (mut sd, mut host) = fresh();
+    assert_eq!(sd.select(&hex("00a4040008a000000151000000"), &mut host), [hex(REF_SELECT), hex("9000")].concat());
+    for ins in [0x5E, 0x6E, 0x93] {
+        assert_eq!(plain(&mut sd, &mut host, &[0x00, ins, 0x00, 0x00]), hex("6982"), "INS {ins:02X}");
+    }
+    assert_eq!(plain(&mut sd, &mut host, &hex("00C0000000")), hex("6982"));
+    assert_eq!(plain(&mut sd, &mut host, &hex("10CA0066")), hex("9000"));
+    assert_eq!(plain(&mut sd, &mut host, &hex("00C0000000")), hex("6982"));
+    // The chain was dropped: GET DATA works on its own again.
+    assert_eq!(get_data(&mut sd, &mut host, 0x00, 0x66), hex(REF_RECOGNITION));
+    // A handshake-class command for the selected domain is still served (INITIALIZE
+    // UPDATE goes to the handshake, not to the fallback).
+    assert_eq!(status(&plain(&mut sd, &mut host, &init_update_apdu(0xFF, &[7; 8]))), 0x9000);
+}
+
+/// docs/MEASUREMENT.md, probe `cla-variants-sd`: `80 CA 00 66` answers the card
+/// recognition data inside its `66` template (GP 2.3.1 Annex H.2), 65 bytes `66 3F 73 3D
+/// ...`; `00 CA 00 66` answers the bare 63-byte `73` template. Before the measurement
+/// both classes got the bare template.
+#[test]
+fn proprietary_class_card_data_has_the_66_template() {
+    let (mut sd, mut host) = fresh();
+    let resp = plain(&mut sd, &mut host, &hex("80CA0066"));
+    assert_eq!(resp, [hex("663F"), hex(REF_RECOGNITION), hex("9000")].concat());
+    assert_eq!(resp.len(), 65 + 2);
+    assert_eq!(plain(&mut sd, &mut host, &hex("00CA0066")), [hex(REF_RECOGNITION), hex("9000")].concat());
+    // Ne applies to the wrapped form too.
+    let first = plain(&mut sd, &mut host, &hex("80CA006610"));
+    assert_eq!(status(&first), 0x6131);
+    // Other objects are unmeasured with CLA 80 and keep their plain form.
+    assert_eq!(plain(&mut sd, &mut host, &hex("80CA00E000")), plain(&mut sd, &mut host, &hex("00CA00E000")));
 }
 
 /// PUT KEY of a whole set: KCVs returned (GP 2.3.1 §11.8.2.3), the factory set is

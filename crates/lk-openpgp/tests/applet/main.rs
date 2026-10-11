@@ -16,6 +16,7 @@ mod import;
 mod interop;
 mod kdf;
 mod lifecycle;
+mod measured;
 mod operations;
 mod passwords;
 mod public_objects;

@@ -1,5 +1,5 @@
 //! Adversarial interleavings found missing during independent review: other channels
-//! poking at an active transaction, resynchronisation at the last packet, lock expiry
+//! poking at an active transaction, resynchronisation at the last packet, a refused LOCK
 //! during a request, repeated CANCEL and reset with everything active at once
 //! (CTAP 2.1 §11.2.5, §11.2.9).
 
@@ -37,8 +37,8 @@ fn init_from_another_allocated_channel_while_one_assembles_is_busy() {
 
 #[test]
 fn rejected_broadcast_init_allocates_no_channel() {
-    // A busy or locked-out broadcast INIT must not consume a channel identifier
-    // (CTAP 2.1 §11.2.5.1; model policy: identifiers are allocated in order).
+    // A busy broadcast INIT must not consume a channel identifier (CTAP 2.1 §11.2.5.1;
+    // model policy: identifiers are allocated in order).
     let mut dev = device();
     let a = allocate(&mut dev, 0);
     let broadcast_init = init_packet(BROADCAST, INIT, 8, &[0xC3; 8]);
@@ -56,33 +56,41 @@ fn rejected_broadcast_init_allocates_no_channel() {
         error_events(BROADCAST, ERR_CHANNEL_BUSY)
     );
     assert_eq!(dev.respond(a, CBOR, &[0x00]).len(), 1);
-    // While another channel holds the lock.
-    assert_eq!(dev.report(3, &init_packet(a, LOCK, 1, &[2])).len(), 1);
+    // While an empty CBOR request stalls the device (docs/MEASUREMENT.md, probe
+    // empty-cbor). This step held a CTAPHID_LOCK before the measurement showed the
+    // device does not implement it (probe lock).
+    assert_eq!(dev.report(3, &init_packet(a, CBOR, 0, &[])), vec![]);
     assert_eq!(
         dev.report(3, &broadcast_init),
         error_events(BROADCAST, ERR_CHANNEL_BUSY)
     );
+    // INIT on the stalled channel frees the device and allocates nothing.
+    assert_eq!(
+        sends(&dev.report(4, &init_packet(a, INIT, 8, &[0x3C; 8]))).len(),
+        1
+    );
     // Once free, the next identifier follows the first one directly.
-    assert_eq!(allocate(&mut dev, 3 + 2000), a + 1);
+    assert_eq!(allocate(&mut dev, 5), a + 1);
 }
 
 #[test]
 fn init_resync_just_before_the_final_sequence_drops_the_whole_message() {
     // CTAP 2.1 §11.2.5.3: INIT on the active channel aborts the transaction and flushes
-    // buffered data. Here 7609 bytes have arrived except the last packet (SEQ 127,
-    // `reference/BEHAVIOR_CATALOG.md` "final legal sequence 127").
+    // buffered data. Here a maximum request (1536 bytes, docs/MEASUREMENT.md probe
+    // ping-max; 7609 bytes and SEQ 127 before the measurement) has arrived except its
+    // last packet (SEQ 25).
     let mut dev = device();
     let cid = allocate(&mut dev, 0);
-    let request = message(cid, PING, &pattern(7609, 0x17));
-    assert_eq!(request.len(), 129);
-    assert_eq!(feed(&mut dev, 1, &request[..128]), vec![]);
+    let request = message(cid, PING, &pattern(MAX_REQUEST, 0x17));
+    assert_eq!(request.len(), 27);
+    assert_eq!(feed(&mut dev, 1, &request[..26]), vec![]);
     let reports = sends(&dev.report(2, &init_packet(cid, INIT, 8, &[0x77; 8])));
     assert_eq!(reports.len(), 1);
     assert_eq!(reports[0][4], 0x80 | INIT);
     // The final packet is now an orphan and starts nothing.
-    assert_eq!(dev.report(3, &request[128]), vec![]);
+    assert_eq!(dev.report(3, &request[26]), vec![]);
     assert_eq!(dev.next_deadline(), None);
-    assert_ping_echo(&mut dev, 4, cid, 7609);
+    assert_ping_echo(&mut dev, 4, cid, MAX_REQUEST);
 }
 
 #[test]
@@ -149,10 +157,18 @@ fn any_new_command_on_the_assembling_channel_ends_the_message_except_cancel() {
 #[test]
 fn sequence_errors_at_the_far_end_of_a_maximum_message() {
     // CTAP 2.1 §11.2.5.4: packets arrive "in correct and ascending order and ... no
-    // expected packets are missing". Skipping, repeating or wrapping a SEQ near 127 is
-    // ERR_INVALID_SEQ.
-    let request_payload = pattern(7609, 0x23);
-    for (sent, bad_seq) in [(127usize, 0x7Eu8), (127, 0x00), (126, 0x7F), (1, 0x7F)] {
+    // expected packets are missing". Skipping, repeating or wrapping a SEQ near the end
+    // of a maximum request is ERR_INVALID_SEQ. The maximum is 1536 bytes, last SEQ 25
+    // (docs/MEASUREMENT.md, probe ping-max; 7609 bytes and SEQ 127 before the
+    // measurement).
+    let request_payload = pattern(MAX_REQUEST, 0x23);
+    for (sent, bad_seq) in [
+        (25usize, 0x18u8),
+        (25, 0x00),
+        (25, 0x7F),
+        (24, 0x19),
+        (1, 0x19),
+    ] {
         let mut dev = device();
         let cid = allocate(&mut dev, 0);
         let request = message(cid, PING, &request_payload);
@@ -168,55 +184,57 @@ fn sequence_errors_at_the_far_end_of_a_maximum_message() {
 }
 
 #[test]
-fn lock_lapsing_during_the_holders_request_keeps_others_busy_until_the_answer() {
-    // CTAP 2.1 §11.2.9.2.2 (lock time up to 10 s) and §11.2.5.1 (busy until the
-    // response). Other channels see CHANNEL_BUSY while the lock holds, still after it
-    // lapses via tick() while the holder's request is outstanding, and are served once
-    // that request is answered.
+fn refused_lock_before_a_request_leaves_others_busy_only_until_the_answer() {
+    // docs/MEASUREMENT.md, probes lock and lock-expiry: CTAPHID_LOCK is ERR_INVALID_CMD
+    // and holds nothing, so after the holder's request is answered other channels are
+    // served at once (§11.2.5.1: busy until the response). Before the measurement a
+    // 1 s lock kept them busy past the answer, until it lapsed.
     let mut dev = device();
     let a = allocate(&mut dev, 0);
     let b = allocate(&mut dev, 0);
-    assert_eq!(dev.report(0, &init_packet(a, LOCK, 1, &[1])).len(), 1);
+    assert_eq!(
+        dev.report(0, &init_packet(a, LOCK, 1, &[1])),
+        error_events(a, ERR_INVALID_CMD)
+    );
+    assert_eq!(dev.next_deadline(), None);
     start_cbor(&mut dev, 10, a, &[0x01]);
     assert_eq!(
         dev.report(999, &init_packet(b, PING, 0, &[])),
         error_events(b, ERR_CHANNEL_BUSY)
     );
-    assert_eq!(dev.next_deadline(), Some(1000));
-    assert_eq!(dev.tick(1000), vec![], "lock expiry sends nothing");
     assert_eq!(dev.next_deadline(), None);
-    assert_eq!(
-        dev.report(1001, &init_packet(b, PING, 0, &[])),
-        error_events(b, ERR_CHANNEL_BUSY)
-    );
     assert_eq!(dev.respond(a, CBOR, &[0x00]).len(), 1);
-    assert_ping_echo(&mut dev, 1002, b, 0);
+    assert_ping_echo(&mut dev, 999, b, 0);
 }
 
 #[test]
 fn tick_before_the_deadline_changes_nothing() {
     // `Ctaphid::tick` only acts on deadlines that are due (CTAP 2.1 §11.2.5.2 timeout,
-    // §11.2.9.2.2 lock time).
+    // 470 ms measured: docs/MEASUREMENT.md, probe message-timeout). The message timeout
+    // is the framer's only deadline: a 10 s CTAPHID_LOCK that also ran here before is
+    // ERR_INVALID_CMD on the measured device (probe lock).
     let mut dev = device();
     let a = allocate(&mut dev, 0);
     let b = allocate(&mut dev, 0);
-    assert_eq!(dev.report(0, &init_packet(a, LOCK, 1, &[10])).len(), 1);
+    assert_eq!(
+        dev.report(0, &init_packet(a, LOCK, 1, &[10])),
+        error_events(a, ERR_INVALID_CMD)
+    );
     assert_eq!(dev.report(0, &init_packet(a, PING, 58, &[0; 57])), vec![]);
     for now in [0, 1, TIMEOUT_MS - 1] {
         assert_eq!(dev.tick(now), vec![], "tick at {now}");
         assert_eq!(dev.next_deadline(), Some(TIMEOUT_MS));
     }
-    assert_eq!(dev.tick(TIMEOUT_MS), error_events(a, ERR_MSG_TIMEOUT));
-    for now in [TIMEOUT_MS, 9_999] {
-        assert_eq!(dev.tick(now), vec![]);
-        assert_eq!(dev.next_deadline(), Some(10_000));
-    }
     assert_eq!(
-        dev.report(9_999, &init_packet(b, PING, 0, &[])),
+        dev.report(TIMEOUT_MS - 1, &init_packet(b, PING, 0, &[])),
         error_events(b, ERR_CHANNEL_BUSY)
     );
-    assert_eq!(dev.tick(10_000), vec![]);
-    assert_eq!(dev.next_deadline(), None);
+    assert_eq!(dev.tick(TIMEOUT_MS), error_events(a, ERR_MSG_TIMEOUT));
+    for now in [TIMEOUT_MS, 9_999, 10_000] {
+        assert_eq!(dev.tick(now), vec![]);
+        assert_eq!(dev.next_deadline(), None);
+    }
+    assert_ping_echo(&mut dev, 10_000, b, 0);
 }
 
 #[test]
@@ -251,19 +269,20 @@ fn cancel_after_init_resync_is_ignored() {
 }
 
 #[test]
-fn reset_with_lock_assembly_and_old_channels_at_once() {
+fn reset_with_assembly_and_old_channels_at_once() {
     // `reference/BEHAVIOR_CATALOG.md` appendix A: on USB bus reset "connection
     // generations discard old assembly, pending responses, and late worker replies".
+    // (A CTAPHID_LOCK was also held here before the measurement showed the device does
+    // not implement it: docs/MEASUREMENT.md, probe lock.)
     let mut dev = device();
     let a = allocate(&mut dev, 0);
-    assert_eq!(dev.report(0, &init_packet(a, LOCK, 1, &[10])).len(), 1);
     let request = message(a, PING, &pattern(200, 2));
     assert_eq!(dev.report(1, &request[0]), vec![]);
     dev.reset();
     assert_eq!(dev.next_deadline(), None);
     assert_eq!(dev.tick(20_000), vec![]);
     assert_eq!(feed(&mut dev, 2, &request[1..]), vec![]);
-    // Broadcast INIT is no longer locked out, and the old channel is gone.
+    // Broadcast INIT allocates a new channel, and the old channel is gone.
     let fresh = allocate(&mut dev, 3);
     assert_ne!(fresh, a);
     assert_eq!(

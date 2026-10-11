@@ -280,20 +280,32 @@ impl Authenticator {
             subcommand::GET_PIN_UV_AUTH_TOKEN_USING_PIN_WITH_PERMISSIONS => {
                 self.get_pin_uv_auth_token_using_pin(&req, host)
             }
-            // No built-in user verification: GetInfo has no "uv" option, so the UV
-            // subcommands are not supported (§6.5.5.7.3, §6.5.5.3).
-            subcommand::GET_PIN_UV_AUTH_TOKEN_USING_UV_WITH_PERMISSIONS
-            | subcommand::GET_UV_RETRIES => Err(status::INVALID_SUBCOMMAND),
+            // No built-in user verification: GetInfo has no "uv" option (§6.5.5.3).
+            // getUVRetries is answered CTAP2_ERR_PIN_AUTH_INVALID (0x33), measured on a
+            // YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probe client-pin-uv-retries;
+            // it was CTAP2_ERR_INVALID_SUBCOMMAND before the measurement).
+            subcommand::GET_UV_RETRIES => Err(status::PIN_AUTH_INVALID),
+            // getPinUvAuthTokenUsingUvWithPermissions (§6.5.5.7.3) was not measured.
+            subcommand::GET_PIN_UV_AUTH_TOKEN_USING_UV_WITH_PERMISSIONS => {
+                Err(status::INVALID_SUBCOMMAND)
+            }
             _ => Err(status::INVALID_SUBCOMMAND),
         }
     }
 
-    /// getPINRetries (§6.5.5.2): `{3: pinRetries, 4: powerCycleState}`. pinUvAuthProtocol
-    /// is not needed and its value is not checked.
+    /// getPINRetries (§6.5.5.2): `{3: pinRetries}`, plus `4: true` (powerCycleState)
+    /// while the PIN is soft-blocked until a power cycle. pinUvAuthProtocol is not needed
+    /// and its value is not checked.
+    ///
+    /// Measured on a YubiKey 5C Nano 5.7.4 (`docs/MEASUREMENT.md`, probe
+    /// `client-pin-retries`): without a soft block the answer is `00 A1 03 08` (`{3: 8}`),
+    /// no powerCycleState (§6.5.5.2 makes it optional); the engine sent `4: false` before
+    /// the measurement. The soft-blocked answer was not measured; it keeps `4: true`.
     fn get_pin_retries(&self) -> Vec<u8> {
+        let soft_blocked = self.pin.soft_blocked();
         ok(MapBuilder::new()
             .insert(0x03, self.state.pin.retries)
-            .insert(0x04, self.pin.soft_blocked())
+            .insert_opt(0x04, soft_blocked.then_some(true))
             .build())
     }
 

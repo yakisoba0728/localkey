@@ -326,11 +326,12 @@ fn reenumeration_ends_a_waiting_fido_command_without_an_answer() {
 /// `docs/DESIGN.md` §5: a reboot drops every volatile state and keeps persistent state
 /// (catalog appendix A `Linux_native`: "persistent credentials retained and old PIN
 /// token rejected"). Before a Management reboot over CTAPHID (`0x43` with REBOOT):
-/// a CTAPHID_LOCK held by the writer's channel (CTAP 2.1 §11.2.9.2.2), a latched U2F
-/// touch, an SCP03 session over OATH, an OTP HID response waiting to be read. After it:
-/// the channel and its lock are gone, the U2F latch is gone, the CCID slot needs a new
-/// IccPowerOn and the secure channel is gone, the OTP HID read state is reset; the OATH
-/// credential and the OTP slot remain, and the button still types slot 1.
+/// the writer's channel, a latched U2F touch, an SCP03 session over OATH, an OTP HID
+/// response waiting to be read. After it: the channel is gone, the U2F latch is gone, the
+/// CCID slot needs a new IccPowerOn and the secure channel is gone, the OTP HID read state
+/// is reset; the OATH credential and the OTP slot remain, and the button still types
+/// slot 1. (The writer's channel also held a CTAPHID_LOCK here before the measurement
+/// showed the device does not implement LOCK: docs/MEASUREMENT.md, probe lock.)
 #[test]
 fn reboot_resets_volatile_state_on_every_interface() {
     let mut rig = Rig::new();
@@ -341,7 +342,7 @@ fn reboot_resets_volatile_state_on_every_interface() {
     assert_eq!(rig.apdu(&oath_put(b"kept", false)), vec![0x90, 0x00]);
     let mut session = Scp03::open(&mut rig);
     let cid = rig.ctaphid_init();
-    assert_eq!(rig.ctaphid(cid, 0x04, &[10]), (0x04, vec![]), "CTAPHID_LOCK for 10 s");
+    assert_eq!(rig.ctaphid(cid, 0x04, &[10]), (CTAPHID_ERROR, vec![0x01]), "CTAPHID_LOCK is ERR_INVALID_CMD");
     let u2f = {
         let mut data = vec![0x42; 32];
         data.extend_from_slice(&[0x24; 32]);
@@ -358,7 +359,7 @@ fn reboot_resets_volatile_state_on_every_interface() {
 
     assert_eq!(rig.ctaphid(cid, CTAPHID_PING, b"x"), (CTAPHID_ERROR, vec![0x0B]), "the channel is gone");
     let fresh = rig.ctaphid_init();
-    assert_eq!(rig.ctaphid(fresh, CTAPHID_PING, b"x"), (CTAPHID_PING, b"x".to_vec()), "no lock");
+    assert_eq!(rig.ctaphid(fresh, CTAPHID_PING, b"x"), (CTAPHID_PING, b"x".to_vec()), "a fresh channel works");
     let status = rig.otp_feature();
     assert_eq!((status[4], status[7] & 0x40), (pgm_seq, 0), "status report, no pending response");
     let (seq, out) = rig.xfr(&OATH_LIST);

@@ -9,10 +9,13 @@ phase changes to the engine").
 
 What "done" means here: behaviour is tested against the public specifications, published
 test vectors and the public bytes read from a real key (`reference/yubikey-5c-nano-5.7.4/`).
-It has **not** been compared command by command with a physical YubiKey 5C Nano. Every status
-word, timing and cadence that no public source fixes is a model policy, recorded with its
-reasoning in the crate's catalog file (`docs/catalog/`). Nothing in this repository claims
-parity with the physical device.
+On 2026-10-11 one physical YubiKey 5C Nano 5.7.4 was compared command by command with
+read-only probes (116 probes, `docs/MEASUREMENT.md`), and the engine adopted every
+behavioural difference that measurement established (37 probes differed before, 13 after;
+the 13 are state, host artifacts or unclear cases). Every status word, timing and cadence
+that neither a public source nor that measurement fixes is a model policy, recorded with
+its reasoning in the crate's catalog file (`docs/catalog/`). Nothing in this repository
+claims parity with the physical device.
 
 ## Phases
 
@@ -121,8 +124,8 @@ physical answer:
 
 Model policies (unmeasured, documented in each catalog file):
 
-- every status word no source fixes;
-- the KEEPALIVE cadence (100 ms) and the CCID time-extension cadence (500 ms);
+- every status word no source or measurement fixes;
+- the CCID time-extension cadence (500 ms);
 - the U2F request window and latch (3 s each);
 - Management configuration changes apply at the next enumeration; only `REBOOT`
   re-enumerates at once (ykman `config usb`, yubikit `set_mode`); over OTP HID the reboot
@@ -130,9 +133,14 @@ Model policies (unmeasured, documented in each catalog file):
   program phase);
 - OpenPGP RSA attributes accept exponent lengths of 17 to 32 bits (GnuPG and OpenSC write
   `0020`; FA lists `0011`);
-- the touch timeouts (15 s for card applets, 30 s for FIDO);
-- the OTP button windows;
-- the CTAPHID lock answer (`ERR_CHANNEL_BUSY`).
+- the card touch timeouts (15 s);
+- the OTP button windows.
+
+Measured on a YubiKey 5C Nano 5.7.4 and adopted (`docs/MEASUREMENT.md`, "Engine changes"),
+no longer model policies: the KEEPALIVE cadence (95 ms, the first one an interval after the
+request), the FIDO user-presence timeout (28.5 s), the CTAPHID message timeout (470 ms),
+the 1536-byte request limit, `CTAPHID_LOCK` (not implemented: `ERR_INVALID_CMD`), the stall
+after an empty `CTAPHID_CBOR`, and the card and CTAP2 status words listed there.
 
 Upstream note: ecdsa 0.17 disagrees with rfc6979 on how to truncate P-521 digests of 66
 bytes or more, which can reveal the key. lk-crypto works around this, with tests. Filing

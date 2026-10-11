@@ -14,13 +14,13 @@
 //! | `6982` | a touch-required CALCULATE was not touched (ykman "not touched"; ykhsmauth touch error; YESDK `RetryWithTouch`) |
 //! | `6983` | PUT with an existing label; GET PUBLIC KEY of a symmetric credential (ykman; YESDK "label conflict" / "invalid entry") |
 //! | `6984` | card cryptogram or receipt does not verify, or the context does not carry the outstanding ephemeral key (YESDK maps `ReferenceDataUnusable` `6984` to "invalid authentication data"; ykhsmauth `SW_DATA_INVALID`; the exact triggers are a model decision) |
-//! | `6985` | model decision: GET RESPONSE with nothing pending; a touch with nothing waiting; touch confirmed after the credential vanished |
+//! | `6985` | model decision: a touch with nothing waiting; touch confirmed after the credential vanished |
 //! | `6A80` | malformed command data (ykhsmauth "invalid parameters") |
 //! | `6A82` | no credential with that label |
 //! | `6A84` | all 32 credential slots are in use |
 //! | `6A86` | RESET without `P1 P2 = DE AD` |
-//! | `6D00` | unknown instruction (including 5.8's CHANGE CREDENTIAL PASSWORD) |
-//! | `6E00` | class outside the first interindustry range (`20`–`FF`) |
+//! | `6D00` | unknown instruction (including 5.8's CHANGE CREDENTIAL PASSWORD); GET RESPONSE with nothing pending (measured, `docs/MEASUREMENT.md` probe `get-response-idle-hsmauth`) |
+//! | `6E00` | class outside the first interindustry range (`20`–`FF`), except `80`, which is served like `00` (measured, probe `cla-variants-hsmauth`) |
 
 use core::fmt;
 
@@ -36,6 +36,10 @@ use crate::{
     AID, CREDENTIAL_PASSWORD_LEN, MANAGEMENT_KEY_LEN, MAX_COMMAND_LEN, MAX_CREDENTIALS, RESET_P1P2, RETRIES,
     TOUCH_TIMEOUT_MS, alg, ins, tag,
 };
+
+/// The proprietary class served like `00` (`docs/MEASUREMENT.md`, probe
+/// `cla-variants-hsmauth`).
+const CLA_PROPRIETARY: u8 = 0x80;
 
 /// CLA command-chaining bit (ISO/IEC 7816-4 §5.1.1.1).
 const CLA_CHAIN: u8 = 0x10;
@@ -677,16 +681,21 @@ fn max_response(cmd: &Command) -> usize {
     }
 }
 
-/// Check the class byte (ISO/IEC 7816-4 §5.1.1): `00`, or `10` for a chained command.
+/// Check the class byte (ISO/IEC 7816-4 §5.1.1): `00`, `10` for a chained command, or
+/// the proprietary class `80`.
 ///
-/// - Outside the first interindustry range (`20`–`FF`): `6E00`.
+/// - `80` is accepted like `00`: a YubiKey 5C Nano 5.7.4 answers `80 5E 00 00` with
+///   `6D00`, as it answers `00 5E 00 00` (`docs/MEASUREMENT.md`, probe
+///   `cla-variants-hsmauth`; only an undefined instruction was measured with it).
+/// - Otherwise outside the first interindustry range (`20`–`FF`): `6E00` (unmeasured,
+///   e.g. `84` and `90`).
 /// - Secure-messaging bits: `6882`. The device's secure channel clears them after
 ///   unwrapping (`docs/CONTRACTS.md` "Secure messaging", "APDU conventions"), so a
 ///   command that still carries them was never verified and must not run as if it
 ///   had been. Before the review fix they were tolerated.
 /// - A logical channel number: `6881` (as lk-piv and lk-oath).
 fn check_cla(cla: u8) -> Result<(), u16> {
-    if cla & !CLA_CHAIN == 0 {
+    if cla & !CLA_CHAIN == 0 || cla == CLA_PROPRIETARY {
         Ok(())
     } else if cla & 0xE0 != 0 {
         Err(sw::CLA_NOT_SUPPORTED)
@@ -730,8 +739,10 @@ impl CardApplet for HsmAuth {
             return Outcome::Done(status(code));
         }
         if cmd.ins == ins::GET_RESPONSE && !self.chain.is_active() {
+            // Nothing pending: `6D00`, as for an unknown instruction (`docs/MEASUREMENT.md`,
+            // probe `get-response-idle-hsmauth`).
             let max = max_response(&cmd);
-            return Outcome::Done(self.queue.next(max).unwrap_or_else(|| status(sw::CONDITIONS)));
+            return Outcome::Done(self.queue.next(max).unwrap_or_else(|| status(sw::INS_NOT_SUPPORTED)));
         }
         self.queue.clear();
         let mut cmd = match self.chain.push(cmd) {

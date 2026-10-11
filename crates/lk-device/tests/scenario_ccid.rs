@@ -147,7 +147,8 @@ fn select_routes_between_all_seven_applications() {
         assert_eq!(rig.select(AID_OPENPGP), vec![0x90, 0x00]);
         assert_eq!(rig.apdu(&[0x00, 0xF1, 0x00, 0x00, 0x00]), [&version[..], &[0x90, 0x00]].concat());
 
-        assert_eq!(rig.select(AID_MGMT), b"5.7.4\x90\x00".to_vec());
+        // The Management SELECT text as measured (docs/MEASUREMENT.md, probe `select-mgmt`).
+        assert_eq!(rig.select(AID_MGMT), b"Virtual mgr - FW version 5.7.4\x90\x00".to_vec());
         let config = rig.apdu(&[0x00, 0x1D, 0x00, 0x00, 0x00]);
         assert_eq!((usize::from(config[0]), sw(&config)), (config.len() - 3, 0x9000));
 
@@ -159,12 +160,16 @@ fn select_routes_between_all_seven_applications() {
         assert_eq!(answer, vec![0x79, 0x03, 5, 7, 4, 0x90, 0x00]);
         assert_eq!(rig.apdu(&[0x00, 0x07, 0x00, 0x00, 0x00]), [&version[..], &[0x90, 0x00]].concat());
 
+        // `80 CA 00 66` answers the recognition data inside its `66` template, 65 bytes
+        // (docs/MEASUREMENT.md, probe `cla-variants-sd`; the engine answered the bare
+        // 63 bytes before the measurement).
+        let wrapped = [&[0x66, 0x3F][..], recognition.as_slice(), &[0x90, 0x00]].concat();
         let answer = rig.select(AID_SD);
         assert_eq!(answer, [sd_select.as_slice(), &[0x90, 0x00]].concat());
-        assert_eq!(rig.apdu(&[0x80, 0xCA, 0x00, 0x66, 0x00]), [recognition.as_slice(), &[0x90, 0x00]].concat());
+        assert_eq!(rig.apdu(&[0x80, 0xCA, 0x00, 0x66, 0x00]), wrapped);
 
         assert_eq!(rig.select(&[0xA0, 0x00, 0x00, 0x05, 0x27, 0x99]), vec![0x6A, 0x82]);
-        assert_eq!(rig.apdu(&[0x80, 0xCA, 0x00, 0x66, 0x00]), [recognition.as_slice(), &[0x90, 0x00]].concat());
+        assert_eq!(rig.apdu(&[0x80, 0xCA, 0x00, 0x66, 0x00]), wrapped);
     }
 }
 

@@ -25,10 +25,11 @@
 //! timers (KEEPALIVE, CCID time extension) run on a fixed grid from the moment their
 //! request started waiting: the next message is due at the first grid point after the
 //! time the previous one was processed. A host whose timer fires late therefore never
-//! stretches the cadence (CTAP 2.1 §11.2.9.1.7: KEEPALIVE "at least every 100ms"; a
-//! cadence rescheduled from the processing time would drift by the host's lateness on
-//! every message), and a `Tick` that is late by several intervals still sends one
-//! message rather than a burst of stale ones.
+//! stretches the cadence (CTAP 2.1 §11.2.9.1.7: KEEPALIVE "at least every 100ms"; the
+//! measured key sends one every 94.86 ms, [`KEEPALIVE_INTERVAL_MS`]; a cadence
+//! rescheduled from the processing time would drift by the host's lateness on every
+//! message), and a `Tick` that is late by several intervals still sends one message
+//! rather than a burst of stale ones.
 
 use lk_core::Millis;
 use lk_ctaphid::{cmd, keepalive};
@@ -38,11 +39,19 @@ use crate::{Device, Output, TouchEdge};
 
 /// CTAPHID KEEPALIVE cadence while a CTAP2 command waits for a touch. CTAP 2.1
 /// §11.2.9.1.7: KEEPALIVE "should be sent at least every 100ms and whenever the status
-/// changes". The first one goes out as soon as the command starts waiting, the others
-/// at `start + k * 100 ms` (a grid from the start, see the module documentation). The
-/// status is always `STATUS_UPNEEDED`: the engine is synchronous, so a pending command
-/// is always one waiting for user presence.
-pub const KEEPALIVE_INTERVAL_MS: Millis = 100;
+/// changes". KEEPALIVEs go out at `start + k * 95 ms`, k ≥ 1 (a grid from the start, see
+/// the module documentation): none when the command starts waiting, the first one
+/// interval later. The status is always `STATUS_UPNEEDED`: the engine is synchronous, so
+/// a pending command is always one waiting for user presence.
+///
+/// Measured on a YubiKey 5C Nano 5.7.4 (`docs/MEASUREMENT.md`, probes
+/// `selection-keepalive-cancel` and `selection-no-touch`): `KEEPALIVE(UPNEEDED)` every
+/// 94.86 ms on average (14 intervals 93.9 to 96.0 ms, 299 intervals 91.5 to 98.1 ms),
+/// the first one 93.8 ms and 85.9 ms after the request, never at once. The key's clock
+/// runs about 5.4 % fast (a nominal 100 ms); the engine models what a host observes and
+/// uses 95 ms. Before the measurement the model policy was 100 ms with a first KEEPALIVE
+/// at once.
+pub const KEEPALIVE_INTERVAL_MS: Millis = 95;
 
 /// CCID time-extension cadence while a card command waits for a touch: one
 /// `RDR_to_PC_DataBlock` with `bStatus` `80` (USB CCID Rev 1.1 §6.2.6,
@@ -183,7 +192,7 @@ pub(crate) struct Touch {
 /// Every timer of the device, in the order used to break ties.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Timer {
-    /// `Ctaphid::next_deadline`: message assembly timeout, channel lock expiry.
+    /// `Ctaphid::next_deadline`: message assembly timeout.
     Ctaphid,
     Keepalive,
     FidoTimeout,
@@ -372,8 +381,10 @@ impl Device {
         });
     }
 
-    /// Record a CTAP2 command waiting for a touch and send the first KEEPALIVE.
-    pub(crate) fn wait_fido(&mut self, cid: u32, timeout_ms: Millis, out: &mut Vec<Output>) {
+    /// Record a CTAP2 command waiting for a touch. Nothing is sent yet: the first
+    /// KEEPALIVE is due one [`KEEPALIVE_INTERVAL_MS`] later (measured: no KEEPALIVE at
+    /// once, `docs/MEASUREMENT.md`, probe `selection-keepalive-cancel`).
+    pub(crate) fn wait_fido(&mut self, cid: u32, timeout_ms: Millis) {
         let now = self.host.now;
         let order = self.next_order();
         self.waits.fido = Some(FidoWait {
@@ -383,7 +394,6 @@ impl Device {
             deadline: now.saturating_add(timeout_ms),
             keepalive_at: now.saturating_add(KEEPALIVE_INTERVAL_MS),
         });
-        out.push(Output::FidoReport(self.ctaphid.keepalive(cid, keepalive::UPNEEDED)));
     }
 
     /// Open (or extend) the U2F request window after a `Requested` reply.

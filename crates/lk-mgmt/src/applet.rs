@@ -7,11 +7,17 @@
 //!
 //! | Status | Meaning |
 //! | --- | --- |
-//! | `6E00` | class outside the first interindustry range (`20`..`FF`) |
+//! | `6E00` | class outside the first interindustry range (`20`..`FF`), except `80` |
 //! | `6882` | secure-messaging CLA bits (the device's secure channel clears them) |
 //! | `6881` | logical channel number (ISO/IEC 7816-4 §5.6; as lk-piv and lk-oath) |
 //! | `61xx` | more response data than Ne; fetch it with GET RESPONSE (`C0`) |
-//! | `6985` | GET RESPONSE with nothing pending |
+//! | `6D00` | unknown instruction; GET RESPONSE with nothing pending |
+//!
+//! Measured on a YubiKey 5C Nano 5.7.4 (`docs/MEASUREMENT.md`): CLA `80` is served like
+//! `00` (probe `cla-variants-mgmt`), and GET RESPONSE with nothing pending is `6D00`,
+//! also right after a chained command part left a chain open (probes
+//! `get-response-idle-mgmt`, `cla-variants-mgmt`). These replace the `docs/CONTRACTS.md`
+//! conventions `6E00` for CLA `80` and `6985` for an idle GET RESPONSE.
 //!
 //! A response is served in pieces of at most Ne bytes (Ne of the command; 256 for a
 //! short command without Le, 65 536 for an extended one), the rest with `61xx` and
@@ -35,7 +41,8 @@ pub mod ins {
     pub const SELECT: u8 = 0xA4;
     /// WRITE CONFIG (`INS_WRITE_CONFIG`), data `len || TLVs`, P1 = P2 = 0.
     pub const WRITE_CONFIG: u8 = 0x1C;
-    /// READ CONFIG (`INS_READ_CONFIG`), P1 = page, P2 = 0.
+    /// READ CONFIG (`INS_READ_CONFIG`), P1 = page; P2 is ignored (measured, probe
+    /// `bad-p1p2-mgmt`).
     pub const READ_CONFIG: u8 = 0x1D;
     /// YubiKey 4 SET MODE (`INS_SET_MODE`, P1 `11`); not implemented (`6D00`, see
     /// [`crate::Management::legacy_set_mode`]).
@@ -59,15 +66,18 @@ const SHORT_MAX_NE: usize = 256;
 /// Response data per APDU for an extended command without a smaller Le.
 const EXTENDED_MAX_NE: usize = 65_536;
 
-/// Check the class byte (ISO/IEC 7816-4 §5.1.1): `00`, or `10` for a chained command.
+/// Check the class byte (ISO/IEC 7816-4 §5.1.1): `00`, `10` for a chained command, or
+/// the proprietary class `80`.
 ///
-/// `docs/CONTRACTS.md` (APDU conventions): secure-messaging bits are `6882` and a
-/// class of `80` or more is `6E00`; the first interindustry class with a logical
-/// channel number is `6881` and the other classes (`20`..`7F`) are `6E00`, as in
-/// lk-piv and lk-oath.
+/// A YubiKey 5C Nano 5.7.4 serves `80 1D 00 00` exactly like `00 1D 00 00`
+/// (`docs/MEASUREMENT.md`, probe `cla-variants-mgmt`). The other classes follow
+/// `docs/CONTRACTS.md` (APDU conventions; unmeasured): secure-messaging bits are `6882`
+/// and any other class of `80` or more (`84`, `90`, …) is `6E00`; the first
+/// interindustry class with a logical channel number is `6881` and the other classes
+/// (`20`..`7F`) are `6E00`, as in lk-piv and lk-oath.
 fn check_cla(cla: u8) -> Result<(), u16> {
     let base = cla & !0x10;
-    if base == 0 {
+    if base == 0 || cla == 0x80 {
         Ok(())
     } else if cla & 0xE0 != 0 {
         Err(sw::CLA_NOT_SUPPORTED)
@@ -156,18 +166,21 @@ impl MgmtApplet {
         std::mem::replace(&mut self.effect, ConfigEffect::None)
     }
 
-    /// The SELECT response data: the firmware version as ASCII `major.minor.patch`
-    /// (yubikit-python `_ManagementSmartCardBackend` decodes the SELECT response as
-    /// UTF-8 and reads the version with `Version.from_string`), answered with `9000`.
+    /// The SELECT response data, answered with `9000`: the ASCII text
+    /// `Virtual mgr - FW version major.minor.patch`, 30 bytes for 5.7.4, as a YubiKey 5C
+    /// Nano 5.7.4 sends it (`docs/MEASUREMENT.md`, probe `select-mgmt`).
     ///
-    /// Model policy: `Version.from_string` searches the text for
-    /// `\b(\d+).(\d).(\d)\b` (yubikit-python `yubikit/core/__init__.py`,
-    /// `_VERSION_STRING_PATTERN`), so a bare `5.7.4` and a longer text containing the
-    /// version parse alike. The exact text of the 5.7.4 firmware is not in
-    /// `reference/`; the engine sends the bare version (`docs/catalog/mgmt.md`).
+    /// yubikit-python `_ManagementSmartCardBackend` decodes the SELECT response as
+    /// UTF-8 and reads the version with `Version.from_string`, which searches the text
+    /// for `\b(\d+).(\d).(\d)\b` (`yubikit/core/__init__.py`,
+    /// `_VERSION_STRING_PATTERN`).
     fn select_text(host: &dyn Host) -> Vec<u8> {
         let v = host.profile().firmware;
-        format!("{}.{}.{}", v.major, v.minor, v.patch).into_bytes()
+        format!(
+            "Virtual mgr - FW version {}.{}.{}",
+            v.major, v.minor, v.patch
+        )
+        .into_bytes()
     }
 
     /// Drop an unfinished command chain and unread response data.
@@ -176,15 +189,22 @@ impl MgmtApplet {
         self.responses.clear();
     }
 
-    /// GET RESPONSE: the next piece of the pending response; `6A86` for P1/P2 other
-    /// than `00 00`, `6985` with nothing pending (as lk-piv and lk-hsmauth).
+    /// GET RESPONSE: the next piece of the pending response.
+    ///
+    /// With nothing pending the answer is `6D00`, as for an unknown instruction
+    /// (`docs/MEASUREMENT.md`, probe `get-response-idle-mgmt`; model policy: whatever
+    /// P1/P2). With data pending, P1/P2 other than `00 00` is `6A86` and keeps the data
+    /// (model policy).
     fn get_response(&mut self, cmd: &Command) -> Vec<u8> {
+        if !self.responses.is_pending() {
+            return apdu::status(sw::INS_NOT_SUPPORTED);
+        }
         if cmd.p1 != 0 || cmd.p2 != 0 {
             return apdu::status(sw::INCORRECT_P1P2);
         }
         self.responses
             .next(response_max(cmd))
-            .unwrap_or_else(|| apdu::status(sw::CONDITIONS))
+            .unwrap_or_else(|| apdu::status(sw::INS_NOT_SUPPORTED))
     }
 
     /// Record the effect of a successful command; see [`MgmtApplet::take_effect`].
@@ -206,7 +226,11 @@ impl MgmtApplet {
             self.abort_command();
             return apdu::status(status);
         }
-        if cmd.ins == ins::GET_RESPONSE && !self.chain.is_active() {
+        if cmd.ins == ins::GET_RESPONSE {
+            // GET RESPONSE right after a chained part (`10 1D 00 00`) is answered like an
+            // idle GET RESPONSE (`6D00`), not as a chain break (`docs/MEASUREMENT.md`,
+            // probe `cla-variants-mgmt`); the open chain is dropped.
+            self.chain.clear();
             return self.get_response(&cmd);
         }
         // Any other command discards unread response data (ISO/IEC 7816-4 §7.6.1).
@@ -218,15 +242,17 @@ impl MgmtApplet {
         };
         let max = response_max(&cmd);
         match cmd.ins {
-            ins::READ_CONFIG => {
-                if cmd.p2 != 0 {
-                    return apdu::status(sw::INCORRECT_P1P2);
-                }
-                match self.mgmt.read_config(cmd.p1, host) {
+            // P1 alone selects the page: P2 is ignored, and a page past the last is a
+            // bare `9000` without even a length byte (`docs/MEASUREMENT.md`, probe
+            // `bad-p1p2-mgmt`: `00 1D 00 01` is page 0, `00 1D 02 00` and `00 1D FF 00`
+            // are `9000` with no data).
+            ins::READ_CONFIG => match self.mgmt.device_info_page(cmd.p1, host) {
+                None => apdu::status(sw::OK),
+                Some(_) => match self.mgmt.read_config(cmd.p1, host) {
                     Ok(data) => self.responses.start(data, sw::OK, max),
                     Err(status) => apdu::status(status),
-                }
-            }
+                },
+            },
             ins::WRITE_CONFIG => {
                 if cmd.p1 != 0 || cmd.p2 != 0 {
                     return apdu::status(sw::INCORRECT_P1P2);

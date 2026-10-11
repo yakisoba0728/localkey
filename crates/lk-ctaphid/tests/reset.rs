@@ -43,12 +43,21 @@ fn reset_discards_the_outstanding_request_and_its_late_reply() {
 }
 
 #[test]
-fn reset_releases_the_lock() {
+fn reset_ends_an_empty_cbor_stall() {
+    // An empty CBOR request holds the device until INIT on its channel
+    // (docs/MEASUREMENT.md, probe empty-cbor); a USB reset ends it too (model policy:
+    // the reset drops every transaction). This test released a CTAPHID_LOCK before the
+    // measurement showed the device does not implement LOCK (probe lock).
     let mut dev = device();
     let a = allocate(&mut dev, 0);
-    assert_eq!(dev.report(0, &init_packet(a, LOCK, 1, &[10])).len(), 1);
+    assert_eq!(dev.report(0, &init_packet(a, CBOR, 0, &[])), vec![]);
+    assert_eq!(
+        dev.report(0, &init_packet(BROADCAST, INIT, 8, &[0; 8])),
+        error_events(BROADCAST, ERR_CHANNEL_BUSY)
+    );
     dev.reset();
     assert_eq!(dev.next_deadline(), None);
+    assert_eq!(dev.outstanding(), None);
     let fresh = allocate(&mut dev, 1);
     assert_ping_echo(&mut dev, 1, fresh, 1);
 }

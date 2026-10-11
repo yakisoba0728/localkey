@@ -27,6 +27,7 @@ pub(super) mod sub {
     pub const SET_PIN: u64 = 0x03;
     pub const CHANGE_PIN: u64 = 0x04;
     pub const GET_PIN_TOKEN: u64 = 0x05;
+    pub const GET_UV_RETRIES: u64 = 0x07;
     pub const GET_TOKEN_WITH_PERMISSIONS: u64 = 0x09;
 }
 
@@ -281,15 +282,21 @@ pub(super) fn token(
     platform.token_from(&r)
 }
 
-/// `{3: pinRetries, 4: powerCycleState}` from getPINRetries.
-pub(super) fn retries(auth: &mut Authenticator, host: &mut TestHost) -> (u64, bool) {
+/// `{3: pinRetries, 4: powerCycleState}` from getPINRetries; powerCycleState is `None`
+/// when the key is absent. The measured key leaves it out unless a power cycle is needed
+/// (docs/MEASUREMENT.md, probe client-pin-retries: `{3: 8}`); this helper returned
+/// `false` for that case before the measurement, when the engine always sent the key.
+pub(super) fn retries(auth: &mut Authenticator, host: &mut TestHost) -> (u64, Option<bool>) {
     let r = body(&send_untouched(
         auth,
         host,
         &client_pin(Some(2), sub::GET_PIN_RETRIES).request(),
     ));
+    let power_cycle_state = r
+        .map_get_int(4)
+        .map(|v| v.as_bool().expect("powerCycleState is a boolean"));
     (
         r.map_get_int(3).and_then(Value::as_u64).unwrap(),
-        r.map_get_int(4).and_then(Value::as_bool).unwrap(),
+        power_cycle_state,
     )
 }

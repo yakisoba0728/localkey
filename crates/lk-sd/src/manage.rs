@@ -56,6 +56,8 @@ mod tag {
     pub(super) const SERIAL: u32 = 0x93;
     /// SCP11c replay counter of an allowlist (catalog SecurityDomain_scp11c).
     pub(super) const COUNTER: u32 = 0x92;
+    /// Card data template around the card recognition data (GP 2.3.1 Annex H.2).
+    pub(super) const CARD_DATA: u32 = 0x66;
 }
 
 /// An EC key PUT KEY or GENERATE installs.
@@ -74,15 +76,23 @@ impl Drop for NewEc {
 
 impl SecurityDomain {
     /// GET DATA (GP 2.3.1 §11.3), readable without a session:
-    /// - `0066` card recognition data, `00E0` key information, `9F7F` CPLC;
+    /// - `0066` card recognition data, `00E0` key information, `9F7F` CPLC. With
+    ///   `wrap_recognition` (a plaintext command in the GlobalPlatform class `80`) the
+    ///   recognition data comes inside its `66` template (GP 2.3.1 Annex H.2), 65 bytes,
+    ///   as a YubiKey 5C Nano 5.7.4 answers `80 CA 00 66` (`docs/MEASUREMENT.md`, probe
+    ///   `cla-variants-sd`); `00 CA 00 66` gets the bare `73` template (63 bytes, as
+    ///   observed). The class was measured for `0066` only, and only in plaintext:
+    ///   through a secure channel (`84` unwrapped to `80`) the bare template stays
+    ///   (model policy);
     /// - `BF21` with `A6 { 83 KID KVN }`: the certificates stored for that key,
     ///   concatenated, leaf last (`6A88` if none, `6A80` for other data);
     /// - `FF33` / `FF34`: `42 <SKI> 83 <KID KVN>` for every CA identifier of an OCE CA
     ///   key (KLOC) / of a Security Domain key (KLCC); `6A88` if none.
     ///
     /// Any other tag: `6A88`.
-    pub(crate) fn get_data(&self, cmd: &Command) -> Vec<u8> {
+    pub(crate) fn get_data(&self, cmd: &Command, wrap_recognition: bool) -> Vec<u8> {
         match (cmd.p1, cmd.p2) {
+            (0x00, 0x66) if wrap_recognition => apdu::response(&tlv::encode(tag::CARD_DATA, &CARD_RECOGNITION), sw::OK),
             (0x00, 0x66) => apdu::response(&CARD_RECOGNITION, sw::OK),
             (0x00, 0xE0) => apdu::response(&data::key_information(&self.state), sw::OK),
             (0x9F, 0x7F) => apdu::response(&self.state.cplc, sw::OK),

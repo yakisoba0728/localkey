@@ -51,7 +51,8 @@
 //!   which ends any session and drops a half-open handshake and the cached OCE.
 //! - [`SecurityDomain::process_secure`] returns whole responses; the device splits a
 //!   wrapped response into `61xx` pieces itself. Plaintext responses longer than Ne are
-//!   chained by the Security Domain (GET RESPONSE `00 C0`).
+//!   chained by the Security Domain (GET RESPONSE `00 C0`; `6982` with nothing waiting,
+//!   as measured, `docs/MEASUREMENT.md`).
 
 #![forbid(unsafe_code)]
 
@@ -328,16 +329,22 @@ impl SecurityDomain {
     }
 
     /// A plaintext command: dispatch it and chain a response longer than Ne with `61xx`
-    /// (ISO/IEC 7816-4 §5.1.3); GET RESPONSE fetches the rest (`6985` if nothing waits).
+    /// (ISO/IEC 7816-4 §5.1.3); GET RESPONSE fetches the rest.
+    ///
+    /// GET RESPONSE with nothing waiting is `6982`, also right after a chained part
+    /// left a plaintext chain open, which it drops (`docs/MEASUREMENT.md`, probes
+    /// `get-response-idle-sd` and `cla-variants-sd`: a YubiKey 5C Nano 5.7.4 answers
+    /// `6982` in both cases, the status its Security Domain gives every command it does
+    /// not serve outside a secure channel).
     fn process_plain(&mut self, apdu: &[u8], host: &mut dyn Host) -> Vec<u8> {
         let parsed = Command::parse(apdu).ok();
         if let Some(cmd) = &parsed
             && cmd.ins == ins::GET_RESPONSE
             && cmd.cla == 0x00
-            && !self.chain.is_active()
         {
+            self.chain.clear();
             let max = max_response(cmd);
-            return self.responses.next(max).unwrap_or_else(|| apdu::status(sw::CONDITIONS));
+            return self.responses.next(max).unwrap_or_else(|| apdu::status(sw::SECURITY_STATUS));
         }
         self.responses.clear();
         let response = self.dispatch(apdu, None, host);
@@ -384,7 +391,7 @@ impl SecurityDomain {
         let any_class = gp_class || cmd.cla == 0x00;
         let protocol = channel.map(SecureChannel::protocol);
         match cmd.ins {
-            ins::GET_DATA if any_class => self.get_data(&cmd),
+            ins::GET_DATA if any_class => self.get_data(&cmd, gp_class && !secure),
             // GP 2.3.1 §11.9.2.1: the Security Domain is selected by name (P1 `04`), the
             // only SELECT the device recognises (docs/CONTRACTS.md "Applications A as
             // implemented"); any other INS `A4` is not a SELECT and changes nothing.
@@ -431,6 +438,11 @@ impl SecurityDomain {
             | ins::GENERATE_KEY
             | ins::STORE_DATA
             | ins::SET_STATUS => apdu::status(sw::CLA_NOT_SUPPORTED),
+            // Outside a secure channel a YubiKey 5C Nano 5.7.4 answers an instruction its
+            // Security Domain does not know with `6982` (`docs/MEASUREMENT.md`, probe
+            // `undefined-ins-sd`: INS `5E`, `6E`, `93`). Inside a channel this is
+            // unmeasured and stays `6D00` (model policy).
+            _ if !secure => apdu::status(sw::SECURITY_STATUS),
             _ => apdu::status(sw::INS_NOT_SUPPORTED),
         }
     }

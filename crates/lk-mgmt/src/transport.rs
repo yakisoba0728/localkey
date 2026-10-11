@@ -191,7 +191,8 @@ impl Management {
     /// The OTP HID response carries at most 32 chunks of 7 bytes (the five sequence
     /// bits, `SEQUENCE_MASK 0x1F`, that yubikit-python `yubikit/core/otp.py`
     /// `_read_frame` follows; `lk-otp` refuses longer responses), so `len || TLVs ||
-    /// CRC` must stay within 224 bytes; this device's 51-byte page does (tested).
+    /// CRC` must stay within 224 bytes; this device's pages (52 and 42 bytes with the
+    /// length byte) do (tested).
     pub fn otp_read_config(&self, slot_data: &[u8], host: &dyn Host) -> Result<Vec<u8>, u16> {
         let page = slot_data.first().copied().unwrap_or(0);
         self.read_config(page, host)

@@ -62,7 +62,8 @@ application contract in `applet.rs`:
   `usb_product_ids`, `usb_device_release`, `manufacturer`, `product`, `aaguid`,
   `supported_usb`, `default_enabled_usb`, `attestation_common_name`,
   `attestation_organization`, `attestation_country`, `atr`, `openpgp_manufacturer`,
-  `cert_not_before`, `cert_not_after` (see "Applications B" for the later fields);
+  `cert_not_before`, `cert_not_after` (see "Applications B" for the later fields, and
+  "Measurement changes to the engine" for `part_number`);
 - `Host: Entropy` with `now()`, `profile()`, `persist()` and `unix_time()` (default
   `None`);
 - `Outcome<T>` (`Done` / `NeedTouch { timeout_ms }`);
@@ -181,7 +182,8 @@ application contract in `applet.rs`:
   expires locks.
 - While one channel holds a `CTAPHID_LOCK`, every other channel (broadcast INIT included)
   gets `ERR_CHANNEL_BUSY` (`0x06`), not `ERR_LOCK_REQUIRED` (as built, see "Final
-  integration").
+  integration"). Superseded by the measurement: LOCK is `ERR_INVALID_CMD` and no lock
+  exists ("Measurement changes to the engine").
 - `fn next_deadline(&self) -> Option<Millis>`, `fn reset(&mut self)` for USB reset.
 
 ## lk-ccid (CCID Rev 1.1)
@@ -324,6 +326,8 @@ The frozen crates' sources are the authority; these are the points other crates 
   - Command codes in `Event::Request.cmd` are 7-bit (`0x10` CBOR, `0x03` MSG); `respond`
     accepts either form.
   - Empty CBOR/MSG requests are answered with INVALID_LEN by the framer and never reach lk-fido.
+    Since the measurement an empty CBOR request stalls the device instead (it still never
+    reaches lk-fido; "Measurement changes to the engine").
   - CIDs are allocated sequentially from 1.
   - `reset()` emits no events: lk-device must check `outstanding()` first and drop its pending
     operation itself.
@@ -364,7 +368,8 @@ The frozen crates' sources are the authority; these are the points other crates 
 - **Secure messaging**: after `lk_sd::SecureChannel::unwrap_command`, the applet receives the
   command with the CLA secure-messaging bits cleared. Plaintext continuation commands
   (SEND REMAINING, GET RESPONSE) are delivered as received.
-- **Touch timeouts**: applets return `NeedTouch { timeout_ms }` (OATH 15000, FIDO 30000).
+- **Touch timeouts**: applets return `NeedTouch { timeout_ms }` (OATH 15000, FIDO 30000;
+  FIDO 28500 since the measurement).
   lk-device calls `touch_resolved(false)` / `presence_resolved(false)` on timeout, cancel,
   abort or session end.
 - **lk-fido**
@@ -415,7 +420,8 @@ The frozen crates' sources are the authority; these are the points other crates 
     command) for the rest.
   - Data-less forms `CLA INS P1 P2 00` (T=0) and `CLA INS P1 P2 00 00 00` (extended) are
     accepted where an explicit Le is otherwise rejected.
-  - Applets answer `6882` for secure-messaging CLA bits and `6E00` for CLA >= `0x80`.
+  - Applets answer `6882` for secure-messaging CLA bits and `6E00` for CLA >= `0x80`
+    (since the measurement Management, HSM Auth, PIV and OpenPGP serve CLA `80` like `00`).
     lk-device must deliver unwrapped commands with those bits cleared.
   - As built, every card applet also answers `6881` for a logical-channel number in the
     CLA (ISO/IEC 7816-4 §5.1.1); the order of the checks is in each crate's docs.
@@ -428,7 +434,8 @@ The frozen crates' sources are the authority; these are the points other crates 
   - `OpenPgp::select()` answers `6285` while terminated. Treat `62xx` as a successful
     selection and keep routing to it.
   - Reassemble ISO-chained secure-messaging commands before `SecureChannel::unwrap_command`.
-  - Touch timeouts: OATH, PIV, OpenPGP and HSM Auth use 15000 ms; FIDO uses 30000 ms.
+  - Touch timeouts: OATH, PIV, OpenPGP and HSM Auth use 15000 ms; FIDO uses 30000 ms
+    (28500 ms since the measurement).
 - **lk-core additions**:
   - `DeviceProfile` has `attestation_organization`, `attestation_country`, `atr` and
     `openpgp_manufacturer`. As built, lk-fido takes its attestation subject from them and
@@ -476,6 +483,7 @@ additions; existing callers compile unchanged.
 - **lk-ctaphid**: a channel kept out by another channel's `CTAPHID_LOCK` gets
   `ERR_CHANNEL_BUSY` (`0x06`), the only code Chromium and python-fido2 retry on (CTAP 2.1
   §11.2.9.1.6). `err::LOCK_REQUIRED` stays for source compatibility and is never sent.
+  Superseded by the measurement: LOCK is `ERR_INVALID_CMD` and no lock exists.
 - **lk-mgmt**: CCID responses honour Ne with `61xx` and GET RESPONSE (`ins::GET_RESPONSE`
   = `C0`), like every other applet. Under a secure channel lk-device collects a `61xx`
   response with `00 C0 00 00 00`, so every applet that can answer `61xx` implements
@@ -525,7 +533,7 @@ additions; existing callers compile unchanged.
       last `PresenceIndicator` state).
     - `Device::set_unix_time(Option<u64>)` backs `Host::unix_time`. The device never
       advances it.
-  - Constants: `KEEPALIVE_INTERVAL_MS` (100), `WTX_INTERVAL_MS` (500),
+  - Constants: `KEEPALIVE_INTERVAL_MS` (100; 95 since the measurement), `WTX_INTERVAL_MS` (500),
     `U2F_REQUEST_WINDOW_MS` and `U2F_LATCH_MS` (3000), `OTP_REBOOT_DELAY_MS` (1000),
     `FIDO_REPORT_DESCRIPTOR`, `OTP_REPORT_DESCRIPTOR`.
   - `lk_device::storage`: `seal`, `open`, `record_id`, `SealError`, `FORMAT_VERSION`,
@@ -604,6 +612,42 @@ known gap required it.
   SCP11a and SCP11c with PIV behind the channel (protected PSO valid, failed and complete,
   MUTUAL AUTHENTICATE handover, wrapped signatures verified, plaintext ending the channel
   and the PIV PIN). The last deferred SD device line is tested.
+
+## Measurement changes to the engine (as built, binding)
+
+A read-only command-by-command measurement of a YubiKey 5C Nano 5.7.4 (`docs/MEASUREMENT.md`)
+replaced these model policies. The sections above keep the values they were written with and
+point here where they changed; `docs/MEASUREMENT.md` "Engine changes" lists every change with
+its tests and probe.
+
+- **lk-core**: `DeviceProfile::part_number: String` (DeviceInfo tag `13`): empty in `own`,
+  a 12-character placeholder in `yubikey_5c_nano_5_7_4`, never a real key's part number.
+- **lk-ctaphid**:
+  - `MAX_MESSAGE_LEN` (1536): a longer request gets `ERR_INVALID_LEN` at its initialization
+    packet and its remaining packets are ignored; `MAX_PAYLOAD` (7609) stays the response
+    limit.
+  - `TRANSACTION_TIMEOUT_MS` is 470.
+  - `CTAPHID_LOCK` is answered `ERR_INVALID_CMD` and reserves nothing; `tick` no longer
+    expires locks. `MAX_LOCK_SECONDS`, `cmd::LOCK` and `err::LOCK_REQUIRED` stay for source
+    compatibility.
+  - A `CTAPHID_CBOR` request with BCNT 0 is never answered: the device stays busy until
+    INIT on that channel or `reset()`. No event reaches the application and `outstanding()`
+    stays `None`. An empty MSG request is still `ERR_INVALID_LEN`.
+- **lk-device**: `KEEPALIVE_INTERVAL_MS` is 95, and the first KEEPALIVE is due one interval
+  after the request (none at once). A SELECT whose DF name starts with no enabled
+  applet's AID selects the first enabled applet, in `AppId::ALL` order, whose AID starts with the DF
+  name (a partial DF name).
+- **lk-fido**: `TOUCH_TIMEOUT_MS` is 28 500 (300 KEEPALIVE intervals). getPINRetries omits
+  `powerCycleState` unless the PIN is soft-blocked; getUVRetries answers
+  `CTAP2_ERR_PIN_AUTH_INVALID`.
+- **lk-mgmt**: the SELECT text is `Virtual mgr - FW version <major>.<minor>.<patch>`;
+  DeviceInfo is two fixed pages (new tag constants `FPS_VERSION` `0x20`, `STM_VERSION`
+  `0x21`; `PAGE_LIMIT` stays as an upper bound); the factory challenge-response timeout
+  byte is 15.
+- **Card applets**: CLA `80` is served like `00` in Management, HSM Auth, PIV and OpenPGP;
+  other classes `>= 0x80` keep `6E00`. GET RESPONSE with nothing pending answers `6D00`
+  (Management, HSM Auth, OpenPGP), `6A80` (PIV) or `6982` (Security Domain) instead of
+  `6985`.
 
 ## Contract change requests
 

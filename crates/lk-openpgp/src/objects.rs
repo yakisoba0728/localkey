@@ -333,9 +333,10 @@ pub(crate) fn generation_times(state: &State) -> Vec<u8> {
 }
 
 /// Key information DE (spec §4.4.3.8): key reference and status (00 absent, 01
-/// generated, 02 imported) for each slot. The factory value is `01 00 02 00 03 00 81 01`:
-/// only the attestation key exists, generated on first start (attest.rs; model policy,
-/// the observation keeps only DE's length).
+/// generated, 02 imported) for each slot. The factory value is `01 00 02 00 03 00 81 02`:
+/// only the attestation key exists, created on first start and reported as imported, as
+/// measured on a YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probe `openpgp-get-006e`;
+/// attest.rs `FACTORY_ISSUER_STATUS`).
 pub(crate) fn key_information(state: &State) -> Vec<u8> {
     Slot::ALL
         .into_iter()

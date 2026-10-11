@@ -46,8 +46,18 @@ pub const ERR_LOCK_REQUIRED: u8 = 0x0A;
 pub const ERR_INVALID_CHANNEL: u8 = 0x0B;
 pub const ERR_OTHER: u8 = 0x7F;
 
-/// The model policy transaction timeout (`lk_ctaphid::TRANSACTION_TIMEOUT_MS`).
-pub const TIMEOUT_MS: u64 = 3000;
+/// The transaction timeout (`lk_ctaphid::TRANSACTION_TIMEOUT_MS`). Measured on a
+/// YubiKey 5C Nano 5.7.4 (`docs/MEASUREMENT.md`, probe `message-timeout`: 469.8 ms);
+/// it was the model policy 3000 ms before the measurement.
+pub const TIMEOUT_MS: u64 = 470;
+
+/// The longest request message (`lk_ctaphid::MAX_MESSAGE_LEN`). Measured on a YubiKey
+/// 5C Nano 5.7.4 (`docs/MEASUREMENT.md`, probe `ping-max`: the longest PING echoed is
+/// 1536 bytes, 1537 is `ERR_INVALID_LEN`); it was the framing limit 7609 before.
+pub const MAX_REQUEST: usize = 1536;
+
+/// The framing limit for device responses, `57 + 128 * 59` (CTAP 2.1 §11.2.4).
+pub const MAX_FRAMED: usize = 7609;
 
 pub fn device() -> Ctaphid {
     Ctaphid::new(FIRMWARE, CAPS)

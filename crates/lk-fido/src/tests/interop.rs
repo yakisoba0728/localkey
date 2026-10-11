@@ -65,7 +65,7 @@ fn libfido2_touch_probe_reports_pin_state_after_a_touch_and_changes_nothing() {
             vec![status::PIN_INVALID]
         );
     }
-    assert_eq!(retries(&mut auth, &mut host), (8, false), "no retry spent");
+    assert_eq!(retries(&mut auth, &mut host), (8, None), "no retry spent");
     assert_eq!(host.persist_count(), saves);
 }
 

@@ -64,12 +64,19 @@ fn factory_card_has_no_chuid_ccc_or_certificates() {
 #[test]
 fn get_data_header_and_tag_list_validation() {
     let mut card = Card::new();
-    // P1-P2 must be 3FFF (SP 800-73-4 Part 2 §3.1.2).
-    assert_eq!(card.send("00CB3FFE035C017E00").1, 0x6A86);
-    assert_eq!(card.send("00CB0000035C017E00").1, 0x6A86);
+    // P1-P2 must be 3FFF (SP 800-73-4 Part 2 §3.1.2); others answer 6A82, measured on a
+    // YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probe bad-p1p2-piv; was 6A86).
+    assert_eq!(card.send("00CB3FFE035C017E00").1, 0x6A82);
+    assert_eq!(card.send("00CB0000035C017E00").1, 0x6A82);
+    // A tag list whose length runs past the data field answers 6A82, measured for
+    // `5C 01` (docs/MEASUREMENT.md, probe lc-le-piv-get-data; was 6A80).
+    for data in ["5C01", "5C035FC1"] {
+        let data = hex(data);
+        assert_eq!(card.cmd(0xCB, 0x3F, 0xFF, &data, Some(0)).1, 0x6A82, "{data:02X?}");
+    }
     for data in [
         "",                   // no tag list
-        "5C",                 // truncated
+        "5C",                 // truncated before the length (unmeasured)
         "5C025FC1",           // two-byte 5F tag
         "5C035F0102",         // not a three-byte BER tag
         "5C045FC10200",       // too long
@@ -200,8 +207,9 @@ fn long_object_uses_command_and_response_chaining() {
     assert_eq!(statuses.len(), 11);
     assert_eq!(statuses[9], 0x61BC, "188 bytes left before the last piece");
     assert_eq!(all, tlv::encode(0x53, &value));
-    // Nothing more is pending.
-    assert_eq!(card.send("00C0000000").1, 0x6985);
+    // Nothing more is pending: 6A80, measured (docs/MEASUREMENT.md, probe
+    // get-response-idle-piv; was 6985).
+    assert_eq!(card.send("00C0000000").1, 0x6A80);
     // Extended GET DATA with Le 0000 returns everything at once.
     let (all_at_once, sw) = card.send("00CB3FFF0000055C035FC1020000");
     assert_eq!(sw, 0x9000);
@@ -216,7 +224,8 @@ fn another_command_discards_pending_response() {
     let (_, sw) = card.send("00CB3FFF055C035FC10200");
     assert_eq!(sw, 0x6100);
     assert_eq!(card.pin_status(), 0x63C3);
-    assert_eq!(card.send("00C0000000").1, 0x6985);
+    // Nothing pending any more: 6A80 (docs/MEASUREMENT.md, probe get-response-idle-piv).
+    assert_eq!(card.send("00C0000000").1, 0x6A80);
     // GET RESPONSE with P1-P2 other than 0000.
     let (_, sw) = card.send("00CB3FFF055C035FC10200");
     assert_eq!(sw, 0x6100);
@@ -350,7 +359,10 @@ fn class_byte_validation() {
     let mut card = Card::new();
     assert_eq!(card.send("0CCB3FFF035C017E00").1, 0x6882, "secure messaging");
     assert_eq!(card.send("01CB3FFF035C017E00").1, 0x6881, "logical channel");
-    assert_eq!(card.send("80CB3FFF035C017E00").1, 0x6E00);
+    // CLA 80 is taken like 00, measured (docs/MEASUREMENT.md, probe cla-variants-piv;
+    // was 6E00); 90 and the other proprietary classes are unmeasured.
+    assert_eq!(card.send("80CB3FFF035C017E00"), (hex(DISCOVERY), 0x9000));
+    assert_eq!(card.send("90CB3FFF035C017E00").1, 0x6E00);
     assert_eq!(card.send("A0CB3FFF035C017E00").1, 0x6E00);
     assert_eq!(card.send("00CA3FFF035C017E00").1, 0x6D00, "unknown INS");
     assert_eq!(card.send("00CB").1, 0x6700, "malformed APDU");

@@ -2,11 +2,14 @@
 
 use crate::common::{Card, hex};
 
-/// ISO 7816-4 §5.4.1: proprietary class and logical channels; unknown instructions.
+/// ISO 7816-4 §5.4.1: proprietary class and logical channels; unknown instructions. CLA 80
+/// is taken like 00 (docs/MEASUREMENT.md, probe cla-variants-openpgp; tests/applet/measured.rs),
+/// so the unsupported class here is A0.
 #[test]
 fn unsupported_cla_and_ins() {
     let mut card = Card::new();
-    assert_eq!(card.send(&hex("80CA006E00")).1, 0x6E00);
+    assert_eq!(card.send(&hex("A0CA006E00")).1, 0x6E00);
+    assert_eq!(card.send(&hex("90CA006E00")).1, 0x6E00);
     assert_eq!(card.send(&hex("01CA006E00")).1, 0x6881);
     assert_eq!(card.send(&hex("0012000000")).1, 0x6D00);
     // The key instructions exist; the Yubico GET ATTESTATION takes CLA 80 only.
@@ -51,14 +54,21 @@ fn secure_messaging_bits_answer_6882() {
 }
 
 /// Catalog: "OpenPGP GET DATA rejects unsupported command-chain CLA 10 with 6E00, leaving
-/// the next YubiKit GET DATA unaffected".
+/// the next YubiKit GET DATA unaffected". The first half is contradicted by the
+/// measurement: a YubiKey 5C Nano 5.7.4 answers `10 CA 00 C4` with `9000` and no data,
+/// leaving the chain open (docs/MEASUREMENT.md, probe cla-variants-openpgp; this test
+/// expected 6E00 before). The next GET DATA of the same object completes the chain and is
+/// answered as usual; one of another object breaks it (6883) and is not executed.
 #[test]
-fn get_data_chained_cla_rejected() {
+fn get_data_accepts_chaining_cla_10() {
     let mut card = Card::new();
-    assert_eq!(card.send(&hex("10CA006E00")), (vec![], 0x6E00));
-    assert_eq!(card.send(&hex("10CA5F5200")), (vec![], 0x6E00));
+    assert_eq!(card.send(&hex("10CA006E00")), (vec![], 0x9000));
+    assert_eq!(card.send(&hex("00CA5F5200")), (vec![], 0x6883));
     assert_eq!(card.get(0x5F52).1, 0x9000);
-    // Other data-less commands reject chaining too.
+    assert_eq!(card.send(&hex("10CA5F5200")), (vec![], 0x9000));
+    let (data, sw) = card.get(0x5F52);
+    assert_eq!((data, sw), card.get(0x5F52), "the chained read gives the plain answer");
+    // Other data-less commands reject chaining (model policy, unmeasured).
     for apdu in ["10CC7F2100", "1084000008", "10E60000", "10440000", "10F1000000", "10C0000000"] {
         assert_eq!(card.send(&hex(apdu)).1, 0x6E00, "{apdu}");
     }
@@ -79,8 +89,9 @@ fn get_response_serves_long_data() {
     assert_eq!((part.len(), sw), (5, 0x6103));
     let (tail, sw) = card.send(&hex("00C0000003"));
     assert_eq!((tail.len(), sw), (3, 0x9000));
-    // Nothing pending.
-    assert_eq!(card.send(&hex("00C0000000")).1, 0x6985);
+    // Nothing pending: 6D00 (docs/MEASUREMENT.md, probes get-response-idle-openpgp and
+    // chain-61xx; was 6985).
+    assert_eq!(card.send(&hex("00C0000000")).1, 0x6D00);
 }
 
 /// Catalog: "GET RESPONSE rejects unsupported plaintext CLA before consuming a pending
@@ -90,7 +101,10 @@ fn get_response_rejects_bad_cla_without_consuming() {
     let mut card = Card::yubikey();
     let (first, sw) = card.send(&hex("00CA00FA00"));
     assert_eq!(sw, 0x61A5);
-    assert_eq!(card.send(&hex("80C0000000")), (vec![], 0x6E00));
+    // CLA 80 is a supported class since docs/MEASUREMENT.md (probe cla-variants-openpgp),
+    // so A0 and 90 stand for the unsupported proprietary classes here.
+    assert_eq!(card.send(&hex("A0C0000000")), (vec![], 0x6E00));
+    assert_eq!(card.send(&hex("90C0000000")), (vec![], 0x6E00));
     assert_eq!(card.send(&hex("10C0000000")), (vec![], 0x6E00));
     assert_eq!(card.send(&hex("01C0000000")), (vec![], 0x6881));
     assert_eq!(card.send(&hex("00C0010000")), (vec![], 0x6A86));
@@ -107,17 +121,21 @@ fn other_command_discards_pending_response() {
     let mut card = Card::yubikey();
     assert_eq!(card.send(&hex("00CA006E00")).1, 0x613B);
     assert_eq!(card.get(0x5F52).1, 0x9000);
-    assert_eq!(card.send(&hex("00C0000000")).1, 0x6985);
+    // Nothing pending: 6D00 (docs/MEASUREMENT.md, probe get-response-idle-openpgp).
+    assert_eq!(card.send(&hex("00C0000000")).1, 0x6D00);
 }
 
-/// Catalog: "OpenPGP GET RESPONSE during unfinished command chaining returns 6883"; the
-/// chain is dropped and a later chained PUT DATA works.
+/// Catalog: "OpenPGP GET RESPONSE during unfinished command chaining returns 6883". The
+/// status is contradicted by the measurement: a YubiKey 5C Nano 5.7.4 answers GET
+/// RESPONSE during an open chain with 6D00 (docs/MEASUREMENT.md, probe
+/// cla-variants-openpgp; this test expected 6883 before). The chain is dropped (model
+/// policy) and a later chained PUT DATA works.
 #[test]
-fn get_response_during_chain_returns_6883() {
+fn get_response_during_chain_returns_6d00() {
     let mut card = Card::new();
     card.admin();
     assert_eq!(card.apdu(0x10, 0xDA, 0x5F, 0x50, b"https://", None).1, 0x9000);
-    assert_eq!(card.send(&hex("00C0000000")).1, 0x6883);
+    assert_eq!(card.send(&hex("00C0000000")).1, 0x6D00);
     // The final part alone is now an unchained command.
     assert_eq!(card.apdu(0x00, 0xDA, 0x5F, 0x50, b"example.org", None).1, 0x9000);
     assert_eq!(card.get_ok(0x5F50), b"example.org");
@@ -138,7 +156,8 @@ fn header_change_mid_chain_returns_6883() {
     // An unknown INS or a rejected CLA does not disturb an open chain.
     assert_eq!(card.apdu(0x10, 0xDA, 0x5F, 0x50, b"abc", None).1, 0x9000);
     assert_eq!(card.send(&hex("0012000000")).1, 0x6D00);
-    assert_eq!(card.send(&hex("80CA006E00")).1, 0x6E00);
+    // (CLA 80 is a supported class since docs/MEASUREMENT.md; A0 is not.)
+    assert_eq!(card.send(&hex("A0CA006E00")).1, 0x6E00);
     assert_eq!(card.apdu(0x00, 0xDA, 0x5F, 0x50, b"def", None).1, 0x9000);
     assert_eq!(card.get_ok(0x5F50), b"abcdef");
 }

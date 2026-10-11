@@ -148,11 +148,16 @@ impl Piv {
     /// - P1 `00` with the 8-byte PIN: verify; P1 `00` without data: report the status
     ///   (`9000` if verified, else `63Cx`, or `6983` when blocked); P1 `FF` without data:
     ///   reset the PIN's security status.
-    /// - P1 other than `00`/`FF` is `6A86`; P2 other than `80` is `6A88` (§3.2.1). A
-    ///   non-zero Le is `6700` (§3.2.1 lists Le as absent; catalog "VERIFY/CHANGE/RESET
-    ///   RETRY PIN-command P1/P2/Le guards before state changes"); Le `00`, which
-    ///   yubico-piv-tool appends on T=1, and the five-byte T=0 form of the status query are
-    ///   accepted (`crate::explicit_le`).
+    /// - P1 other than `00`/`FF` is `6A86`. P2 `81` (the PUK) is `6A80`, checked right
+    ///   after P1 and before everything else: measured on a YubiKey 5C Nano 5.7.4 for
+    ///   `00 20 00 81` with no data (docs/MEASUREMENT.md, probe `piv-verify-status-81`),
+    ///   where SP 800-73-4 Part 2 §3.2.1 would give `6A88`; the physical measurement
+    ///   ranks first (docs/DESIGN.md §2). The same answer for a PUK VERIFY with data, or
+    ///   with a non-zero Le, is an extrapolation (unmeasured). Any other P2 than `80` is
+    ///   `6A88` (§3.2.1). A non-zero Le is `6700` (§3.2.1 lists Le as absent; catalog
+    ///   "VERIFY/CHANGE/RESET RETRY PIN-command P1/P2/Le guards before state changes");
+    ///   Le `00`, which yubico-piv-tool appends on T=1, and the five-byte T=0 form of the
+    ///   status query are accepted (`crate::explicit_le`).
     /// - PIN data that is not 8 bytes is `6A80` and does not consume a retry (§3.2.1.1).
     ///   Any 8 bytes are compared (module documentation: python yubikit verifies eight
     ///   `FF` bytes to block the PIN and needs `63CX`).
@@ -162,6 +167,10 @@ impl Piv {
     pub(crate) fn verify(&mut self, cmd: &Command, armed: bool, host: &mut dyn Host) -> Reply {
         if cmd.p1 != 0x00 && cmd.p1 != 0xFF {
             return Err(sw::INCORRECT_P1P2);
+        }
+        if cmd.p2 == KEY_PUK {
+            // Measured (docs/MEASUREMENT.md, probe piv-verify-status-81); see above.
+            return Err(sw::INCORRECT_DATA);
         }
         check_reference_p2(cmd.p2, &[KEY_PIN])?;
         if explicit_le(cmd) {

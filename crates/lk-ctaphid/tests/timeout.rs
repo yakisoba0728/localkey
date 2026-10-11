@@ -1,7 +1,9 @@
 //! Transaction timeout for incomplete messages (CTAP 2.1 §11.2.5.2).
 //!
-//! Model policy (`lk_ctaphid::TRANSACTION_TIMEOUT_MS`): the spec and the behaviour
-//! catalog give no value, so a message is abandoned 3000 ms after its latest packet.
+//! Measured on a YubiKey 5C Nano 5.7.4 (`docs/MEASUREMENT.md`, probe `message-timeout`):
+//! a message is abandoned 470 ms after its latest packet (`lk_ctaphid::TRANSACTION_TIMEOUT_MS`;
+//! the model policy before the measurement was 3000 ms). That every packet restarts the
+//! timeout is still model policy (not measured).
 
 mod common;
 
@@ -9,8 +11,30 @@ use common::*;
 use lk_ctaphid::{Event, TRANSACTION_TIMEOUT_MS};
 
 #[test]
-fn model_timeout_is_3000_ms() {
+fn measured_timeout_is_470_ms() {
+    // docs/MEASUREMENT.md, probe message-timeout: ERR_MSG_TIMEOUT 469.8 ms after the
+    // packet was written (this test asserted the model policy 3000 ms before).
+    assert_eq!(TRANSACTION_TIMEOUT_MS, 470);
     assert_eq!(TRANSACTION_TIMEOUT_MS, TIMEOUT_MS);
+}
+
+#[test]
+fn measured_probe_ping_with_bcnt_100_and_no_continuation_times_out_at_470_ms() {
+    // docs/MEASUREMENT.md, probe message-timeout: a PING initialization packet with BCNT
+    // 100, its continuation withheld, is answered ERR_MSG_TIMEOUT (05) on its channel
+    // 469.8 ms after it was written; nothing comes before.
+    let mut dev = device();
+    let cid = allocate(&mut dev, 0);
+    let request = message(cid, PING, &pattern(100, 0x64));
+    assert_eq!(request.len(), 2);
+    assert_eq!(dev.report(1000, &request[0]), vec![]);
+    assert_eq!(dev.next_deadline(), Some(1470));
+    assert_eq!(dev.tick(1469), vec![]);
+    assert_eq!(dev.tick(1470), error_events(cid, ERR_MSG_TIMEOUT));
+    assert_eq!(dev.next_deadline(), None);
+    // The withheld continuation is an orphan now; the channel works again.
+    assert_eq!(dev.report(1500, &request[1]), vec![]);
+    assert_ping_echo(&mut dev, 1500, cid, 100);
 }
 
 #[test]
@@ -43,10 +67,11 @@ fn incomplete_message_times_out_with_msg_timeout() {
     assert_eq!(dev.next_deadline(), None);
     assert_eq!(dev.tick(1000 + 2 * TIMEOUT_MS), vec![], "reported once");
     // The rest of the message is now orphaned, and the device is free.
-    assert_eq!(feed(&mut dev, 4001, &request[1..]), vec![]);
+    let later = 1000 + 2 * TIMEOUT_MS + 1;
+    assert_eq!(feed(&mut dev, later, &request[1..]), vec![]);
     assert_eq!(dev.outstanding(), None);
-    assert_ping_echo(&mut dev, 4001, b, 1);
-    assert_ping_echo(&mut dev, 4001, a, 1);
+    assert_ping_echo(&mut dev, later, b, 1);
+    assert_ping_echo(&mut dev, later, a, 1);
 }
 
 #[test]

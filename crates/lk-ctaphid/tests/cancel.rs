@@ -120,14 +120,27 @@ fn cancel_with_nonzero_bcnt_still_cancels_and_never_starts_a_message() {
 }
 
 #[test]
-fn cancel_is_not_blocked_by_a_lock_on_another_channel() {
-    // CANCEL is never answered, so no CHANNEL_BUSY for the locked-out channel either;
-    // the lock holder's own CBOR request can be cancelled.
+fn cancel_of_a_stalled_empty_cbor_request_is_ignored() {
+    // docs/MEASUREMENT.md, probe empty-cbor: CANCEL on the channel of an empty CBOR
+    // request is not answered and the device stays busy; the application never had the
+    // request, so no Cancel event either. CANCEL from another channel is not answered
+    // with CHANNEL_BUSY. (This test exercised CANCEL under a CTAPHID_LOCK before the
+    // measurement showed the device does not implement LOCK, probe lock.)
     let mut dev = device();
     let a = allocate(&mut dev, 0);
     let b = allocate(&mut dev, 0);
-    assert_eq!(dev.report(1, &init_packet(a, LOCK, 1, &[5])).len(), 1);
-    assert_eq!(dev.report(1, &cancel(b)), vec![]);
-    start_cbor(&mut dev, 2, a, &[0x01]);
-    assert_eq!(dev.report(3, &cancel(a)), vec![Event::Cancel { cid: a }]);
+    assert_eq!(dev.report(1, &init_packet(a, CBOR, 0, &[])), vec![]);
+    assert_eq!(dev.report(2, &cancel(a)), vec![]);
+    assert_eq!(dev.report(2, &cancel(b)), vec![]);
+    assert_eq!(
+        dev.report(3, &init_packet(b, PING, 0, &[])),
+        error_events(b, ERR_CHANNEL_BUSY)
+    );
+    // After INIT resynchronisation a real CBOR request can be cancelled again.
+    assert_eq!(
+        sends(&dev.report(4, &init_packet(a, INIT, 8, &[1; 8]))).len(),
+        1
+    );
+    start_cbor(&mut dev, 5, a, &[0x01]);
+    assert_eq!(dev.report(6, &cancel(a)), vec![Event::Cancel { cid: a }]);
 }

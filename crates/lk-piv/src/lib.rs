@@ -91,6 +91,9 @@ const FULL_AID: [u8; 11] = [0xA0, 0x00, 0x00, 0x03, 0x08, 0x00, 0x00, 0x10, 0x00
 /// SELECT P1 "select by DF name" (ISO/IEC 7816-4 §7.1.1; SP 800-73-4 Part 2 §3.1.1).
 const P1_SELECT_BY_NAME: u8 = 0x04;
 
+/// The proprietary class the card accepts like `00` (`check_cla`).
+const CLA_PROPRIETARY: u8 = 0x80;
+
 /// The SELECT answer (`piv_initial_profile.select_response`): application property
 /// template `61` with the PIX `4F 06 00 00 10 00 01 00` and the coexistent tag
 /// allocation authority `79 { 4F A0 00 00 03 08 }` (SP 800-73-4 Part 2 §3.1.1, Table 3).
@@ -287,8 +290,9 @@ impl Piv {
     }
 
     /// GET RESPONSE (`INS C0`, ISO/IEC 7816-4 §7.6.1): the next piece of the pending
-    /// response. P1-P2 must be `0000` (`6A86`); with nothing pending the answer is `6985`
-    /// (model policy).
+    /// response. P1-P2 must be `0000` (`6A86`, model policy). With nothing pending the
+    /// answer is `6A80`: measured on a YubiKey 5C Nano 5.7.4 for `00 C0 00 00 00` right
+    /// after SELECT (docs/MEASUREMENT.md, probe `get-response-idle-piv`).
     fn get_response(&mut self, cmd: &Command) -> Vec<u8> {
         if cmd.p1 != 0 || cmd.p2 != 0 {
             return apdu::status(sw::INCORRECT_P1P2);
@@ -296,7 +300,7 @@ impl Piv {
         self.session
             .responses
             .next(response_max(cmd))
-            .unwrap_or_else(|| apdu::status(sw::CONDITIONS))
+            .unwrap_or_else(|| apdu::status(sw::INCORRECT_DATA))
     }
 }
 
@@ -306,12 +310,16 @@ fn is_piv_aid(aid: &[u8]) -> bool {
     aid.len() >= AID.len() && FULL_AID.starts_with(aid)
 }
 
-/// Check the class byte (ISO/IEC 7816-4 §5.1.1): `00`, or `10` for a chained command.
-/// Secure messaging (`6882`) and logical channels (`6881`) are not supported; other
-/// classes are `6E00`.
+/// Check the class byte (ISO/IEC 7816-4 §5.1.1): `00`, or `10` for a chained command,
+/// and the proprietary `80`, which every instruction takes like `00`: measured on a
+/// YubiKey 5C Nano 5.7.4, `80 CB 3F FF 03 5C 01 7E` returns the Discovery Object with
+/// `9000` (docs/MEASUREMENT.md, probe `cla-variants-piv`); the other instructions follow
+/// by extension. `90` (`80` with the chaining bit) and the other proprietary classes are
+/// unmeasured and stay `6E00`. Secure messaging (`6882`) and logical channels (`6881`)
+/// are not supported; other classes are `6E00`.
 fn check_cla(cla: u8) -> Result<(), u16> {
     let base = cla & !0x10;
-    if base == 0 {
+    if base == 0 || cla == CLA_PROPRIETARY {
         Ok(())
     } else if cla & 0xE0 != 0 {
         Err(sw::CLA_NOT_SUPPORTED)
