@@ -46,7 +46,9 @@ These replace the engine-only rules of `docs/CONTRACTS.md` "Rules for every crat
   must keep the macOS build and clippy clean.
 - Tests never touch the host's devices, keychain or the user's real directories. They use
   fresh directories under `std::env::temp_dir()` with short names (a Unix socket path must
-  fit in 104 bytes on macOS) and remove them at the end. No network.
+  fit in 104 bytes on macOS) and remove them at the end. No network; the one exception is
+  lk-vpcd (and localkeyd's vpcd tests), which talk TCP to a fake vpcd on `127.0.0.1` with
+  ephemeral ports.
 - Build with `CARGO_BUILD_JOBS=2 nice -n 10 cargo ...`. Other agents may build at the same
   time; wait on cargo's lock instead of deleting `target/`.
 - Secrets: the storage key travels as `[u8; 32]` only where the engine API demands it;

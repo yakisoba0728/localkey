@@ -171,7 +171,8 @@ a systemd unit and a udev rule as examples.
   input (0dfdebd) and a too-tight timing bound in an lk-vpcd test.
 - Real kernel: `tools/linux-guest/` builds an Ubuntu 26.04 arm64 guest (its own 7.0.0-38
   kernel plus `dummy_hcd` built from the matching source) that runs under QEMU with no NIC
-  inside a `--network none` container. Results, all PASS:
+  inside a `--network none` container. Results at the final commit (all four scenarios
+  re-run after the vpcd peer check), all PASS:
   - `smoke.sh`: modules, `dummy_udc.0`, vpcd driver, both USB transports enumerate and tear
     down cleanly.
   - `uhid.sh`: report descriptors byte-equal; libfido2 (`fido2-token`, `fido2-cred`,
