@@ -152,21 +152,21 @@ transports and vpcd were then run on a real kernel with real host tools.
 | `lk-wire` | private Unix-socket transport (framed `Input`/`Output`) and the line control socket (incl. `shutdown`) | 99 |
 | `lk-uhid` | Linux FIDO HID and OTP HID through `/dev/uhid` | 72 |
 | `lk-gadget` | Linux ConfigFS + FunctionFS composite USB gadget (OTP, FIDO, CCID) | 156 |
-| `lk-vpcd` | CCID as a card in pcscd's vsmartcard `vpcd` reader | 101 |
-| `localkeyd` | the daemon: `keygen`, `run --transport wire\|uhid\|gadget\|vpcd\|uhid,vpcd`, `ctl` | 79 |
+| `lk-vpcd` | CCID as a card in pcscd's vsmartcard `vpcd` reader, with peer authentication | 121 |
+| `localkeyd` | the daemon: `keygen`, `run --transport wire\|uhid\|gadget\|vpcd\|uhid,vpcd`, `ctl` | 88 |
 
 All program crates are std only, without `unsafe`, like the engine. `tools/service/` holds
 a systemd unit and a udev rule as examples.
 
 ### Verification (2026-10-11)
 
-- macOS: `cargo test --workspace` **2321 passed, 0 failed, 1 ignored** (the lk-fido long
+- macOS: `cargo test --workspace` **2350 passed, 0 failed, 1 ignored** (the lk-fido long
   repeat test). `cargo clippy --workspace --all-targets`: no warnings.
   `tools/license_check.py` (78 third-party crates, all through lk-crypto) and
   `tools/catalog_status.py --check` (451 lines: 378 tested, 31 intentional differences,
   42 deferred): clean.
-- Linux (Docker, offline, `--network none`): **2320 passed, 0 failed, 1 ignored** (the
-  missing one is the macOS-only test that `uhid`/`gadget` are refused off Linux); clippy
+- Linux (Docker, offline, `--network none`): **2351 passed, 0 failed, 1 ignored** (Linux
+  runs the real `/proc` peer-check tests and skips the macOS-only refusal tests); clippy
   clean. Linux runs found two defects, both fixed: a control connection reset by unread
   input (0dfdebd) and a too-tight timing bound in an lk-vpcd test.
 - Real kernel: `tools/linux-guest/` builds an Ubuntu 26.04 arm64 guest (its own 7.0.0-38
@@ -209,8 +209,10 @@ a systemd unit and a udev rule as examples.
   udev rule for desktop users (`tools/service/70-localkey.rules`). A device whose HID
   driver was unbound by someone else leaks one reader thread per re-enumeration (needs
   `poll`).
-- **vpcd**: ykman needs the reader renamed to contain "Yubico YubiKey" (vpcd's
-  `FRIENDLYNAME`); vpcd itself listens on every IPv4 interface; a `ctl power-cycle` without
+- **vpcd**: the link has no authentication of its own; localkeyd refuses non-loopback
+  addresses unless told otherwise and, on Linux only, checks that the peer socket belongs
+  to root, `pcscd` or itself (`docs/PROGRAM.md`). ykman needs the reader renamed to contain
+  "Yubico YubiKey" (vpcd's `FRIENDLYNAME`); vpcd itself listens on every IPv4 interface; a `ctl power-cycle` without
   an interface change leaves the card in the reader; pcscd's `--auto-exit` drops the card
   between clients; vpcd on macOS is untested.
 - **macOS**: only `wire` runs here (and `vpcd` if the user installs vpcd); virtual HID/USB

@@ -271,8 +271,9 @@ TRANSPORT (default wire):
   --transport uhid [--uhid-path PATH]                      (Linux)
   --transport gadget --udc NAME [--gadget-name NAME]
                      [--configfs DIR] [--ffs-dir DIR]      (Linux, root)
-  --transport vpcd [--vpcd-addr HOST:PORT]                 (needs vsmartcard vpcd)
-  --transport uhid,vpcd [--uhid-path PATH] [--vpcd-addr HOST:PORT]   (Linux)
+  --transport vpcd [--vpcd-addr HOST:PORT] [--vpcd-allow-remote]
+                   [--vpcd-peer-uid UID[,UID...]]          (needs vsmartcard vpcd)
+  --transport uhid,vpcd [--uhid-path PATH] [vpcd options]  (Linux)
 ```
 
 - **as built**: transport defaults `--uhid-path /dev/uhid`, `--gadget-name localkey`,
@@ -684,6 +685,27 @@ pcsc-lite 2.4.1 with OpenSC, ykman, pyscard and GnuPG.
   is not connected (vpcd listens on every IPv4 interface).
 - **Service examples** (`tools/service/`): `systemd-analyze verify` and `udevadm verify`
   pass on systemd 259; `systemd-analyze security` exposure 1.9. Examples only.
+- **Peer authentication** (after a security review): the vpcd link itself has no
+  authentication, and whoever listens on the address drives the card (PIN retry counters,
+  OATH codes without an access key). So:
+  - a `--vpcd-addr` that does not resolve to loopback is a startup failure (exit 2, before
+    the state directory) unless `--vpcd-allow-remote` is given; then it is warned about
+    once and its owner is not checked. lk-vpcd cannot build a transport for a remote
+    address without that flag (`check_addr`, `RemoteRefused`).
+  - On Linux, after each connect and before any byte, the owner of the peer socket is read
+    from `/proc/net/tcp` and `/proc/net/tcp6` (only ESTABLISHED and SYN_RECV lines; TIME_WAIT
+    lines print uid 0; every matching line must be allowed; format from
+    `net/ipv4/tcp_ipv4.c` `get_tcp4_sock` and the IPv6 counterpart). Allowed by default:
+    root, the uid of the local `pcscd` user from `/etc/passwd` (only root can create it;
+    Ubuntu 26.04's pcsc-lite 2.4.1-1 runs pcscd with `User=pcscd`, uid 990 in the guest)
+    and the daemon's own real uid. `--vpcd-peer-uid` replaces that set (numeric). A refused
+    peer is closed with nothing sent, reported once per series at the default level, and
+    the transport keeps retrying every second. Guest: an impostor listening as uid 65534
+    while pcscd was down got four connections in 4.5 s, each closed with 0 bytes; pcscd as
+    uid 990 and as root were accepted.
+  - macOS has no `/proc`, so the owner is not checked there (reported once at `-v`).
+  - A service unit must not use `ProcSubset=pid` (it hides `/proc/net`);
+    `ProtectProc=invisible` is fine.
 - **Still open**: a `ctl power-cycle` without an interface change leaves the vpcd card in
   the reader (the next APDU gets `6F00`, then the card is powered on again); pcscd's
   `--auto-exit` (Debian packaging) drops the card between clients; vpcd on macOS with a
