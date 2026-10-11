@@ -16,12 +16,12 @@ use core::fmt;
 
 use lk_codec::apdu::sw;
 use lk_core::{Host, Millis, Record, ResetKind};
-use lk_crypto::{ct_eq, hmac_sha1};
+use lk_crypto::{ct_eq, hmac_sha1, wipe};
 
 use crate::config::{
     ACC_CODE_SIZE, CONFIG_SIZE, Mode, SCAN_CODES_SIZE, SLOT_DATA_SIZE, SlotConfig, cfg, ext, tkt,
 };
-use crate::keyboard::{SCAN_MAP_SIZE, Typist};
+use crate::keyboard::{APPEND_DELAY_MS, SCAN_MAP_SIZE, Typist};
 use crate::state::{Persistent, SlotState};
 use crate::token::{MAX_USE_COUNTER, Ticket};
 
@@ -83,8 +83,6 @@ pub const LONG_TOUCH_MS: (Millis, Millis) = (2500, 5000);
 /// Default challenge-response touch timeout (Yubico: 15 s, the management
 /// `chalresp_timeout` default).
 pub const DEFAULT_CHALRESP_TIMEOUT_S: u8 = 15;
-/// `TKTFLAG_APPEND_DELAYx` delay.
-const APPEND_DELAY_MS: u64 = 500;
 
 /// A completed button press of the legacy software button API.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -172,7 +170,8 @@ pub(crate) enum ChallengeKind {
 }
 
 /// A challenge-response waiting for a touch, bound to the configuration it was asked
-/// of.
+/// of. The encoded configuration (keys and access code) and the challenge are wiped
+/// when it is dropped (`docs/DESIGN.md` §8).
 #[derive(Clone)]
 pub(crate) struct PendingChallenge {
     slot: usize,
@@ -180,6 +179,13 @@ pub(crate) struct PendingChallenge {
     challenge: [u8; SLOT_DATA_SIZE],
     config: [u8; CONFIG_SIZE],
     pub(crate) timeout_ms: Millis,
+}
+
+impl Drop for PendingChallenge {
+    fn drop(&mut self) {
+        wipe(&mut self.challenge);
+        wipe(&mut self.config);
+    }
 }
 
 impl fmt::Debug for PendingChallenge {
@@ -193,7 +199,9 @@ impl fmt::Debug for PendingChallenge {
 }
 
 /// The result of a slot command, before transport framing.
-#[derive(Debug)]
+///
+/// `Data` can be a challenge-response result, which is key material for the host, so
+/// `Debug` shows its length only (`docs/DESIGN.md` §8).
 pub(crate) enum Reply {
     /// A write succeeded; the transport answers with the status.
     Status,
@@ -201,6 +209,16 @@ pub(crate) enum Reply {
     Data(Vec<u8>),
     /// The command waits for a touch.
     NeedTouch(PendingChallenge),
+}
+
+impl fmt::Debug for Reply {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Status => f.write_str("Status"),
+            Self::Data(data) => f.debug_struct("Data").field("len", &data.len()).finish(),
+            Self::NeedTouch(pending) => f.debug_tuple("NeedTouch").field(pending).finish(),
+        }
+    }
 }
 
 /// The transport a challenge-response waits on (index into `Otp::waits`).
@@ -735,14 +753,24 @@ impl Otp {
         host: &mut dyn Host,
     ) -> Result<Vec<u8>, u16> {
         let slot = self.slot(pending.slot).ok_or(sw::CONDITIONS)?;
-        if !ct_eq(&slot.config.to_bytes(), &pending.config) {
+        let mut current = slot.config.to_bytes();
+        let unchanged = ct_eq(&current, &pending.config);
+        wipe(&mut current);
+        if !unchanged {
             return Err(sw::CONDITIONS);
         }
+        // The clone, the secret and the MAC are wiped after use (`docs/DESIGN.md` §8);
+        // the response itself goes to the transport's response buffer, which wipes it.
         let config = slot.config.clone();
         match pending.kind {
             ChallengeKind::Hmac => {
                 let lt64 = config.cfg_flags & cfg::HMAC_LT64 != 0;
-                Ok(hmac_sha1(&config.secret20(), hmac_message(&pending.challenge, lt64)).to_vec())
+                let mut secret = config.secret20();
+                let mut mac = hmac_sha1(&secret, hmac_message(&pending.challenge, lt64));
+                wipe(&mut secret);
+                let response = mac.to_vec();
+                wipe(&mut mac);
+                Ok(response)
             }
             ChallengeKind::Yubico => {
                 // The 6-byte challenge replaces the private ID, XORed with it
@@ -751,8 +779,14 @@ impl Otp {
                 for (u, c) in uid.iter_mut().zip(pending.challenge.iter()) {
                     *u ^= c;
                 }
-                let ticket = self.next_ticket(pending.slot, uid, host)?;
-                Ok(ticket.encrypt(&config.key).to_vec())
+                let ticket = self.next_ticket(pending.slot, uid, host);
+                wipe(&mut uid);
+                let mut ticket = ticket?;
+                let mut block = ticket.encrypt(&config.key);
+                wipe(&mut ticket.uid);
+                let response = block.to_vec();
+                wipe(&mut block);
+                Ok(response)
             }
         }
     }
@@ -841,29 +875,42 @@ impl Otp {
         if !slot.config.is_touch_triggered() {
             return Vec::new();
         }
+        // A clone of the configuration; it wipes its secrets when dropped, and the
+        // other copies made below are wiped after use (`docs/DESIGN.md` §8).
         let config = slot.config.clone();
         let body = match config.mode() {
             Mode::YubicoOtp => match self.next_ticket(index, config.uid, host) {
-                Ok(ticket) => Body::Modhex(ticket.encrypt(&config.key).to_vec()),
+                Ok(mut ticket) => {
+                    let mut encrypted = ticket.encrypt(&config.key);
+                    wipe(&mut ticket.uid);
+                    let body = Body::Modhex(encrypted.to_vec());
+                    wipe(&mut encrypted);
+                    body
+                }
                 Err(_) => return Vec::new(),
             },
             Mode::StaticTicket => {
                 // Static ticket: the same AES/CRC ticket with frozen (zero) counters;
                 // SHORT_TICKET sends half of it.
-                let ticket = Ticket {
+                let mut ticket = Ticket {
                     uid: config.uid,
                     use_counter: 0,
                     timestamp: 0,
                     session_counter: 0,
                     random: 0,
                 };
-                let encrypted = ticket.encrypt(&config.key);
+                // The output never changes, so it is as secret as a static password:
+                // the block and its copy in `Body` are wiped after use.
+                let mut encrypted = ticket.encrypt(&config.key);
+                wipe(&mut ticket.uid);
                 let len = if config.cfg_flags & cfg::SHORT_TICKET != 0 {
                     8
                 } else {
                     16
                 };
-                Body::Modhex(encrypted.get(..len).unwrap_or(&encrypted).to_vec())
+                let body = Body::Modhex(encrypted.get(..len).unwrap_or(&encrypted).to_vec());
+                wipe(&mut encrypted);
+                body
             }
             Mode::StaticPassword => Body::None,
             Mode::Hotp => match self.next_hotp_counter(index, host) {
@@ -873,7 +920,10 @@ impl Otp {
                     } else {
                         6
                     };
-                    Body::Digits(hotp(&config.secret20(), u64::from(counter), digits), digits)
+                    let mut secret = config.secret20();
+                    let value = hotp(&secret, u64::from(counter), digits);
+                    wipe(&mut secret);
+                    Body::Digits(value, digits)
                 }
                 Err(_) => return Vec::new(),
             },
@@ -908,10 +958,11 @@ impl Otp {
                 typist.modhex(config.fixed_part());
             }
             Mode::StaticPassword => {
-                let codes: [u8; SCAN_CODES_SIZE] = config.scan_codes();
+                let mut codes: [u8; SCAN_CODES_SIZE] = config.scan_codes();
                 for &code in codes.iter().take_while(|&&c| c != 0) {
                     typist.scan(code);
                 }
+                wipe(&mut codes);
             }
             Mode::Hotp => {
                 let modhex_bytes = match config.cfg_flags & cfg::OATH_FIXED_MODHEX {
@@ -936,10 +987,10 @@ impl Otp {
         if tkt & tkt::APPEND_DELAY1 != 0 {
             typist.delay(APPEND_DELAY_MS);
         }
-        match body {
-            Body::Modhex(bytes) => typist.modhex(&bytes),
+        match &body {
+            Body::Modhex(bytes) => typist.modhex(bytes),
             Body::Digits(value, digits) => {
-                let text = format!("{value:0width$}", width = digits as usize);
+                let text = format!("{value:0width$}", width = *digits as usize);
                 for c in text.bytes() {
                     typist.digit(c.wrapping_sub(b'0'));
                 }
@@ -959,11 +1010,21 @@ impl Otp {
     }
 }
 
-/// The dynamic second part of a keyboard emission.
+/// The dynamic second part of a keyboard emission. A static ticket is the same on
+/// every touch, so the modhex bytes are wiped when the body is dropped
+/// (`docs/DESIGN.md` §8).
 enum Body {
     Modhex(Vec<u8>),
     Digits(u32, u32),
     None,
+}
+
+impl Drop for Body {
+    fn drop(&mut self) {
+        if let Self::Modhex(bytes) = self {
+            lk_crypto::wipe_vec(bytes);
+        }
+    }
 }
 
 /// Whether the keyboard output starts with the modhex reference string `0..F`
@@ -1026,12 +1087,13 @@ fn hmac_message(challenge: &[u8; SLOT_DATA_SIZE], lt64: bool) -> &[u8] {
 
 /// RFC 4226 §5.3 HOTP value with `digits` digits.
 fn hotp(secret: &[u8], counter: u64, digits: u32) -> u32 {
-    let mac = hmac_sha1(secret, &counter.to_be_bytes());
+    let mut mac = hmac_sha1(secret, &counter.to_be_bytes());
     let offset = usize::from(mac[19] & 0x0F);
     let word = mac
         .get(offset..offset + 4)
         .and_then(|w| <[u8; 4]>::try_from(w).ok())
         .map_or(0, u32::from_be_bytes);
+    wipe(&mut mac);
     (word & 0x7FFF_FFFF) % 10u32.pow(digits.min(9))
 }
 
@@ -1078,5 +1140,65 @@ mod tests {
         assert_eq!(advance(0), 1);
         assert_eq!(advance(254), 255);
         assert_eq!(advance(255), 1);
+    }
+
+    fn slot_config(cfg_flags: u8, tkt_flags: u8, fill: u8) -> SlotConfig {
+        SlotConfig {
+            fixed: [fill; 16],
+            uid: [fill; 6],
+            key: [fill; 16],
+            acc_code: [0; 6],
+            fixed_size: 16,
+            ext_flags: 0,
+            tkt_flags,
+            cfg_flags,
+            rfu: [0; 2],
+        }
+    }
+
+    /// The keyboard report buffer is allocated for the longest emission
+    /// (`keyboard::emission_capacity`) and never grows, so no reallocation frees a copy
+    /// of a static password or static ticket. The longest layout (`ykdef.h` flags: TAB
+    /// first, reference string, 16-byte public ID, both TABs and delays, ENTER, 30 ms
+    /// pacing) fills it exactly; a full 38-code static password fits too.
+    #[test]
+    fn keyboard_reports_are_allocated_at_their_final_size() {
+        let mut host = lk_testkit::TestHost::new();
+        let mut otp = Otp::new(None, &mut host);
+        let all_tkt = tkt::TAB_FIRST
+            | tkt::APPEND_TAB1
+            | tkt::APPEND_TAB2
+            | tkt::APPEND_DELAY1
+            | tkt::APPEND_DELAY2
+            | tkt::APPEND_CR;
+        let pacing = cfg::PACING_10MS | cfg::PACING_20MS;
+        let capacity = crate::keyboard::emission_capacity(30);
+        for cfg_flags in [cfg::SEND_REF, cfg::SEND_REF | cfg::STATIC_TICKET] {
+            otp.state.slots[0] = Some(SlotState {
+                config: slot_config(cfg_flags | pacing, all_tkt, 0x11),
+                counter: 0,
+            });
+            let reports = otp.emit(0, &mut host);
+            assert_eq!(reports.len(), capacity, "cfg flags {cfg_flags:#04x}");
+            assert_eq!(reports.capacity(), capacity, "cfg flags {cfg_flags:#04x}");
+        }
+        otp.state.slots[0] = Some(SlotState {
+            config: slot_config(cfg::SHORT_TICKET | pacing, all_tkt, 0x04),
+            counter: 0,
+        });
+        let reports = otp.emit(0, &mut host);
+        assert_eq!(
+            otp.state.slots[0].as_ref().map(|s| s.config.mode()),
+            Some(Mode::StaticPassword)
+        );
+        assert_eq!(reports.len(), (4 + 38) * 5 + 100);
+        assert_eq!(reports.capacity(), capacity);
+    }
+
+    #[test]
+    fn reply_debug_shows_the_data_length_only() {
+        let text = format!("{:?}", Reply::Data(vec![0xC3; 20]));
+        assert_eq!(text, "Data { len: 20 }");
+        assert_eq!(format!("{:?}", Reply::Status), "Status");
     }
 }

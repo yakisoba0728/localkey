@@ -40,9 +40,9 @@ label or this table is stale. The rule is the same for every file:
 | PIV | `lk-piv` | 29 | 1 | 3 | 0 | 32 | [catalog/piv.md](catalog/piv.md) |
 | OpenPGP | `lk-openpgp` | 52 | 0 | 3 | 5 | 60 | [catalog/openpgp.md](catalog/openpgp.md) |
 | YubiHSM Auth | `lk-hsmauth` | 17 | 3 | 0 | 0 | 17 | [catalog/hsmauth.md](catalog/hsmauth.md) |
-| Security Domain / SCP03 / SCP11 | `lk-sd` | 98 | 0 | 9 | 13 | 120 | [catalog/sd.md](catalog/sd.md) |
+| Security Domain / SCP03 / SCP11 | `lk-sd` | 100 | 0 | 9 | 11 | 120 | [catalog/sd.md](catalog/sd.md) |
 | Device / transports / storage | `lk-device` | 70 | 2 | 4 | 24 | 98 | [catalog/device.md](catalog/device.md) |
-| **All files** | | **376** | **8** | **31** | **44** | **451** | |
+| **All files** | | **378** | **8** | **31** | **42** | **451** | |
 
 Bullets owned by another crate's file (not counted above): 3. Unlabelled bullets: 0.
 <!-- END tools/catalog_status.py -->

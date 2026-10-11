@@ -13,13 +13,20 @@
 //! The ticket is encrypted with AES-128 (FIPS 197) in a single ECB block and typed in
 //! modhex after the public ID.
 
+use core::fmt;
+
 use crate::crc::crc16;
 
 /// Largest usage-counter value; the counter saturates here.
 pub const MAX_USE_COUNTER: u16 = 0x7FFF;
 
 /// A plaintext Yubico OTP ticket.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+///
+/// The private ID is a secret: the YubiKey manual ("Yubico OTP") describes it as a
+/// 6-byte value that only ever leaves the key encrypted inside the OTP. `Debug`
+/// therefore prints the counters and the timestamp, never `uid` (nor the random
+/// value, which is payload without diagnostic use; `docs/DESIGN.md` §8).
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Ticket {
     pub uid: [u8; 6],
     pub use_counter: u16,
@@ -27,6 +34,16 @@ pub struct Ticket {
     pub timestamp: u32,
     pub session_counter: u8,
     pub random: u16,
+}
+
+impl fmt::Debug for Ticket {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Ticket")
+            .field("use_counter", &self.use_counter)
+            .field("timestamp", &self.timestamp)
+            .field("session_counter", &self.session_counter)
+            .finish_non_exhaustive()
+    }
 }
 
 impl Ticket {
@@ -60,10 +77,15 @@ impl Ticket {
         })
     }
 
-    /// AES-128 encrypt the ticket under `key`.
+    /// AES-128 encrypt the ticket under `key`. The plaintext block (it holds the
+    /// private ID) is wiped after use (`docs/DESIGN.md` §8). `Ticket` itself is `Copy`
+    /// and cannot wipe itself; callers wipe the `uid` of their copies.
     pub fn encrypt(&self, key: &[u8; 16]) -> [u8; 16] {
+        let mut plain = self.to_bytes();
         // A 16-byte key and block cannot be rejected; fall back to zeros defensively.
-        lk_crypto::aes_ecb_encrypt_block(key, &self.to_bytes()).unwrap_or([0; 16])
+        let encrypted = lk_crypto::aes_ecb_encrypt_block(key, &plain).unwrap_or([0; 16]);
+        lk_crypto::wipe(&mut plain);
+        encrypted
     }
 }
 

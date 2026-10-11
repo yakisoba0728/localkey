@@ -150,7 +150,11 @@ impl OtpApplet {
         if let Some(dst) = payload.get_mut(..command.data.len()) {
             dst.copy_from_slice(&command.data);
         }
-        match self.otp.execute(command.p1, &payload, mgmt, host) {
+        // The payload may hold a configuration or access code (`docs/DESIGN.md` §8;
+        // `command` wipes its own data when dropped).
+        let result = self.otp.execute(command.p1, &payload, mgmt, host);
+        lk_crypto::wipe(&mut payload);
+        match result {
             Ok(Reply::Status) => {
                 let data = self.otp.status().to_vec();
                 Outcome::Done(self.responses.start(data, sw::OK, max))

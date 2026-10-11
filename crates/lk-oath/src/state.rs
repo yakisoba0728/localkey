@@ -28,6 +28,7 @@ use std::fmt;
 
 use lk_codec::tlv;
 use lk_core::Host;
+use lk_crypto::SecretBytes;
 
 use crate::credential::{Alg, Credential, Kind, PROP_ALL};
 use crate::{MAX_CHALLENGE_LEN, MAX_CREDENTIALS, MAX_NAME_LEN};
@@ -53,11 +54,12 @@ mod field {
 /// (RFC 2104 §2), so no stored key exceeds 128 bytes.
 const MAX_STORED_KEY: usize = 128;
 
-/// The access key protecting the application (YKOATH §SET CODE).
+/// The access key protecting the application (YKOATH §SET CODE). The key is wiped
+/// when dropped (`docs/DESIGN.md` §8).
 #[derive(Clone, PartialEq, Eq)]
 pub(crate) struct AccessKey {
     pub(crate) alg: Alg,
-    pub(crate) key: Vec<u8>,
+    pub(crate) key: SecretBytes,
 }
 
 impl fmt::Debug for AccessKey {
@@ -98,28 +100,40 @@ impl State {
     }
 
     /// Serialize as described in the module documentation.
-    pub(crate) fn encode(&self) -> Vec<u8> {
-        let mut out = vec![VERSION];
-        tlv::encode_into(&mut out, field::SALT, &self.salt);
-        if let Some(key) = &self.access_key {
-            let mut value = vec![key.alg.code()];
-            value.extend_from_slice(&key.key);
-            tlv::encode_into(&mut out, field::ACCESS_KEY, &value);
-        }
-        for cred in &self.creds {
-            let mut value = Vec::new();
-            tlv::encode_into(&mut value, field::NAME, &cred.name);
-            tlv::encode_into(&mut value, field::TYPE_ALG, &[cred.type_alg()]);
-            tlv::encode_into(&mut value, field::DIGITS, &[cred.digits]);
-            tlv::encode_into(&mut value, field::KEY, &cred.key);
-            tlv::encode_into(&mut value, field::PROPS, &[cred.props]);
-            tlv::encode_into(&mut value, field::COUNTER, &cred.counter.to_be_bytes());
-            if !cred.last_challenge.is_empty() {
-                tlv::encode_into(&mut value, field::LAST_CHALLENGE, &cred.last_challenge);
+    ///
+    /// The record holds every key, so it is returned in [`SecretBytes`], and it is
+    /// built without leaving copies behind (`docs/DESIGN.md` §8): each credential is
+    /// encoded into its own wiped buffer first, and the record buffer is allocated at
+    /// its final size, so no growing `Vec` frees an unwiped allocation.
+    pub(crate) fn encode(&self) -> SecretBytes {
+        let access_key = self.access_key.as_ref().map(|key| {
+            let mut value = SecretBytes::zeroed(access_key_len(key));
+            if let Some((code, rest)) = value.split_first_mut() {
+                *code = key.alg.code();
+                rest.copy_from_slice(&key.key);
             }
-            tlv::encode_into(&mut out, field::CREDENTIAL, &value);
+            value
+        });
+        let creds: Vec<SecretBytes> = self.creds.iter().map(encode_credential).collect();
+        let mut out = Vec::with_capacity(self.record_len());
+        out.push(VERSION);
+        tlv::encode_into(&mut out, field::SALT, &self.salt);
+        if let Some(value) = &access_key {
+            tlv::encode_into(&mut out, field::ACCESS_KEY, value);
         }
-        out
+        for value in &creds {
+            tlv::encode_into(&mut out, field::CREDENTIAL, value);
+        }
+        SecretBytes::new(out)
+    }
+
+    /// The length of [`encode`](Self::encode)'s output, which is also the capacity it
+    /// allocates: the version byte, the salt object, the access-key object when one is
+    /// set, and one `A2` object per credential.
+    fn record_len(&self) -> usize {
+        let access_key = self.access_key.as_ref().map_or(0, |key| tlv_len(access_key_len(key)));
+        let creds = self.creds.iter().map(|cred| tlv_len(credential_len(cred))).sum::<usize>();
+        1 + tlv_len(self.salt.len()) + access_key + creds
     }
 
     /// Restore a state written by [`State::encode`]; `None` if it is unreadable.
@@ -153,13 +167,55 @@ impl State {
     }
 }
 
+/// The encoded length of a one-byte-tag BER-TLV with `len` value bytes (ISO/IEC
+/// 7816-4 §5.2.2: short length below 128, then `81 xx` and `82 xx xx`), as
+/// `tlv::encode_into` writes it. Values stay below 65 536 bytes here.
+pub(crate) fn tlv_len(len: usize) -> usize {
+    let header = match len {
+        0..=0x7F => 2,
+        0x80..=0xFF => 3,
+        _ => 4,
+    };
+    header + len
+}
+
+/// The value length of the access-key object: the algorithm code, then the key.
+fn access_key_len(key: &AccessKey) -> usize {
+    1 + key.key.len()
+}
+
+/// The length of one credential's `A2` value as [`encode_credential`] writes it, which
+/// is also the capacity it allocates: name, type/algorithm, digits, key, properties,
+/// the 8-byte counter, and the last challenge when there is one.
+fn credential_len(cred: &Credential) -> usize {
+    let challenge = if cred.last_challenge.is_empty() { 0 } else { tlv_len(cred.last_challenge.len()) };
+    tlv_len(cred.name.len()) + tlv_len(1) + tlv_len(1) + tlv_len(cred.key.len()) + tlv_len(1) + tlv_len(8) + challenge
+}
+
+/// The value of one credential's `A2` object, in a buffer allocated at its final size
+/// ([`credential_len`]) and wiped when dropped.
+fn encode_credential(cred: &Credential) -> SecretBytes {
+    let counter = cred.counter.to_be_bytes();
+    let mut value = Vec::with_capacity(credential_len(cred));
+    tlv::encode_into(&mut value, field::NAME, &cred.name);
+    tlv::encode_into(&mut value, field::TYPE_ALG, &[cred.type_alg()]);
+    tlv::encode_into(&mut value, field::DIGITS, &[cred.digits]);
+    tlv::encode_into(&mut value, field::KEY, &cred.key);
+    tlv::encode_into(&mut value, field::PROPS, &[cred.props]);
+    tlv::encode_into(&mut value, field::COUNTER, &counter);
+    if !cred.last_challenge.is_empty() {
+        tlv::encode_into(&mut value, field::LAST_CHALLENGE, &cred.last_challenge);
+    }
+    SecretBytes::new(value)
+}
+
 fn decode_access_key(value: &[u8]) -> Option<AccessKey> {
     let (&code, key) = value.split_first()?;
     let alg = Alg::from_code(code)?;
     if key.is_empty() || key.len() > MAX_STORED_KEY {
         return None;
     }
-    Some(AccessKey { alg, key: key.to_vec() })
+    Some(AccessKey { alg, key: SecretBytes::from_slice(key) })
 }
 
 fn decode_credential(value: &[u8]) -> Option<Credential> {
@@ -175,7 +231,7 @@ fn decode_credential(value: &[u8]) -> Option<Credential> {
             field::NAME => name = Some(item.value.to_vec()),
             field::TYPE_ALG => type_alg = Some(single_byte(item.value)?),
             field::DIGITS => digits = Some(single_byte(item.value)?),
-            field::KEY => key = Some(item.value.to_vec()),
+            field::KEY => key = Some(SecretBytes::from_slice(item.value)),
             field::PROPS => props = single_byte(item.value)?,
             field::COUNTER => counter = u64::from_be_bytes(<[u8; 8]>::try_from(item.value).ok()?),
             field::LAST_CHALLENGE => last_challenge = item.value.to_vec(),
@@ -224,7 +280,7 @@ mod tests {
             salt: [1, 2, 3, 4, 5, 6, 7, 8],
             access_key: Some(AccessKey {
                 alg: Alg::Sha256,
-                key: vec![0x42; 16],
+                key: SecretBytes::new(vec![0x42; 16]),
             }),
             creds: vec![
                 Credential {
@@ -232,7 +288,7 @@ mod tests {
                     kind: Kind::Hotp,
                     alg: Alg::Sha1,
                     digits: 6,
-                    key: vec![7; 20],
+                    key: SecretBytes::new(vec![7; 20]),
                     props: PROP_REQUIRE_TOUCH,
                     counter: u64::MAX - 1,
                     last_challenge: Vec::new(),
@@ -242,7 +298,7 @@ mod tests {
                     kind: Kind::Totp,
                     alg: Alg::Sha512,
                     digits: 8,
-                    key: vec![9; 128],
+                    key: SecretBytes::new(vec![9; 128]),
                     props: PROP_ONLY_INCREASING,
                     counter: 0,
                     last_challenge: vec![0, 0, 0, 0, 0, 0, 0, 9],
@@ -262,7 +318,7 @@ mod tests {
     #[test]
     fn unknown_fields_are_skipped() {
         let state = sample();
-        let mut bytes = state.encode();
+        let mut bytes = state.encode().to_vec();
         // A one-byte and a two-byte unknown tag at the top level.
         tlv::encode_into(&mut bytes, 0x8F, &[1, 2, 3]);
         tlv::encode_into(&mut bytes, 0x9F20, &[4]);
@@ -297,6 +353,50 @@ mod tests {
         let mut wrong = bytes.clone();
         wrong[0] = 0x02;
         assert_eq!(State::decode(&wrong), None);
+    }
+
+    /// The record is built at its final size: `encode` and `encode_credential`
+    /// allocate exactly `record_len` and `credential_len` bytes, and these tests compare
+    /// those very functions with what is written. A buffer whose final length equals
+    /// its starting capacity was never reallocated while it held keys. The cases cover
+    /// every BER-TLV length form of ISO/IEC 7816-4 §5.2.2 (a credential value over 255
+    /// bytes takes `82 xx xx`), no access key, and an empty and a full last challenge.
+    #[test]
+    fn record_buffers_are_allocated_at_their_final_size() {
+        for len in [0usize, 1, 0x7F, 0x80, 0xFF, 0x100, 300] {
+            let mut out = Vec::new();
+            tlv::encode_into(&mut out, 0x80, &vec![0; len]);
+            assert_eq!(out.len(), tlv_len(len), "value of {len} bytes");
+        }
+        let mut state = sample();
+        state.creds.push(Credential {
+            name: vec![b'n'; MAX_NAME_LEN],
+            kind: Kind::Totp,
+            alg: Alg::Sha512,
+            digits: 8,
+            key: SecretBytes::new(vec![5; MAX_STORED_KEY]),
+            props: PROP_ONLY_INCREASING,
+            counter: 0,
+            last_challenge: vec![0xEE; MAX_CHALLENGE_LEN],
+        });
+        let long = state.creds.last().map(credential_len);
+        assert!(long.is_some_and(|len| len > 0xFF), "the long credential needs `82 xx xx`");
+        for cred in &state.creds {
+            assert_eq!(encode_credential(cred).len(), credential_len(cred));
+        }
+        assert_eq!(state.encode().len(), state.record_len());
+        state.access_key = None;
+        assert_eq!(state.encode().len(), state.record_len());
+        state.creds.clear();
+        assert_eq!(state.encode().len(), state.record_len());
+    }
+
+    #[test]
+    fn access_key_debug_hides_the_key() {
+        let key = AccessKey { alg: Alg::Sha1, key: SecretBytes::new(vec![0xC3; 16]) };
+        let text = format!("{key:?}");
+        assert!(text.contains("<redacted>"), "{text}");
+        assert!(!text.contains("195") && !text.to_lowercase().contains("c3"), "{text}");
     }
 
     #[test]

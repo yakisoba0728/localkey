@@ -43,6 +43,11 @@
 //! State is persisted in [`lk_core::Record::Device`] (format in [`Management::new`]).
 //! The device identity (serial, firmware version, form factor, supported capabilities)
 //! always comes from [`lk_core::Host::profile`] and is never stored.
+//!
+//! The configuration lock code is wiped when the state holding it is dropped, and the
+//! records this crate persists are passed from a `lk_crypto::SecretBytes`
+//! (`docs/DESIGN.md` §8); WRITE CONFIG data received over CCID is wiped by
+//! `lk_codec::apdu`'s types. [`Management::to_record`] hands out a plain copy.
 
 #![forbid(unsafe_code)]
 

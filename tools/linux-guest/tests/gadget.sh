@@ -267,7 +267,7 @@ import base64, hashlib, hmac, struct, time
 key = base64.b32decode("JBSWY3DPEHPK3PXP")
 step = int(time.time()) // 30
 out = []
-for t in (step - 1, step):
+for t in sorted({max(step - 1, 0), step}):  # the guest's clock starts at 1970-01-01
     h = hmac.new(key, struct.pack(">Q", t), hashlib.sha1).digest()
     o = h[-1] & 15
     out.append("%06d" % ((struct.unpack(">I", h[o:o + 4])[0] & 0x7FFFFFFF) % 1000000))

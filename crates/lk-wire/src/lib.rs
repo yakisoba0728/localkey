@@ -7,8 +7,8 @@
 //!   plugged into; it implements [`lk_run::Transport`] and feeds the runner through its
 //!   `Sender<Command>`.
 //! - [`Client`]: the other end, for tests and bridges.
-//! - [`ControlServer`]: the user side (touch, power cycle, status, presence), one line-based
-//!   command per connection.
+//! - [`ControlServer`]: the user side (touch, power cycle, status, presence, shutdown), one
+//!   line-based command per connection.
 //!
 //! Both sockets follow the same placement rules (`docs/PROGRAM.md` "Socket placement"): the
 //! parent directory must exist and grant no group or other permission, an existing socket
@@ -76,7 +76,20 @@
 //!     is answered `error no request`, and a connection whose thread cannot start is
 //!     closed.
 //!   - Error reasons: `empty request`, `unknown command: <words>`, `request too long`,
-//!     `request is not UTF-8`, `no request`, `runner stopped`, `runner did not answer`.
+//!     `request is not UTF-8`, `no request`, `runner stopped`, `runner did not answer`,
+//!     `shutdown not available`.
+//!   - `shutdown` (`docs/PROGRAM.md` "Clean shutdown from the control socket") does not go
+//!     to the runner. A server made with [`ControlServer::bind_with_shutdown`] writes `ok`,
+//!     then calls its [`ShutdownHook`] on the connection's thread with a
+//!     [`ShutdownRequest`] that holds the connection open: the client sees the end of the
+//!     stream only when the owner lets it go (the daemon keeps it until it has stopped, so
+//!     a supervisor's stop command returns once the daemon is gone). The owner writes one
+//!     last line first: `stopped` for a clean stop, `error <reason>` when it failed after
+//!     the `ok` (found by review: `ok` and the close alone cannot tell the two apart, and
+//!     a supervisor needs to). A request dropped without that line closes after `ok`
+//!     alone. The hook is called even when the client left before it could read `ok`;
+//!     every `shutdown` request calls it, so two requests give the owner two. A server
+//!     made with [`ControlServer::bind`] answers `error shutdown not available`.
 //!   - `watch` writes a line only when the state differs from the last line written: the
 //!     runner may repeat an unchanged state to its watchers (`lk_run`'s "As built" notes).
 //!   - `watch` checks once a second whether its client is gone; closing the server ends
@@ -100,7 +113,7 @@ use std::path::PathBuf;
 
 pub use client::{CONNECT_TIMEOUT, Client};
 pub use codec::{Frame, FrameError, HEADER_LEN, Identity, MAX_LENGTH, MAX_PAYLOAD, Origin, decode, frame_type};
-pub use control::{ControlServer, status_lines};
+pub use control::{ControlServer, ShutdownHook, ShutdownRequest, status_lines};
 pub use transport::{INPUT_WINDOW_BYTES, INPUT_WINDOW_FRAMES, Observer, WRITE_QUEUE_FRAMES, WireEvent, WireTransport};
 
 /// Why a socket could not be set up or a connection failed. Messages name paths and

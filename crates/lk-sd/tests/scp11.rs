@@ -1429,7 +1429,7 @@ fn yubikit_request_shapes_on_extended_and_short_sessions() {
         let pending = read_init_response(&StaticKeys::DEFAULT, &challenge, &[resp, sw.to_be_bytes().to_vec()].concat());
         assert!(pending.card_cryptogram_ok, "{session}");
         let (ea, mut s) = pending.external_authenticate_form(0x33, &pending.host_cryptogram(), extended, extended);
-        let ea_data = lk_codec::apdu::Command::parse(&ea).unwrap().data;
+        let ea_data = lk_codec::apdu::Command::parse(&ea).unwrap().data.clone();
         let (_, sw, ch) = yubikit_plain(&mut sd, &mut host, 0x84, 0x82, 0x33, 0x00, &ea_data, extended);
         assert_eq!(sw, 0x9000, "{session}");
         let mut ch = ch.unwrap();

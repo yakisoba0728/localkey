@@ -4,9 +4,9 @@
 //!
 //! Nothing logged carries payload bytes, record contents or key bytes: the daemon logs
 //! paths, counts, frame types and sizes, and the transports' events (`lk_wire::WireEvent`,
-//! `lk_uhid::UhidNotice`, `lk_gadget::GadgetEvent`), whose texts never hold payloads
-//! (`docs/PROGRAM.md` "Rules for program crates", Secrets). Which event goes to which
-//! level is decided in `run`.
+//! `lk_uhid::UhidNotice`, `lk_gadget::GadgetEvent`, `lk_vpcd::VpcdNotice`), whose texts
+//! never hold payloads (`docs/PROGRAM.md` "Rules for program crates", Secrets). Which
+//! event goes to which level is decided in `run`.
 //!
 //! # As built
 //!

@@ -15,8 +15,9 @@
 //! means factory state.
 
 use lk_codec::tlv;
+use lk_crypto::SecretBytes;
 
-use crate::config::SlotConfig;
+use crate::config::{CONFIG_SIZE, SlotConfig};
 use crate::keyboard::{DEFAULT_SCAN_MAP, SCAN_MAP_SIZE};
 
 const FORMAT_VERSION: u8 = 0x01;
@@ -68,19 +69,33 @@ impl Persistent {
         self.slots.iter().any(Option::is_some)
     }
 
-    pub(crate) fn serialize(&self) -> Vec<u8> {
-        let mut out = vec![FORMAT_VERSION];
+    /// The record bytes. They hold the slot secrets, so they come in [`SecretBytes`],
+    /// in a buffer allocated at its final size (no growing `Vec` frees an unwiped
+    /// copy), and the encoded configuration is wiped after use (`docs/DESIGN.md` §8).
+    pub(crate) fn serialize(&self) -> SecretBytes {
+        let mut out = Vec::with_capacity(self.record_len());
+        out.push(FORMAT_VERSION);
         tlv::encode_into(&mut out, TAG_PGM_SEQ, &[self.pgm_seq]);
         tlv::encode_into(&mut out, TAG_SCAN_MAP, &self.scan_map);
         for (index, slot) in self.slots.iter().enumerate() {
             if let Some(slot) = slot {
                 let (config_tag, counter_tag) = (TAG_CONFIG[index], TAG_COUNTER[index]);
-                tlv::encode_into(&mut out, config_tag, &slot.config.to_bytes());
+                let mut config = slot.config.to_bytes();
+                tlv::encode_into(&mut out, config_tag, &config);
+                lk_crypto::wipe(&mut config);
                 tlv::encode_into(&mut out, counter_tag, &slot.counter.to_be_bytes());
             }
         }
         out.extend_from_slice(&self.unknown);
-        out
+        SecretBytes::new(out)
+    }
+
+    /// The length of [`serialize`](Self::serialize)'s output: the version byte, `01 01
+    /// seq`, `02 2D map`, per configured slot `0x 34 config` and `0x 04 counter`, then
+    /// the unknown objects.
+    fn record_len(&self) -> usize {
+        let slots = self.slots.iter().flatten().count();
+        1 + 3 + 2 + SCAN_MAP_SIZE + slots * (2 + CONFIG_SIZE + 2 + 4) + self.unknown.len()
     }
 
     /// Decode a record; `None` if anything is unreadable.
@@ -157,13 +172,32 @@ mod tests {
             config: config(),
             counter: 0x0102_0304,
         });
-        let mut bytes = state.serialize();
+        let mut bytes = state.serialize().to_vec();
         bytes.extend_from_slice(&[0x1E, 0x02, 0xAA, 0xBB]);
         let back = Persistent::deserialize(&bytes).expect("readable");
         assert_eq!(back.slots, state.slots);
         assert_eq!(back.pgm_seq, 7);
         assert_eq!(back.unknown, vec![0x1E, 0x02, 0xAA, 0xBB]);
-        assert_eq!(back.serialize(), bytes);
+        assert_eq!(back.serialize().as_slice(), bytes.as_slice());
+    }
+
+    /// The record buffer is allocated at its final size, so it is never reallocated
+    /// (which would free an unwiped copy of the slot secrets).
+    #[test]
+    fn record_length_is_known_before_encoding() {
+        let mut state = Persistent::default();
+        assert_eq!(state.serialize().len(), state.record_len());
+        state.slots[0] = Some(SlotState {
+            config: config(),
+            counter: 1,
+        });
+        assert_eq!(state.serialize().len(), state.record_len());
+        state.slots[1] = Some(SlotState {
+            config: config(),
+            counter: 2,
+        });
+        state.unknown = vec![0x1E, 0x02, 0xAA, 0xBB];
+        assert_eq!(state.serialize().len(), state.record_len());
     }
 
     #[test]

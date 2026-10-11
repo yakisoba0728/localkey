@@ -1,0 +1,108 @@
+# localkeyd as a systemd system service: the whole device on a Linux machine without a USB
+# device controller. FIDO and OTP reach the kernel as HID devices through /dev/uhid; CCID
+# reaches pcscd as a card in the vsmartcard vpcd reader ("Transport combinations" in
+# docs/PROGRAM.md).
+#
+# An example only: nothing installs it. See README.md in this directory for the steps, the
+# packages it needs (pcscd, vsmartcard-vpcd) and the safety notes.
+#
+# Paths assumed: the binary at /usr/local/bin/localkeyd, the storage key in a root-only
+# file /etc/localkey/storage.key (directory 0700, file 0600, made with
+# `localkeyd keygen --key-file /etc/localkey/storage.key`), the state in
+# /var/lib/localkey (StateDirectory= below creates it).
+
+[Unit]
+Description=localkey software security key (UHID and vpcd)
+# vpcd is a pcscd driver: its listener exists while pcscd runs. The transport retries every
+# second until it can connect, so the order only saves a few retries. Wants=, not
+# Requires=: with Requires=, stopping or restarting pcscd.socket (an admin, a package
+# upgrade) would stop or restart localkeyd too, destroying its UHID FIDO and OTP devices
+# under the programs using them, and the unit would not start where pcscd.socket is
+# masked or missing. The FIDO and OTP devices do not need pcscd.
+Wants=pcscd.socket
+After=pcscd.socket
+# /dev/uhid is the uhid module's device node; load the module first (systemd >= 245 ships
+# modprobe@.service; ProtectKernelModules= below keeps the service itself from loading it).
+Wants=modprobe@uhid.service
+After=modprobe@uhid.service
+
+[Service]
+Type=exec
+ExecStart=/usr/local/bin/localkeyd run \
+    --state /var/lib/localkey \
+    --key-file /etc/localkey/storage.key \
+    --transport uhid,vpcd \
+    -v
+# The storage key from a command instead of a file: --key-command CMD runs `/bin/sh -c CMD`,
+# whose output must be the 64 hex digits. With an encrypted credential (`systemd-creds
+# encrypt`, systemd >= 250), replace the ExecStart= above with the commented one below and
+# uncomment LoadCredentialEncrypted= (one ExecStart= only: two are allowed for
+# Type=oneshot alone). `$$` is systemd's escape for a literal `$`, so the shell expands
+# the variable systemd sets for the service:
+#LoadCredentialEncrypted=localkey-key:/etc/localkey/storage.key.cred
+#ExecStart=/usr/local/bin/localkeyd run --state /var/lib/localkey --transport uhid,vpcd -v --key-command 'cat "$${CREDENTIALS_DIRECTORY}/localkey-key"'
+#
+# Other run options: --profile yubikey-5c-nano-5.7.4 (Yubico's USB IDs, which ykman needs
+# for OTP over HID), --vpcd-addr HOST:PORT (vpcd's first slot 127.0.0.1:35963 by default),
+# --wall-clock. Never pass --allow-unreadable here: it lets the first write replace a
+# record the key could not open.
+
+# A clean stop: ctl prints the daemon's "ok" and returns once the daemon has shut down
+# (devices destroyed, card removed, sockets removed), so systemd does not have to kill it.
+# The daemon then prints "stopped" (it exits 0, and so does ctl) or "error <reason>" (it
+# failed while shutting down and exits non-zero; ctl exits 1). The "-" keeps a daemon that
+# already ended from failing the stop; the daemon's own exit status is what marks the unit
+# failed.
+ExecStop=-/usr/local/bin/localkeyd ctl --control /var/lib/localkey/control.sock shutdown
+TimeoutStopSec=30s
+
+# 1 is a runtime failure (worth a restart); 2 a startup failure (usage, lock, key,
+# permissions, /dev/uhid) and 3 unreadable records refused: neither goes away by itself.
+Restart=on-failure
+RestartSec=2s
+RestartPreventExitStatus=2 3
+
+# State: /var/lib/localkey, private. lk-host refuses a state directory that grants group
+# or other access, and StateDirectory= would create it 0755 by default.
+StateDirectory=localkey
+StateDirectoryMode=0700
+UMask=0077
+
+# Hardening. The daemon runs as root only for /dev/uhid (root-only by default; see
+# 70-localkey.rules) and the root-only key file; it needs no capability.
+CapabilityBoundingSet=
+AmbientCapabilities=
+NoNewPrivileges=yes
+# Devices: /dev/uhid read-write; DevicePolicy=closed still allows the pseudo devices
+# (/dev/null, /dev/urandom for OS randomness, ...). PrivateDevices= must stay off: a
+# private /dev has no /dev/uhid.
+DevicePolicy=closed
+DeviceAllow=/dev/uhid rw
+# Files: everything read-only except the state directory; no home directories.
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ProtectProc=invisible
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+# Network: Unix sockets (control socket) and TCP to vpcd on loopback only. Widen
+# IPAddressAllow= only together with a non-loopback --vpcd-addr (APDUs, PINs among them,
+# travel unencrypted).
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+IPAddressDeny=any
+IPAddressAllow=localhost
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+[Install]
+WantedBy=multi-user.target

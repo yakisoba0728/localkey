@@ -583,6 +583,21 @@ impl Scp03 {
         })
     }
 
+    /// A session whose keys were agreed by an SCP11 handshake (GP Card Specification
+    /// v2.3.1 Amendment F §3.1.2, §6.5.2.3): S-ENC, S-MAC, S-RMAC and S-DEK from the key
+    /// derivation; secure messaging then works as in SCP03 (Amd D §6.2), with the
+    /// receipt as the first MAC chaining value and the encryption counter at 1.
+    pub fn from_scp11(s_enc: [u8; 16], s_mac: [u8; 16], s_rmac: [u8; 16], receipt: [u8; 16], s_dek: [u8; 16]) -> Scp03 {
+        Scp03 {
+            s_enc,
+            s_mac,
+            s_rmac,
+            mcv: receipt,
+            counter: 1,
+            dek: s_dek,
+        }
+    }
+
     /// PUT KEY of a whole SCP03 key set (GP 2.3.1 §11.8, Amd D §7.2): `80 D8 <replace
     /// KVN> 81 <new KVN> { 88 11 10 <key encrypted with the DEK, AES-CBC zero ICV> 03
     /// <KCV> } x3`, where the KCV is the first three bytes of `AES(key, 01..01)`

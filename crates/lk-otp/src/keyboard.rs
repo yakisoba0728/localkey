@@ -14,6 +14,12 @@
 //!   are encoded as extra all-zero reports. The program sends one report per keyboard
 //!   poll interval of [`REPORT_PERIOD_MS`]; it must deliver every report in order and
 //!   may pause (backpressure) without the engine dropping anything.
+//! - The reports of a static password (or a static ticket) are the secret itself, so
+//!   the report buffer is allocated for the longest emission up front and never grows
+//!   by `Vec` reallocation, which would free a copy unwiped (`docs/DESIGN.md` §8). The
+//!   finished reports leave through lk-device's outputs and are the caller's.
+
+use crate::config::FIXED_SIZE;
 
 /// Number of entries in a scan map.
 pub const SCAN_MAP_SIZE: usize = 45;
@@ -31,6 +37,35 @@ pub const MAP_BANG: usize = 42;
 pub const MAP_TAB: usize = 43;
 /// Index of CR (ENTER) in the scan map.
 pub const MAP_CR: usize = 44;
+
+/// The `TKTFLAG_APPEND_DELAY1` / `TKTFLAG_APPEND_DELAY2` delay (`ykdef.h`: "add 0.5s
+/// delay").
+pub(crate) const APPEND_DELAY_MS: u64 = 500;
+
+/// The most keys one emission types (layout of `Otp::emit`, `ykdef.h` ticket flags):
+/// `TAB_FIRST`, `APPEND_TAB1`, `APPEND_TAB2` and `APPEND_CR` (4), the 16-character
+/// reference string (`CFGFLAG_SEND_REF`), part 1 of at most two characters per byte of
+/// the fixed part, and part 2 of at most 32 characters (a 16-byte ticket in modhex).
+/// The other layouts type fewer: a static password 4 + 38 scan codes (no reference, no
+/// part 2), OATH-HOTP 4 + 32 + 8 digits.
+const MAX_KEYS: usize = 4 + 16 + 2 * FIXED_SIZE + 2 * 16;
+
+/// The most idle time one emission adds: both append delays.
+const MAX_DELAY_MS: u64 = 2 * APPEND_DELAY_MS;
+
+/// Idle reports after each key for `pacing_ms` of `CFGFLAG_PACING_*`.
+fn idle_reports(pacing_ms: u64) -> usize {
+    usize::try_from(pacing_ms / REPORT_PERIOD_MS).unwrap_or(0)
+}
+
+/// The number of reports the longest emission with `pacing_ms` produces: per key a
+/// press, a release and the pacing idles, plus the idle reports of both delays. A
+/// [`Typist`] allocates this many up front.
+pub(crate) fn emission_capacity(pacing_ms: u64) -> usize {
+    let per_key = idle_reports(pacing_ms).saturating_add(2);
+    let delays = usize::try_from(MAX_DELAY_MS / REPORT_PERIOD_MS).unwrap_or(0);
+    MAX_KEYS.saturating_mul(per_key).saturating_add(delays)
+}
 
 /// The US-layout scan map for `cbdefghijklnrtuvCBDEFGHIJKLNRTUV0123456789!\t\r`
 /// (HID usage IDs: a=0x04 .. z=0x1D, 1=0x1E .. 9=0x26, 0=0x27, ENTER=0x28, TAB=0x2B).
@@ -58,7 +93,8 @@ pub fn press_report(scan_code: u8) -> [u8; 8] {
     [modifiers, 0, scan_code & !SHIFT, 0, 0, 0, 0, 0]
 }
 
-/// Accumulates the reports for one OTP emission.
+/// Accumulates the reports for one OTP emission, in a buffer allocated for the longest
+/// emission ([`emission_capacity`]; module documentation).
 pub(crate) struct Typist<'a> {
     map: &'a [u8; SCAN_MAP_SIZE],
     idle_after_key: usize,
@@ -68,12 +104,35 @@ pub(crate) struct Typist<'a> {
 
 impl<'a> Typist<'a> {
     pub(crate) fn new(map: &'a [u8; SCAN_MAP_SIZE], pacing_ms: u64, keypad_digits: bool) -> Self {
+        Self::with_capacity(map, pacing_ms, keypad_digits, emission_capacity(pacing_ms))
+    }
+
+    fn with_capacity(
+        map: &'a [u8; SCAN_MAP_SIZE],
+        pacing_ms: u64,
+        keypad_digits: bool,
+        capacity: usize,
+    ) -> Self {
         Self {
             map,
-            idle_after_key: usize::try_from(pacing_ms / REPORT_PERIOD_MS).unwrap_or(0),
+            idle_after_key: idle_reports(pacing_ms),
             keypad_digits,
-            reports: Vec::new(),
+            reports: Vec::with_capacity(capacity),
         }
+    }
+
+    /// Append one report. Should the buffer ever be full (the capacity is an upper
+    /// bound, so only if the layout outgrows it), the reports move to a buffer twice
+    /// the size and the old one is wiped before it is freed, instead of letting `Vec`
+    /// free it unwiped.
+    fn push(&mut self, report: [u8; 8]) {
+        if self.reports.len() == self.reports.capacity() {
+            let mut grown = Vec::with_capacity(self.reports.capacity().saturating_mul(2).max(16));
+            grown.extend_from_slice(&self.reports);
+            lk_crypto::wipe(self.reports.as_flattened_mut());
+            self.reports = grown;
+        }
+        self.reports.push(report);
     }
 
     /// Type one scan code (zero means "nothing").
@@ -81,10 +140,10 @@ impl<'a> Typist<'a> {
         if code == 0 {
             return;
         }
-        self.reports.push(press_report(code));
-        self.reports.push(RELEASE);
+        self.push(press_report(code));
+        self.push(RELEASE);
         for _ in 0..self.idle_after_key {
-            self.reports.push(RELEASE);
+            self.push(RELEASE);
         }
     }
 
@@ -139,7 +198,7 @@ impl<'a> Typist<'a> {
     /// Idle for `ms` (rounded down to whole report periods).
     pub(crate) fn delay(&mut self, ms: u64) {
         for _ in 0..ms / REPORT_PERIOD_MS {
-            self.reports.push(RELEASE);
+            self.push(RELEASE);
         }
     }
 
@@ -196,6 +255,32 @@ mod tests {
         assert_eq!(reports[4], press_report(0x19));
         assert_eq!(reports[8], press_report(0x24));
         assert_eq!(decode_reports(&reports), "cv7");
+    }
+
+    #[test]
+    fn a_typist_that_outgrows_its_buffer_keeps_every_report_in_order() {
+        let mut t = Typist::with_capacity(&DEFAULT_SCAN_MAP, 10, false, 3);
+        t.modhex(&[0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF]);
+        t.delay(APPEND_DELAY_MS);
+        t.enter();
+        let reports = t.finish();
+        // 17 keys of press, release and one pacing idle, plus 50 idles of the delay.
+        assert_eq!(reports.len(), 17 * 3 + 50);
+        assert!(reports.capacity() >= reports.len());
+        assert_eq!(decode_reports(&reports), "cbdefghijklnrtuv\n");
+    }
+
+    /// The bound is MAX_KEYS keys of press, release and pacing idles plus both 0.5 s
+    /// delays; `otp::tests` checks that the longest real emission fills it exactly.
+    #[test]
+    fn emission_capacity_counts_keys_pacing_and_both_delays() {
+        assert_eq!(MAX_KEYS, 84);
+        assert_eq!(emission_capacity(0), 84 * 2 + 100);
+        assert_eq!(emission_capacity(30), 84 * 5 + 100);
+        assert_eq!(
+            Typist::new(&DEFAULT_SCAN_MAP, 20, false).reports.capacity(),
+            84 * 4 + 100
+        );
     }
 
     #[test]

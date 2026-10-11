@@ -32,6 +32,9 @@ for tool in pcsc_scan scdaemon evtest strace busybox; do
     command -v "$tool" >/dev/null || [ -x "/usr/lib/gnupg/$tool" ] && note "$tool present" || { note "$tool MISSING"; fail=1; }
 done
 ls /usr/lib/pcsc/drivers 2>&1
+vpcd_lib=$(sed -n 's/^LIBPATH[[:space:]]*//p' /etc/reader.conf.d/vpcd 2>/dev/null)
+if [ -n "$vpcd_lib" ] && [ -f "$vpcd_lib" ]; then note "vpcd driver $vpcd_lib (reader.conf.d/vpcd)"; else note "vpcd driver MISSING"; fail=1; fi
+if busybox ifconfig lo 2>/dev/null | grep -q 'UP'; then note "loopback up (for lk-vpcd)"; else note "loopback DOWN"; fail=1; fi
 
 section localkeyd
 "$LK_BIN" --help 2>&1 | head -n 3

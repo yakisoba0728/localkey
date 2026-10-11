@@ -1,0 +1,42 @@
+# localkey: give the user at the seat (systemd-logind "uaccess") access to the hidraw nodes
+# of the HID devices localkeyd creates through /dev/uhid: the OTP keyboard (ykman otp,
+# challenge-response) and the FIDO authenticator (browsers, libfido2).
+#
+# An example only: nothing installs it. Copy it to /etc/udev/rules.d/70-localkey.rules,
+# then `udevadm control --reload` and restart localkeyd (or `udevadm trigger
+# --subsystem-match=hidraw --action=change`). See README.md in this directory.
+#
+# Why a rule is needed: a UHID device has no USB ancestor. Its hidraw node lives under
+# /devices/virtual/misc/uhid/<bus>:<vendor>:<product>.<instance>/hidraw/hidrawN, so rules
+# keyed on USB attributes (ATTRS{idVendor}, the usual YubiKey rules) never match it.
+# systemd's fido_id tags the FIDO node "uaccess" by itself (60-fido-id.rules, systemd >=
+# 244); nothing tags the OTP node. Checked in the test guest (tools/linux-guest,
+# tests/uhid.sh): a DEVPATH rule like these tags the OTP node uaccess.
+#
+# The name: TAG+="uaccess" must be set before 73-seat-late.rules applies the ACLs, hence
+# "70-".
+#
+# Scope: DEVPATH under /devices/virtual/misc/uhid/ matches only devices made through
+# /dev/uhid, never a physical YubiKey (whose nodes sit under a USB host controller). Bus
+# 0003 is BUS_USB, the bus localkeyd gives its UHID devices; the kernel writes vendor and
+# product as four upper-case hex digits.
+
+ACTION=="remove", GOTO="localkey_end"
+SUBSYSTEM!="hidraw", GOTO="localkey_end"
+
+# --profile own (the default): pid.codes test VID 1209, PID 0001 for every interface set.
+DEVPATH=="/devices/virtual/misc/uhid/0003:1209:0001.*", TAG+="uaccess"
+
+# --profile yubikey-5c-nano-5.7.4: Yubico's VID 1050 and the PID of the enabled interface
+# set; the HID nodes exist with 0401 (OTP), 0402 (FIDO), 0403 (OTP+FIDO), 0405 (OTP+CCID),
+# 0406 (FIDO+CCID) and 0407 (OTP+FIDO+CCID). 0404 (CCID only) has no HID node.
+DEVPATH=="/devices/virtual/misc/uhid/0003:1050:040[1235-7].*", TAG+="uaccess"
+
+LABEL="localkey_end"
+
+# /dev/uhid itself is left alone: it stays root-only (crw------- root root on common
+# distributions), and the example unit runs localkeyd as root for it. Do not open it to a
+# group or a user lightly: whoever can write /dev/uhid can create any HID device, a
+# keyboard that types into the logged-in session among them. Only for a daemon run as a
+# dedicated system user, and knowing that, something like:
+#KERNEL=="uhid", SUBSYSTEM=="misc", GROUP="localkey", MODE="0660"

@@ -32,6 +32,14 @@
 //! ([`lk_crypto::ct_eq`]). The "spend and persist the try before comparing" rule of
 //! `docs/CONTRACTS.md` therefore has nothing to apply to here.
 //!
+//! Secrets are wiped when they are dropped (`docs/DESIGN.md` §8): credential keys, the
+//! access key, the serialized record and every HMAC output (full codes, which a host
+//! may use as key-derived secrets, the device's VALIDATE proof and the expected
+//! VALIDATE and SET CODE proofs) are held in [`lk_crypto::SecretBytes`]. The record and
+//! the code answers are built at their final size, so no reallocation frees a copy.
+//! Command data, chained data and pending response data are wiped by
+//! `lk_codec::apdu`'s types.
+//!
 //! # Status words
 //!
 //! | Situation | SW | Source |
@@ -65,9 +73,10 @@ use std::ops::RangeInclusive;
 use lk_codec::apdu::{self, Command, CommandChain, ResponseQueue, sw};
 use lk_codec::tlv;
 use lk_core::{CardApplet, Host, Millis, Outcome, Record, ResetKind};
+use lk_crypto::SecretBytes;
 
 use credential::{Alg, Credential, HOTP_EXHAUSTED, Kind, PROP_ALL, compare_challenges, dynamic_truncate};
-use state::{AccessKey, State};
+use state::{AccessKey, State, tlv_len};
 
 /// The OATH application identifier `A0 00 00 05 27 21 01` (YKOATH §SELECT).
 pub const AID: &[u8] = &[0xA0, 0x00, 0x00, 0x05, 0x27, 0x21, 0x01];
@@ -445,7 +454,8 @@ impl Oath {
                 .filter(|r| r.len() == alg.output_len())
                 .ok_or(sw::INCORRECT_DATA)?;
             let stored = alg.shorten(secret);
-            if !lk_crypto::ct_eq(&alg.hmac(&stored, challenge), response) {
+            let expected = alg.hmac(&stored, challenge);
+            if !lk_crypto::ct_eq(&expected, response) {
                 return Err(sw::DATA_INVALID);
             }
             next.access_key = Some(AccessKey { alg, key: stored });
@@ -589,7 +599,8 @@ impl Oath {
         if let Some(next) = next {
             self.commit(next, host)?;
         }
-        let mut out = Vec::new();
+        // At its final size, so no reallocation frees a copy of a full code.
+        let mut out = Vec::with_capacity(tlv_len(value.len()));
         put_tlv(&mut out, response_tag, &value);
         Ok(out)
     }
@@ -625,12 +636,16 @@ impl Oath {
         let Some(device_challenge) = self.session.challenge else {
             return Err(sw::DATA_INVALID);
         };
-        if !lk_crypto::ct_eq(&key.alg.hmac(&key.key, &device_challenge), response) {
+        // The expected proof would authenticate this selection; it and the device's
+        // own proof are wiped when dropped (`Alg::hmac`).
+        let expected = key.alg.hmac(&key.key, &device_challenge);
+        if !lk_crypto::ct_eq(&expected, response) {
             self.session.authorized = None;
             return Err(sw::INCORRECT_DATA);
         }
-        let mut out = Vec::new();
-        put_tlv(&mut out, tag::RESPONSE, &key.alg.hmac(&key.key, challenge));
+        let proof = key.alg.hmac(&key.key, challenge);
+        let mut out = Vec::with_capacity(tlv_len(proof.len()));
+        put_tlv(&mut out, tag::RESPONSE, &proof);
         self.session.authorized = Some(self.revision);
         Ok(Reply::Data(out))
     }
@@ -651,7 +666,9 @@ impl Oath {
         let challenge = challenge
             .filter(|c| c.len() <= MAX_CHALLENGE_LEN)
             .ok_or(sw::INCORRECT_DATA)?;
-        let mut out = Vec::new();
+        // Allocated for the longest answer, so no reallocation frees a copy of a full
+        // code (`docs/DESIGN.md` §8).
+        let mut out = Vec::with_capacity(calculate_all_capacity(&self.state.creds));
         let mut next: Option<State> = None;
         for (index, cred) in self.state.creds.iter().enumerate() {
             put_tlv(&mut out, tag::NAME, &cred.name);
@@ -901,15 +918,32 @@ fn check_calculation(cred: &Credential, challenge: &[u8]) -> Result<(), u16> {
 
 /// The response object for one code: tag `75` with digits and the full MAC, or tag
 /// `76` with digits and the four truncated bytes (YKOATH §CALCULATE, RFC 4226 §5.3).
-fn code_response(digits: u8, mac: &[u8], truncated: bool) -> Result<(u8, Vec<u8>), u16> {
-    let mut value = vec![digits];
-    if truncated {
-        value.extend_from_slice(&dynamic_truncate(mac).ok_or(sw::UNKNOWN)?);
-        Ok((tag::TRUNCATED, value))
+fn code_response(digits: u8, mac: &[u8], truncated: bool) -> Result<(u8, SecretBytes), u16> {
+    let short;
+    let (tag, code): (u8, &[u8]) = if truncated {
+        short = dynamic_truncate(mac).ok_or(sw::UNKNOWN)?;
+        (tag::TRUNCATED, &short)
     } else {
-        value.extend_from_slice(mac);
-        Ok((tag::RESPONSE, value))
+        (tag::RESPONSE, mac)
+    };
+    // The full response is the whole MAC: built at its final size and wiped when
+    // dropped (`docs/DESIGN.md` §8).
+    let mut value = SecretBytes::zeroed(1 + code.len());
+    if let Some((first, rest)) = value.split_first_mut() {
+        *first = digits;
+        rest.copy_from_slice(code);
     }
+    Ok((tag, value))
+}
+
+/// The most CALCULATE ALL can answer for `creds`: per credential the `71` name and a
+/// full `75` response (digits and the whole MAC), which is longer than the `76`, `77`
+/// and `7C` objects (5, 1 and 1 value bytes against at least 21).
+fn calculate_all_capacity(creds: &[Credential]) -> usize {
+    creds
+        .iter()
+        .map(|cred| tlv_len(cred.name.len()) + tlv_len(1 + cred.alg.output_len()))
+        .sum()
 }
 
 /// Response piece size: Ne of the command, or 256 without Le (ISO/IEC 7816-4 §5.1).
@@ -998,7 +1032,7 @@ mod tests {
         // Give the state an access key and authorize this session at revision 0.
         oath.state.access_key = Some(AccessKey {
             alg: Alg::Sha1,
-            key: vec![1; 16],
+            key: SecretBytes::new(vec![1; 16]),
         });
         oath.session.authorized = Some(oath.revision);
 
@@ -1027,7 +1061,7 @@ mod tests {
         assert_eq!(ok(&put, &mut oath, &mut host), vec![0x90, 0x00]);
         oath.state.access_key = Some(AccessKey {
             alg: Alg::Sha1,
-            key: vec![1; 16],
+            key: SecretBytes::new(vec![1; 16]),
         });
         oath.session.authorized = Some(oath.revision);
 
@@ -1065,6 +1099,44 @@ mod tests {
         for other in [0x20, 0x40, 0x80, 0x84, 0x90, 0xFF] {
             assert_eq!(check_cla(other, true), Err(sw::CLA_NOT_SUPPORTED), "{other:02X}");
             assert_eq!(check_cla(other, false), Err(sw::CLA_NOT_SUPPORTED), "{other:02X}");
+        }
+    }
+
+    /// Full codes are whole MACs (YKOATH §CALCULATE, P2 `00`), which a host can use as
+    /// key-derived secrets, so the answers holding them are built at their final size:
+    /// a buffer whose length equals its starting capacity was never reallocated, so no
+    /// unwiped copy was freed (`docs/DESIGN.md` §8). TOTP credentials without touch are
+    /// the case where `calculate_all_capacity` is exact.
+    #[test]
+    fn code_answers_are_allocated_at_their_final_size() {
+        let mut host = TestHost::new();
+        let mut oath = Oath::new(None, &mut host);
+        for (name, alg) in [(&b"one"[..], Alg::Sha1), (&[b'x'; MAX_NAME_LEN][..], Alg::Sha256), (b"512", Alg::Sha512)] {
+            oath.state.creds.push(Credential {
+                name: name.to_vec(),
+                kind: Kind::Totp,
+                alg,
+                digits: 6,
+                key: SecretBytes::new(vec![0x3C; 32]),
+                props: 0,
+                counter: 0,
+                last_challenge: Vec::new(),
+            });
+        }
+        let challenge = [0, 0, 0, 0, 0x03, 0x5B, 0xB5, 0x2A];
+        let mut apdu = vec![0x00, 0xA4, 0x00, 0x00, 10, 0x74, 8];
+        apdu.extend_from_slice(&challenge);
+        let cmd = Command::parse(&apdu).unwrap();
+        let Ok(Reply::Data(all)) = oath.calculate_all(&cmd, &mut host) else {
+            panic!("CALCULATE ALL failed");
+        };
+        assert_eq!(all.len(), calculate_all_capacity(&oath.state.creds));
+        assert_eq!(all.capacity(), all.len());
+        for index in 0..oath.state.creds.len() {
+            for truncated in [false, true] {
+                let code = oath.calculate_now(index, &challenge, truncated, &mut host).unwrap();
+                assert_eq!(code.capacity(), code.len(), "credential {index}, truncated {truncated}");
+            }
         }
     }
 

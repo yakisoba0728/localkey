@@ -3,7 +3,7 @@
 use std::cmp::Ordering;
 use std::fmt;
 
-use lk_crypto::HashAlg;
+use lk_crypto::{HashAlg, SecretBytes};
 
 /// Credential type: the high nibble of the YKOATH type/algorithm byte
 /// (YKOATH §PUT, "Type").
@@ -83,20 +83,23 @@ impl Alg {
         self.hash().output_len()
     }
 
-    /// HMAC with this algorithm (RFC 2104).
-    pub(crate) fn hmac(self, key: &[u8], data: &[u8]) -> Vec<u8> {
-        lk_crypto::hmac(self.hash(), key, data)
+    /// HMAC with this algorithm (RFC 2104). The MAC is a full code, a VALIDATE proof or
+    /// an expected proof, all derived from a key, so it comes in [`SecretBytes`] and is
+    /// wiped when dropped (`docs/DESIGN.md` §8).
+    pub(crate) fn hmac(self, key: &[u8], data: &[u8]) -> SecretBytes {
+        SecretBytes::new(lk_crypto::hmac(self.hash(), key, data))
     }
 
     /// Key shortening of RFC 2104 §2: a key longer than the block size is replaced by
     /// its hash. HMAC does this itself, so the stored key gives the same MAC as the
     /// key the host sent; shortening on entry only bounds the storage per credential
-    /// (YKOATH clients shorten before PUT for the same reason).
-    pub(crate) fn shorten(self, key: &[u8]) -> Vec<u8> {
+    /// (YKOATH clients shorten before PUT for the same reason). The result is held in
+    /// [`SecretBytes`], wiped when dropped (`docs/DESIGN.md` §8).
+    pub(crate) fn shorten(self, key: &[u8]) -> SecretBytes {
         if key.len() > self.block_size() {
-            lk_crypto::digest(self.hash(), key)
+            SecretBytes::new(lk_crypto::digest(self.hash(), key))
         } else {
-            key.to_vec()
+            SecretBytes::from_slice(key)
         }
     }
 }
@@ -123,8 +126,8 @@ pub(crate) struct Credential {
     pub(crate) alg: Alg,
     /// Number of digits the client should display (RFC 4226 §5.3 "Digit").
     pub(crate) digits: u8,
-    /// HMAC key, shortened per RFC 2104 §2.
-    pub(crate) key: Vec<u8>,
+    /// HMAC key, shortened per RFC 2104 §2; wiped when dropped (`docs/DESIGN.md` §8).
+    pub(crate) key: SecretBytes,
     /// Property bits ([`PROP_ONLY_INCREASING`], [`PROP_REQUIRE_TOUCH`]).
     pub(crate) props: u8,
     /// HOTP: the next moving factor `C` (RFC 4226 §5.2); unused for TOTP.
@@ -162,8 +165,8 @@ impl Credential {
     }
 
     /// `HMAC(K, message)` with this credential's key and algorithm (RFC 4226 §5.3 step 1,
-    /// RFC 6238 §4).
-    pub(crate) fn hmac(&self, message: &[u8]) -> Vec<u8> {
+    /// RFC 6238 §4), wiped when dropped.
+    pub(crate) fn hmac(&self, message: &[u8]) -> SecretBytes {
         self.alg.hmac(&self.key, message)
     }
 }
@@ -246,6 +249,23 @@ mod tests {
     }
 
     #[test]
+    fn credential_debug_hides_the_key() {
+        let cred = Credential {
+            name: b"n".to_vec(),
+            kind: Kind::Totp,
+            alg: Alg::Sha1,
+            digits: 6,
+            key: SecretBytes::new(vec![0xC3; 20]),
+            props: 0,
+            counter: 0,
+            last_challenge: Vec::new(),
+        };
+        let text = format!("{cred:?}");
+        assert!(text.contains("<redacted>"), "{text}");
+        assert!(!text.contains("195") && !text.to_lowercase().contains("c3"), "{text}");
+    }
+
+    #[test]
     fn challenge_comparison_is_numeric() {
         assert_eq!(compare_challenges(&[0, 0, 1], &[1]), Ordering::Equal);
         assert_eq!(compare_challenges(&[1, 0], &[0xff]), Ordering::Greater);
@@ -263,7 +283,7 @@ mod tests {
             assert_eq!(short.len(), alg.output_len());
             assert_eq!(alg.hmac(&short, b"m"), alg.hmac(&long, b"m"));
             let exact = vec![0x5a; alg.block_size()];
-            assert_eq!(alg.shorten(&exact), exact);
+            assert_eq!(alg.shorten(&exact).as_slice(), exact.as_slice());
         }
     }
 }

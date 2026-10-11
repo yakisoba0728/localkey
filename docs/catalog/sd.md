@@ -82,7 +82,7 @@ Model decisions that apply throughout (sources in the crate docs):
   live in the one `SecurityDomain`, so "across clients" is the same object. Multiplexing
   several host connections onto it is `lk-device`/program-phase work.
 
-Totals: 98 tested, 9 intentional differences, 13 deferred (120 bullets).
+Totals: 100 tested, 9 intentional differences, 11 deferred (120 bullets).
 
 ## SCP03
 
@@ -214,8 +214,8 @@ Totals: 98 tested, 9 intentional differences, 13 deferred (120 bullets).
 - malformed DER uses the initial CA retry; duplicate extensions malformed: tested: `certificate_chain_checks`
 - optional-root/intermediate/direct-leaf SDK interoperability; policy-free profile preserved: tested: `scp11a_with_full_omitted_root_and_direct_chains`
 - software 6982/date/critical role/qualifier/budget model; physical statuses pending: intentional difference: GP role policies are not mapped (see SecurityDomain_profile), and dates are only fully checked when the program lends a wall clock (`Host::unix_time`): without one the engine knows only the earliest possible current time (the profile's certificate start date), so expiry before it is refused but a notBefore in the future passes; `6982` for expired and (with a clock) not-yet-valid certificates, policy failures, qualifiers, critical extensions and the eight-certificate budget is tested by `certificate_chain_checks`, `pso_validity_follows_a_lent_wall_clock`, `cert::tests::expiry_is_checked_against_the_earliest_current_time`
-- protected PSO keeps messaging and the PIV PIN; plaintext in a channel rejected before dispatch and revokes authorization: deferred: the PIV PIN is lk-device/lk-piv state, and no device test runs a protected PSO followed by PIV commands; protected PSO keeping the session and plaintext revoking the OCE are tested by `protected_handoff_in_every_combination`, `plaintext_ends_scp11_sessions_before_dispatch`
-- PIV signatures verified after protected PSO: deferred: lk-device/lk-piv integration (no device test runs SCP11 PSO and then PIV signing; SCP03-wrapped PIV signing is tested in lk-device `scenario_ccid::scp03_then_wrapped_piv_commands`)
+- protected PSO keeps messaging and the PIV PIN; plaintext in a channel rejected before dispatch and revokes authorization: tested: lk-device `tests/secure_channel_scp11.rs::protected_pso_keeps_secure_messaging_and_the_piv_pin_until_plaintext_ends_the_channel`, `protected_handoff_in_every_combination`, `plaintext_ends_scp11_sessions_before_dispatch` (through `Device`, for SCP11a and SCP11c opened with plaintext PSO and MUTUAL AUTHENTICATE while PIV is selected: the PIN verified inside the channel stays verified, and every later wrapped exchange passes its R-MAC check, after a valid protected PSO, after a failed one (`6982`, returned bare), after the complete chain inside the channel and after the protected MUTUAL AUTHENTICATE that uses it; a plaintext VERIFY with a wrong PIN is then refused with `6982` without using a PIV try, a wrapped command reaches PIV with its secure-messaging bits (`6882`) and the PIN verification is gone)
+- PIV signatures verified after protected PSO: tested: lk-device `tests/secure_channel_scp11.rs::piv_signatures_verify_after_valid_failed_and_complete_protected_pso`, `scenario_ccid::scp03_then_wrapped_piv_commands` (wrapped GENERAL AUTHENTICATE with a P-256 key generated in PIV slot `9A`, verified against the GENERATE point right after the SCP11a or SCP11c channel opens, after a valid, a failed and a complete protected PSO, and under the session the protected MUTUAL AUTHENTICATE opened; after a plaintext command ends the channel a plaintext signature needs the PIN again; fixed test scalars only, no real key or manufacturer identity; the same flow under SCP03 is the second test)
 
 ## SecurityDomain_plaintext
 

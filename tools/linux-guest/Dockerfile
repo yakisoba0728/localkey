@@ -88,18 +88,34 @@ RUN set -eux; \
 
 ########################################################################################
 # guest: the userland the tests run in, plus the trimmed modules.
+#
+# vsmartcard-vpcd is the vpcd IFD handler for pcscd (tests/vpcd.sh, crates/lk-vpcd): the
+# package installs the driver and a reader.conf entry, so every pcscd started in the guest
+# loads it and shows two "Virtual PCD" slots, listening for a card on TCP 35963 and 35964
+# (0x8C7B + slot). The check after the install fails the build if that entry or its driver
+# is missing or names another port. The tests change FRIENDLYNAME themselves where a client
+# needs it (ykman: see tests/vpcd.sh), so the image keeps the package's file as shipped.
+# python3-pyscard (a dependency of yubikey-manager) is named because tests use it directly.
 FROM ${UBUNTU} AS guest
 ENV DEBIAN_FRONTEND=noninteractive
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
         python3 python3-fido2 fido2-tools \
-        pcscd libccid pcsc-tools opensc yubikey-manager \
+        pcscd libccid pcsc-tools opensc yubikey-manager python3-pyscard vsmartcard-vpcd \
         gnupg scdaemon \
         usbutils kmod udev procps evtest busybox-static strace; \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/* /var/log/apt /var/log/dpkg.log \
         /usr/share/doc/* /usr/share/man/* /usr/share/info/* /usr/share/locale/* \
         /usr/share/lintian /usr/share/bash-completion /usr/share/zsh
+RUN set -eux; \
+    conf=/etc/reader.conf.d/vpcd; \
+    cat "$conf"; \
+    grep -q -E '^DEVICENAME[[:space:]]+/dev/null:0x8C7B[[:space:]]*$' "$conf"; \
+    lib="$(sed -n 's/^LIBPATH[[:space:]]*//p' "$conf")"; \
+    test -f "$lib"; \
+    ls -l "$lib"; \
+    dpkg-query -W vsmartcard-vpcd pcscd
 COPY --from=kernel /out/modules/ /
 RUN set -eux; \
     k="$(ls /usr/lib/modules)"; \

@@ -1,8 +1,9 @@
 # Linux test guest
 
 A disposable arm64 Linux guest for exercising `localkeyd`'s Linux transports (`lk-uhid`,
-`lk-gadget`) against a real kernel, with real host-side clients (python-fido2, libfido2,
-ykman, pcscd + libccid, OpenSC, GnuPG) as black boxes. The guest is QEMU (TCG, no KVM) inside
+`lk-gadget`) against a real kernel and its PC/SC transport (`lk-vpcd`) against the real
+vsmartcard `vpcd`, with real host-side clients (python-fido2, libfido2, ykman, pcscd +
+libccid, pcsc-tools, OpenSC, GnuPG, pyscard) as black boxes. The guest is QEMU (TCG, no KVM) inside
 a Docker container; it boots from a single initramfs, runs one test script, prints the result
 on the serial console and powers off.
 
@@ -16,7 +17,10 @@ The guest exists so that nothing touches the machine it runs on.
   hidraw, usbfs and pcscd all live in the guest. The host's USB/HID/PC/SC stack, keyboard,
   keychain, kernel and any physically inserted security key are out of reach.
 - **No network while a guest runs.** `guest-run.sh` starts the container with
-  `--network none`, and QEMU gets `-nic none` (no NIC at all). The network is used only while
+  `--network none`, and QEMU gets `-nic none` (no NIC at all). Inside the guest `/init`
+  brings up the loopback interface only, for `lk-vpcd`'s TCP connection to vpcd on
+  `127.0.0.1` (vpcd listens on the guest's `0.0.0.0:35963`; with no NIC nothing can reach
+  it from outside the guest). The network is used only while
   building the images (`docker build`: apt and rustup downloads). The `localkeyd` build runs
   offline (`--network none`, `cargo --offline` against a vendored crate directory).
 - **Bounded resources.** Every container is `--cpus 2 --memory 6g`; the guest is
@@ -34,7 +38,7 @@ The guest exists so that nothing touches the machine it runs on.
 
 | File | Purpose |
 | --- | --- |
-| `Dockerfile` | `localkey-guest-build:1`: QEMU, the kernel `Image`, the guest root filesystem `base.cpio.gz` |
+| `Dockerfile` | `localkey-guest-build:1`: QEMU, the kernel `Image`, the guest root filesystem `base.cpio.gz` (with `vsmartcard-vpcd`; the build fails if its reader entry or driver is missing) |
 | `extract-image.py` | Ubuntu's arm64 `vmlinuz` (EFI stub + zstd zboot) to a raw `Image` for `qemu -kernel` |
 | `Dockerfile.rust` | `localkey-rust:1.98-clippy`: `rust:1.98-slim` plus clippy (base of the musl image; also runs the offline Linux test and clippy pass) |
 | `Dockerfile.musl` | `localkey-rust-musl:1`: the project's Rust image plus `aarch64-unknown-linux-musl` |
@@ -45,7 +49,7 @@ The guest exists so that nothing touches the machine it runs on.
 | `guest/init` | PID 1 of the guest |
 | `guest/lib.sh` | helpers for test scripts (start/stop/kill/resume `localkeyd`, hex dumps, waits, hidraw lookup) |
 | `guest/py/*.py` | Python helpers for test scripts, copied to `/localkey/py/` (see below) |
-| `tests/*.sh` | test scripts; `smoke.sh` is the smoke test, `uhid.sh` the uhid scenario, `gadget.sh` the gadget scenario |
+| `tests/*.sh` | test scripts; `smoke.sh` is the smoke test, `uhid.sh` the uhid scenario, `gadget.sh` the gadget scenario, `vpcd.sh` the vpcd scenario |
 
 ## Building
 
@@ -97,6 +101,7 @@ docker run --rm --network none --cpus 2 --memory 6g --user "$(id -u):$(id -g)" \
 tools/linux-guest/guest-run.sh smoke.sh                     # a script in tests/
 tools/linux-guest/guest-run.sh -t 600 path/to/mytest.sh     # any script
 tools/linux-guest/guest-run.sh -k loglevel=7 -f some/dir smoke.sh
+tools/linux-guest/guest-run.sh -t 1500 -f tools/service vpcd.sh   # the service examples for step E
 ```
 
 - `-t SECONDS` hard timeout of the whole run (default 900; the test gets 60 s less).
@@ -113,7 +118,9 @@ timeout, 125 if the guest never reached the end marker.
 - Root filesystem: Ubuntu 26.04 arm64 userland in RAM (an initramfs; nothing persists).
   `/localkey/bin/localkeyd`, `/localkey/lib.sh`, `/localkey/tests/`, `/localkey/extra/`.
 - `/init` mounts proc, sysfs, devtmpfs, devpts, tmpfs (`/run`, `/tmp`, `/dev/shm`), ConfigFS
-  (`/sys/kernel/config`) and debugfs (`/sys/kernel/debug`, for usbmon), loads `uhid`,
+  (`/sys/kernel/config`) and debugfs (`/sys/kernel/debug`, for usbmon), brings `lo` up
+  (`busybox ifconfig`; the image has no iproute2, and a connect to `127.0.0.1` fails with
+  `ENETUNREACH` while `lo` is down), loads `uhid`,
   `dummy_hcd`, `libcomposite`, `usb_f_fs`, `usbhid`, `hid_generic`, `usbmon`, starts
   `systemd-udevd` (so hidraw/hiddev/input nodes get their udev properties and libudev
   enumeration works for libfido2, pcscd and ykman), then runs the test with `bash` from
@@ -155,9 +162,26 @@ timeout, 125 if the guest never reached the end marker.
     FunctionFS gadget of its own with chosen descriptor flags (default
     `FUNCTIONFS_VIRTUAL_ADDR`) and prints the endpoint files, what the host sees and the
     kernel log, then removes it.
-- Userland: python3 with python-fido2, fido2-tools (libfido2), pcscd + libccid, pcsc-tools,
-  OpenSC, yubikey-manager, GnuPG + scdaemon, usbutils, kmod, udev, procps, evtest, strace,
-  busybox-static.
+  - `pcsc_big_apdu.py READER SIZE`: one extended SELECT of SIZE bytes through pcscd with
+    pyscard (answered `6A82`), then SELECT OATH (`9000`); ykman and OpenSC never send an
+    APDU longer than one CCID message, pyscard does.
+  - `certs.py large OUT-PEM OUT-DER MIN MAX` (a self-signed certificate of MIN..MAX DER
+    bytes, padded with subjectAltName names) and `certs.py verify PEM` (checks a
+    self-signed certificate's signature, e.g. one a PIV key signed on the device).
+  - `yk_connections.py`: what ykman reaches through SmartCardConnection, OtpConnection and
+    FidoConnection separately (`ykman.device.list_all_devices`), one line each, with the
+    serial; ykman's log records are counted, not printed.
+- pcscd is not started by `/init`; the tests start it. Every pcscd in the guest loads the
+  vpcd driver (`/etc/reader.conf.d/vpcd`, as packaged: `FRIENDLYNAME "Virtual PCD"`,
+  `DEVICENAME /dev/null:0x8C7B`), so `opensc-tool -l` lists "Virtual PCD 00 00" and
+  "Virtual PCD 00 01" (no card unless something connects to vpcd) before any libccid
+  reader. OpenSC and GnuPG pick the reader with a card and `gadget.sh` names its reader
+  `yubico`, so the gadget scenario is unaffected.
+- The guest's clock starts at 1970-01-01 (no RTC is read): TOTP checks compute the
+  expected codes with the guest's own `time.time()`, and a step before 0 does not exist.
+- Userland: python3 with python-fido2 and pyscard, fido2-tools (libfido2), pcscd + libccid,
+  vsmartcard-vpcd, pcsc-tools, OpenSC, yubikey-manager, GnuPG + scdaemon, usbutils, kmod,
+  udev (with systemd's `systemd-analyze`), procps, evtest, strace, busybox-static.
 
 ## The uhid scenario (`tests/uhid.sh`)
 
@@ -218,6 +242,72 @@ controller. Every step prints `STEP <n> PASS` or `STEP <n> FAIL`; the exit code 
 any failed. What it established is recorded in `crates/lk-gadget/src/lib.rs` ("Settled on
 a real kernel").
 
+## The vpcd scenario (`tests/vpcd.sh`)
+
+`guest-run.sh -t 1500 -f tools/service vpcd.sh` (about 3 minutes) runs `localkeyd run
+--transport vpcd` and `--transport uhid,vpcd` with `--profile yubikey-5c-nano-5.7.4`
+against Ubuntu's vsmartcard-vpcd 3.3 and pcsc-lite 2.4.1 in the guest, with real host
+software, tmpfs state directories and touches through the control socket:
+
+1. insertion: `localkeyd` first (nothing listens yet: one "cannot connect" line, retried
+   every second, `attached=false`), then pcscd; "Virtual PCD 00 00" with a card in
+   `opensc-tool -l` and `pcsc_scan`, the profile's ATR (`opensc-tool -a`), vpcd listening
+   on `0.0.0.0:35963` and the card's connection from `127.0.0.1` (`/proc/net/tcp`),
+   `attached=true`;
+2. CCID clients: the reader renamed to "Yubico YubiKey OTP+FIDO+CCID" (pcscd restarted; the
+   card leaves and comes back by itself), ykman info, OATH with touch (the code checked
+   against RFC 6238), PIV key and certificate generation (the device's signature
+   verified), `ykman openpgp info`, `gpg --card-status` (scdaemon through pcscd);
+3. large transfers: a 2.9 KB PIV certificate imported and exported byte for byte (one
+   APDU of about 2930 bytes each way), an extended APDU of 4007 bytes with pyscard (one
+   vpcd message, more than one CCID message);
+4. a PIV key with `--touch-policy ALWAYS` signs a certificate once `localkeyd ctl tap`
+   touches (sent when `ctl status` says `presence=waiting`); the signature verifies;
+5. `localkeyd ctl shutdown`: prints `ok`, then `stopped`, exits 0 once the daemon has
+   exited 0; the card leaves the reader (pcscd logs "Card Removed"), the sockets are
+   removed;
+6. `--transport uhid,vpcd`: two hidraw nodes (1050:0407) and the card; `fido2-token -L/-I`,
+   `fido2-cred -M/-V` through UHID; ykman reaches the same serial through
+   SmartCardConnection, OtpConnection and FidoConnection (`py/yk_connections.py`);
+   `ykman list` shows one "YubiKey 5C Nano (5.7.4) [OTP+FIDO+CCID]", `ykman info` all three
+   interfaces;
+7. CCID off and on with `ykman config usb` (REBOOT): disabling OATH, PIV, OPENPGP and
+   HSMAUTH over CCID removes the card (the transport closes its connection and makes no
+   new one) and turns the HID devices into 1050:0403; enabling them over HID brings the
+   card back (pcscd logs the removal and the insertion);
+8. CCID off and on with `ykman config mode` (no REBOOT on a YubiKey 5): nothing changes
+   until `localkeyd ctl power-cycle`, the virtual re-plug, after which the device
+   re-enumerates with the new interfaces;
+9. `kill -9` and restart: the hidraw nodes and the card go, come back, the state is kept
+   (OATH account, configuration, the FIDO credential of step 6);
+10. `localkeyd ctl shutdown` with `uhid,vpcd`: the HID devices destroyed, the card out,
+    exit 0;
+
+then E: `systemd-analyze verify` of `tools/service/localkeyd-uhid-vpcd.service` (with
+`/usr/local/bin/localkeyd` linked to the guest's binary) and `udevadm verify` of
+`70-localkey.rules`, when `-f tools/service` is given. Every step prints `STEP <n> PASS` or
+`STEP <n> FAIL`; the exit code is 1 if any failed. The protocol facts the real vpcd
+settled are in `crates/lk-vpcd/src/lib.rs` ("Checked against the real vpcd").
+
+Found with the real clients (none of them a transport defect):
+
+- **ykman needs the reader name.** ykman treats only a reader whose name contains "yubico
+  yubikey" as a YubiKey, and takes the USB interfaces it assumes from the name
+  (`_pid_from_name`, `ykman/pcsc/__init__.py`). With vpcd's packaged name every ykman
+  command fails with "Failed to connect to YubiKey."; the script sets `FRIENDLYNAME "Yubico
+  YubiKey OTP+FIDO+CCID"` in `/etc/reader.conf.d/vpcd` and restarts pcscd. The image keeps
+  the packaged file.
+- **The second slot.** vpcd always offers two slots; ykman opens the empty
+  "... 00 01" too and prints "WARNING: Failed opening device" for it. Harmless.
+- **ykman counts devices by PID without opening them** (`scan_devices`,
+  `ykman/device.py`). With `uhid,vpcd` and all interfaces enabled, the HID PID (0407) and
+  the reader name's PID agree and ykman sees one key. With CCID disabled the HID devices
+  are 0403 while the reader's static name still says 0407, so a plain `ykman info` says
+  "Multiple YubiKeys detected"; `ykman --device SERIAL ...` works.
+- **ykman 5.8's `config usb` has no CCID switch** (it takes applications); the CCID
+  interface goes when every CCID application is disabled over USB. `ykman config mode`
+  writes without REBOOT and asks for a re-plug, exactly as on a YubiKey 5.
+
 ## How it is put together, and why
 
 - **Kernel**: Ubuntu's `linux-image-<abi>-generic` for arm64 (7.0.0-38 when this was
@@ -245,6 +335,11 @@ a real kernel").
   `/dev/console` node) appended to `base.cpio.gz`; the kernel unpacks concatenated
   archives in order, so the overlay wins. Changing a test or `localkeyd` therefore needs no
   image rebuild.
+- **vpcd**: Ubuntu's `vsmartcard-vpcd` package in the guest stage. It installs the IFD
+  handler (`/usr/lib/pcsc/drivers/serial/libifdvpcd.so`) and `/etc/reader.conf.d/vpcd`
+  (`DEVICENAME /dev/null:0x8C7B`, `CHANNELID 0x8C7B`: vpcd's port 35963, slot *n* on
+  35963 + *n*), which pcscd reads at start; a `RUN` after the install checks both, so a
+  package that moved them fails the build instead of a test.
 - **localkeyd**: a static `aarch64-unknown-linux-musl` release build, so it runs whatever
   the guest's C library.
 - **Console**: QEMU's `-nographic` serial (`ttyAMA0`) on stdout, carriage returns removed
@@ -252,6 +347,6 @@ a real kernel").
 
 ## Timing (Apple Silicon host, TCG)
 
-A smoke run takes about 20–25 s wall time: the kernel reaches `/init` after about 6–8 s
+A smoke run takes about 16–25 s wall time: the kernel reaches `/init` after about 6–8 s
 (about 4.5 s of that is unpacking the initramfs), udev settles about 5 s later, and the smoke
 test itself takes about 5–8 s.

@@ -6,7 +6,7 @@
 use core::fmt;
 use core::ops::{Deref, DerefMut};
 
-use zeroize::Zeroizing;
+use zeroize::{Zeroize, Zeroizing};
 
 use crate::ct_eq;
 
@@ -85,6 +85,23 @@ impl fmt::Debug for SecretBytes {
     }
 }
 
+/// Overwrite `bytes` with zeros through `zeroize` (volatile writes plus a compiler
+/// fence, so the stores are not optimised away even though the buffer is about to be
+/// released). For secrets that live in fixed-size arrays or borrowed buffers, where
+/// [`SecretBytes`] does not fit; protocol crates may not call `zeroize` themselves
+/// (docs/DESIGN.md §8).
+pub fn wipe(bytes: &mut [u8]) {
+    bytes.zeroize();
+}
+
+/// Overwrite every byte of `buf`'s allocation with zeros, the spare capacity beyond its
+/// length included, and leave it empty (length 0, capacity kept). `zeroize`'s `Vec`
+/// implementation does exactly this. Use it before a buffer that held a secret is
+/// dropped, cleared or reused.
+pub fn wipe_vec(buf: &mut Vec<u8>) {
+    buf.zeroize();
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -113,5 +130,24 @@ mod tests {
         let text = format!("{:?}", SecretBytes::new(vec![0xAB; 4]));
         assert_eq!(text, "SecretBytes(4 bytes, <redacted>)");
         assert!(!text.contains("171"));
+    }
+
+    #[test]
+    fn wipe_zeroes_a_slice_in_place() {
+        let mut key = [0xA5u8; 24];
+        wipe(&mut key[4..]);
+        assert_eq!(&key[..4], &[0xA5; 4]);
+        assert!(key[4..].iter().all(|&b| b == 0));
+    }
+
+    #[test]
+    fn wipe_vec_empties_the_buffer_and_keeps_its_allocation() {
+        let mut buf = Vec::with_capacity(64);
+        buf.extend_from_slice(&[0x5Au8; 40]);
+        buf.truncate(10);
+        let capacity = buf.capacity();
+        wipe_vec(&mut buf);
+        assert!(buf.is_empty());
+        assert_eq!(buf.capacity(), capacity, "the allocation is kept for reuse");
     }
 }

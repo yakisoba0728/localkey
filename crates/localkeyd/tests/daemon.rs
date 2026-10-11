@@ -229,6 +229,107 @@ fn closing_stdin_stops_the_daemon_cleanly_and_removes_both_sockets() -> TestResu
     Ok(())
 }
 
+/// `docs/PROGRAM.md` "Clean shutdown from the control socket": `ctl shutdown` gets `ok`,
+/// then the daemon does what `--exit-on-stdin-eof` does at EOF, tells `ctl` `stopped` and
+/// exits 0. It works without `--exit-on-stdin-eof` and with stdin at `/dev/null`, as under
+/// a supervisor, and `ctl` returns only once the shutdown is done: both sockets are gone by
+/// then and the wire client has been unplugged.
+#[test]
+fn ctl_shutdown_stops_a_supervised_daemon_cleanly_and_removes_both_sockets() -> TestResult {
+    let dir = TestDir::new();
+    keygen(&dir.key())?;
+    let key = dir.key();
+    let mut daemon = Daemon::start_supervised(&dir, &["--key-file", key.to_str().ok_or("key path")?, "-v"])?;
+    let mut host = Host::connect(&dir)?;
+    assert!(dir.wire().exists() && dir.control().exists());
+
+    let output = ctl(&dir.control(), &["shutdown"])?;
+    assert_eq!(output.status.code(), Some(0), "{}", text(&output.stderr));
+    assert_eq!(text(&output.stdout), "ok\nstopped\n", "accepted, then stopped cleanly");
+    assert!(!dir.wire().exists(), "the wire socket was removed before ctl returned");
+    assert!(!dir.control().exists(), "the control socket was removed before ctl returned");
+    let unplugged = loop {
+        match host.client.recv(WAIT) {
+            Ok(Some(_)) => {}
+            Ok(None) => break false,
+            Err(_) => break true,
+        }
+    };
+    assert!(unplugged, "the wire client was disconnected");
+
+    let deadline = Instant::now() + Duration::from_secs(20);
+    while !daemon.has_exited()? {
+        assert!(Instant::now() < deadline, "the daemon still runs well after ctl returned:\n{}", daemon.log());
+        std::thread::sleep(Duration::from_millis(20));
+    }
+    let status = daemon.wait_exit()?;
+    assert_eq!(status.code(), Some(0), "{}", daemon.log());
+    let log = daemon.log();
+    assert!(log.contains("localkeyd: shutdown requested on the control socket; shutting down"), "{log}");
+    assert!(log.contains("localkeyd: stopped"), "{log}");
+    assert!(!log.contains("stdin closed"), "{log}");
+
+    // The state is kept: the next start serves the same serial.
+    let serial = persisted_serial(&dir.state())?;
+    let _again = Daemon::with_key(&dir, &[])?;
+    let output = ctl(&dir.control(), &["status"])?;
+    assert_eq!(status_value(&text(&output.stdout), "serial"), Some(serial));
+    Ok(())
+}
+
+/// The same shutdown with `--exit-on-stdin-eof` given: whichever comes first stops the
+/// daemon, and the other one then finds nothing to do.
+#[test]
+fn ctl_shutdown_also_stops_a_daemon_that_watches_stdin() -> TestResult {
+    let dir = TestDir::new();
+    keygen(&dir.key())?;
+    let mut daemon = Daemon::with_key(&dir, &[])?;
+    let output = ctl(&dir.control(), &["shutdown"])?;
+    let reply = (output.status.code(), text(&output.stdout));
+    assert_eq!(reply, (Some(0), "ok\nstopped\n".to_owned()), "{}", text(&output.stderr));
+    assert_eq!(daemon.stop()?.code(), Some(0), "{}", daemon.log());
+    assert!(!dir.wire().exists() && !dir.control().exists());
+    let output = ctl(&dir.control(), &["shutdown"])?;
+    assert_eq!(output.status.code(), Some(1), "no daemon to stop: {}", text(&output.stderr));
+    Ok(())
+}
+
+/// `ctl shutdown` exits 0 only when the daemon reports a clean stop (`stopped` after `ok`).
+/// A daemon that fails after accepting the request reports `error <reason>`, and one that
+/// ends without a word after `ok` (killed, aborted) cannot have stopped cleanly: `ctl`
+/// exits 1 for both. (Found by review: `ok` and the close alone made `ctl` exit 0 while
+/// the daemon exited 1 or 2.) The daemon's side is played by a fake control socket.
+#[test]
+fn ctl_shutdown_exits_0_only_when_the_daemon_reports_a_clean_stop() -> TestResult {
+    use std::io::{BufRead, BufReader, Write};
+    use std::os::unix::net::UnixListener;
+
+    let dir = TestDir::new();
+    let path = dir.join("fc");
+    for (reply, code, stderr) in [
+        ("ok\nstopped\n", 0, ""),
+        ("ok\nerror the runner stopped unexpectedly\n", 1, ""),
+        ("ok\n", 1, "the daemon accepted the shutdown but ended without reporting a clean stop"),
+    ] {
+        let _ = fs::remove_file(&path);
+        let listener = UnixListener::bind(&path)?;
+        let daemon = std::thread::spawn(move || -> std::io::Result<String> {
+            let (stream, _) = listener.accept()?;
+            let mut request = String::new();
+            BufReader::new(&stream).read_line(&mut request)?;
+            (&stream).write_all(reply.as_bytes())?;
+            Ok(request)
+        });
+        let output = ctl(&path, &["shutdown"])?;
+        let request = daemon.join().map_err(|_| "the fake daemon panicked")??;
+        assert_eq!(request, "shutdown\n");
+        assert_eq!(output.status.code(), Some(code), "{reply:?}: {}", text(&output.stderr));
+        assert_eq!(text(&output.stdout), reply, "every line is printed");
+        assert!(text(&output.stderr).contains(stderr), "{reply:?}: {}", text(&output.stderr));
+    }
+    Ok(())
+}
+
 #[test]
 fn a_key_command_supplies_the_key() -> TestResult {
     let dir = TestDir::new();
@@ -252,6 +353,14 @@ fn usage_errors_exit_with_code_2() -> TestResult {
         &["run", "--state", "/nonexistent", "--key-file", "/k", "--transport", "gadget"],
         &["run", "--state", "/nonexistent", "--key-file", "/k", "--transport", "uhid", "--wire", "/w"],
         &["run", "--state", "/nonexistent", "--key-file", "/k", "--udc", "dummy_udc.0"],
+        &["run", "--state", "/nonexistent", "--key-file", "/k", "--transport", "wire,vpcd"],
+        &["run", "--state", "/nonexistent", "--key-file", "/k", "--transport", "uhid,uhid"],
+        &["run", "--state", "/nonexistent", "--key-file", "/k", "--transport", "uhid,vpcd,gadget"],
+        &["run", "--state", "/nonexistent", "--key-file", "/k", "--transport", "uhid,"],
+        &["run", "--state", "/nonexistent", "--key-file", "/k", "--transport", "vpcd", "--wire", "/w"],
+        &["run", "--state", "/nonexistent", "--key-file", "/k", "--vpcd-addr", "127.0.0.1:35963"],
+        &["run", "--state", "/nonexistent", "--key-file", "/k", "--transport", "vpcd", "--vpcd-addr", "nowhere"],
+        &["ctl", "--control", "/nonexistent", "shutdown", "now"],
     ] {
         let output = localkeyd(args.iter().copied())?;
         assert_eq!(output.status.code(), Some(2), "{args:?}");
@@ -449,8 +558,9 @@ fn the_linux_transports_are_refused_elsewhere_before_the_state_directory_is_touc
     let uhid = dir.join("uhid");
     let configfs = dir.join("cfg");
     let ffs = dir.join("ffs");
+    let uhid = uhid.to_str().ok_or("uhid path")?;
     let lines = [
-        vec!["--key-file", missing_key, "--transport", "uhid", "--uhid-path", uhid.to_str().ok_or("uhid path")?],
+        vec!["--key-file", missing_key, "--transport", "uhid", "--uhid-path", uhid],
         vec![
             "--key-file",
             missing_key,
@@ -464,8 +574,10 @@ fn the_linux_transports_are_refused_elsewhere_before_the_state_directory_is_touc
             ffs.to_str().ok_or("ffs path")?,
             "-vv",
         ],
+        // `docs/PROGRAM.md` "Transport combinations": uhid in the set still needs Linux.
+        vec!["--key-file", missing_key, "--transport", "vpcd,uhid", "--uhid-path", uhid, "--vpcd-addr", "127.0.0.1:1"],
     ];
-    for (args, transport) in lines.iter().zip(["uhid", "gadget"]) {
+    for (args, transport) in lines.iter().zip(["uhid", "gadget", "uhid,vpcd: uhid"]) {
         let mut daemon = Daemon::spawn(&dir, args)?;
         let status = daemon.wait_exit()?;
         assert_eq!(status.code(), Some(2), "{}", daemon.log());

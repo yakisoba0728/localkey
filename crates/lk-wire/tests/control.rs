@@ -4,20 +4,59 @@
 mod common;
 
 use std::fs;
-use std::io::{BufRead, BufReader, Write};
+use std::io::{self, BufRead, BufReader, Read, Write};
 use std::net::Shutdown;
 use std::os::unix::fs::{FileTypeExt, PermissionsExt};
-use std::sync::mpsc;
+use std::os::unix::net::UnixStream;
+use std::sync::mpsc::{self, Receiver};
+use std::sync::{Arc, Mutex, PoisonError};
 use std::thread;
 use std::time::Duration;
 
 use common::*;
 use lk_device::{BusEvent, TouchEdge};
 use lk_run::{Command, HostInput, TAP_LONG_MS, TAP_SHORT_MS};
-use lk_wire::{ControlServer, WireError};
+use lk_wire::{ControlServer, ShutdownHook, ShutdownRequest, WireError};
 
 fn serve(dir: &TestDir, runner: &FakeRunner) -> Result<ControlServer, WireError> {
     ControlServer::bind(&dir.join("c"), runner.sender())
+}
+
+/// A server whose shutdown hook sends every [`ShutdownRequest`] to the returned receiver.
+fn serve_with_shutdown(
+    dir: &TestDir,
+    runner: &FakeRunner,
+) -> Result<(ControlServer, Receiver<ShutdownRequest>), WireError> {
+    let (requests, received) = mpsc::channel();
+    let hook: ShutdownHook = Arc::new(move |request| {
+        let _ = requests.send(request);
+    });
+    Ok((ControlServer::bind_with_shutdown(&dir.join("c"), runner.sender(), hook)?, received))
+}
+
+/// Read one line (up to and including `\n`) without buffering past it.
+fn read_line(stream: &mut UnixStream) -> io::Result<String> {
+    let mut line = Vec::new();
+    let mut byte = [0; 1];
+    while line.last() != Some(&b'\n') {
+        if stream.read(&mut byte)? == 0 {
+            break;
+        }
+        line.push(byte[0]);
+    }
+    Ok(String::from_utf8_lossy(&line).into_owned())
+}
+
+/// Whether the stream stays open and silent for [`QUIET`]: a read times out.
+fn stays_open(stream: &mut UnixStream) -> io::Result<bool> {
+    stream.set_read_timeout(Some(QUIET))?;
+    let mut byte = [0; 1];
+    let open = match stream.read(&mut byte) {
+        Err(error) => matches!(error.kind(), io::ErrorKind::WouldBlock | io::ErrorKind::TimedOut),
+        Ok(_) => false,
+    };
+    stream.set_read_timeout(Some(WAIT))?;
+    Ok(open)
 }
 
 #[test]
@@ -321,5 +360,171 @@ fn many_requests_in_a_row_are_each_served() -> TestResult {
         assert!(control(server.path(), "status\n")?.ends_with("\nok\n"));
         assert_eq!(runner.next(), Seen::Status);
     }
+    Ok(())
+}
+
+/// `docs/PROGRAM.md` "Clean shutdown from the control socket": `shutdown` replies `ok`, and
+/// the owner gets the request; the connection stays open until the owner drops it, so the
+/// client can wait for the shutdown to finish. Nothing reaches the runner.
+#[test]
+fn shutdown_replies_ok_and_hands_the_open_connection_to_the_hook() -> TestResult {
+    let dir = TestDir::new();
+    let runner = FakeRunner::plain();
+    let (server, requests) = serve_with_shutdown(&dir, &runner)?;
+    let mut stream = raw_connect(server.path())?;
+    stream.write_all(b"shutdown\n")?;
+    assert_eq!(read_line(&mut stream)?, "ok\n");
+    let request = requests.recv_timeout(WAIT)?;
+    assert_eq!(format!("{request:?}"), "ShutdownRequest { .. }");
+    assert!(stays_open(&mut stream)?, "the connection is held while the owner shuts down");
+    request.finish();
+    assert_closed(&mut stream);
+    runner.assert_quiet();
+    assert!(requests.try_recv().is_err(), "one request, one call");
+    Ok(())
+}
+
+/// The owner ends a held request with how its shutdown went: `stopped` for a clean stop,
+/// `error <reason>` when it failed after the `ok`, and then the connection closes. (Found
+/// by review: with the close alone, a client could not tell a clean stop from a daemon
+/// that failed after accepting the request.) A reason with line breaks stays one line.
+#[test]
+fn a_held_shutdown_ends_with_stopped_or_with_the_error_that_followed_the_ok() -> TestResult {
+    let dir = TestDir::new();
+    let runner = FakeRunner::plain();
+    let (server, requests) = serve_with_shutdown(&dir, &runner)?;
+    let mut clean = raw_connect(server.path())?;
+    clean.write_all(b"shutdown\n")?;
+    assert_eq!(read_line(&mut clean)?, "ok\n");
+    let stopped = requests.recv_timeout(WAIT)?;
+    let mut failing = raw_connect(server.path())?;
+    failing.write_all(b"shutdown\n")?;
+    assert_eq!(read_line(&mut failing)?, "ok\n");
+    let failed = requests.recv_timeout(WAIT)?;
+    server.close();
+
+    assert!(stays_open(&mut clean)?, "nothing more until the owner is done");
+    stopped.stopped();
+    assert_eq!(read_line(&mut clean)?, "stopped\n");
+    assert_closed(&mut clean);
+    failed.failed("the runner stopped:\nit panicked\r");
+    assert_eq!(read_line(&mut failing)?, "error the runner stopped: it panicked \n");
+    assert_closed(&mut failing);
+    runner.assert_quiet();
+    Ok(())
+}
+
+/// A client that has gone before the owner is done does not trouble the owner: writing
+/// the last line fails quietly.
+#[test]
+fn the_last_line_to_a_client_that_has_gone_is_dropped_quietly() -> TestResult {
+    let dir = TestDir::new();
+    let runner = FakeRunner::plain();
+    let (server, requests) = serve_with_shutdown(&dir, &runner)?;
+    let mut stream = raw_connect(server.path())?;
+    stream.write_all(b"shutdown\n")?;
+    assert_eq!(read_line(&mut stream)?, "ok\n");
+    let request = requests.recv_timeout(WAIT)?;
+    drop(stream);
+    request.failed("gone");
+    Ok(())
+}
+
+/// The reply is written before the hook runs: a hook that waits until the client has read
+/// `ok` would otherwise wait for ever.
+#[test]
+fn the_shutdown_reply_is_out_before_the_hook_is_called() -> TestResult {
+    let dir = TestDir::new();
+    let runner = FakeRunner::plain();
+    let (read_ok, ok_was_read) = mpsc::channel::<()>();
+    let ok_was_read = Mutex::new(ok_was_read);
+    let (called, hook_called) = mpsc::channel();
+    let hook: ShutdownHook = Arc::new(move |request| {
+        // `Receiver` is not `Sync`, so the hook (shared by every connection) locks it.
+        let waited = ok_was_read.lock().unwrap_or_else(PoisonError::into_inner).recv_timeout(WAIT).is_ok();
+        let _ = called.send((waited, request));
+    });
+    let server = ControlServer::bind_with_shutdown(&dir.join("c"), runner.sender(), hook)?;
+    let mut stream = raw_connect(server.path())?;
+    stream.write_all(b"shutdown\n")?;
+    assert_eq!(read_line(&mut stream)?, "ok\n");
+    read_ok.send(())?;
+    let (waited, request) = hook_called.recv_timeout(WAIT)?;
+    assert!(waited, "the hook ran only after the client had its reply");
+    drop(request);
+    assert_closed(&mut stream);
+    Ok(())
+}
+
+/// Closing the server (the daemon's first step of a clean shutdown) does not close a held
+/// shutdown connection; only dropping the request does.
+#[test]
+fn a_held_shutdown_connection_outlives_the_server() -> TestResult {
+    let dir = TestDir::new();
+    let runner = FakeRunner::plain();
+    let (server, requests) = serve_with_shutdown(&dir, &runner)?;
+    let path = server.path().to_owned();
+    let mut stream = raw_connect(&path)?;
+    stream.write_all(b"shutdown")?;
+    stream.shutdown(Shutdown::Write)?;
+    assert_eq!(read_line(&mut stream)?, "ok\n", "a request may end at the close of the client's side");
+    let request = requests.recv_timeout(WAIT)?;
+    server.close();
+    assert!(!path.exists(), "the socket is removed");
+    assert!(stays_open(&mut stream)?, "the held connection is still open");
+    drop(request);
+    assert_closed(&mut stream);
+    Ok(())
+}
+
+/// Every `shutdown` request calls the hook, and the other commands still work beside it.
+#[test]
+fn every_shutdown_request_reaches_the_hook_and_other_commands_still_work() -> TestResult {
+    let dir = TestDir::new();
+    let runner = FakeRunner::plain();
+    let (server, requests) = serve_with_shutdown(&dir, &runner)?;
+    let mut first = raw_connect(server.path())?;
+    first.write_all(b"shutdown\n")?;
+    assert_eq!(read_line(&mut first)?, "ok\n");
+    let mut second = raw_connect(server.path())?;
+    second.write_all(b"  shutdown \r\n")?;
+    assert_eq!(read_line(&mut second)?, "ok\n");
+    let held = [requests.recv_timeout(WAIT)?, requests.recv_timeout(WAIT)?];
+    assert_eq!(control(server.path(), "down\n")?, "ok\n");
+    assert_eq!(runner.next(), Seen::Input(HostInput::Touch(TouchEdge::Down)));
+    drop(held);
+    assert_closed(&mut first);
+    assert_closed(&mut second);
+    Ok(())
+}
+
+/// A server bound without a hook has nobody to tell: the request is refused, the
+/// connection closes as for every other request, and the runner hears nothing.
+#[test]
+fn shutdown_without_a_hook_is_refused() -> TestResult {
+    let dir = TestDir::new();
+    let runner = FakeRunner::plain();
+    let server = serve(&dir, &runner)?;
+    assert_eq!(control(server.path(), "shutdown\n")?, "error shutdown not available\n");
+    runner.assert_quiet();
+    Ok(())
+}
+
+/// `shutdown` does not need the runner: it is answered `ok` while the runner has stopped.
+#[test]
+fn shutdown_is_answered_while_the_runner_has_stopped() -> TestResult {
+    let dir = TestDir::new();
+    let (sender, receiver) = mpsc::channel::<Command>();
+    drop(receiver);
+    let (requests, received) = mpsc::channel();
+    let hook: ShutdownHook = Arc::new(move |request| {
+        let _ = requests.send(request);
+    });
+    let server = ControlServer::bind_with_shutdown(&dir.join("c"), sender, hook)?;
+    let mut stream = raw_connect(server.path())?;
+    stream.write_all(b"shutdown\n")?;
+    assert_eq!(read_line(&mut stream)?, "ok\n");
+    drop(received.recv_timeout(WAIT)?);
+    assert_closed(&mut stream);
     Ok(())
 }

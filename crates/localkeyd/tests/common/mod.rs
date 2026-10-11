@@ -173,13 +173,27 @@ impl Daemon {
 
     /// Start the daemon without waiting for it to serve.
     pub fn spawn(dir: &TestDir, args: &[&str]) -> io::Result<Daemon> {
+        let mut eof_args = vec!["--exit-on-stdin-eof"];
+        eof_args.extend_from_slice(args);
+        Daemon::launch(dir, &eof_args, Stdio::piped())
+    }
+
+    /// Start `localkeyd run --state <state> <args>` without `--exit-on-stdin-eof` and with
+    /// stdin from `/dev/null`, as a supervisor runs it: only `ctl shutdown` (or a kill)
+    /// stops it. Wait until it serves.
+    pub fn start_supervised(dir: &TestDir, args: &[&str]) -> Result<Daemon, Box<dyn Error>> {
+        let mut daemon = Daemon::launch(dir, args, Stdio::null())?;
+        daemon.wait_serving()?;
+        Ok(daemon)
+    }
+
+    fn launch(dir: &TestDir, args: &[&str], stdin: Stdio) -> io::Result<Daemon> {
         let mut child = Command::new(BIN)
             .arg("run")
             .arg("--state")
             .arg(dir.state())
-            .arg("--exit-on-stdin-eof")
             .args(args)
-            .stdin(Stdio::piped())
+            .stdin(stdin)
             .stdout(Stdio::null())
             .stderr(Stdio::piped())
             .spawn()?;
@@ -226,6 +240,11 @@ impl Daemon {
             }
             thread::sleep(Duration::from_millis(20));
         }
+    }
+
+    /// Whether the daemon has exited (it is reaped then), without waiting.
+    pub fn has_exited(&mut self) -> io::Result<bool> {
+        Ok(self.child.try_wait()?.is_some())
     }
 
     /// Wait for the daemon to exit on its own, then for its log to be complete.

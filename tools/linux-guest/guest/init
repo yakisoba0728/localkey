@@ -37,6 +37,10 @@ ln -sfn /proc/self/fd/1 /dev/stdout
 ln -sfn /proc/self/fd/2 /dev/stderr
 mkdir -p /run/lock /var/tmp
 echo localkey-guest > /proc/sys/kernel/hostname
+# The loopback interface only (QEMU has no NIC): lk-vpcd reaches vpcd on 127.0.0.1, and
+# lo starts down, so a connect() there fails with ENETUNREACH until it is up (crates/lk-vpcd,
+# "Checked against the real vpcd"). The image has no iproute2; busybox has ifconfig.
+busybox ifconfig lo 127.0.0.1 netmask 255.0.0.0 up || say "loopback up failed"
 
 say "init started at uptime $(cut -d' ' -f1 /proc/uptime) s"
 

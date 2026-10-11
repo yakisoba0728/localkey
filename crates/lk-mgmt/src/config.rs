@@ -7,7 +7,7 @@ use std::fmt;
 use lk_codec::apdu::sw;
 use lk_codec::tlv;
 use lk_core::{Capabilities, DeviceProfile, Host, Record};
-use lk_crypto::ct_eq;
+use lk_crypto::{SecretBytes, ct_eq};
 
 use crate::info::{self, InfoFields, PAGE_LIMIT, tag};
 
@@ -54,7 +54,8 @@ pub enum ConfigEffect {
     Reboot,
 }
 
-/// The persisted configuration.
+/// The persisted configuration. The lock code is wiped when the value is dropped
+/// (`docs/DESIGN.md` §8) and `Debug` prints only whether one is set.
 #[derive(Clone, PartialEq, Eq)]
 struct Config {
     usb_enabled: u16,
@@ -81,6 +82,12 @@ impl fmt::Debug for Config {
     }
 }
 
+impl Drop for Config {
+    fn drop(&mut self) {
+        lk_crypto::wipe(&mut self.lock_code);
+    }
+}
+
 impl Config {
     /// Factory state: the profile's default applications, zero timeouts and flags, no
     /// lock code.
@@ -99,9 +106,12 @@ impl Config {
         self.lock_code.iter().any(|&b| b != 0)
     }
 
-    /// `0x01 || TLV fields`, unknown fields last.
+    /// `0x01 || TLV fields`, unknown fields last. The buffer is allocated at its final
+    /// size ([`Config::record_len`]), so no reallocation leaves an unwiped copy of the
+    /// lock code behind.
     fn encode(&self) -> Vec<u8> {
-        let mut out = vec![FORMAT_VERSION];
+        let mut out = Vec::with_capacity(self.record_len());
+        out.push(FORMAT_VERSION);
         tlv::encode_into(
             &mut out,
             field::USB_ENABLED,
@@ -117,6 +127,12 @@ impl Config {
         tlv::encode_into(&mut out, field::LOCK_CODE, &self.lock_code);
         out.extend_from_slice(&self.unknown);
         out
+    }
+
+    /// The length of [`Config::encode`]'s output: version, `01 02`, `02 02`, `03 01`,
+    /// `04 01`, `05 10` with their values, then the unknown fields.
+    fn record_len(&self) -> usize {
+        1 + (2 + 2) + (2 + 2) + (2 + 1) + (2 + 1) + (2 + LOCK_CODE_LEN) + self.unknown.len()
     }
 
     /// Parse a stored record; `None` if it is unreadable (wrong version, malformed
@@ -262,6 +278,10 @@ impl Management {
     }
 
     /// The serialized state, as last persisted (or as it would be persisted).
+    ///
+    /// The record holds the configuration lock code; the caller should wipe it after
+    /// use (`docs/DESIGN.md` §8). This crate persists its own writes from a
+    /// `lk_crypto::SecretBytes`.
     pub fn to_record(&self) -> Vec<u8> {
         self.config.encode()
     }
@@ -499,7 +519,8 @@ impl Management {
         }
 
         if next != self.config {
-            host.persist(Record::Device, &next.encode())
+            let record = SecretBytes::new(next.encode());
+            host.persist(Record::Device, &record)
                 .map_err(|_| sw::MEMORY_FAILURE)?;
             self.config = next;
         }
@@ -671,6 +692,20 @@ mod tests {
         }
         assert_eq!(m.to_record(), before);
         assert_eq!(host.persist_attempts(), 0);
+    }
+
+    /// The record buffer is allocated at its final size (no reallocation frees an
+    /// unwiped copy of the lock code), with and without unknown fields.
+    #[test]
+    fn record_length_is_known_before_encoding() {
+        let mut host = TestHost::new();
+        let factory = Management::new(None, &mut host);
+        assert_eq!(factory.to_record().len(), factory.config.record_len());
+        let mut stored = factory.to_record();
+        stored.extend_from_slice(&[0x7E, 0x01, 0xAA]);
+        let with_unknown = Management::new(Some(&stored), &mut host);
+        assert_eq!(with_unknown.to_record(), stored);
+        assert_eq!(stored.len(), with_unknown.config.record_len());
     }
 
     #[test]

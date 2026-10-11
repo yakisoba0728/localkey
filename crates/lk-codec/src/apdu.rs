@@ -9,6 +9,22 @@
 //!   (§7.6.1) or an applet's own continuation command.
 //!
 //! Section numbers follow ISO/IEC 7816-4:2005.
+//!
+//! Command data and response data carry PINs, management keys and imported key
+//! material, so every buffer of this module is wiped (`docs/DESIGN.md` §8): a
+//! [`Command`]'s data when the command is dropped, a [`CommandChain`]'s buffered data
+//! when the chain completes, is cleared or is dropped (and before a growing buffer is
+//! reallocated), and a [`ResponseQueue`]'s data when it is replaced, cleared, fully
+//! served or dropped. Their `Debug` output shows lengths, never bytes. This crate may
+//! not depend on `zeroize` (only `lk-crypto` may), so the wipe is the same best effort
+//! as in lk-sd and lk-hsmauth: plain zero stores kept observable with
+//! [`std::hint::black_box`]. Copies made outside these types (the bytes returned by
+//! [`Command::to_bytes`], [`Command::into_data`], [`response`] or
+//! [`ResponseQueue::next`]) belong to the caller.
+//!
+//! The `Drop` on [`Command`] is an intentional API change: a caller can no longer move
+//! the public `data` field out of a command (E0509) and uses [`Command::into_data`]
+//! (or a clone) instead. Every other use of the public fields compiles unchanged.
 
 use std::fmt;
 
@@ -161,13 +177,47 @@ impl fmt::Display for ApduError {
 
 impl std::error::Error for ApduError {}
 
+/// Overwrite every byte of `buf`'s allocation with zeros, the spare capacity beyond its
+/// length included, leaving `buf` as `capacity` zero bytes (module documentation: best
+/// effort without `unsafe` volatile writes; `black_box` keeps the stores from being
+/// proven dead).
+fn zero_allocation(buf: &mut Vec<u8>) {
+    let capacity = buf.capacity();
+    buf.fill(0);
+    buf.resize(capacity, 0);
+    std::hint::black_box(buf.as_mut_slice());
+}
+
+/// [`zero_allocation`], then leave the buffer empty with its capacity.
+fn wipe_vec(buf: &mut Vec<u8>) {
+    zero_allocation(buf);
+    buf.clear();
+}
+
+/// Append `more` to a buffer holding secret bytes without leaving a copy behind: when
+/// the allocation is too small, the data moves to a larger one and the old one is wiped
+/// before it is freed (`Vec` growth would free it unwiped).
+fn extend_wiping(buf: &mut Vec<u8>, more: &[u8]) {
+    let needed = buf.len().saturating_add(more.len());
+    if needed > buf.capacity() {
+        let mut grown = Vec::with_capacity(needed.max(buf.capacity().saturating_mul(2)));
+        grown.extend_from_slice(buf);
+        wipe_vec(buf);
+        *buf = grown;
+    }
+    buf.extend_from_slice(more);
+}
+
 /// A command APDU (ISO/IEC 7816-4 §5.1).
 ///
 /// `le` holds the Le field as written: `None` when absent (cases 1 and 3), otherwise
 /// its value. `Some(0)` is the encoding of the maximum, meaning Ne = 256 for a short
 /// command and Ne = 65 536 for an extended one; [`Command::expected_len`] resolves it.
 /// `extended` records whether the command used the extended length form.
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+///
+/// The data field is wiped when the command is dropped, and its `Debug` output shows
+/// the data length only (module documentation).
+#[derive(Clone, Default, PartialEq, Eq)]
 pub struct Command {
     /// Class byte (§5.1.1).
     pub cla: u8,
@@ -185,6 +235,26 @@ pub struct Command {
     pub extended: bool,
 }
 
+impl Drop for Command {
+    fn drop(&mut self) {
+        wipe_vec(&mut self.data);
+    }
+}
+
+impl fmt::Debug for Command {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Command")
+            .field("cla", &format_args!("{:#04x}", self.cla))
+            .field("ins", &format_args!("{:#04x}", self.ins))
+            .field("p1", &format_args!("{:#04x}", self.p1))
+            .field("p2", &format_args!("{:#04x}", self.p2))
+            .field("data_len", &self.data.len())
+            .field("le", &self.le)
+            .field("extended", &self.extended)
+            .finish()
+    }
+}
+
 impl Command {
     /// A case 1 command with the given header.
     pub fn new(cla: u8, ins: u8, p1: u8, p2: u8) -> Self {
@@ -193,14 +263,25 @@ impl Command {
             ins,
             p1,
             p2,
-            ..Self::default()
+            data: Vec::new(),
+            le: None,
+            extended: false,
         }
     }
 
-    /// Set the command data field.
+    /// Set the command data field (the previous data is wiped).
     pub fn with_data(mut self, data: impl Into<Vec<u8>>) -> Self {
+        wipe_vec(&mut self.data);
         self.data = data.into();
         self
+    }
+
+    /// Take the data field out of the command without copying it. Because `Command`
+    /// wipes its data in `Drop`, the field can no longer be moved out
+    /// (`command.data`, error E0509); this is the replacement. The returned bytes
+    /// belong to the caller, which wipes them if they are secret.
+    pub fn into_data(mut self) -> Vec<u8> {
+        std::mem::take(&mut self.data)
     }
 
     /// Set the Le field (`0` means the maximum; see [`Command`]).
@@ -413,14 +494,27 @@ impl std::error::Error for ChainError {}
 /// but only the response to the last one carries the command's response data. A command that arrives with no chain
 /// in progress and the bit clear is returned unchanged (the limit applies only to
 /// chained data).
-#[derive(Debug, Clone, PartialEq, Eq)]
+///
+/// Buffered data is wiped when the chain is cleared, discarded or dropped; its `Debug`
+/// output shows the buffered length only (module documentation).
+#[derive(Clone, PartialEq, Eq)]
 pub struct CommandChain {
     max: usize,
     pending: Option<Pending>,
 }
 
+impl fmt::Debug for CommandChain {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("CommandChain")
+            .field("max", &self.max)
+            .field("active", &self.is_active())
+            .field("buffered_len", &self.buffered_len())
+            .finish()
+    }
+}
+
 /// The header and data of an unfinished chain.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 struct Pending {
     /// CLA with the chaining bit cleared.
     cla: u8,
@@ -428,6 +522,12 @@ struct Pending {
     p1: u8,
     p2: u8,
     data: Vec<u8>,
+}
+
+impl Drop for Pending {
+    fn drop(&mut self) {
+        wipe_vec(&mut self.data);
+    }
 }
 
 impl CommandChain {
@@ -461,7 +561,7 @@ impl CommandChain {
     /// Returns `Ok(None)` while the chain continues and `Ok(Some(command))` when a
     /// complete command is ready. On error the chain is discarded, so the next command
     /// starts afresh.
-    pub fn push(&mut self, cmd: Command) -> Result<Option<Command>, ChainError> {
+    pub fn push(&mut self, mut cmd: Command) -> Result<Option<Command>, ChainError> {
         let Some(mut pending) = self.pending.take() else {
             if !cmd.is_chained() {
                 return Ok(Some(cmd));
@@ -474,7 +574,7 @@ impl CommandChain {
                 ins: cmd.ins,
                 p1: cmd.p1,
                 p2: cmd.p2,
-                data: cmd.data,
+                data: std::mem::take(&mut cmd.data),
             });
             return Ok(None);
         };
@@ -488,13 +588,13 @@ impl CommandChain {
         if pending.data.len().saturating_add(cmd.data.len()) > self.max {
             return Err(ChainError::TooLong);
         }
-        pending.data.extend_from_slice(&cmd.data);
+        extend_wiping(&mut pending.data, &cmd.data);
         if cmd.is_chained() {
             self.pending = Some(pending);
             return Ok(None);
         }
         Ok(Some(Command {
-            data: pending.data,
+            data: std::mem::take(&mut pending.data),
             ..cmd
         }))
     }
@@ -508,11 +608,29 @@ impl CommandChain {
 /// GET RESPONSE (§7.6.1) or applet-specific continuation command calls
 /// [`ResponseQueue::next`] for the following piece; the last piece carries the final
 /// status word.
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+///
+/// The held data is wiped when it is replaced, cleared, served to the end or dropped;
+/// `Debug` shows the remaining length only (module documentation).
+#[derive(Clone, Default, PartialEq, Eq)]
 pub struct ResponseQueue {
     data: Vec<u8>,
     offset: usize,
     sw: u16,
+}
+
+impl Drop for ResponseQueue {
+    fn drop(&mut self) {
+        wipe_vec(&mut self.data);
+    }
+}
+
+impl fmt::Debug for ResponseQueue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("ResponseQueue")
+            .field("remaining", &self.remaining())
+            .field("sw", &format_args!("{:#06x}", self.sw))
+            .finish()
+    }
 }
 
 impl ResponseQueue {
@@ -524,6 +642,7 @@ impl ResponseQueue {
     /// Replace any pending data with `data` and return the first response APDU, at
     /// most `max` data bytes long (`max` of 0 is treated as 1).
     pub fn start(&mut self, data: Vec<u8>, sw: u16, max: usize) -> Vec<u8> {
+        wipe_vec(&mut self.data);
         self.data = data;
         self.offset = 0;
         self.sw = sw;
@@ -546,8 +665,9 @@ impl ResponseQueue {
         self.data.len().saturating_sub(self.offset)
     }
 
-    /// Drop any pending data.
+    /// Drop any pending data, wiping it first.
     pub fn clear(&mut self) {
+        wipe_vec(&mut self.data);
         self.data = Vec::new();
         self.offset = 0;
     }
@@ -1513,5 +1633,134 @@ mod tests {
             };
             check_against_spec(&wire);
         }
+    }
+
+    // --- Wiping and redaction (docs/DESIGN.md §8) ---
+
+    #[test]
+    fn zeroing_covers_the_spare_capacity_of_a_buffer() {
+        // A buffer that held 32 secret bytes and was truncated to 8 still holds the
+        // other 24 in its allocation; all 32 are overwritten.
+        let mut buf = vec![0xA5u8; 32];
+        buf.truncate(8);
+        let capacity = buf.capacity();
+        zero_allocation(&mut buf);
+        assert_eq!(buf.len(), capacity);
+        assert!(buf.iter().all(|&b| b == 0));
+        wipe_vec(&mut buf);
+        assert!(buf.is_empty());
+        assert_eq!(buf.capacity(), capacity, "the allocation is kept");
+    }
+
+    #[test]
+    fn growing_a_secret_buffer_keeps_its_contents() {
+        let mut buf = Vec::with_capacity(4);
+        buf.extend_from_slice(&[1, 2, 3]);
+        extend_wiping(&mut buf, &[4, 5, 6, 7, 8]);
+        assert_eq!(buf, [1, 2, 3, 4, 5, 6, 7, 8]);
+        assert!(buf.capacity() >= 8);
+        extend_wiping(&mut buf, &[]);
+        assert_eq!(buf.len(), 8);
+    }
+
+    #[test]
+    fn debug_output_shows_lengths_but_no_data_bytes() {
+        // A PIV VERIFY with the PIN "123456" (SP 800-73-4 Part 2 §3.2.1).
+        let verify = Command::parse(&hex("0020008008313233343536FFFF")).unwrap();
+        assert_eq!(verify.le, None);
+        let text = format!("{verify:?}");
+        assert!(text.contains("data_len: 8"), "{text}");
+        assert!(
+            !text.contains("49") && !text.contains("0x31") && !text.contains("255"),
+            "{text}"
+        );
+
+        let mut chain = CommandChain::new(64);
+        assert_eq!(
+            chain.push(Command::parse(&hex("102000800431323334")).unwrap()),
+            Ok(None)
+        );
+        let text = format!("{chain:?}");
+        assert!(
+            text.contains("buffered_len: 4") && text.contains("active: true"),
+            "{text}"
+        );
+        assert!(!text.contains("49"), "{text}");
+
+        let mut queue = ResponseQueue::new();
+        queue.start(vec![0x31; 300], sw::OK, 256);
+        let text = format!("{queue:?}");
+        assert!(
+            text.contains("remaining: 44") && text.contains("0x9000"),
+            "{text}"
+        );
+        assert!(!text.contains("49"), "{text}");
+    }
+
+    #[test]
+    fn into_data_hands_the_data_field_over_without_a_copy() {
+        let cmd = Command::parse(&hex("0020008008313233343536FFFF")).unwrap();
+        let address = cmd.data.as_ptr();
+        let data = cmd.into_data();
+        assert_eq!(data, hex("313233343536FFFF"));
+        assert_eq!(data.as_ptr(), address, "the same allocation, not a copy");
+    }
+
+    #[test]
+    fn clearing_a_response_queue_leaves_no_data_to_serve() {
+        let mut q = ResponseQueue::new();
+        let first = q.start(vec![0x5A; 600], sw::OK, 256);
+        assert_eq!(&first[256..], &[0x61, 0x00]);
+        q.clear();
+        assert!(!q.is_pending());
+        assert_eq!(q.remaining(), 0);
+        assert_eq!(q.next(256), None);
+        // A response started after the clear serves only its own bytes.
+        assert_eq!(
+            q.start(vec![0x01, 0x02], sw::OK, 256),
+            [0x01, 0x02, 0x90, 0x00]
+        );
+        assert_eq!(q.next(256), None);
+        // Replacing pending data with `start` drops the old remainder too.
+        q.start(vec![0x5A; 600], sw::OK, 256);
+        assert_eq!(q.start(vec![0x07], sw::OK, 256), [0x07, 0x90, 0x00]);
+        assert_eq!(q.next(256), None);
+    }
+
+    #[test]
+    fn a_discarded_chain_leaves_nothing_buffered() {
+        let mut chain = CommandChain::new(64);
+        assert_eq!(
+            chain.push(Command::parse(&hex("1020008002AABB")).unwrap()),
+            Ok(None)
+        );
+        assert_eq!(chain.buffered_len(), 2);
+        chain.clear();
+        assert_eq!((chain.is_active(), chain.buffered_len()), (false, 0));
+        // A header change discards the chain as well.
+        assert_eq!(
+            chain.push(Command::parse(&hex("1020008002AABB")).unwrap()),
+            Ok(None)
+        );
+        assert_eq!(
+            chain.push(Command::parse(&hex("0024008002CCDD")).unwrap()),
+            Err(ChainError::HeaderChanged)
+        );
+        assert_eq!((chain.is_active(), chain.buffered_len()), (false, 0));
+        // A completed chain hands its data over and keeps none.
+        assert_eq!(
+            chain.push(Command::parse(&hex("1020008002AABB")).unwrap()),
+            Ok(None)
+        );
+        let done = chain
+            .push(Command::parse(&hex("0020008002CCDD")).unwrap())
+            .unwrap()
+            .unwrap();
+        assert_eq!(done.data, [0xAA, 0xBB, 0xCC, 0xDD]);
+        assert_eq!(
+            (done.cla, done.ins, done.p1, done.p2),
+            (0x00, 0x20, 0x00, 0x80)
+        );
+        assert_eq!(chain.buffered_len(), 0);
     }
 }

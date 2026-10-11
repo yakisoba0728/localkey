@@ -570,7 +570,7 @@ fn extended_external_authenticate_macs_the_extended_lc() {
         assert_eq!(sw, 0x9000);
         let inner_pending = read_init_response(&new, &challenge, &[data, vec![0x90, 0x00]].concat());
         let (inner_ea, mut inner) = inner_pending.external_authenticate_form(0x33, &inner_pending.host_cryptogram(), true, true);
-        let inner_data = lk_codec::apdu::Command::parse(&inner_ea).unwrap().data;
+        let inner_data = lk_codec::apdu::Command::parse(&inner_ea).unwrap().data.clone();
         let apdu = s.wrap(0x80, 0x82, 0x33, 0x00, &inner_data, Some(0), true);
         let plain = ch.unwrap_command(&apdu).unwrap();
         let (resp, next) = sd.handshake(&plain, &mut host);
@@ -702,7 +702,7 @@ fn reassembled_short_chain_of_a_long_protected_command_verifies() {
     let assembled = chain.push(lk_codec::apdu::Command::parse(&parts[1]).unwrap()).unwrap().unwrap();
     let plain = ch.unwrap_command(&assembled.to_bytes()).unwrap();
     let cmd = lk_codec::apdu::Command::parse(&plain).unwrap();
-    assert_eq!((cmd.cla, cmd.data), (0x80, long));
+    assert_eq!((cmd.cla, cmd.data.clone()), (0x80, long));
     let resp = device_after_unwrap(&mut sd, &mut ch, &mut host, &plain);
     assert_eq!(s.unwrap(&resp).unwrap().1, 0x9000);
 }

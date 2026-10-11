@@ -649,6 +649,7 @@ dependencies = [
  "lk-core",
  "lk-device",
  "lk-run",
+ "lk-testkit",
 ]
 
 [[package]]
@@ -672,6 +673,7 @@ dependencies = [
  "lk-host",
  "lk-run",
  "lk-uhid",
+ "lk-vpcd",
  "lk-wire",
 ]
 

@@ -1,5 +1,6 @@
 //! The program's run loop: one thread owns the [`Device`], gives it a monotonic clock and
-//! its deadlines, and connects it to one bus [`Transport`] (`docs/PROGRAM.md` "lk-run").
+//! its deadlines, and connects it to one bus [`Transport`] (`docs/PROGRAM.md` "lk-run"),
+//! which may be a [`Fanout`] of several.
 //!
 //! The device is `!Send`, so [`Runner::spawn`] builds it on the runner thread from a
 //! `Send` factory and drops it there. Everything else talks to the thread through
@@ -41,6 +42,10 @@
 //!   sends `Command::Shutdown`: the loop ends after the command it is handling, and
 //!   commands still queued behind it are dropped, like frames in flight when a key is
 //!   unplugged. A `Command::Shutdown` sent through a [`Runner::sender`] waits its turn.
+//! - [`Fanout`] (`docs/PROGRAM.md` "Transport combinations") is the one bus transport when
+//!   the device is presented through several: the runner still attaches exactly one
+//!   [`Transport`]. Its members are called in the order given; an empty fanout does
+//!   nothing and knows nothing (`attached` is `None`).
 
 use std::any::Any;
 use std::collections::VecDeque;
@@ -160,6 +165,82 @@ pub trait Transport: Send + fmt::Debug {
     /// Whether a host is connected, for transports that know (`Status::attached`).
     fn attached(&self) -> Option<bool> {
         None
+    }
+}
+
+/// A [`Transport`] made of several transports, for a device presented through more than
+/// one bus at once (`docs/PROGRAM.md` "Transport combinations": `uhid,vpcd` gives FIDO and
+/// OTP through UHID and CCID through pcscd).
+///
+/// - [`Transport::enumerate`] goes to every member, in the order they were given.
+/// - [`Transport::deliver`] gives every member the output (a clone to each but the last,
+///   which takes the original), in member order; each member ignores what it does not
+///   carry. The runner's ordering guarantee holds per member: each sees the outputs in
+///   the order the device returned them.
+/// - [`Transport::attached`] is `Some(true)` if any member says so, `Some(false)` if every
+///   member that knows says false, and `None` if no member knows (also with no members).
+///
+/// A member that blocks holds up the others, as it would hold up the runner alone; every
+/// transport buffers on its own threads ([`Transport`]'s rule).
+#[derive(Debug, Default)]
+pub struct Fanout {
+    members: Vec<Box<dyn Transport>>,
+}
+
+impl Fanout {
+    /// A fanout over `members`, in this order.
+    pub fn new(members: Vec<Box<dyn Transport>>) -> Fanout {
+        Fanout { members }
+    }
+
+    /// Add a member after the others.
+    pub fn push(&mut self, member: Box<dyn Transport>) {
+        self.members.push(member);
+    }
+
+    /// How many members there are.
+    pub fn len(&self) -> usize {
+        self.members.len()
+    }
+
+    /// Whether there are no members (then every call does nothing).
+    pub fn is_empty(&self) -> bool {
+        self.members.is_empty()
+    }
+}
+
+impl From<Vec<Box<dyn Transport>>> for Fanout {
+    fn from(members: Vec<Box<dyn Transport>>) -> Fanout {
+        Fanout::new(members)
+    }
+}
+
+impl Transport for Fanout {
+    fn enumerate(&mut self, identity: &UsbIdentity) {
+        for member in &mut self.members {
+            member.enumerate(identity);
+        }
+    }
+
+    fn deliver(&mut self, output: Output) {
+        if let Some((last, others)) = self.members.split_last_mut() {
+            for member in others {
+                member.deliver(output.clone());
+            }
+            last.deliver(output);
+        }
+    }
+
+    fn attached(&self) -> Option<bool> {
+        let mut known = false;
+        for member in &self.members {
+            match member.attached() {
+                Some(true) => return Some(true),
+                Some(false) => known = true,
+                None => {}
+            }
+        }
+        known.then_some(false)
     }
 }
 

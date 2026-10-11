@@ -2,9 +2,11 @@
 //!
 //! - `keygen` makes a storage key ([`keygen`]);
 //! - `run` opens the state directory, starts the device on the runner thread and serves it
-//!   on one transport (the wire socket by default; UHID or a USB gadget on Linux), with
-//!   the control socket for the user side ([`run`]);
-//! - `ctl` sends one request to a running daemon's control socket ([`ctl`]).
+//!   on one transport (the wire socket by default; UHID or a USB gadget on Linux; a card
+//!   in pcscd's vpcd reader), or on UHID and vpcd together, with the control socket for the
+//!   user side ([`run`]);
+//! - `ctl` sends one request to a running daemon's control socket, `shutdown` among them
+//!   ([`ctl`]).
 //!
 //! The arguments are parsed by hand ([`args`]); a usage error exits with code 2 and prints
 //! the usage to stderr. Unix only, like `lk-wire`.

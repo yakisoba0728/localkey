@@ -54,11 +54,19 @@ const LAST_SEQ: u8 = 9;
 /// A response can use at most 32 chunks (five sequence bits).
 const MAX_RESPONSE_CHUNKS: usize = 32;
 
+/// Response data waiting to be read: a challenge-response result is key material for
+/// the host (an HMAC-SHA1 response), so it is wiped when dropped (`docs/DESIGN.md` §8).
 #[derive(Clone)]
 struct Response {
     data: Vec<u8>,
     next: u8,
     chunks: u8,
+}
+
+impl Drop for Response {
+    fn drop(&mut self) {
+        lk_crypto::wipe_vec(&mut self.data);
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -68,6 +76,10 @@ struct Wait {
 }
 
 /// Framing state of the OTP HID interface.
+///
+/// The receive buffer holds slot configurations (keys, access codes) and challenges;
+/// it is wiped once a frame is dispatched or dropped, and when the value is dropped
+/// (`docs/DESIGN.md` §8).
 #[derive(Clone)]
 pub struct OtpHid {
     rx: [u8; FRAME_SIZE],
@@ -84,6 +96,12 @@ impl fmt::Debug for OtpHid {
             .field("response_pending", &self.response.is_some())
             .field("wait", &self.wait)
             .finish_non_exhaustive()
+    }
+}
+
+impl Drop for OtpHid {
+    fn drop(&mut self) {
+        lk_crypto::wipe(&mut self.rx);
     }
 }
 
@@ -129,13 +147,15 @@ impl OtpHid {
         let seq = flags & !SLOT_WRITE_FLAG;
         if seq > LAST_SEQ {
             self.rx_seq = None;
+            lk_crypto::wipe(&mut self.rx);
             return Outcome::Done(());
         }
         match (seq, self.rx_seq) {
-            (0, _) => self.rx = [0; FRAME_SIZE],
+            (0, _) => lk_crypto::wipe(&mut self.rx),
             (s, Some(previous)) if s > previous => {}
             _ => {
                 self.rx_seq = None;
+                lk_crypto::wipe(&mut self.rx);
                 return Outcome::Done(());
             }
         }
@@ -227,10 +247,15 @@ impl OtpHid {
         payload.copy_from_slice(&self.rx[..SLOT_DATA_SIZE]);
         let command = self.rx[SLOT_DATA_SIZE];
         let crc = u16::from_le_bytes([self.rx[SLOT_DATA_SIZE + 1], self.rx[SLOT_DATA_SIZE + 2]]);
-        if crc16(&payload) != crc {
+        // The frame is consumed: neither the buffer nor the copy outlives this call.
+        lk_crypto::wipe(&mut self.rx);
+        let valid = crc16(&payload) == crc;
+        let result = valid.then(|| otp.execute(command, &payload, mgmt, host));
+        lk_crypto::wipe(&mut payload);
+        let Some(result) = result else {
             return Outcome::Done(());
-        }
-        match otp.execute(command, &payload, mgmt, host) {
+        };
+        match result {
             Ok(Reply::Data(data)) => {
                 self.load_response(data);
                 Outcome::Done(())
@@ -246,18 +271,25 @@ impl OtpHid {
         }
     }
 
+    /// Frame `data` (complemented CRC, zero padding to whole chunks) for reading. The
+    /// framed copy is allocated at its final size and `data` is wiped, so no unwiped
+    /// copy of a challenge-response result is left behind.
     fn load_response(&mut self, mut data: Vec<u8>) {
-        append_crc(&mut data);
-        let chunks = data.len().div_ceil(FEATURE_RPT_DATA_SIZE);
-        let Ok(count) = u8::try_from(chunks) else {
+        let chunks = data.len().saturating_add(2).div_ceil(FEATURE_RPT_DATA_SIZE);
+        let count = u8::try_from(chunks)
+            .ok()
+            .filter(|_| chunks <= MAX_RESPONSE_CHUNKS);
+        let Some(count) = count else {
+            lk_crypto::wipe_vec(&mut data);
             return;
         };
-        if chunks == 0 || chunks > MAX_RESPONSE_CHUNKS {
-            return;
-        }
-        data.resize(chunks * FEATURE_RPT_DATA_SIZE, 0);
+        let mut framed = Vec::with_capacity(chunks * FEATURE_RPT_DATA_SIZE);
+        framed.extend_from_slice(&data);
+        lk_crypto::wipe_vec(&mut data);
+        append_crc(&mut framed);
+        framed.resize(chunks * FEATURE_RPT_DATA_SIZE, 0);
         self.response = Some(Response {
-            data,
+            data: framed,
             next: 0,
             chunks: count,
         });

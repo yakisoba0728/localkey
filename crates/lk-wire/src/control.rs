@@ -4,8 +4,15 @@
 //! - request: one line;
 //! - reply: zero or more lines, then `ok` or `error <reason>`, then close;
 //! - `watch` instead streams `presence waiting` / `presence idle` lines until the client
-//!   disconnects, with no `ok`.
+//!   disconnects, with no `ok`;
+//! - `shutdown` replies `ok` and hands the open connection to the server's owner as a
+//!   [`ShutdownRequest`] (`docs/PROGRAM.md` "Clean shutdown from the control socket"); the
+//!   connection stays open until the owner has shut down, then carries one last line,
+//!   `stopped` ([`ShutdownRequest::stopped`]) or `error <reason>`
+//!   ([`ShutdownRequest::failed`]), and closes, so the client can wait for the shutdown to
+//!   finish and learn how it ended.
 
+use std::fmt;
 use std::io::{self, Read, Write};
 use std::os::unix::net::UnixStream;
 use std::path::{Path, PathBuf};
@@ -36,6 +43,67 @@ const WATCH_POLL: Duration = Duration::from_secs(1);
 const PROBE_TIMEOUT: Duration = Duration::from_millis(1);
 
 const RUNNER_STOPPED: &str = "error runner stopped\n";
+/// The reply to `shutdown` on a server bound without a [`ShutdownHook`].
+const NO_SHUTDOWN: &str = "error shutdown not available\n";
+
+/// What a [`ControlServer`] bound with [`ControlServer::bind_with_shutdown`] calls when a
+/// client sends `shutdown`. It runs on that connection's thread after `ok` was written, so
+/// it must not wait for the shutdown it starts (the owner usually sends the request to
+/// the thread that shuts down, and the server is closed during the shutdown).
+pub type ShutdownHook = Arc<dyn Fn(ShutdownRequest) + Send + Sync>;
+
+/// A `shutdown` request that has been answered `ok` (`docs/PROGRAM.md` "Clean shutdown
+/// from the control socket").
+///
+/// It holds the client's connection open: the client reads `ok`, then waits for the end of
+/// the stream. An owner that keeps it until its shutdown is done lets the client
+/// (`localkeyd ctl ... shutdown`, a supervisor's stop command) return only once the daemon
+/// has stopped. The owner then says how the shutdown ended, in one last line before the
+/// close: [`ShutdownRequest::stopped`] (`stopped`, a clean stop) or
+/// [`ShutdownRequest::failed`] (`error <reason>`). `ok` alone only says that the request
+/// was accepted, and a daemon can still fail after it (a startup that fails before the
+/// daemon could act on the request, a panic in the device found while shutting down).
+/// Dropping it (or [`ShutdownRequest::finish`]) closes the connection without that line,
+/// and so does the process's exit: the client cannot tell a clean stop then.
+pub struct ShutdownRequest {
+    stream: UnixStream,
+}
+
+/// The last line of a clean shutdown ([`ShutdownRequest::stopped`]).
+const STOPPED: &str = "stopped\n";
+
+impl ShutdownRequest {
+    /// Write `stopped` and close the connection: the owner has shut down cleanly.
+    pub fn stopped(self) {
+        self.last_line(STOPPED);
+    }
+
+    /// Write `error <reason>` and close the connection: the owner failed after accepting
+    /// the request. Control characters in `reason` become spaces, so it stays one line.
+    pub fn failed(self, reason: &str) {
+        let reason: String = reason.chars().map(|c| if c.is_control() { ' ' } else { c }).collect();
+        self.last_line(&format!("error {reason}\n"));
+    }
+
+    /// Close the connection without a last line: the client sees the end of the reply
+    /// after `ok` and cannot tell how the shutdown ended. The same as dropping it.
+    pub fn finish(self) {
+        let _ = self.stream.shutdown(std::net::Shutdown::Both);
+    }
+
+    /// Write `line` (bounded by the connection's write timeout; a client that is gone
+    /// makes it fail, which changes nothing), then close.
+    fn last_line(self, line: &str) {
+        let _ = (&self.stream).write_all(line.as_bytes());
+        self.finish();
+    }
+}
+
+impl fmt::Debug for ShutdownRequest {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("ShutdownRequest").finish_non_exhaustive()
+    }
+}
 
 /// The control socket server. Each connection is served on its own thread; dropping the
 /// server (or [`ControlServer::close`]) stops accepting, ends running `watch` streams within
@@ -48,16 +116,35 @@ pub struct ControlServer {
 
 impl ControlServer {
     /// Bind the control socket at `path` (the same placement rules as the wire socket).
-    /// Commands go to the runner through `runner`.
+    /// Commands go to the runner through `runner`. Nobody is told about a `shutdown`
+    /// request, so it is answered `error shutdown not available`.
     pub fn bind(path: &Path, runner: Sender<Command>) -> Result<ControlServer, WireError> {
+        ControlServer::start(path, runner, None)
+    }
+
+    /// [`ControlServer::bind`], and a `shutdown` request is answered `ok` and then handed
+    /// to `shutdown` as a [`ShutdownRequest`] (`docs/PROGRAM.md` "Clean shutdown from the
+    /// control socket").
+    pub fn bind_with_shutdown(
+        path: &Path,
+        runner: Sender<Command>,
+        shutdown: ShutdownHook,
+    ) -> Result<ControlServer, WireError> {
+        ControlServer::start(path, runner, Some(shutdown))
+    }
+
+    fn start(path: &Path, runner: Sender<Command>, shutdown: Option<ShutdownHook>) -> Result<ControlServer, WireError> {
         let (listener, file) = socket::bind_private(path)?;
         let closing = Arc::new(AtomicBool::new(false));
         let flag = Arc::clone(&closing);
         let acceptor = Acceptor::spawn(file, listener, "lk-control-accept", closing, move |stream| {
             let runner = runner.clone();
+            let shutdown = shutdown.clone();
             let closing = Arc::clone(&flag);
             // A connection whose thread cannot start is closed by dropping it.
-            let _ = thread::Builder::new().name("lk-control".into()).spawn(move || serve(stream, &runner, &closing));
+            let _ = thread::Builder::new()
+                .name("lk-control".into())
+                .spawn(move || serve(stream, &runner, shutdown.as_ref(), &closing));
         })?;
         Ok(ControlServer { path: path.to_owned(), acceptor })
     }
@@ -88,6 +175,8 @@ enum Request {
     Status,
     /// `watch`
     Watch,
+    /// `shutdown`: stop the daemon ([`ShutdownRequest`]).
+    Shutdown,
 }
 
 impl Request {
@@ -102,6 +191,7 @@ impl Request {
             ["power-cycle"] => Request::PowerCycle,
             ["status"] => Request::Status,
             ["watch"] => Request::Watch,
+            ["shutdown"] => Request::Shutdown,
             [] => return Err("empty request".into()),
             _ => return Err(format!("unknown command: {}", words.join(" "))),
         };
@@ -110,10 +200,11 @@ impl Request {
 }
 
 /// Serve one control connection.
-fn serve(stream: UnixStream, runner: &Sender<Command>, closing: &AtomicBool) {
+fn serve(stream: UnixStream, runner: &Sender<Command>, shutdown: Option<&ShutdownHook>, closing: &AtomicBool) {
     let _ = stream.set_write_timeout(Some(REPLY_TIMEOUT));
     let reply = match read_request(&stream, REQUEST_TIMEOUT).and_then(|line| Request::parse(&line)) {
         Ok(Request::Watch) => return watch(&stream, runner, closing),
+        Ok(Request::Shutdown) => return request_shutdown(stream, shutdown),
         Ok(Request::Status) => status(runner),
         Ok(Request::Tap { long }) => {
             send(runner, Command::Tap { hold_ms: if long { TAP_LONG_MS } else { TAP_SHORT_MS } })
@@ -125,6 +216,22 @@ fn serve(stream: UnixStream, runner: &Sender<Command>, closing: &AtomicBool) {
     };
     let _ = (&stream).write_all(reply.as_bytes());
     discard_pending(&stream);
+}
+
+/// `shutdown`: reply `ok`, then hand the connection to the owner, so the reply is out
+/// before anything is shut down (`docs/PROGRAM.md`: "replies `ok`, then the daemon ...").
+/// The request counts once its line has arrived: the hook is called even when the client
+/// is gone before it could read `ok`. Without a hook the request is refused.
+fn request_shutdown(stream: UnixStream, shutdown: Option<&ShutdownHook>) {
+    let reply = if shutdown.is_some() { "ok\n" } else { NO_SHUTDOWN };
+    let _ = (&stream).write_all(reply.as_bytes());
+    discard_pending(&stream);
+    if let Some(hook) = shutdown {
+        // `discard_pending` left the socket non-blocking; the last line is written blocking,
+        // within the write timeout `serve` set.
+        let _ = stream.set_nonblocking(false);
+        hook(ShutdownRequest { stream });
+    }
 }
 
 /// Most bytes [`discard_pending`] reads.
@@ -410,6 +517,7 @@ mod tests {
         assert_eq!(Request::parse("power-cycle"), Ok(Request::PowerCycle));
         assert_eq!(Request::parse("status"), Ok(Request::Status));
         assert_eq!(Request::parse("watch"), Ok(Request::Watch));
+        assert_eq!(Request::parse("shutdown"), Ok(Request::Shutdown));
     }
 
     #[test]
@@ -426,6 +534,8 @@ mod tests {
         assert_eq!(Request::parse("TAP"), Err("unknown command: TAP".into()));
         assert_eq!(Request::parse("status now"), Err("unknown command: status now".into()));
         assert_eq!(Request::parse("powercycle"), Err("unknown command: powercycle".into()));
+        assert_eq!(Request::parse("shutdown now"), Err("unknown command: shutdown now".into()));
+        assert_eq!(Request::parse("SHUTDOWN"), Err("unknown command: SHUTDOWN".into()));
     }
 
     #[test]

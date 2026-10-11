@@ -5,16 +5,18 @@
 //! localkeyd run --state DIR (--key-file PATH | --key-command CMD) [TRANSPORT]
 //!               [--profile own|yubikey-5c-nano-5.7.4] [--control PATH]
 //!               [--wall-clock] [--allow-unreadable] [--exit-on-stdin-eof] [-v | -vv]
-//! localkeyd ctl --control PATH (tap [long] | down | up | power-cycle | status | watch)
+//! localkeyd ctl --control PATH (tap [long] | down | up | power-cycle | status | watch | shutdown)
 //!
 //! TRANSPORT (default wire):
 //!   [--transport wire] [--wire PATH]
 //!   --transport uhid [--uhid-path PATH]
 //!   --transport gadget --udc NAME [--gadget-name NAME] [--configfs DIR] [--ffs-dir DIR]
+//!   --transport vpcd [--vpcd-addr HOST:PORT]
+//!   --transport uhid,vpcd [--uhid-path PATH] [--vpcd-addr HOST:PORT]
 //! ```
 //!
-//! The transports are `docs/PROGRAM.md` "lk-wire", "lk-uhid" and "lk-gadget"; the run
-//! side is in `run`.
+//! The transports are `docs/PROGRAM.md` "lk-wire", "lk-uhid", "lk-gadget" and "lk-vpcd",
+//! the sets "Transport combinations"; the run side is in `run`.
 //!
 //! # As built
 //!
@@ -29,24 +31,38 @@
 //!   it (an error earlier on the line is reported instead), and an option's value stays a
 //!   value: `--state help` is a state directory named `help`.
 //! - The `ctl` command words and `--control` may come in either order.
+//! - `--transport` takes a comma-separated set ([`Transports`]): any one of `wire`,
+//!   `uhid`, `gadget` and `vpcd`, or `uhid` and `vpcd` together in either order
+//!   (`docs/PROGRAM.md` "Transport combinations": `wire` and `gadget` present the whole
+//!   device and combine with nothing). An empty name (`uhid,`), a name given twice
+//!   (`vpcd,vpcd`) and any other combination are usage errors. Names are not trimmed: the
+//!   set is one argument without spaces. The members are kept in [`TransportKind`] order
+//!   (wire, uhid, gadget, vpcd), whatever the order on the line, so `vpcd,uhid` is
+//!   `uhid,vpcd` everywhere after parsing, in the log too.
 //! - `run` collects every option before it looks at `--transport`, so an option that
-//!   belongs to another transport (`--wire` without the wire transport, `--uhid-path`
-//!   without uhid, `--udc`, `--gadget-name`, `--configfs` or `--ffs-dir` without gadget)
-//!   is the same usage error wherever it stands on the line. `--control` belongs to every
-//!   transport: the control socket is how a touch reaches the device.
+//!   belongs to a transport outside the set (`--wire` without the wire transport,
+//!   `--uhid-path` without uhid, `--udc`, `--gadget-name`, `--configfs` or `--ffs-dir`
+//!   without gadget, `--vpcd-addr` without vpcd) is the same usage error wherever it stands
+//!   on the line. `--control` belongs to every transport: the control socket is how a
+//!   touch reaches the device.
 //! - The transport defaults are resolved here, so [`RunOptions`] holds the paths the
 //!   daemon uses: `--uhid-path` [`DEFAULT_UHID_PATH`], `--gadget-name`
 //!   [`DEFAULT_GADGET_NAME`], `--configfs` [`DEFAULT_CONFIGFS`], `--ffs-dir`
 //!   `lk_gadget::default_mount_point` of the gadget name (`/dev/ffs-NAME`, the naming of
-//!   `Documentation/usb/functionfs.rst`). Each default is the transport crate's own, so
-//!   the two cannot drift apart. Only the wire socket's default stays `None`, because it
-//!   lives in the state directory (`run` normalises that path first).
+//!   `Documentation/usb/functionfs.rst`), `--vpcd-addr` [`DEFAULT_VPCD_ADDR`]. Each
+//!   default is the transport crate's own, so the two cannot drift apart. Only the wire
+//!   socket's default stays `None`, because it lives in the state directory (`run`
+//!   normalises that path first).
 //! - `--gadget-name` must be 1 to 32 of `[A-Za-z0-9_-]`, the rule `lk_gadget` applies to
 //!   the names it puts into ConfigFS paths (it names the gadget directory, the FunctionFS
 //!   instance and the default `--ffs-dir`); `--udc` must not hold a `/` or a newline (it
 //!   is a name in `/sys/class/udc`, written to the gadget's `UDC` attribute followed by a
 //!   newline). Both must be UTF-8. Checking them here makes a name that can never work a
 //!   usage error; `lk_gadget::GadgetTransport` checks them again.
+//! - `--vpcd-addr` must be UTF-8 `HOST:PORT` with a host and a port from 1 to 65535 (an
+//!   IPv6 address in brackets, `[::1]:35963`). Only the form is checked here; `run`
+//!   resolves the address (`lk_vpcd::resolve`) before the state directory is opened, so a
+//!   name that does not resolve is a startup failure (exit 2), not a usage error.
 
 use std::ffi::{OsStr, OsString};
 use std::fmt;
@@ -60,7 +76,8 @@ usage:
   localkeyd run --state DIR (--key-file PATH | --key-command CMD) [TRANSPORT]
                 [--profile own|yubikey-5c-nano-5.7.4] [--control PATH]
                 [--wall-clock] [--allow-unreadable] [--exit-on-stdin-eof] [-v | -vv]
-  localkeyd ctl --control PATH (tap [long] | down | up | power-cycle | status | watch)
+  localkeyd ctl --control PATH (tap [long] | down | up | power-cycle | status | watch
+                                | shutdown)
 
 TRANSPORT, how the device reaches a USB host (default wire):
   [--transport wire] [--wire PATH]
@@ -69,13 +86,19 @@ TRANSPORT, how the device reaches a USB host (default wire):
       the FIDO and OTP HID interfaces as kernel HID devices (Linux, /dev/uhid access)
   --transport gadget --udc NAME [--gadget-name NAME] [--configfs DIR] [--ffs-dir DIR]
       the whole device as a USB gadget on the device controller NAME (Linux, root)
-The control socket is served with every transport (ctl tap is the touch).
+  --transport vpcd [--vpcd-addr HOST:PORT]
+      the CCID interface as a card in pcscd's vsmartcard vpcd reader (needs vpcd)
+  --transport uhid,vpcd [--uhid-path PATH] [--vpcd-addr HOST:PORT]
+      FIDO and OTP through UHID, CCID through vpcd: the whole device (Linux)
+The control socket is served with every transport: ctl tap is the touch, ctl
+shutdown stops the daemon cleanly (as --exit-on-stdin-eof does at EOF) and returns
+once it has: it prints ok, then stopped (exit 0) or the daemon's error (exit 1).
 
 run defaults: --profile own, --wire DIR/wire.sock, --control DIR/control.sock,
 --uhid-path /dev/uhid, --gadget-name localkey, --configfs /sys/kernel/config/usb_gadget,
---ffs-dir /dev/ffs-NAME (NAME is the gadget name)
--v logs connections, enumeration, presence and transport events; -vv adds report
-and frame types and sizes (never their bytes)
+--ffs-dir /dev/ffs-NAME (NAME is the gadget name), --vpcd-addr 127.0.0.1:35963
+-v logs connections, enumeration, presence and transport events; -vv adds report,
+frame and message types and sizes (never their bytes)
 exit codes: 0 clean, 1 runtime failure, 2 startup failure (usage, lock, key,
 permissions, uhid or gadget on a system other than Linux), 3 unreadable records
 refused (see --allow-unreadable)
@@ -95,6 +118,10 @@ pub const DEFAULT_GADGET_NAME: &str = lk_gadget::DEFAULT_NAME;
 pub const DEFAULT_CONFIGFS: &str = lk_gadget::DEFAULT_CONFIGFS_ROOT;
 /// The longest `--gadget-name` (`lk_gadget::GadgetConfig`: 1 to 32 of `[A-Za-z0-9_-]`).
 pub const MAX_GADGET_NAME: usize = 32;
+/// `--vpcd-addr` when not given: vpcd's first slot on this machine (`docs/PROGRAM.md`
+/// "lk-vpcd"; `lk_vpcd::protocol::DEFAULT_ADDR`, port `VPCDPORT` 35963 of vsmartcard's
+/// `vpcd.h`).
+pub const DEFAULT_VPCD_ADDR: &str = lk_vpcd::protocol::DEFAULT_ADDR;
 
 /// What the command line asks for.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -150,8 +177,9 @@ impl Profile {
     }
 }
 
-/// `--transport`: how the device reaches a USB host.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// A transport `--transport` can name. The order of the variants is the order of the
+/// members of a set ([`Transports`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum TransportKind {
     /// `wire`: `lk_wire::WireTransport`, a private Unix socket.
     Wire,
@@ -159,6 +187,8 @@ pub enum TransportKind {
     Uhid,
     /// `gadget`: `lk_gadget::GadgetTransport`, Linux only.
     Gadget,
+    /// `vpcd`: `lk_vpcd::VpcdTransport`, every Unix.
+    Vpcd,
 }
 
 impl TransportKind {
@@ -167,6 +197,7 @@ impl TransportKind {
             "wire" => Some(TransportKind::Wire),
             "uhid" => Some(TransportKind::Uhid),
             "gadget" => Some(TransportKind::Gadget),
+            "vpcd" => Some(TransportKind::Vpcd),
             _ => None,
         }
     }
@@ -177,26 +208,39 @@ impl TransportKind {
             TransportKind::Wire => "wire",
             TransportKind::Uhid => "uhid",
             TransportKind::Gadget => "gadget",
+            TransportKind::Vpcd => "vpcd",
         }
+    }
+
+    /// Whether `localkeyd` runs this transport on Linux only (`docs/PROGRAM.md` "Linux
+    /// transports"; vpcd "runs on every Unix", "Transport combinations").
+    pub fn linux_only(self) -> bool {
+        matches!(self, TransportKind::Uhid | TransportKind::Gadget)
     }
 }
 
-/// The chosen transport with its options, defaults resolved (see the module's "As built"
-/// notes).
+/// One transport of the set with its options, defaults resolved (see the module's "As
+/// built" notes).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TransportOptions {
-    /// `--transport wire` (the default).
+    /// `wire` (the default).
     Wire {
         /// `--wire`; `None` is [`WIRE_SOCKET`] in the state directory.
         socket: Option<PathBuf>,
     },
-    /// `--transport uhid`.
+    /// `uhid`.
     Uhid {
         /// `--uhid-path`, [`DEFAULT_UHID_PATH`] when not given.
         path: PathBuf,
     },
-    /// `--transport gadget`.
+    /// `gadget`.
     Gadget(GadgetOptions),
+    /// `vpcd`.
+    Vpcd {
+        /// `--vpcd-addr` as given (`HOST:PORT`, resolved by `run`), [`DEFAULT_VPCD_ADDR`]
+        /// when not given.
+        addr: String,
+    },
 }
 
 impl TransportOptions {
@@ -205,7 +249,37 @@ impl TransportOptions {
             TransportOptions::Wire { .. } => TransportKind::Wire,
             TransportOptions::Uhid { .. } => TransportKind::Uhid,
             TransportOptions::Gadget(_) => TransportKind::Gadget,
+            TransportOptions::Vpcd { .. } => TransportKind::Vpcd,
         }
+    }
+}
+
+/// `--transport`: the transports the device is presented through, at least one, in
+/// [`TransportKind`] order. Only the sets `docs/PROGRAM.md` "Transport combinations" allows
+/// are ever made: one transport, or `uhid,vpcd`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Transports(Vec<TransportOptions>);
+
+impl Transports {
+    /// The members, in [`TransportKind`] order.
+    pub fn members(&self) -> &[TransportOptions] {
+        &self.0
+    }
+
+    /// The members' kinds, in order.
+    pub fn kinds(&self) -> Vec<TransportKind> {
+        self.0.iter().map(TransportOptions::kind).collect()
+    }
+
+    /// The set as the command line writes it, members in order: `wire`, `uhid,vpcd`.
+    pub fn name(&self) -> String {
+        self.kinds().iter().map(|kind| kind.name()).collect::<Vec<_>>().join(",")
+    }
+
+    /// A set of these members, for tests: the caller keeps them valid and in order.
+    #[cfg(test)]
+    pub fn of(members: Vec<TransportOptions>) -> Transports {
+        Transports(members)
     }
 }
 
@@ -228,8 +302,8 @@ pub struct RunOptions {
     pub state: PathBuf,
     pub key: KeySource,
     pub profile: Profile,
-    /// `--transport` and the options that belong to it.
-    pub transport: TransportOptions,
+    /// `--transport` and the options that belong to its members.
+    pub transport: Transports,
     /// `--control`; `None` is [`CONTROL_SOCKET`] in the state directory.
     pub control: Option<PathBuf>,
     pub wall_clock: bool,
@@ -255,6 +329,9 @@ pub enum Request {
     PowerCycle,
     Status,
     Watch,
+    /// `shutdown`: the daemon stops cleanly (`docs/PROGRAM.md` "Clean shutdown from the
+    /// control socket").
+    Shutdown,
 }
 
 impl Request {
@@ -267,6 +344,7 @@ impl Request {
             ["power-cycle"] => Request::PowerCycle,
             ["status"] => Request::Status,
             ["watch"] => Request::Watch,
+            ["shutdown"] => Request::Shutdown,
             _ => return None,
         };
         Some(request)
@@ -282,6 +360,7 @@ impl Request {
             Request::PowerCycle => "power-cycle",
             Request::Status => "status",
             Request::Watch => "watch",
+            Request::Shutdown => "shutdown",
         }
     }
 }
@@ -441,6 +520,7 @@ fn parse_run(args: &[OsString]) -> Result<Invocation, UsageError> {
     let mut gadget_name = None;
     let mut configfs = None;
     let mut ffs_dir = None;
+    let mut vpcd_addr = None;
     let mut control = None;
     let mut wall_clock = false;
     let mut allow_unreadable = false;
@@ -469,9 +549,7 @@ fn parse_run(args: &[OsString]) -> Result<Invocation, UsageError> {
             }
             "--transport" => {
                 let value = utf8(&name, args.value(&name, inline)?)?;
-                let parsed = TransportKind::parse(value)
-                    .ok_or_else(|| usage(format!("unknown transport {value} (expected wire, uhid or gadget)")))?;
-                once(&mut transport, &name, parsed)?;
+                once(&mut transport, &name, transport_set(value)?)?;
             }
             "--wire" => once(&mut wire, &name, PathBuf::from(args.value(&name, inline)?))?,
             "--uhid-path" => once(&mut uhid_path, &name, PathBuf::from(args.value(&name, inline)?))?,
@@ -493,6 +571,15 @@ fn parse_run(args: &[OsString]) -> Result<Invocation, UsageError> {
             }
             "--configfs" => once(&mut configfs, &name, PathBuf::from(args.value(&name, inline)?))?,
             "--ffs-dir" => once(&mut ffs_dir, &name, PathBuf::from(args.value(&name, inline)?))?,
+            "--vpcd-addr" => {
+                let value = utf8(&name, args.value(&name, inline)?)?;
+                if !valid_host_port(value) {
+                    return Err(usage(format!(
+                        "--vpcd-addr {value:?}: expected HOST:PORT with a port from 1 to 65535, such as {DEFAULT_VPCD_ADDR}"
+                    )));
+                }
+                once(&mut vpcd_addr, &name, value.to_owned())?;
+            }
             "--control" => once(&mut control, &name, PathBuf::from(args.value(&name, inline)?))?,
             "--wall-clock" => flag(&mut wall_clock, &name, inline)?,
             "--allow-unreadable" => flag(&mut allow_unreadable, &name, inline)?,
@@ -514,8 +601,9 @@ fn parse_run(args: &[OsString]) -> Result<Invocation, UsageError> {
         (Some(_), Some(_)) => return Err(usage("run takes --key-file PATH or --key-command CMD, not both")),
         (None, None) => return Err(usage("run needs --key-file PATH or --key-command CMD")),
     };
-    let kind = transport.unwrap_or(TransportKind::Wire);
-    // Every option that belongs to one transport only, with that transport.
+    let kinds = transport.unwrap_or_else(|| vec![TransportKind::Wire]);
+    let set = kinds.iter().map(|kind| kind.name()).collect::<Vec<_>>().join(",");
+    // Every option that belongs to one transport only, with a set that has that transport.
     let owned = [
         ("--wire", wire.is_some(), TransportKind::Wire),
         ("--uhid-path", uhid_path.is_some(), TransportKind::Uhid),
@@ -523,27 +611,35 @@ fn parse_run(args: &[OsString]) -> Result<Invocation, UsageError> {
         ("--gadget-name", gadget_name.is_some(), TransportKind::Gadget),
         ("--configfs", configfs.is_some(), TransportKind::Gadget),
         ("--ffs-dir", ffs_dir.is_some(), TransportKind::Gadget),
+        ("--vpcd-addr", vpcd_addr.is_some(), TransportKind::Vpcd),
     ];
-    if let Some((option, _, owner)) = owned.iter().find(|(_, given, owner)| *given && *owner != kind) {
+    if let Some((option, _, owner)) = owned.iter().find(|(_, given, owner)| *given && !kinds.contains(owner)) {
         return Err(usage(format!(
-            "{option} applies to --transport {} only (the transport is {})",
-            owner.name(),
-            kind.name()
+            "{option} applies to --transport {} only (the transport is {set})",
+            owner.name()
         )));
     }
-    let transport = match kind {
-        TransportKind::Wire => TransportOptions::Wire { socket: wire },
-        TransportKind::Uhid => {
-            TransportOptions::Uhid { path: uhid_path.unwrap_or_else(|| PathBuf::from(DEFAULT_UHID_PATH)) }
-        }
-        TransportKind::Gadget => {
-            let udc = udc.ok_or_else(|| usage("--transport gadget needs --udc NAME"))?;
-            let name = gadget_name.unwrap_or_else(|| DEFAULT_GADGET_NAME.to_owned());
-            let ffs_dir = ffs_dir.unwrap_or_else(|| lk_gadget::default_mount_point(&name));
-            let configfs = configfs.unwrap_or_else(|| PathBuf::from(DEFAULT_CONFIGFS));
-            TransportOptions::Gadget(GadgetOptions { udc, name, configfs, ffs_dir })
-        }
-    };
+    let mut members = Vec::with_capacity(kinds.len());
+    for kind in kinds {
+        let member = match kind {
+            TransportKind::Wire => TransportOptions::Wire { socket: wire.take() },
+            TransportKind::Uhid => TransportOptions::Uhid {
+                path: uhid_path.take().unwrap_or_else(|| PathBuf::from(DEFAULT_UHID_PATH)),
+            },
+            TransportKind::Gadget => {
+                let udc = udc.take().ok_or_else(|| usage("--transport gadget needs --udc NAME"))?;
+                let name = gadget_name.take().unwrap_or_else(|| DEFAULT_GADGET_NAME.to_owned());
+                let ffs_dir = ffs_dir.take().unwrap_or_else(|| lk_gadget::default_mount_point(&name));
+                let configfs = configfs.take().unwrap_or_else(|| PathBuf::from(DEFAULT_CONFIGFS));
+                TransportOptions::Gadget(GadgetOptions { udc, name, configfs, ffs_dir })
+            }
+            TransportKind::Vpcd => {
+                TransportOptions::Vpcd { addr: vpcd_addr.take().unwrap_or_else(|| DEFAULT_VPCD_ADDR.to_owned()) }
+            }
+        };
+        members.push(member);
+    }
+    let transport = Transports(members);
     Ok(Invocation::Run(RunOptions {
         state,
         key,
@@ -555,6 +651,39 @@ fn parse_run(args: &[OsString]) -> Result<Invocation, UsageError> {
         exit_on_stdin_eof,
         verbosity: verbosity.unwrap_or(0),
     }))
+}
+
+/// The members of a `--transport` value, in [`TransportKind`] order: one transport, or
+/// `uhid` and `vpcd` in either order (`docs/PROGRAM.md` "Transport combinations").
+fn transport_set(value: &str) -> Result<Vec<TransportKind>, UsageError> {
+    let mut kinds = Vec::new();
+    for item in value.split(',') {
+        if item.is_empty() {
+            return Err(usage(format!("--transport {value}: a transport name is empty")));
+        }
+        let kind = TransportKind::parse(item)
+            .ok_or_else(|| usage(format!("unknown transport {item} (expected wire, uhid, gadget or vpcd)")))?;
+        if kinds.contains(&kind) {
+            return Err(usage(format!("--transport {value} names {item} twice")));
+        }
+        kinds.push(kind);
+    }
+    kinds.sort_unstable();
+    match kinds.as_slice() {
+        [_] | [TransportKind::Uhid, TransportKind::Vpcd] => Ok(kinds),
+        _ => Err(usage(format!(
+            "--transport {value} cannot be combined: the only set of several transports is uhid,vpcd \
+             (wire and gadget present the whole device and combine with nothing)"
+        ))),
+    }
+}
+
+/// `HOST:PORT`: a non-empty host and a port from 1 to 65535 after the last `:` (an IPv6
+/// address is written in brackets, `[::1]:35963`). Resolving is left to `run`.
+fn valid_host_port(value: &str) -> bool {
+    value.rsplit_once(':').is_some_and(|(host, port)| {
+        !host.is_empty() && !host.contains(char::is_whitespace) && port.parse::<u16>().is_ok_and(|port| port != 0)
+    })
 }
 
 /// 1 to [`MAX_GADGET_NAME`] of `[A-Za-z0-9_-]` (see the module's "As built" notes).
@@ -579,11 +708,11 @@ fn parse_ctl(args: &[OsString]) -> Result<Invocation, UsageError> {
     }
     let control = control.ok_or_else(|| usage("ctl needs --control PATH"))?;
     if words.is_empty() {
-        return Err(usage("ctl needs a command: tap [long], down, up, power-cycle, status or watch"));
+        return Err(usage("ctl needs a command: tap [long], down, up, power-cycle, status, watch or shutdown"));
     }
     let request = Request::parse(&words).ok_or_else(|| {
         usage(format!(
-            "unknown ctl command: {} (expected tap [long], down, up, power-cycle, status or watch)",
+            "unknown ctl command: {} (expected tap [long], down, up, power-cycle, status, watch or shutdown)",
             words.join(" ")
         ))
     })?;
@@ -633,7 +762,8 @@ mod tests {
     fn run_has_the_documented_defaults() {
         let options = run(&["run", "--state", "/s", "--key-file", "/k"]);
         assert_eq!(options.profile, Profile::Own);
-        assert_eq!(options.transport, TransportOptions::Wire { socket: None }, "the wire transport is the default");
+        assert_eq!(options.transport.members(), [TransportOptions::Wire { socket: None }], "the wire is the default");
+        assert_eq!(options.transport.name(), "wire");
         assert_eq!(options.control, None, "the sockets go into the state directory");
         assert_eq!(options.key, KeySource::File("/k".into()));
         assert!(!options.wall_clock && !options.allow_unreadable && !options.exit_on_stdin_eof);
@@ -661,7 +791,7 @@ mod tests {
         assert_eq!(options.state, PathBuf::from("/s"));
         assert_eq!(options.key, KeySource::Command("pass show localkey".into()));
         assert_eq!(options.profile, Profile::YubiKey5cNano574);
-        assert_eq!(options.transport, TransportOptions::Wire { socket: Some(PathBuf::from("/w")) });
+        assert_eq!(options.transport.members(), [TransportOptions::Wire { socket: Some(PathBuf::from("/w")) }]);
         assert_eq!(options.control, Some(PathBuf::from("/c")));
         assert!(options.wall_clock && options.allow_unreadable && options.exit_on_stdin_eof);
         assert_eq!(options.verbosity, 2);
@@ -687,7 +817,15 @@ mod tests {
         line
     }
 
+    /// The one transport of a set that has one.
     fn transport(extra: &[&str]) -> TransportOptions {
+        match run(&run_line(extra)).transport.members() {
+            [member] => member.clone(),
+            members => panic!("{extra:?} gave the set {members:?}"),
+        }
+    }
+
+    fn transports(extra: &[&str]) -> Transports {
         run(&run_line(extra)).transport
     }
 
@@ -753,7 +891,7 @@ mod tests {
             configfs: PathBuf::from("/cfg"),
             ffs_dir: PathBuf::from("/mnt/ffs"),
         };
-        assert_eq!(options.transport, TransportOptions::Gadget(expected));
+        assert_eq!(options.transport.members(), [TransportOptions::Gadget(expected)]);
         assert_eq!(options.control, Some(PathBuf::from("/c")));
     }
 
@@ -794,6 +932,16 @@ mod tests {
             ("uhid", "--ffs-dir", "/f", "gadget"),
             ("gadget", "--wire", "/w", "wire"),
             ("gadget", "--uhid-path", "/u", "uhid"),
+            ("gadget", "--vpcd-addr", "127.0.0.1:1", "vpcd"),
+            ("wire", "--vpcd-addr", "127.0.0.1:1", "vpcd"),
+            ("uhid", "--vpcd-addr", "127.0.0.1:1", "vpcd"),
+            ("vpcd", "--wire", "/w", "wire"),
+            ("vpcd", "--uhid-path", "/u", "uhid"),
+            ("vpcd", "--udc", "u", "gadget"),
+            ("vpcd", "--ffs-dir", "/f", "gadget"),
+            ("uhid,vpcd", "--wire", "/w", "wire"),
+            ("uhid,vpcd", "--udc", "u", "gadget"),
+            ("uhid,vpcd", "--configfs", "/cfg", "gadget"),
         ] {
             // The gadget transport's own required option, so only the foreign one is wrong.
             let required: &[&str] = if chosen == "gadget" { &["--udc", "u0"] } else { &[] };
@@ -812,8 +960,75 @@ mod tests {
     }
 
     #[test]
+    fn the_vpcd_transport_defaults_to_vpcds_own_port_on_loopback_and_takes_an_address() {
+        let vpcd = transport(&["--transport", "vpcd"]);
+        assert_eq!(vpcd, TransportOptions::Vpcd { addr: "127.0.0.1:35963".into() });
+        assert_eq!(vpcd.kind(), TransportKind::Vpcd);
+        assert_eq!(DEFAULT_VPCD_ADDR, lk_vpcd::protocol::DEFAULT_ADDR, "the crate's own default");
+        for addr in ["127.0.0.1:40000", "[::1]:35963", "localhost:35963", "192.0.2.7:1", "vpcd.example:65535"] {
+            let given = transport(&["--vpcd-addr", addr, "--transport=vpcd"]);
+            assert_eq!(given, TransportOptions::Vpcd { addr: addr.into() }, "{addr}");
+        }
+    }
+
+    #[test]
+    fn a_vpcd_address_must_be_host_and_port() {
+        for addr in ["127.0.0.1", "35963", ":35963", "localhost:", "h:0", "h:65536", "h:x", "[::1]", "a b:1"] {
+            assert_eq!(
+                run_error(&["--transport", "vpcd", "--vpcd-addr", addr]),
+                format!("--vpcd-addr {addr:?}: expected HOST:PORT with a port from 1 to 65535, such as 127.0.0.1:35963"),
+                "{addr}"
+            );
+        }
+        assert_eq!(run_error(&["--transport", "vpcd", "--vpcd-addr="]), "--vpcd-addr needs a value");
+    }
+
+    /// `docs/PROGRAM.md` "Transport combinations": `uhid,vpcd` in either order, each with
+    /// its own options and defaults, members in kind order.
+    #[test]
+    fn uhid_and_vpcd_combine_in_either_order_with_their_own_options() {
+        let expected = [
+            TransportOptions::Uhid { path: PathBuf::from("/dev/uhid") },
+            TransportOptions::Vpcd { addr: "127.0.0.1:35963".into() },
+        ];
+        for value in ["uhid,vpcd", "vpcd,uhid"] {
+            let set = transports(&["--transport", value]);
+            assert_eq!(set.members(), expected, "{value}");
+            assert_eq!(set.kinds(), [TransportKind::Uhid, TransportKind::Vpcd]);
+            assert_eq!(set.name(), "uhid,vpcd", "{value}");
+        }
+        let set = transports(&["--vpcd-addr", "127.0.0.1:9", "--transport=vpcd,uhid", "--uhid-path", "/u", "--control", "/c"]);
+        assert_eq!(
+            set.members(),
+            [TransportOptions::Uhid { path: PathBuf::from("/u") }, TransportOptions::Vpcd { addr: "127.0.0.1:9".into() }]
+        );
+    }
+
+    #[test]
+    fn other_combinations_duplicates_and_empty_names_are_usage_errors() {
+        for value in ["wire,vpcd", "wire,uhid", "uhid,gadget", "gadget,vpcd", "wire,gadget", "uhid,vpcd,wire", "vpcd,uhid,gadget"] {
+            assert_eq!(
+                run_error(&["--transport", value]),
+                format!(
+                    "--transport {value} cannot be combined: the only set of several transports is uhid,vpcd \
+                     (wire and gadget present the whole device and combine with nothing)"
+                ),
+                "{value}"
+            );
+        }
+        assert_eq!(run_error(&["--transport", "uhid,uhid"]), "--transport uhid,uhid names uhid twice");
+        assert_eq!(run_error(&["--transport", "vpcd,uhid,vpcd"]), "--transport vpcd,uhid,vpcd names vpcd twice");
+        for value in ["uhid,", ",vpcd", "uhid,,vpcd", ","] {
+            assert_eq!(run_error(&["--transport", value]), format!("--transport {value}: a transport name is empty"));
+        }
+        assert_eq!(run_error(&["--transport", "uhid, vpcd"]), "unknown transport  vpcd (expected wire, uhid, gadget or vpcd)");
+        assert_eq!(run_error(&["--transport", "uhid,usb"]), "unknown transport usb (expected wire, uhid, gadget or vpcd)");
+        assert_eq!(run_error(&["--transport", "uhid,vpcd", "--transport", "vpcd"]), "--transport given twice");
+    }
+
+    #[test]
     fn transport_values_and_names_are_checked() {
-        assert_eq!(run_error(&["--transport", "usb"]), "unknown transport usb (expected wire, uhid or gadget)");
+        assert_eq!(run_error(&["--transport", "usb"]), "unknown transport usb (expected wire, uhid, gadget or vpcd)");
         assert_eq!(run_error(&["--transport", "uhid", "--transport", "uhid"]), "--transport given twice");
         assert_eq!(run_error(&["--transport", "uhid", "--uhid-path"]), "--uhid-path needs a value");
         assert_eq!(run_error(&["--transport", "gadget", "--udc="]), "--udc needs a value");
@@ -873,6 +1088,7 @@ mod tests {
             (&["power-cycle"], Request::PowerCycle),
             (&["status"], Request::Status),
             (&["watch"], Request::Watch),
+            (&["shutdown"], Request::Shutdown),
         ] {
             let mut line = vec!["ctl", "--control", "/c"];
             line.extend_from_slice(words);
@@ -890,10 +1106,17 @@ mod tests {
     #[test]
     fn ctl_reports_missing_and_unknown_commands() {
         assert_eq!(error(&["ctl", "status"]), "ctl needs --control PATH");
-        assert_eq!(error(&["ctl", "--control", "/c"]), "ctl needs a command: tap [long], down, up, power-cycle, status or watch");
+        assert_eq!(
+            error(&["ctl", "--control", "/c"]),
+            "ctl needs a command: tap [long], down, up, power-cycle, status, watch or shutdown"
+        );
         assert_eq!(
             error(&["ctl", "--control", "/c", "tap", "short"]),
-            "unknown ctl command: tap short (expected tap [long], down, up, power-cycle, status or watch)"
+            "unknown ctl command: tap short (expected tap [long], down, up, power-cycle, status, watch or shutdown)"
+        );
+        assert_eq!(
+            error(&["ctl", "--control", "/c", "shutdown", "now"]),
+            "unknown ctl command: shutdown now (expected tap [long], down, up, power-cycle, status, watch or shutdown)"
         );
     }
 

@@ -13,3 +13,6 @@ workspace = true
 lk-core.workspace = true
 lk-device.workspace = true
 lk-run.workspace = true
+
+[dev-dependencies]
+lk-testkit.workspace = true

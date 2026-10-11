@@ -140,6 +140,13 @@ pub enum Mode {
 }
 
 /// One slot configuration (`struct config_st`).
+///
+/// `fixed`, `uid`, `key` and `acc_code` hold secrets (the AES or HMAC key, the private
+/// ID, static-password scan codes, the access code), so they are wiped when the value
+/// is dropped (`docs/DESIGN.md` §8; [`lk_crypto::wipe`]), and `Debug` prints none of
+/// them. Copies returned by [`to_bytes`](Self::to_bytes),
+/// [`secret20`](Self::secret20) and [`scan_codes`](Self::scan_codes) belong to the
+/// caller, which wipes them after use.
 #[derive(Clone, PartialEq, Eq)]
 pub struct SlotConfig {
     pub fixed: [u8; FIXED_SIZE],
@@ -163,6 +170,15 @@ impl fmt::Debug for SlotConfig {
             .field("cfg_flags", &self.cfg_flags)
             .field("has_access_code", &self.has_access_code())
             .finish_non_exhaustive()
+    }
+}
+
+impl Drop for SlotConfig {
+    fn drop(&mut self) {
+        lk_crypto::wipe(&mut self.fixed);
+        lk_crypto::wipe(&mut self.uid);
+        lk_crypto::wipe(&mut self.key);
+        lk_crypto::wipe(&mut self.acc_code);
     }
 }
 
@@ -339,6 +355,19 @@ mod tests {
         c.cfg_flags = cfg::CHAL_YUBICO;
         assert_eq!(c.mode(), Mode::YubicoChallenge);
         assert!(!c.is_touch_triggered());
+    }
+
+    #[test]
+    fn debug_prints_no_secret_field() {
+        let mut c = sample();
+        c.key = [0xC3; 16];
+        c.uid = [0xD4; 6];
+        c.acc_code = [0xE5; 6];
+        let text = format!("{c:?}");
+        assert!(text.contains("has_access_code: true"), "{text}");
+        for secret in ["195", "212", "229", "c3", "d4", "e5"] {
+            assert!(!text.to_lowercase().contains(secret), "{secret} in {text}");
+        }
     }
 
     #[test]

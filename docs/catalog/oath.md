@@ -15,6 +15,16 @@ Counting convention: each bullet has exactly one label, the first word after the
   comes first, then the tests that cover what does apply.
 - `deferred`: something the bullet needs is missing.
 
+Secrets (`docs/DESIGN.md` §8): credential keys, the access key, the serialized record
+and every HMAC output (full CALCULATE / CALCULATE ALL codes, the device's VALIDATE
+proof, the expected VALIDATE / SET CODE proofs) are held in `lk_crypto::SecretBytes` and
+wiped when dropped; `Debug` redacts the keys (`credential::tests::credential_debug_hides_the_key`,
+`state::tests::access_key_debug_hides_the_key`, `tests::debug_output_hides_secrets`). The
+record buffers and the code answers are allocated at their final size, checked against
+the same length functions the encoders allocate with
+(`state::tests::record_buffers_are_allocated_at_their_final_size`,
+`tests::code_answers_are_allocated_at_their_final_size`).
+
 Totals for the `## OATH` section: 17 tested, 3 intentional differences, 0 deferred.
 With the related rows below, `tools/catalog_status.py` counts 22 tested, 3 intentional
 differences, 0 deferred.

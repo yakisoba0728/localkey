@@ -1,6 +1,6 @@
 [package]
 name = "localkeyd"
-description = "The localkey daemon: storage, run loop, wire and control sockets around the engine"
+description = "The localkey daemon: storage, run loop, transports and the control socket around the engine"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -21,6 +21,7 @@ lk-gadget.workspace = true
 lk-host.workspace = true
 lk-run.workspace = true
 lk-uhid.workspace = true
+lk-vpcd.workspace = true
 lk-wire.workspace = true
 
 [dev-dependencies]

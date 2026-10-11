@@ -30,6 +30,18 @@
 //!   [`OtpHid`] and the [`OtpApplet`] (which resets the shared [`Otp`]).
 //! - [`MgmtBridge`] connects the serial and device-information slot commands to
 //!   Management.
+//!
+//! Secrets are wiped (`docs/DESIGN.md` §8): a [`SlotConfig`] wipes its `fixed`, `uid`,
+//! `key` and access code when dropped; the serialized record is held in
+//! `lk_crypto::SecretBytes`; the HID receive buffer, slot payloads, a pending
+//! challenge-response, the read-back response and every temporary copy of a key,
+//! private ID, scan-code block or encrypted ticket are wiped after use with
+//! `lk_crypto::wipe`. The keyboard report buffer is allocated for the longest emission,
+//! so it never reallocates while holding a static password. `Debug` prints no secret:
+//! [`SlotConfig`] omits its secret fields and [`Ticket`] its private ID. Two copies
+//! stay outside this crate's reach: [`Ticket`] is `Copy` (its `uid` is wiped where this
+//! crate holds one), and the finished keyboard reports of a static password leave
+//! through `lk-device`'s outputs.
 
 #![forbid(unsafe_code)]
 

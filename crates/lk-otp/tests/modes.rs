@@ -480,3 +480,27 @@ fn lt64_boundaries_at_63_and_64_bytes() {
         hmac_sha1(&key, &run)
     );
 }
+
+/// The private ID is a secret (YubiKey manual "Yubico OTP": it only leaves the key
+/// encrypted inside the OTP), and no key or payload bytes may reach `Debug`
+/// (`docs/DESIGN.md` §8). Found by the engine-hardening review: `Ticket` derived
+/// `Debug` and printed `uid: [212, 212, ...]`.
+#[test]
+fn ticket_debug_does_not_print_the_private_id() {
+    let ticket = Ticket {
+        uid: [0xD4; 6],
+        use_counter: 0x0102,
+        timestamp: 0x00AB_CDEF,
+        session_counter: 7,
+        random: 0xBEEF,
+    };
+    let text = format!("{ticket:?}");
+    assert!(
+        !text.contains("212") && !text.to_lowercase().contains("d4"),
+        "the private ID reaches Debug: {text}"
+    );
+    assert!(
+        text.contains("use_counter: 258") && text.contains("session_counter: 7"),
+        "the counters stay visible: {text}"
+    );
+}
