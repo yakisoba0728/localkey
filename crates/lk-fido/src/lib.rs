@@ -66,7 +66,7 @@ use crate::state::State;
 /// last at 29 925 ms, and then the answer at 30 000 ms.
 ///
 /// Known difference from the reference device (`docs/MEASUREMENT.md`, probe
-/// `selection-no-touch`, and "Revised by principle"): a YubiKey 5C Nano 5.7.4 answers
+/// `selection-no-touch`, and "Revised by principle"): the reference key answers
 /// authenticatorSelection without a touch 28 451.8 ms after the request, after 300
 /// KEEPALIVEs. Its clock runs about 5.4 % fast (28 451.8 / 30 000 = 0.9484, the same ratio
 /// as its KEEPALIVE interval), so that is the 30 s design value as a fast oscillator shows

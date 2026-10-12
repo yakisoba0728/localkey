@@ -730,7 +730,7 @@ mod tests {
 
     #[test]
     fn case_2s_from_device_trace() {
-        // reference/yubikey-5c-nano-5.7.4/openpgp-reference-observation.json, commands:
+        // reference/physical-key/openpgp-reference-observation.json, commands:
         // "00ca5f5200" (GET DATA 5F52) and "00f1000000"; §5.1: short Le 00 = 256.
         let cmd = Command::parse(&hex("00ca5f5200")).unwrap();
         assert_eq!((cmd.cla, cmd.ins, cmd.p1, cmd.p2), (0x00, 0xCA, 0x5F, 0x52));

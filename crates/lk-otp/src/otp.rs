@@ -476,7 +476,7 @@ impl Otp {
             cmd::UPDATE1 => self.update_config(0, payload, host),
             cmd::UPDATE2 => self.update_config(1, payload, host),
             cmd::SWAP => self.swap(payload, host),
-            // The 5C Nano has no NFC interface: there is no NDEF record to write.
+            // The reference key has no NFC interface: there is no NDEF record to write.
             cmd::NDEF1 | cmd::NDEF2 => Err(sw::FUNC_NOT_SUPPORTED),
             cmd::DEVICE_SERIAL => self.read_serial(mgmt, host),
             cmd::DEVICE_CONFIG => self.write_device_config(payload, mgmt, host),

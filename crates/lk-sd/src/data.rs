@@ -1,8 +1,8 @@
 //! Public Security Domain data objects: the SELECT response, card recognition data
 //! and the key information template.
 //!
-//! The card recognition data are the bytes a YubiKey 5C Nano 5.7.4 returned
-//! (`reference/yubikey-5c-nano-5.7.4/security-domain-reference-observation.json`,
+//! The card recognition data are the bytes the reference key returned
+//! (`reference/physical-key/security-domain-reference-observation.json`,
 //! `card_recognition_data`). The SELECT response is the observed template
 //! (`select_public_template`, 25 bytes) plus the `9F65` object GP 2.3.1 Table 11-82
 //! makes mandatory, which the reference omits (a known difference: specification over
@@ -20,7 +20,7 @@ use crate::state::{KID_SCP03_DEK, KID_SCP03_ENC, KID_SCP03_MAC, State};
 /// GP 2.3.1 §11.1.5 ("All GlobalPlatform APDU command messages (excluding the APDU
 /// header) are limited to 255 bytes in length"); it is this device's choice, since the
 /// reference sends no value to follow. Extended and chained commands are still accepted.
-/// A YubiKey 5C Nano 5.7.4 omits `9F65` and answers the other 25 bytes
+/// The reference key omits `9F65` and answers the other 25 bytes
 /// (`select_public_template` of the reference observation): a known difference, the
 /// specification is followed over the reference (`docs/catalog/sd.md`).
 pub(crate) const SELECT_FCI: [u8; 29] = [

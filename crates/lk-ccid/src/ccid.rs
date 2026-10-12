@@ -1,7 +1,7 @@
 //! The single-slot CCID state machine (USB CCID Rev 1.1 §5.3.1, §6.1–§6.3).
 
 use crate::chain::{CommandChain, ResponseChain};
-use crate::descriptor::YUBIKEY_5C_NANO;
+use crate::descriptor::YUBIKEY_COMPAT;
 use crate::message::msg_type::{
     PC_TO_RDR_ABORT, PC_TO_RDR_GET_PARAMETERS, PC_TO_RDR_GET_SLOT_STATUS, PC_TO_RDR_ICC_CLOCK,
     PC_TO_RDR_ICC_POWER_OFF, PC_TO_RDR_ICC_POWER_ON, PC_TO_RDR_MECHANICAL,
@@ -162,7 +162,7 @@ impl Ccid {
         self.slot = Slot::Active;
         let (chain, part) = self
             .response
-            .start(response, YUBIKEY_5C_NANO.max_data_len());
+            .start(response, YUBIKEY_COMPAT.max_data_len());
         Reply::ok(RDR_TO_PC_DATA_BLOCK, SLOT, seq, status::ICC_ACTIVE)
             .with_byte9(chain)
             .encode(&part)
@@ -251,7 +251,7 @@ impl Ccid {
     }
 
     fn max_message_len(&self) -> usize {
-        HEADER_LEN + YUBIKEY_5C_NANO.max_data_len()
+        HEADER_LEN + YUBIKEY_COMPAT.max_data_len()
     }
 
     fn icc_status(&self) -> u8 {
@@ -384,7 +384,7 @@ impl Ccid {
             level::RESPONSE_CONTINUATION
                 if !chain_open && data.is_empty() && self.response.is_pending() =>
             {
-                let max = YUBIKEY_5C_NANO.max_data_len();
+                let max = YUBIKEY_COMPAT.max_data_len();
                 let (chain, part) = self.response.next(max).unwrap_or_default();
                 CcidAction::Reply(
                     self.ok(RDR_TO_PC_DATA_BLOCK, h)
@@ -466,9 +466,9 @@ impl Ccid {
                 .map_or(0, u32::from_le_bytes)
         };
         let (clock, rate) = (word(0), word(4));
-        let error = if clock != YUBIKEY_5C_NANO.default_clock_khz {
+        let error = if clock != YUBIKEY_COMPAT.default_clock_khz {
             Some(error::INDEX_CLOCK_FREQUENCY)
-        } else if rate != YUBIKEY_5C_NANO.data_rate_bps {
+        } else if rate != YUBIKEY_COMPAT.data_rate_bps {
             Some(error::INDEX_DATA_RATE)
         } else {
             None
@@ -484,8 +484,8 @@ impl Ccid {
 /// `dwClockFrequency` and `dwDataRate` of `RDR_to_PC_DataRateAndClockFrequency`
 /// (§6.2.5): the only clock and rate the descriptor offers.
 fn clock_and_rate() -> [u8; 8] {
-    let [c0, c1, c2, c3] = YUBIKEY_5C_NANO.default_clock_khz.to_le_bytes();
-    let [r0, r1, r2, r3] = YUBIKEY_5C_NANO.data_rate_bps.to_le_bytes();
+    let [c0, c1, c2, c3] = YUBIKEY_COMPAT.default_clock_khz.to_le_bytes();
+    let [r0, r1, r2, r3] = YUBIKEY_COMPAT.data_rate_bps.to_le_bytes();
     [c0, c1, c2, c3, r0, r1, r2, r3]
 }
 

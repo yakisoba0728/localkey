@@ -57,8 +57,8 @@ fn same_seed_same_outputs_and_store() {
 /// Security Domain identity), so the comparison above is not vacuous.
 #[test]
 fn different_seed_differs() {
-    let a = Rig::with_store(DeviceProfile::yubikey_5c_nano_5_7_4(SERIAL), lk_testkit::MemoryStore::new(), 1);
-    let b = Rig::with_store(DeviceProfile::yubikey_5c_nano_5_7_4(SERIAL), lk_testkit::MemoryStore::new(), 2);
+    let a = Rig::with_store(DeviceProfile::yubikey_compat(SERIAL), lk_testkit::MemoryStore::new(), 1);
+    let b = Rig::with_store(DeviceProfile::yubikey_compat(SERIAL), lk_testkit::MemoryStore::new(), 2);
     assert_ne!(a.store.get(Record::SecurityDomain), b.store.get(Record::SecurityDomain));
 }
 

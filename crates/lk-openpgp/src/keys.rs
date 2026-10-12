@@ -698,7 +698,7 @@ mod tests {
 
     #[test]
     fn attributes_decode_every_fa_entry() {
-        // Every entry of the observed FA (reference/yubikey-5c-nano-5.7.4) decodes.
+        // Every entry of the observed FA (reference/yubikey) decodes.
         let (fa, _) = tlv::parse_one(&crate::objects::ALGORITHM_INFORMATION).unwrap();
         let entries = fa.children().unwrap();
         let mut supported = 0;

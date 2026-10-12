@@ -125,7 +125,7 @@ fn cancel_after_a_refused_empty_cbor_request_is_ignored() {
     // starts nothing, so a CANCEL on its channel finds no outstanding request and is not
     // answered (§11.2.9.1.5); CANCEL from another channel is not answered either, and a
     // real CBOR request afterwards is cancelled as usual. Known difference: the YubiKey
-    // 5C Nano 5.7.4 stays busy after the empty request and ignores CANCEL
+    // reference key stays busy after the empty request and ignores CANCEL
     // (docs/MEASUREMENT.md, probe empty-cbor); that stall is a defect not copied
     // (§11.2.4, §11.2.5.2, "Revised by principle"). This test checked CANCEL during the
     // stall between the measurement and that revision, and CANCEL under a CTAPHID_LOCK

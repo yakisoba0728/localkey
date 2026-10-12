@@ -1,6 +1,6 @@
 //! `CTAPHID_LOCK` (CTAP 2.1 §11.2.9.2.2) is not implemented.
 //!
-//! Measured on a YubiKey 5C Nano 5.7.4 (`docs/MEASUREMENT.md`, probes `lock` and
+//! Measured on the reference key (`docs/MEASUREMENT.md`, probes `lock` and
 //! `lock-expiry`): LOCK with 0, 1 or 2 seconds (BCNT 1) is answered `ERR_INVALID_CMD`
 //! (`01`), and another channel's PING and a broadcast INIT sent right after it are
 //! answered normally. Before the measurement the engine implemented the lock (0..=10 s,

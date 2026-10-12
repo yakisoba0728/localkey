@@ -1,11 +1,11 @@
 //! Data objects of the OpenPGP application: constants, the public objects that must
-//! byte-match the firmware 5.7.4 observation, and the builders of the constructed
+//! byte-match the reference observation, and the builders of the constructed
 //! objects 65, 6E and 7A.
 //!
 //! References:
 //! - OpenPGP Smart Card Application Functional Specification 3.4.1 ("spec") §4.2.1
 //!   (AID), §4.4.1 (data object table), §4.4.3 (individual objects), §6 (historical bytes).
-//! - `reference/yubikey-5c-nano-5.7.4/openpgp-reference-observation.json` ("observation"):
+//! - `reference/physical-key/openpgp-reference-observation.json` ("observation"):
 //!   the bytes of 5F52, 7F66, 7F74, C0, FA and the 6E / 7A layouts.
 
 use lk_core::DeviceProfile;
@@ -335,7 +335,7 @@ pub(crate) fn generation_times(state: &State) -> Vec<u8> {
 /// Key information DE (spec §4.4.3.8): key reference and status (00 absent, 01
 /// generated, 02 imported) for each slot. The factory value is `01 00 02 00 03 00 81 01`:
 /// only the attestation key exists, generated on the device at first start (attest.rs
-/// `FACTORY_ISSUER_STATUS`). Known difference: a YubiKey 5C Nano 5.7.4 reads `81 02`, its
+/// `FACTORY_ISSUER_STATUS`). Known difference: the reference key reads `81 02`, its
 /// factory-injected key (docs/MEASUREMENT.md, probe `openpgp-get-006e`).
 pub(crate) fn key_information(state: &State) -> Vec<u8> {
     Slot::ALL
@@ -382,7 +382,7 @@ pub(crate) fn application_data(state: &State, profile: &DeviceProfile) -> Vec<u8
 /// `change_rsa_keyattr` writes `0020` when it switches a slot from ECC to RSA and OpenSC
 /// writes `SC_OPENPGP_MAX_EXP_BITS` = `0020` before RSA generation, so every length from
 /// 17 to 32 bits is accepted and stored as written (model policy: FA lists only `0011`
-/// and a physical 5.7.4's answer to `0020` is unmeasured).
+/// and the reference key's answer to `0020` is unmeasured).
 const RSA_E_BITS: core::ops::RangeInclusive<u16> = 17..=32;
 
 /// Whether `value` is an algorithm attribute the slot accepts: one of the slot's entries
@@ -432,7 +432,7 @@ mod tests {
     #[test]
     fn full_aid_layout() {
         // spec §4.2.1 table: RID, application, version, manufacturer, serial, RFU.
-        let aid = full_aid(&DeviceProfile::yubikey_5c_nano_5_7_4(12_345_678));
+        let aid = full_aid(&DeviceProfile::yubikey_compat(12_345_678));
         assert_eq!(
             aid,
             [0xD2, 0x76, 0x00, 0x01, 0x24, 0x01, 0x03, 0x04, 0x00, 0x06, 0x12, 0x34, 0x56, 0x78, 0x00, 0x00]
@@ -447,7 +447,7 @@ mod tests {
         // docs/CONTRACTS.md "lk-core additions": the AID manufacturer is
         // DeviceProfile::openpgp_manufacturer. A "Yubico" string with a test-range ID, and
         // a foreign string with Yubico's ID, each follow the field.
-        let mut yubico_string = DeviceProfile::yubikey_5c_nano_5_7_4(1);
+        let mut yubico_string = DeviceProfile::yubikey_compat(1);
         yubico_string.openpgp_manufacturer = 0xFFFE;
         assert_eq!(full_aid(&yubico_string)[8..10], [0xFF, 0xFE]);
         let mut own_string = DeviceProfile::own(1);

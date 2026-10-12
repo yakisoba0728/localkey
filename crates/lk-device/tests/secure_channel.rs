@@ -185,7 +185,7 @@ fn security_domain_commands_under_its_own_channel() {
     let (data, status) = session.unwrap(&rig.apdu(&get));
     assert_eq!(status, 0x9000);
     // The reference schema: `C0` key information entries, the first for SCP03 set 1
-    // (`reference/yubikey-5c-nano-5.7.4/security-domain-reference-observation.json`).
+    // (`reference/physical-key/security-domain-reference-observation.json`).
     assert_eq!(&data[..6], &[0xC0, 0x04, 0x01, 0xFF, 0x88, 0x10]);
     assert_eq!(whole, [&[0xE0, data.len() as u8][..], &data].concat());
 }

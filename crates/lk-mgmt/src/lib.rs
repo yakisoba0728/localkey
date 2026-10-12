@@ -38,7 +38,7 @@
 //!   binding APDU conventions of `docs/CONTRACTS.md` ("Applications B"): `6882` for
 //!   secure-messaging CLA bits, `6E00` for other classes (`6881` for a logical
 //!   channel), and at most Ne response bytes per APDU with `61xx` and GET RESPONSE
-//!   (`C0`) for the rest. Where a YubiKey 5C Nano 5.7.4 was measured to differ
+//!   (`C0`) for the rest. Where the reference key was measured to differ
 //!   (`docs/MEASUREMENT.md`), the measurement wins: CLA `80` is served like `00`, and
 //!   GET RESPONSE with nothing pending is `6D00`.
 //!

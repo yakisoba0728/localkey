@@ -11,10 +11,10 @@ use common::*;
 use lk_crypto::{Curve, HashAlg, ecdsa_verify_prehash, hmac, sha256};
 use lk_device::{Input, Output, WTX_INTERVAL_MS};
 
-const SD_REFERENCE: &str = include_str!("../../../reference/yubikey-5c-nano-5.7.4/security-domain-reference-observation.json");
+const SD_REFERENCE: &str = include_str!("../../../reference/physical-key/security-domain-reference-observation.json");
 
 /// Largest `abData` of one CCID message: `dwMaxCCIDMessageLength` 3072 minus the 10-byte
-/// header (`reference/yubikey-5c-nano-5.7.4/usb-reference-observation.json` class
+/// header (`reference/physical-key/usb-reference-observation.json` class
 /// descriptor; USB CCID Rev 1.1 §5.1).
 const MAX_DATA: usize = 3062;
 
@@ -158,7 +158,7 @@ fn select_routes_between_all_seven_applications() {
         assert_eq!(rig.apdu(&[0x00, 0xF1, 0x00, 0x00, 0x00]), [&version[..], &[0x90, 0x00]].concat());
 
         // The Management SELECT text as measured (docs/MEASUREMENT.md, probe `select-mgmt`).
-        assert_eq!(rig.select(AID_MGMT), b"Virtual mgr - FW version 5.7.4\x90\x00".to_vec());
+        assert_eq!(rig.select(AID_MGMT), rig.management_select_text());
         let config = rig.apdu(&[0x00, 0x1D, 0x00, 0x00, 0x00]);
         assert_eq!((usize::from(config[0]), sw(&config)), (config.len() - 3, 0x9000));
 

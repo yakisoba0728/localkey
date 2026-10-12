@@ -1,7 +1,7 @@
 //! Extended APDU level chaining (USB CCID Rev 1.1 §6.1.4 `wLevelParameter`,
 //! §6.2.1 `bChainParameter`). The reference descriptor advertises dwFeatures bit
 //! 0x00040000 (short and extended APDU level) with dwMaxCCIDMessageLength 3072
-//! (reference/yubikey-5c-nano-5.7.4/usb-reference-observation.json).
+//! (reference/physical-key/usb-reference-observation.json).
 
 mod common;
 

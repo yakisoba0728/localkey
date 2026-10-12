@@ -15,7 +15,7 @@
 //!    known code, INIT with 17 bytes, WINK empty).
 //! 2. Against a small host-side model of the rules this crate documents: CTAP 2.1
 //!    §11.2.4 to §11.2.9, the `reference/BEHAVIOR_CATALOG.md` CTAPHID decisions, the
-//!    behaviour measured on a YubiKey 5C Nano 5.7.4 (`docs/MEASUREMENT.md`: requests of
+//!    behaviour measured on the reference key (`docs/MEASUREMENT.md`: requests of
 //!    at most 1536 bytes, probe `ping-max`; LOCK is ERR_INVALID_CMD, probe `lock`;
 //!    470 ms message timeout, probe `message-timeout`), and the check order and model
 //!    policies stated in `src/framer.rs` (channel, busy, command, length; the timeout

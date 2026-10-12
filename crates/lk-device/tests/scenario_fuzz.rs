@@ -515,7 +515,7 @@ fn seeded_random_inputs_across_all_interfaces() {
         if interfaces.ccid {
             assert_eq!(rig.power_on(), rig.profile.atr, "round {round}");
             // The Management SELECT text as measured (docs/MEASUREMENT.md, probe `select-mgmt`).
-            assert_eq!(rig.select(AID_MGMT), b"Virtual mgr - FW version 5.7.4\x90\x00".to_vec(), "round {round}");
+            assert_eq!(rig.select(AID_MGMT), rig.management_select_text(), "round {round}");
         }
         if interfaces.otp {
             rig.input(Input::OtpSetFeature(&[0, 0, 0, 0, 0, 0, 0, 0xFF]));

@@ -37,7 +37,7 @@ const PIV_F9_CERTIFICATE: [u8; 11] = [0x00, 0xCB, 0x3F, 0xFF, 0x05, 0x5C, 0x03, 
 /// GET DATA CPLC (GP 2.3.1 §11.3, tag `9F7F`) and key information (Amendment D/F, `E0`).
 const SD_CPLC: [u8; 5] = [0x80, 0xCA, 0x9F, 0x7F, 0x00];
 const SD_KEY_INFO: [u8; 5] = [0x80, 0xCA, 0x00, 0xE0, 0x00];
-/// The factory key information (`reference/yubikey-5c-nano-5.7.4/` Security Domain
+/// The factory key information (`reference/physical-key/` Security Domain
 /// observation): SCP03 `01`/`02`/`03` at KVN `FF` and SCP11b `13` at KVN `01`.
 const SD_FACTORY_KEYS: &str = "C00401FF8810 C00402FF8810 C00403FF8810 C0061301B120F000";
 

@@ -221,7 +221,7 @@ fn every_generated_algorithm_can_be_attested() {
 
 #[test]
 fn compatibility_profile_uses_the_public_subject_format() {
-    let mut card = Card::with_host(TestHost::with_profile(DeviceProfile::yubikey_5c_nano_5_7_4(31_415_926)));
+    let mut card = Card::with_host(TestHost::with_profile(DeviceProfile::yubikey_compat(31_415_926)));
     card.auth_default();
     card.generate(0x9C, P256, None, None);
     let cert = attest_ok(&mut card, 0x9C);

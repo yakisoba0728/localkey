@@ -131,7 +131,7 @@ impl Drop for DropProbe {
 }
 
 fn open(store: Box<dyn Store>) -> Result<Device, String> {
-    let profile = DeviceProfile::yubikey_5c_nano_5_7_4(SERIAL);
+    let profile = DeviceProfile::yubikey_compat(SERIAL);
     Ok(Device::open(profile, store, Box::new(SeededEntropy::new(1)), KEY))
 }
 
@@ -266,7 +266,7 @@ impl Bench {
     }
 
     /// authenticatorSelection on `cid`: the indicator at once, then the first
-    /// KEEPALIVE(UPNEEDED) one interval (95 ms) later. Measured on a YubiKey 5C Nano 5.7.4
+    /// KEEPALIVE(UPNEEDED) one interval (95 ms) later. Measured on the reference key
     /// (docs/MEASUREMENT.md, probe selection-keepalive-cancel: no KEEPALIVE at once); the
     /// KEEPALIVE came first, at once, before the measurement.
     fn request_presence(&self, cid: u32) {
@@ -355,7 +355,7 @@ fn inputs_before_serve_are_ignored() {
 }
 
 /// The deadline loop: a request that waits for user presence gets a KEEPALIVE every
-/// 95 ms (CTAP 2.1 §11.2.9.1.7; measured on a YubiKey 5C Nano 5.7.4, docs/MEASUREMENT.md,
+/// 95 ms (CTAP 2.1 §11.2.9.1.7; measured on the reference key, docs/MEASUREMENT.md,
 /// probe selection-no-touch; 100 ms before the measurement) with no further input, and a
 /// tap answers it.
 #[test]

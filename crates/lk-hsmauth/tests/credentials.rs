@@ -392,9 +392,9 @@ fn syntax_errors_do_not_consume_management_key_retries() {
 }
 
 /// yubikit `require_version(self.version, (5, 8, 0))` for CHANGE CREDENTIAL PASSWORD:
-/// absent on 5.7.4.
+/// absent from the reference firmware.
 #[test]
-fn change_credential_password_is_not_supported_on_5_7_4() {
+fn change_credential_password_is_not_supported_in_compat_profile() {
     let mut card = Card::new();
     assert_eq!(card.put_symmetric("a", [1; 16], [2; 16], pw("old")), sw::OK);
     let mut d = tlv(tag::LABEL, b"a");

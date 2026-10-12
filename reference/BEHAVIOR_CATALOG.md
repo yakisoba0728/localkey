@@ -2,8 +2,8 @@
 
 이 문서는 이전 구현(태그 `legacy-v0.64.0`)이 **어떻게 동작하도록 정했고 무엇을 검증했는지**를 서술로만 옮긴 것입니다.
 코드가 아니며, 새 엔진은 이 문서를 규격 문서와 함께 *기대 동작 목록*으로 사용합니다. 각 항목은 당시 소프트웨어 모델과
-SDK 상호운용 테스트 기준이며, 실물 YubiKey 5C Nano 5.7.4와의 명령 단위 비교로 확정된 것이 아닙니다.
-실물 키에서 읽은 공개 바이트는 `yubikey-5c-nano-5.7.4/`, 앱별 초기 프로필 값은 `legacy-v0.64-profiles.json`에 있습니다.
+SDK 상호운용 테스트 기준이며, 실물 reference key와의 명령 단위 비교로 확정된 것이 아닙니다.
+실물 키에서 읽은 공개 바이트는 `physical-key/`, 앱별 초기 프로필 값은 `legacy-v0.64-profiles.json`에 있습니다.
 
 원문(영어)은 legacy 저장소의 `implementation-status.json` `implemented_and_verified`와 `compatibility-matrix.json`입니다.
 
@@ -106,7 +106,7 @@ SDK 상호운용 테스트 기준이며, 실물 YubiKey 5C Nano 5.7.4와의 명�
 - certificate iteration
 - 15-second cached/fixed touch
 - wrong PIN invalidates both PW1 authorization modes
-- read-only PC/SC observation of public firmware-5.7.4 metadata; no PIN or persistent writes
+- read-only PC/SC observation of public reference-key metadata; no PIN or persistent writes
 - exact captured C0/5F52/7F66/7F74 bytes and direct-C0 6B00 response
 - captured application-related tag layout/lengths, discretionary 7F66 and public RSA2048 attributes
 - fresh independent own RSA2048 attestation issuer; legacy own EC issuer and user keys preserved
@@ -119,7 +119,7 @@ SDK 상호운용 테스트 기준이며, 실물 YubiKey 5C Nano 5.7.4와의 명�
 - socket and direct IFD independent SDK/crypto; physical write/challenge/touch boundaries unmeasured
 - RFC4880 low-count iterated-salted S2K hashes one complete salt-plus-PIN block; independent digest and SDK APDU verified over socket and direct IFD
 - OpenPGP 3.4.1 VERIFY and CHANGE REFERENCE DATA P1/data validation before PIN retry or state mutation over socket and direct IFD; exact physical statuses unmeasured
-- explicit Le guards on VERIFY/CHANGE and zero P1/P2 guard on INTERNAL AUTHENTICATE over socket and direct IFD; physical 5.7.4 status/tolerance unmeasured
+- explicit Le guards on VERIFY/CHANGE and zero P1/P2 guard on INTERNAL AUTHENTICATE over socket and direct IFD; reference key status/tolerance unmeasured
 - RESET RETRY COUNTER, PUT DATA, GENERATE, PSO SIGN and INTERNAL AUTHENTICATE Le mutation guards verified over private socket and direct IFD
 - GET RESPONSE rejects unsupported plaintext CLA before consuming a pending response; unmodified YubiKit chaining and private socket/direct IFD pass
 - OpenPGP GET RESPONSE during unfinished command chaining returns 6883; unmodified YubiKit chained PUT DATA and subsequent SDK read pass over private CCID socket and direct IFD
@@ -205,7 +205,7 @@ SDK 상호운용 테스트 기준이며, 실물 YubiKey 5C Nano 5.7.4와의 명�
 - two-step static-ticket manual update with fresh presence, configuration binding and session cancellation
 - LT64 empty HMAC challenge maps to a single zero byte over SDK APDU and OTP HID
 - documented two-slot short/long touch windows with independent SDK-written slot fixtures; physical debounce timing unmeasured
-- LT64 direct short-APDU and OTP HID abort/orphan-frame boundaries in isolated software candidate; exact physical 5.7.4 response unmeasured
+- LT64 direct short-APDU and OTP HID abort/orphan-frame boundaries in isolated software candidate; exact reference key response unmeasured
 - touch-trigger status bits distinguish keyboard OTP from challenge-response across APDU/HID, swap, delete and restart
 - Yubico OTP volatile power session survives logical SELECT and private socket reconnect; independent AES/CRC ticket counter verification
 - OTP volatile session rollback and committed device-reboot behavior verified across APDU, private management RPC and software button paths
@@ -604,9 +604,9 @@ SDK 상호운용 테스트 기준이며, 실물 YubiKey 5C Nano 5.7.4와의 명�
 | `piv_generate_p1` | Mac_Linux_socket_direct_IFD_unmodified_YubiKit_verified; physical_status_unmeasured |
 | `ctap_largeblob_sequence` | Mac_Linux_private_socket_and_CPP_verified; physical_error_precedence_unmeasured |
 | `piv_general_authenticate_le` | Mac_Linux_socket_direct_IFD_unmodified_YubiKit_verified; physical_status_unmeasured |
-| `fido_same_cid_transaction` | Mac_Linux_software_and_owned_USB_as_applicable_verified; physical_5_7_4_unmeasured |
-| `hsmauth_symmetric_challenge_touch` | Mac_Linux_software_and_owned_USB_as_applicable_verified; physical_5_7_4_unmeasured |
-| `scp03_initialize_update_le` | Mac_Linux_software_and_owned_USB_as_applicable_verified; physical_5_7_4_unmeasured |
+| `fido_same_cid_transaction` | Mac_Linux_software_and_owned_USB_as_applicable_verified; physical_reference_unmeasured |
+| `hsmauth_symmetric_challenge_touch` | Mac_Linux_software_and_owned_USB_as_applicable_verified; physical_reference_unmeasured |
+| `scp03_initialize_update_le` | Mac_Linux_software_and_owned_USB_as_applicable_verified; physical_reference_unmeasured |
 
 ## 부록 C: 남은 과제와 본질적 차이 (legacy 기준)
 

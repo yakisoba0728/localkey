@@ -458,7 +458,7 @@ mod tests {
     fn status() -> Status {
         Status {
             serial: 12_345_678,
-            product: "YubiKey 5C Nano".into(),
+            product: "YubiKey".into(),
             interfaces: UsbInterfaces { otp: true, fido: true, ccid: true },
             presence_pending: false,
             serving: true,
@@ -558,7 +558,7 @@ mod tests {
     fn status_lists_the_documented_keys_in_order() {
         assert_eq!(
             status_lines(&status()),
-            "serial=12345678\nproduct=YubiKey 5C Nano\ninterfaces=otp,fido,ccid\npresence=idle\nattached=true\n\
+            "serial=12345678\nproduct=YubiKey\ninterfaces=otp,fido,ccid\npresence=idle\nattached=true\n\
              suspended=false\nqueued=0\ndropped=0\nunreadable=\nuptime_ms=1234\n"
         );
     }

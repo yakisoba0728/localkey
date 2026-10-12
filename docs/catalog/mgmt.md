@@ -6,7 +6,7 @@ unit tests in `crates/lk-mgmt/src/`.
 
 ## Management
 
-- CCID and OTP HID device information/configuration — tested: `select_returns_version_string`, `device_info_own_profile_matches_expected_bytes`, `device_info_yubikey_profile_matches_expected_bytes`, `device_info_follows_the_profile`, `read_config_is_length_prefixed_device_info`, `read_config_serves_at_most_ne_with_get_response`, `secure_channel_collection_reaches_the_whole_page`, `unread_response_data_is_discarded_by_other_commands`, `select_serves_at_most_ne`, `apdu_header_errors`, `read_config_paging_bounds`, `config::tests::read_config_serves_the_two_measured_pages`, `info::tests::pages_match_the_measured_layout`, `cla_80_is_served_like_00`, `get_response_without_pending_data_is_6d00`, `write_config_round_trips_every_field`, `yubikit_get_bytes_requests_are_accepted_byte_exact`, `yubikit_parse_tlvs_decodes_every_field`, `ykman_config_usb_mode_and_lock_flows_byte_exact`, `write_config_accepts_case_4_apdus`, `malformed_length_prefixes_are_rejected_on_every_transport`, `device_info_page_is_read_config_without_length_byte`, `otp_read_config_with_crc_frame`, `otp_write_config_from_padded_slot_data`, `otp_padded_write_length_edges`, `otp_device_info_fits_the_otp_response_capacity`. On OTP HID, `lk-otp` owns the feature-report framing, the programming-sequence counter, the response length byte and the CRC. `lk-device` implements `lk_otp::MgmtBridge` with `Management::device_info_page` (bare TLVs), `Management::write_config` (`len || TLVs`), `Management::serial`, `Management::challenge_response_timeout_secs` and `Management::legacy_set_mode`. The mapping table is in `crates/lk-mgmt/src/transport.rs`. The SELECT text, the DeviceInfo pages, CLA `80`, READ CONFIG P1/P2 and GET RESPONSE with nothing pending are measured on a YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probes `select-mgmt`, `mgmt-read-config`, `bad-p1p2-mgmt`, `cla-variants-mgmt`, `get-response-idle-mgmt`; see "Model policies replaced by measurement" below). Form factor (DeviceInfo tag `04`, yubikit `FORM_FACTOR`): intentional difference (own identity): `DeviceProfile::own` reports `00`, `FORM_FACTOR.UNKNOWN`, because a software key has no physical shape and a USB shape code would make yubikit and ykman name the device after a Yubico product; the reference key reports `04`, USB-C Nano (docs/MEASUREMENT.md, "State of the key"), which the compatibility profile `yubikey_5c_nano_5_7_4` keeps for host tools that accept nothing else. yubikit gates nothing on the form factor except its Bio checks. Tests: `device_info_own_profile_matches_expected_bytes` (`04 01 00`), `device_info_yubikey_profile_matches_expected_bytes` (`04 01 04`), `yubikit_parse_tlvs_decodes_every_field` (UNKNOWN for the own profile, USB_C_NANO for the compatibility profile), lk-core `profile::tests::form_factor_per_profile`.
+- CCID and OTP HID device information/configuration — tested: `select_returns_version_string`, `device_info_own_profile_matches_expected_bytes`, `device_info_yubikey_profile_matches_expected_bytes`, `device_info_follows_the_profile`, `read_config_is_length_prefixed_device_info`, `read_config_serves_at_most_ne_with_get_response`, `secure_channel_collection_reaches_the_whole_page`, `unread_response_data_is_discarded_by_other_commands`, `select_serves_at_most_ne`, `apdu_header_errors`, `read_config_paging_bounds`, `config::tests::read_config_serves_the_two_measured_pages`, `info::tests::pages_match_the_measured_layout`, `cla_80_is_served_like_00`, `get_response_without_pending_data_is_6d00`, `write_config_round_trips_every_field`, `yubikit_get_bytes_requests_are_accepted_byte_exact`, `yubikit_parse_tlvs_decodes_every_field`, `ykman_config_usb_mode_and_lock_flows_byte_exact`, `write_config_accepts_case_4_apdus`, `malformed_length_prefixes_are_rejected_on_every_transport`, `device_info_page_is_read_config_without_length_byte`, `otp_read_config_with_crc_frame`, `otp_write_config_from_padded_slot_data`, `otp_padded_write_length_edges`, `otp_device_info_fits_the_otp_response_capacity`. On OTP HID, `lk-otp` owns the feature-report framing, the programming-sequence counter, the response length byte and the CRC. `lk-device` implements `lk_otp::MgmtBridge` with `Management::device_info_page` (bare TLVs), `Management::write_config` (`len || TLVs`), `Management::serial`, `Management::challenge_response_timeout_secs` and `Management::legacy_set_mode`. The mapping table is in `crates/lk-mgmt/src/transport.rs`. The SELECT text, the DeviceInfo pages, CLA `80`, READ CONFIG P1/P2 and GET RESPONSE with nothing pending are measured on the reference key (docs/MEASUREMENT.md, probes `select-mgmt`, `mgmt-read-config`, `bad-p1p2-mgmt`, `cla-variants-mgmt`, `get-response-idle-mgmt`; see "Model policies replaced by measurement" below). Form factor (DeviceInfo tag `04`, yubikit `FORM_FACTOR`): intentional difference (own identity): `DeviceProfile::own` reports `00`, `FORM_FACTOR.UNKNOWN`, because a software key has no physical shape and a USB shape code would make yubikit and ykman name the device after a Yubico product; the reference key reports `04`, USB-C Nano (docs/MEASUREMENT.md, "State of the key"), which the compatibility profile `yubikey_compat` keeps for host tools that accept nothing else. yubikit gates nothing on the form factor except its Bio checks. Tests: `device_info_own_profile_matches_expected_bytes` (`04 01 00`), `device_info_yubikey_profile_matches_expected_bytes` (`04 01 04`), `yubikit_parse_tlvs_decodes_every_field` (UNKNOWN for the own profile, USB_C_NANO for the compatibility profile), lk-core `profile::tests::form_factor_per_profile`.
 - CTAPHID vendor 0x42 / 0x43 commands — tested: `ctaphid_read_config`, `ctaphid_write_config`, `ctaphid_other_vendor_commands_are_not_management`, `malformed_length_prefixes_are_rejected_on_every_transport`, `disabling_every_application_is_rejected_on_every_transport`, `yubikit_parse_tlvs_decodes_every_field` (yubikit `_ManagementCtapBackend.read_config` sends `int2bytes(page)`), `ykman_config_usb_mode_and_lock_flows_byte_exact`, `storage_failure_is_rejected_on_every_transport`.
 - shared own serial and USB application flags — tested: `configuration_is_shared_across_transports`, `device_info_yubikey_profile_matches_expected_bytes`, `device_info_follows_the_profile`, `yubikit_parse_tlvs_decodes_every_field`. The serial always comes from `DeviceProfile` and is never stored. One `Management` value serves CCID, OTP HID and CTAPHID.
 - configuration lock/unlock — tested: `lock_code_protects_configuration`, `lock_is_checked_before_values_and_covers_reboot`, `locked_device_rejects_lock_changes_without_the_code`, `lock_rejection_owes_no_reboot`, `unlock_tag_while_unlocked_must_be_the_zero_code`, `yubikit_get_bytes_requests_are_accepted_byte_exact` (set and `--clear` with `CLEAR_LOCK_CODE`), `ykman_config_usb_mode_and_lock_flows_byte_exact` (`config set-lock-code`, `config usb -L`, a wrong code, `config mode` while locked, `--clear`, on CCID, CTAPHID and OTP HID), `non_minimal_tlv_lengths_are_accepted`, `lock_survives_reload`, `storage_failure_while_clearing_lock_keeps_lock`.
@@ -46,7 +46,7 @@ The request shapes the tests send come from the host source:
 
 `yubikit_parse_tlvs_decodes_every_field` and `ykman_config_usb_mode_and_lock_flows_byte_exact` reimplement these rules and run them against the engine on every transport.
 
-## Model policies replaced by measurement (YubiKey 5C Nano 5.7.4)
+## Model policies replaced by measurement (reference key)
 
 Differential measurement of 2026-10-11 (docs/MEASUREMENT.md): the same read-only probes
 (`tools/measure/probes.py`) sent to the physical key and to the engine. Each answer below
@@ -57,14 +57,14 @@ answers is a reference defect (rule 4). The own profile still carries no Yubico 
 (rule 5: empty part number, form factor `00`). A numbered list, so that
 `tools/catalog_status.py` does not count these as catalog lines:
 
-1. SELECT answers the 30 ASCII bytes `Virtual mgr - FW version 5.7.4` (the profile's
-  firmware version), with or without Le `00`: measured on a YubiKey 5C Nano 5.7.4
-  (docs/MEASUREMENT.md, probes `select-mgmt`, `select-odd-p2`); it was the bare `5.7.4`.
+1. SELECT answers the 30 ASCII bytes `Virtual mgr - FW version <major>.<minor>.<patch>` (the profile's
+  firmware version), with or without Le `00`: measured on the reference key
+  (docs/MEASUREMENT.md, probes `select-mgmt`, `select-odd-p2`); it was the bare version string.
   yubikit's `Version.from_string` finds the version in either text. Tests:
   `select_returns_version_string`, `select_serves_at_most_ne`,
   `device_info_follows_the_profile`, `yubikit_version_search_reads_both_select_texts`,
   `yubikit_parse_tlvs_decodes_every_field`.
-2. DeviceInfo comes in two fixed pages: measured on a YubiKey 5C Nano 5.7.4
+2. DeviceInfo comes in two fixed pages: measured on the reference key
   (docs/MEASUREMENT.md, probe `mgmt-read-config`). Page 0 holds `01 03 02 04 05 06 07 08
   0A 0F 20 21` and ends with `MORE_DATA` (`10 01 01`), 52 bytes with the length byte `33`;
   page 1 holds `11 12 13 14 15 16 17 18`, 42 bytes with `29`, and no `MORE_DATA`. The
@@ -89,26 +89,24 @@ answers is a reference defect (rule 4). The own profile still carries no Yubico 
   `otp_read_config_with_crc_frame`, `otp_device_info_fits_the_otp_response_capacity`,
   `yubikit_parse_tlvs_decodes_every_field` (two pages on all three transports).
 3. A fresh device stores the challenge-response timeout `0F` (15 s): measured on a YubiKey
-  5C Nano 5.7.4 (docs/MEASUREMENT.md, probe `mgmt-read-config`, DeviceInfo `07 01 0F`); it
+  reference key (docs/MEASUREMENT.md, probe `mgmt-read-config`, DeviceInfo `07 01 0F`); it
   was `00`. A host may still write `00`, which `Management::challenge_response_timeout_secs`
   reads as the 15-second default (model policy); a stored record keeps its own value.
   Tests: `factory_challenge_response_timeout_means_default`,
   `malformed_length_prefixes_are_rejected_on_every_transport`, `yubikit_parse_tlvs_decodes_every_field`.
 4. READ CONFIG over CCID: P1 alone selects the page (P2 is ignored), and a page past the
-  last answers `9000` with no data at all, not even a length byte: measured on a YubiKey 5C
-  Nano 5.7.4 (docs/MEASUREMENT.md, probe `bad-p1p2-mgmt`: `00 1D 00 01` is page 0,
+  last answers `9000` with no data at all, not even a length byte: measured on the reference key (docs/MEASUREMENT.md, probe `bad-p1p2-mgmt`: `00 1D 00 01` is page 0,
   `00 1D 02 00` and `00 1D FF 00` are a bare `9000`); all three were `6A86`.
   `Management::read_config` itself (CTAPHID `0x42`, OTP HID slot `0x13`, both unmeasured)
   keeps answering a page past the last with `6A86` (CTAPHID `ERR_INVALID_PAR`; model
   policy). Tests: `read_config_paging_bounds`, `ctaphid_read_config`,
   `otp_read_config_with_crc_frame`.
-5. CLA `80` is served exactly like `00`: measured on a YubiKey 5C Nano 5.7.4
+5. CLA `80` is served exactly like `00`: measured on the reference key
   (docs/MEASUREMENT.md, probe `cla-variants-mgmt`: `80 1D 00 00` answers page 0); it was
   `6E00`. `90` (`80` with the chaining bit), `84` and the other proprietary classes keep
   `6E00` (unmeasured). Tests: `cla_80_is_served_like_00`, `apdu_header_errors`.
 6. GET RESPONSE with nothing pending answers `6D00`, also right after a chained part
-  (`10 1D 00 00`, `9000`) left a chain open, which it drops: measured on a YubiKey 5C Nano
-  5.7.4 (docs/MEASUREMENT.md, probes `get-response-idle-mgmt`, `cla-variants-mgmt`); it was
+  (`10 1D 00 00`, `9000`) left a chain open, which it drops: measured on the reference key (docs/MEASUREMENT.md, probes `get-response-idle-mgmt`, `cla-variants-mgmt`); it was
   `6985`, and `6883` during a chain. With data pending, P1/P2 other than `00 00` stays
   `6A86` (model policy). Tests: `get_response_without_pending_data_is_6d00`,
   `apdu_header_errors`, `read_config_serves_at_most_ne_with_get_response`,
@@ -119,9 +117,9 @@ and `6985` for an idle GET RESPONSE for this application. CLA `0C` came back wit
 status word on the physical side (`none`, docs/MEASUREMENT.md "Host artifacts") and keeps
 `6882`.
 
-## Model policies (not measured on the 5.7.4 reference key)
+## Model policies (not measured on the reference key)
 
-`reference/yubikey-5c-nano-5.7.4/` holds no Management bytes, and the measurement above
+`reference/physical-key/` holds no Management bytes, and the measurement above
 covered only CCID reads. Neither Yubico's documentation, yubikit nor the reference key fixes
 the items below, so each is this engine's choice (a model policy).
 
@@ -156,6 +154,6 @@ the items below, so each is this engine's choice (a model policy).
 - deferred: YubiKey 4 SET MODE is not implemented. `Management::legacy_set_mode` answers `6D00` and changes nothing.
   - This covers CCID INS `16`, OTP slot `0x11` through `lk_otp::MgmtBridge::write_device_config`, and CTAPHID `0x40`, which is left to `lk-device` (`set_mode_is_not_implemented_on_any_transport`, `legacy_set_mode_is_refused_without_change`).
   - yubikit translates mode changes into WRITE CONFIG on firmware 5.x (`ykman_config_usb_mode_and_lock_flows_byte_exact`).
-  - How the 5.7.4 firmware itself maps a legacy mode byte to capabilities is undocumented.
+  - How the reference firmware itself maps a legacy mode byte to capabilities is undocumented.
 - intentional difference: DEVICE RESET (INS `1F`) exists only on YubiKey Bio and answers `6D00` here.
 - The lock code is wiped when the configuration holding it is dropped (`lk_crypto::wipe`, `docs/DESIGN.md` §8), the records this crate persists are passed from a `lk_crypto::SecretBytes` built at its final size (`config::tests::record_length_is_known_before_encoding`), and WRITE CONFIG data received over CCID is wiped by `lk_codec::apdu`'s types. `Management::to_record` still hands out a plain copy for the caller to wipe. The code is compared only with `lk_crypto::ct_eq`, and `Debug` never prints it (`config::tests::debug_does_not_print_lock_code`).

@@ -3,7 +3,7 @@
 //! applies to the card applications once a secure channel is open.
 //!
 //! Sources, in the order `docs/DESIGN.md` §2 ranks them:
-//! 1. `reference/yubikey-5c-nano-5.7.4/security-domain-reference-observation.json`:
+//! 1. `reference/physical-key/security-domain-reference-observation.json`:
 //!    the SELECT response (to which `9F65`, mandatory in GP 2.3.1 Table 11-82, is
 //!    added), GET DATA `0066`, the `00E0` schema and the CPLC length.
 //! 2. GlobalPlatform Card Specification v2.3.1 (SELECT §11.9, GET DATA §11.3, PUT KEY
@@ -334,7 +334,7 @@ impl SecurityDomain {
     ///
     /// GET RESPONSE with nothing waiting is `6982`, also right after a chained part
     /// left a plaintext chain open, which it drops (`docs/MEASUREMENT.md`, probes
-    /// `get-response-idle-sd` and `cla-variants-sd`: a YubiKey 5C Nano 5.7.4 answers
+    /// `get-response-idle-sd` and `cla-variants-sd`: the reference key answers
     /// `6982` in both cases, the status its Security Domain gives every command it does
     /// not serve outside a secure channel).
     fn process_plain(&mut self, apdu: &[u8], host: &mut dyn Host) -> Vec<u8> {
@@ -441,7 +441,7 @@ impl SecurityDomain {
             | ins::GENERATE_KEY
             | ins::STORE_DATA
             | ins::SET_STATUS => apdu::status(sw::CLA_NOT_SUPPORTED),
-            // Outside a secure channel a YubiKey 5C Nano 5.7.4 answers an instruction its
+            // Outside a secure channel the reference key answers an instruction its
             // Security Domain does not know with `6982` (`docs/MEASUREMENT.md`, probe
             // `undefined-ins-sd`: INS `5E`, `6E`, `93`). Inside a channel this is
             // unmeasured and stays `6D00` (model policy).

@@ -15,7 +15,7 @@ use lk_device::{BusEvent, KEEPALIVE_INTERVAL_MS, Output};
 use lk_testkit::SeededEntropy;
 
 const RP: &str = "example.com";
-const REFERENCE: &str = include_str!("../../../reference/yubikey-5c-nano-5.7.4/reference-observation.json");
+const REFERENCE: &str = include_str!("../../../reference/physical-key/reference-observation.json");
 
 fn cdh(label: &str) -> [u8; 32] {
     sha256(label.as_bytes())
@@ -124,9 +124,9 @@ fn with_member(map: &Value, key: Value, value: Value) -> Value {
     builder.build()
 }
 
-/// `reference/yubikey-5c-nano-5.7.4/reference-observation.json` (CTAPHID_INIT then
+/// `reference/physical-key/reference-observation.json` (CTAPHID_INIT then
 /// authenticatorGetInfo on the physical key) under
-/// `DeviceProfile::yubikey_5c_nano_5_7_4`: the device answers with exactly the observed
+/// `DeviceProfile::yubikey_compat`: the device answers with exactly the observed
 /// member keys, and once it is in the observed key's state (a PIN set, one discoverable
 /// credential stored: `clientPin` true, `remainingDiscoverableCredentials` 99, the two
 /// state-dependent values lk-fido documents) the canonical encodings are byte-identical.
@@ -136,7 +136,7 @@ fn get_info_equals_the_reference_observation() {
     let (reference, present) = reference_get_info();
     let mut rig = Rig::new();
     // CTAPHID_INIT (CTAP 2.1 §11.2.9.1.3): nonce, new channel, protocol version 2, the
-    // profile's firmware 5.7.4 and CAPABILITY_WINK | CAPABILITY_CBOR.
+    // profile's firmware and CAPABILITY_WINK | CAPABILITY_CBOR.
     let nonce = [0xA5, 0x5A, 1, 2, 3, 4, 5, 6];
     let (command, payload) = responses(&rig.ctaphid_send(BROADCAST, CTAPHID_INIT, &nonce)).remove(0);
     assert_eq!((command, payload.len()), (CTAPHID_INIT, 17));
@@ -166,7 +166,7 @@ fn get_info_equals_the_reference_observation() {
 
 /// CTAP 2.1 §6.1 with §11.2.9.1.7: MakeCredential waits for user presence, sending
 /// KEEPALIVE(STATUS_UPNEEDED) every 95 ms from one interval after the request until
-/// Touch(Down) (measured on a YubiKey 5C Nano 5.7.4: docs/MEASUREMENT.md, probes
+/// Touch(Down) (measured on the reference key: docs/MEASUREMENT.md, probes
 /// selection-keepalive-cancel and selection-no-touch; at once and every 100 ms before
 /// the measurement); the packed
 /// attestation (WebAuthn L2 §8.2) verifies under the x5c certificate's key; then
@@ -174,7 +174,7 @@ fn get_info_equals_the_reference_observation() {
 /// credential's public key, with a growing signature counter (WebAuthn L2 §6.1.1).
 #[test]
 fn make_credential_and_get_assertion_with_touch_verify() {
-    let mut rig = Rig::with_profile(lk_core::DeviceProfile::yubikey_5c_nano_5_7_4(SERIAL));
+    let mut rig = Rig::with_profile(lk_core::DeviceProfile::yubikey_compat(SERIAL));
     let cid = rig.ctaphid_init();
     rig.now = 1_000;
     let mc_hash = cdh("make-credential");
@@ -294,7 +294,7 @@ fn other_channel_is_busy_while_make_credential_waits() {
 /// permission, or the operation times out, then end the operation by returning
 /// CTAP2_ERR_OPERATION_DENIED"): without a touch the MakeCredential ends exactly when the
 /// timeout passes, after a KEEPALIVE every 95 ms; a touch afterwards does nothing. Known
-/// difference: the YubiKey 5C Nano 5.7.4 answers selection after 300 KEEPALIVEs,
+/// difference: the reference key answers selection after 300 KEEPALIVEs,
 /// 28 451.8 ms after the request (docs/MEASUREMENT.md, probe selection-no-touch), its 30 s
 /// design value on a clock that runs about 5.4 % fast, not copied ("Revised by
 /// principle"). This test expected 28 500 ms and 300 KEEPALIVEs between the measurement
@@ -562,8 +562,8 @@ fn get_next_assertion_returns_every_discoverable_credential() {
     assert_eq!(status_byte, 0x30, "CTAP2_ERR_NOT_ALLOWED: no more assertions");
 }
 
-/// CTAP 2.1 §11.2.9.2.2 CTAPHID_LOCK is not implemented. Measured on a YubiKey 5C Nano
-/// 5.7.4 (docs/MEASUREMENT.md, probes lock and lock-expiry): LOCK with 0, 1 or 2 seconds is
+/// CTAP 2.1 §11.2.9.2.2 CTAPHID_LOCK is not implemented. Measured on the reference key
+/// reference firmware (docs/MEASUREMENT.md, probes lock and lock-expiry): LOCK with 0, 1 or 2 seconds is
 /// answered ERR_INVALID_CMD (`0x01`), and another channel's PING and a new client's
 /// broadcast INIT right after it are served; no deadline is set. Before the measurement
 /// this test (`ctaphid_lock_reserves_the_device_until_it_expires`) expected the lock to

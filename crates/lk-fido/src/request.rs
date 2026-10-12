@@ -173,7 +173,7 @@ pub(crate) fn optional_text(entries: &[(Value, Value)], key: &str) -> CtapResult
 
 /// The most entries accepted in `allowList` / `excludeList`: GetInfo
 /// `maxCredentialCountInList` (CTAP 2.1 §6.4; 8 in
-/// `reference/yubikey-5c-nano-5.7.4/reference-observation.json`).
+/// `reference/physical-key/reference-observation.json`).
 pub(crate) const MAX_CREDENTIAL_COUNT_IN_LIST: usize = 8;
 
 /// Parse a list of `PublicKeyCredentialDescriptor`s (CTAP 2.1 §6.1 excludeList, §6.2

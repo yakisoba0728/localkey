@@ -131,7 +131,7 @@ def main(argv=None) -> int:
     parser.add_argument("--engine-setup", action="append", default=[])
     parser.add_argument("--wire", help="attach to a running localkeyd wire socket instead of spawning one")
     parser.add_argument("--localkeyd", default=DEFAULT_LOCALKEYD)
-    parser.add_argument("--profile", default="yubikey-5c-nano-5.7.4")
+    parser.add_argument("--profile", default="yubikey")
     parser.add_argument("--tmp-base", default=None, help="directory for the spawned daemon's state (short path: sockets are limited to 104 bytes)")
     parser.add_argument("--allow-physical", action="store_true", help="required with --target physical")
     parser.add_argument("--list", action="store_true", help="list the probes per set and exit")

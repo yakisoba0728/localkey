@@ -248,7 +248,7 @@ mod tests {
 
     #[test]
     fn two_byte_tag_keeps_constructed_bit() {
-        // reference/yubikey-5c-nano-5.7.4/openpgp-reference-observation.json,
+        // reference/physical-key/openpgp-reference-observation.json,
         // public_objects["7f74"] = "810120": DO 7F74 (constructed, 0x7F has b6 set)
         // wrapping the simple DO 81 01 20.
         let input = hex("7F74 03 810120");
@@ -420,7 +420,7 @@ mod tests {
 
     #[test]
     fn security_domain_select_template() {
-        // reference/yubikey-5c-nano-5.7.4/security-domain-reference-observation.json,
+        // reference/physical-key/security-domain-reference-observation.json,
         // select_public_template and select_layout: 6F(23) { 84(8), A5(11) { 73(9) {
         // 06(7) } } }.
         let input = hex("6f178408a000000151000000a50b730906072a864886fc6b01");

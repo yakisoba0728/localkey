@@ -61,7 +61,7 @@ note "uhid daemon stopped in $(( ($(date +%s%N) - t0) / 1000000 )) ms"
 wait_for 10 sh -c '[ -z "$(ls /sys/class/hidraw)" ]' && note "hidraw devices removed" || { note "hidraw devices left behind"; fail=1; }
 
 section "gadget transport"
-lk_start gadget --transport gadget --udc dummy_udc.0 --profile yubikey-5c-nano-5.7.4 -vv
+lk_start gadget --transport gadget --udc dummy_udc.0 --profile yubikey -vv
 if wait_for 60 usb_dev 1050 0407; then
     dev=$(usb_dev 1050 0407)
     note "USB device $dev"

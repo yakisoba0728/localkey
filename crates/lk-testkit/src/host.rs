@@ -76,7 +76,7 @@ impl TestHost {
         Self::with_profile(DeviceProfile::own(Self::DEFAULT_SERIAL))
     }
 
-    /// A host presenting `profile`, e.g. `DeviceProfile::yubikey_5c_nano_5_7_4(serial)`.
+    /// A host presenting `profile`, e.g. `DeviceProfile::yubikey_compat(serial)`.
     pub fn with_profile(profile: DeviceProfile) -> Self {
         Self {
             now: 0,
@@ -196,7 +196,7 @@ mod tests {
 
     #[test]
     fn with_profile_uses_the_given_profile() {
-        let profile = DeviceProfile::yubikey_5c_nano_5_7_4(31_415_926);
+        let profile = DeviceProfile::yubikey_compat(31_415_926);
         let host = TestHost::with_profile(profile.clone());
         assert_eq!(host.profile(), &profile);
     }

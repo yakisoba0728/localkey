@@ -1,7 +1,7 @@
 # Measurement harness
 
-A command-by-command comparison between the engine (`localkeyd`) and a physical YubiKey
-5C Nano 5.7.4, to turn the model policies in `docs/STATUS.md` (unmeasured status words,
+A command-by-command comparison between the engine (`localkeyd`) and a physical
+reference key, to turn the model policies in `docs/STATUS.md` (unmeasured status words,
 KEEPALIVE cadence, CTAPHID message timeout, lock answer, cancel code, touch timeouts) into
 measured behaviour. The same probe sets run against both targets; `compare.py` lines the
 two runs up probe by probe.

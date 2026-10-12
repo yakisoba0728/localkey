@@ -291,7 +291,7 @@ impl Piv {
 
     /// GET RESPONSE (`INS C0`, ISO/IEC 7816-4 §7.6.1): the next piece of the pending
     /// response. P1-P2 must be `0000` (`6A86`, model policy). With nothing pending the
-    /// answer is `6A80`: measured on a YubiKey 5C Nano 5.7.4 for `00 C0 00 00 00` right
+    /// answer is `6A80`: measured on the reference key for `00 C0 00 00 00` right
     /// after SELECT (docs/MEASUREMENT.md, probe `get-response-idle-piv`).
     fn get_response(&mut self, cmd: &Command) -> Vec<u8> {
         if cmd.p1 != 0 || cmd.p2 != 0 {
@@ -312,7 +312,7 @@ fn is_piv_aid(aid: &[u8]) -> bool {
 
 /// Check the class byte (ISO/IEC 7816-4 §5.1.1): `00`, or `10` for a chained command,
 /// and the proprietary `80`, which every instruction takes like `00`: measured on a
-/// YubiKey 5C Nano 5.7.4, `80 CB 3F FF 03 5C 01 7E` returns the Discovery Object with
+/// reference key, `80 CB 3F FF 03 5C 01 7E` returns the Discovery Object with
 /// `9000` (docs/MEASUREMENT.md, probe `cla-variants-piv`); the other instructions follow
 /// by extension. `90` (`80` with the chaining bit) and the other proprietary classes are
 /// unmeasured and stay `6E00`. Secure messaging (`6882`) and logical channels (`6881`)

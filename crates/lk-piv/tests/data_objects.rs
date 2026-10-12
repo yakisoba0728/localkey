@@ -65,7 +65,7 @@ fn factory_card_has_no_chuid_ccc_or_certificates() {
 fn get_data_header_and_tag_list_validation() {
     let mut card = Card::new();
     // P1-P2 must be 3FFF (SP 800-73-4 Part 2 §3.1.2); others answer 6A82, measured on a
-    // YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probe bad-p1p2-piv; was 6A86).
+    // reference key (docs/MEASUREMENT.md, probe bad-p1p2-piv; was 6A86).
     assert_eq!(card.send("00CB3FFE035C017E00").1, 0x6A82);
     assert_eq!(card.send("00CB0000035C017E00").1, 0x6A82);
     // A tag list whose length runs past the data field answers 6A82, measured for

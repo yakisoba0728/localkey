@@ -209,7 +209,7 @@
 //!     `UHID_SET_REPORT`; a raw `HIDIOCSFEATURE(8)` as an 8-byte one with report number 0
 //!     (its first byte, 0); both are acknowledged and returned their size.
 //!   - `HIDIOCGFEATURE(9)` returns 9 and the reply data verbatim: `00 00 05 07 04 00 00 00
-//!     00`, the report number and then the 8-byte status (firmware 5.7.4). ykman reads the
+//!     00`, the report number and then the 8-byte status. ykman reads the
 //!     report from byte 1: challenge-response in slot 2 (HMAC-SHA1, checked against the
 //!     generated key, the same answer twice and after a restart) and the slot writes ran
 //!     over 510 GET_REPORT and 186 SET_REPORT round trips without an error.

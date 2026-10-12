@@ -163,7 +163,7 @@ impl FakeRunner {
 pub fn status() -> Status {
     Status {
         serial: 12_345_678,
-        product: "YubiKey 5C Nano".into(),
+        product: "YubiKey".into(),
         interfaces: UsbInterfaces { otp: true, fido: true, ccid: true },
         presence_pending: false,
         serving: true,

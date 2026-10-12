@@ -28,7 +28,7 @@ SUBSYSTEM!="hidraw", GOTO="localkey_end"
 # --profile own (the default): pid.codes test VID 1209, PID 0001 for every interface set.
 DEVPATH=="/devices/virtual/misc/uhid/0003:1209:0001.*", TAG+="uaccess"
 
-# --profile yubikey-5c-nano-5.7.4: Yubico's VID 1050 and the PID of the enabled interface
+# --profile yubikey: Yubico's VID 1050 and the PID of the enabled interface
 # set; the HID nodes exist with 0401 (OTP), 0402 (FIDO), 0403 (OTP+FIDO), 0405 (OTP+CCID),
 # 0406 (FIDO+CCID) and 0407 (OTP+FIDO+CCID). 0404 (CCID only) has no HID node.
 DEVPATH=="/devices/virtual/misc/uhid/0003:1050:040[1235-7].*", TAG+="uaccess"

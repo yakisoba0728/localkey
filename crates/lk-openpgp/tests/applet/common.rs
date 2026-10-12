@@ -9,9 +9,9 @@ use lk_core::{CardApplet, DeviceProfile, Outcome, Record};
 use lk_openpgp::OpenPgp;
 use lk_testkit::{SeededEntropy, TestHost};
 
-/// The public observation of a real YubiKey 5C Nano 5.7.4.
+/// The public observation of a real reference key.
 pub const OBSERVATION: &str =
-    include_str!("../../../../reference/yubikey-5c-nano-5.7.4/openpgp-reference-observation.json");
+    include_str!("../../../../reference/physical-key/openpgp-reference-observation.json");
 
 pub const SELECT: [u8; 11] = [0x00, 0xA4, 0x04, 0x00, 0x06, 0xD2, 0x76, 0x00, 0x01, 0x24, 0x01];
 
@@ -92,7 +92,7 @@ pub fn factory_snapshot(yubikey: bool) -> Vec<u8> {
     static OWN: OnceLock<Vec<u8>> = OnceLock::new();
     static YUBIKEY: OnceLock<Vec<u8>> = OnceLock::new();
     let (cell, profile) = if yubikey {
-        (&YUBIKEY, DeviceProfile::yubikey_5c_nano_5_7_4(12_345_678))
+        (&YUBIKEY, DeviceProfile::yubikey_compat(12_345_678))
     } else {
         (&OWN, DeviceProfile::own(12_345_678))
     };
@@ -227,9 +227,9 @@ impl Card {
         Self::with_host(TestHost::new())
     }
 
-    /// YubiKey 5C Nano 5.7.4 compatibility profile.
+    /// reference key compatibility profile.
     pub fn yubikey() -> Self {
-        Self::with_host(TestHost::with_profile(DeviceProfile::yubikey_5c_nano_5_7_4(12_345_678)))
+        Self::with_host(TestHost::with_profile(DeviceProfile::yubikey_compat(12_345_678)))
     }
 
     pub fn select(&mut self) -> u16 {

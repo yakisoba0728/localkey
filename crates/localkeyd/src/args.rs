@@ -3,7 +3,7 @@
 //! ```text
 //! localkeyd keygen (--key-file PATH | --print)
 //! localkeyd run --state DIR (--key-file PATH | --key-command CMD) [TRANSPORT]
-//!               [--profile own|yubikey-5c-nano-5.7.4] [--control PATH]
+//!               [--profile own|yubikey] [--control PATH]
 //!               [--wall-clock] [--allow-unreadable] [--exit-on-stdin-eof] [-v | -vv]
 //! localkeyd ctl --control PATH (tap [long|pending] | down | up | power-cycle | status | watch | shutdown)
 //!
@@ -84,7 +84,7 @@ pub const USAGE: &str = "\
 usage:
   localkeyd keygen (--key-file PATH | --print)
   localkeyd run --state DIR (--key-file PATH | --key-command CMD) [TRANSPORT]
-                [--profile own|yubikey-5c-nano-5.7.4] [--control PATH]
+                [--profile own|yubikey] [--control PATH]
                 [--wall-clock] [--allow-unreadable] [--exit-on-stdin-eof] [-v | -vv]
   localkeyd ctl --control PATH (tap [long|pending] | down | up | power-cycle | status | watch
                                 | shutdown)
@@ -171,15 +171,15 @@ pub enum KeySource {
 pub enum Profile {
     /// `own`: `DeviceProfile::own`, this project's own identity.
     Own,
-    /// `yubikey-5c-nano-5.7.4`: `DeviceProfile::yubikey_5c_nano_5_7_4`.
-    YubiKey5cNano574,
+    /// `yubikey`: `DeviceProfile::yubikey_compat`.
+    YubiKeyCompat,
 }
 
 impl Profile {
     fn parse(value: &str) -> Option<Profile> {
         match value {
             "own" => Some(Profile::Own),
-            "yubikey-5c-nano-5.7.4" => Some(Profile::YubiKey5cNano574),
+            "yubikey" => Some(Profile::YubiKeyCompat),
             _ => None,
         }
     }
@@ -188,7 +188,7 @@ impl Profile {
     pub fn name(self) -> &'static str {
         match self {
             Profile::Own => "own",
-            Profile::YubiKey5cNano574 => "yubikey-5c-nano-5.7.4",
+            Profile::YubiKeyCompat => "yubikey",
         }
     }
 }
@@ -582,7 +582,7 @@ fn parse_run(args: &[OsString]) -> Result<Invocation, UsageError> {
             "--profile" => {
                 let value = utf8(&name, args.value(&name, inline)?)?;
                 let parsed = Profile::parse(value).ok_or_else(|| {
-                    usage(format!("unknown profile {value} (expected own or yubikey-5c-nano-5.7.4)"))
+                    usage(format!("unknown profile {value} (expected own or yubikey)"))
                 })?;
                 once(&mut profile, &name, parsed)?;
             }
@@ -848,7 +848,7 @@ mod tests {
             "--key-command",
             "pass show localkey",
             "--profile",
-            "yubikey-5c-nano-5.7.4",
+            "yubikey",
             "--wire",
             "/w",
             "--control",
@@ -860,7 +860,7 @@ mod tests {
         ]);
         assert_eq!(options.state, PathBuf::from("/s"));
         assert_eq!(options.key, KeySource::Command("pass show localkey".into()));
-        assert_eq!(options.profile, Profile::YubiKey5cNano574);
+        assert_eq!(options.profile, Profile::YubiKeyCompat);
         assert_eq!(options.transport.members(), [TransportOptions::Wire { socket: Some(PathBuf::from("/w")) }]);
         assert_eq!(options.control, Some(PathBuf::from("/c")));
         assert!(options.wall_clock && options.allow_unreadable && options.exit_on_stdin_eof);
@@ -1195,8 +1195,8 @@ mod tests {
     fn run_refuses_unknown_options_values_and_words() {
         assert_eq!(error(&["run", "--state", "/s", "--key-file", "/k", "--verbose"]), "unknown option for run: --verbose");
         assert_eq!(
-            error(&["run", "--state", "/s", "--key-file", "/k", "--profile", "yubikey"]),
-            "unknown profile yubikey (expected own or yubikey-5c-nano-5.7.4)"
+            error(&["run", "--state", "/s", "--key-file", "/k", "--profile", "invalid"]),
+            "unknown profile invalid (expected own or yubikey)"
         );
         assert_eq!(error(&["run", "--state", "/s", "--key-file", "/k", "now"]), "unexpected argument for run: now");
         assert_eq!(error(&["run", "--state", "/s", "--key-file", "/k", "--wall-clock=1"]), "--wall-clock takes no value");

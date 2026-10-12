@@ -208,7 +208,7 @@
 //! host side is the same kernel's USB core, with libfido2 1.16.0, python-fido2 2.0.0,
 //! ykman 5.8.0, pcsc-lite 2.4.1 with libccid, OpenSC 0.27.0rc1 and GnuPG 2.4.8 as
 //! black-box clients. Two tests, both `localkeyd run --transport gadget --udc
-//! dummy_udc.0 --profile yubikey-5c-nano-5.7.4`:
+//! dummy_udc.0 --profile yubikey`:
 //!
 //! - `tests/smoke.sh`: enumeration, `ctl status`, a clean shutdown through stdin EOF.
 //! - `tests/gadget.sh`: enumeration and descriptors; FIDO and OTP HID through usbhid;
@@ -233,7 +233,7 @@
 //!   descriptor `12 01 00 02 00 00 00 40 50 10 06 04 74 05 01 02 03 01` (`bcdUSB` 2.00,
 //!   `bMaxPacketSize0` 64, `bcdDevice` 5.74, as the reference key's `device_fields`) and a
 //!   125-byte configuration equal to the reference key's FIDO+CCID
-//!   `configuration_descriptor_hex` (`reference/yubikey-5c-nano-5.7.4/`) except the five
+//!   `configuration_descriptor_hex` (`reference/physical-key/`) except the five
 //!   `bEndpointAddress` values.
 //! - Endpoint addresses: `bEndpointAddress` is what the UDC assigns, in descriptor order
 //!   from its endpoint list. On `dummy_hcd` the host saw, for OTP+FIDO+CCID, OTP IN `81`

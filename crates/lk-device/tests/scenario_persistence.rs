@@ -214,7 +214,7 @@ fn wrong_storage_key_gives_factory_state_without_destroying_records() {
     let mut rig = Rig::new();
     let created = create_everything(&mut rig);
     let stored: Vec<Option<Vec<u8>>> = ALL_RECORDS.iter().map(|&r| rig.store.get(r)).collect();
-    let profile = DeviceProfile::yubikey_5c_nano_5_7_4(SERIAL);
+    let profile = DeviceProfile::yubikey_compat(SERIAL);
 
     let saves = rig.store.save_count();
     rig.dev = Device::open_at(rig.now, profile.clone(), Box::new(rig.store.clone()), Box::new(SeededEntropy::new(77)), [0x11; 32]);

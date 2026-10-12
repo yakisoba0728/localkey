@@ -91,7 +91,7 @@ impl Drop for TestDir {
 }
 
 /// `configuration_descriptor_hex` of
-/// `reference/yubikey-5c-nano-5.7.4/usb-reference-observation.json` (FIDO+CCID).
+/// `reference/physical-key/usb-reference-observation.json` (FIDO+CCID).
 pub const REFERENCE_CONFIGURATION: &str = "09027d00020100800f090400000203000000092110010001222200070504034000020705840340000209040100030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020";
 
 pub fn hex(text: &str) -> Vec<u8> {
@@ -914,7 +914,7 @@ fn run_fake_runner(
 fn status() -> Status {
     Status {
         serial: 12_345_678,
-        product: "YubiKey 5C Nano".into(),
+        product: "YubiKey".into(),
         interfaces: ALL,
         presence_pending: false,
         serving: true,

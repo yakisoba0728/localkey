@@ -5,7 +5,7 @@
 //! not fit one page the host asks for page 1, 2, … (P1 on CCID, the payload byte on
 //! CTAPHID and OTP HID) as long as the page carries `MORE_DATA` (`10 01 01`).
 //!
-//! The pages are laid out as a YubiKey 5C Nano 5.7.4 sends them (`docs/MEASUREMENT.md`,
+//! The pages are laid out as the reference key sends them (`docs/MEASUREMENT.md`,
 //! probe `mgmt-read-config`): two fixed pages, the first ending with `MORE_DATA`.
 
 use lk_codec::tlv;
@@ -40,7 +40,7 @@ pub mod tag {
     pub const NFC_SUPPORTED: u32 = 0x0D;
     /// Capabilities enabled over NFC (NFC devices only; rejected on write here).
     pub const NFC_ENABLED: u32 = 0x0E;
-    /// Lightning accessory detection; a USB-C Nano 5.7.4 reports `00`
+    /// Lightning accessory detection; the reference key reports `00`
     /// (`docs/MEASUREMENT.md`, probe `mgmt-read-config`).
     pub const IAP_DETECTION: u32 = 0x0F;
     /// `01`: more DeviceInfo follows on the next page.
@@ -57,14 +57,14 @@ pub mod tag {
     pub const FIPS_APPROVED: u32 = 0x15;
     /// PIN complexity policy enforced, 1 byte (reported as `00`).
     pub const PIN_COMPLEXITY: u32 = 0x16;
-    /// NFC restricted; a USB-only 5.7.4 key reports `00` (measured, probe
+    /// NFC restricted; a USB-only reference key reports `00` (measured, probe
     /// `mgmt-read-config`).
     pub const NFC_RESTRICTED: u32 = 0x17;
     /// Applications whose reset is blocked, bit field (reported as zero).
     pub const RESET_BLOCKED: u32 = 0x18;
     /// Version qualifier (pre-release firmware only; not reported).
     pub const VERSION_QUALIFIER: u32 = 0x19;
-    /// Fingerprint sensor firmware version (YubiKey Bio), 3 bytes; a 5C Nano 5.7.4
+    /// Fingerprint sensor firmware version (YubiKey Bio), 3 bytes; the reference key
     /// reports `000000` (measured, probe `mgmt-read-config`), which yubikit reads as
     /// absent.
     pub const FPS_VERSION: u32 = 0x20;
@@ -76,7 +76,7 @@ pub mod tag {
 /// Most TLV bytes one READ CONFIG page can carry: the page is prefixed by a one-byte
 /// length (yubikit-python `read_device_info` checks `len(encoded) - 1 == encoded[0]`).
 ///
-/// The pages themselves follow the fixed layout measured on a YubiKey 5C Nano 5.7.4
+/// The pages themselves follow the fixed layout measured on the reference key
 /// (`docs/MEASUREMENT.md`, probe `mgmt-read-config`; 51 and 41 TLV bytes with the
 /// profiles' part numbers), which stays well within this bound.
 pub const PAGE_LIMIT: usize = 0xFF;
@@ -99,7 +99,7 @@ pub(crate) struct InfoFields {
     pub part_number: Vec<u8>,
 }
 
-/// The DeviceInfo pages as bare TLVs, in the order and split a YubiKey 5C Nano 5.7.4
+/// The DeviceInfo pages as bare TLVs, in the order and split the reference key
 /// sends them (`docs/MEASUREMENT.md`, probe `mgmt-read-config`):
 ///
 /// - page 0: `01 03 02 04 05 06 07 08 0A 0F 20 21`, then `MORE_DATA` (`10 01 01`);

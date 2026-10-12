@@ -118,7 +118,7 @@ fn verify_header_guards_consume_no_retry() {
     // PIV Card Application, then the PIV Card Application shall return ... '6A 88'".
     assert_eq!(card.send("0020000008313233343536FFFF").1, 0x6A88, "global PIN");
     // The PUK cannot be verified by VERIFY either (§3.2.1, 6A88). Known difference: the
-    // YubiKey 5C Nano 5.7.4 answers 6A80 (docs/MEASUREMENT.md, probe piv-verify-status-81;
+    // reference key answers 6A80 (docs/MEASUREMENT.md, probe piv-verify-status-81;
     // tests/measured.rs).
     assert_eq!(card.send("0020008108313233343536FFFF").1, 0x6A88, "PUK cannot be verified");
     assert_eq!(card.send("0020009E08313233343536FFFF").1, 0x6A88);

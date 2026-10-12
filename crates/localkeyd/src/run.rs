@@ -390,7 +390,7 @@ fn serve(options: &RunOptions, log: &Log, platform: &Platform, shutdowns: &Arc<S
         .map_err(|error| Failure::Startup(format!("identity: {error}")))?;
     let profile = match options.profile {
         Profile::Own => DeviceProfile::own(serial),
-        Profile::YubiKey5cNano574 => DeviceProfile::yubikey_5c_nano_5_7_4(serial),
+        Profile::YubiKeyCompat => DeviceProfile::yubikey_compat(serial),
     };
     let config = RunnerConfig { wall_clock: options.wall_clock, ..RunnerConfig::default() };
     let runner = Runner::spawn(move || Ok(open_device(profile, store, entropy, key)), config)

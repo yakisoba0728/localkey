@@ -88,7 +88,7 @@ pub(crate) const LARGE_BLOB_KEY_LEN: usize = 32;
 /// Factory PIN retry counter (CTAP 2.1 §6.5: the pinRetries counter starts at its maximum, 8).
 pub(crate) const DEFAULT_PIN_RETRIES: u8 = 8;
 /// Factory minimum PIN length (CTAP 2.1 §6.4 `minPINLength`, default 4; GetInfo key 13 of
-/// `reference/yubikey-5c-nano-5.7.4/reference-observation.json`).
+/// `reference/physical-key/reference-observation.json`).
 pub(crate) const DEFAULT_MIN_PIN_LENGTH: u8 = 4;
 
 /// The initial serialized large-blob array: the CBOR empty array `80` followed by

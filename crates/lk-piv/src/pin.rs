@@ -152,7 +152,7 @@ impl Piv {
     ///   `81` included: §3.2.1 "If any key reference value is specified that cannot be
     ///   verified by the PIV Card Application, then the PIV Card Application shall return
     ///   the status word '6A 88'", and this card compares the PUK only inside CHANGE
-    ///   REFERENCE DATA and RESET RETRY COUNTER. Known difference: a YubiKey 5C Nano 5.7.4
+    ///   REFERENCE DATA and RESET RETRY COUNTER. Known difference: the reference key
     ///   answers `00 20 00 81` with `6A80` (docs/MEASUREMENT.md, probe
     ///   `piv-verify-status-81`); the specification is followed instead, and no listed
     ///   host depends on that answer (libykpiv verifies P2 `80` only, yubikit reads the

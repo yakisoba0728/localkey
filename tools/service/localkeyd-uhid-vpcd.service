@@ -42,7 +42,7 @@ ExecStart=/usr/local/bin/localkeyd run \
 #LoadCredentialEncrypted=localkey-key:/etc/localkey/storage.key.cred
 #ExecStart=/usr/local/bin/localkeyd run --state /var/lib/localkey --transport uhid,vpcd -v --key-command 'cat "$${CREDENTIALS_DIRECTORY}/localkey-key"'
 #
-# Other run options: --profile yubikey-5c-nano-5.7.4 (Yubico's USB IDs, which ykman needs
+# Other run options: --profile yubikey (Yubico's USB IDs, which ykman needs
 # for OTP over HID), --vpcd-addr HOST:PORT (vpcd's first slot 127.0.0.1:35963 by default;
 # a loopback address unless --vpcd-allow-remote, which IPAddressAllow= below would block
 # anyway), --vpcd-peer-uid UID[,UID...] (the owners allowed for vpcd's end of the

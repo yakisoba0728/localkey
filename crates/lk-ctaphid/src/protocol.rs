@@ -4,7 +4,7 @@ use lk_core::Millis;
 
 /// Size of every HID input and output report on the FIDO interface (CTAP 2.1 §11.2.4,
 /// the 64-byte reports declared by the measured HID report descriptor in
-/// `reference/yubikey-5c-nano-5.7.4/usb-reference-observation.json`).
+/// `reference/physical-key/usb-reference-observation.json`).
 pub const REPORT_LEN: usize = 64;
 
 /// Data bytes carried by an initialization packet: CID(4) CMD(1) BCNTH(1) BCNTL(1) DATA(57).
@@ -26,7 +26,7 @@ pub const MAX_PAYLOAD: usize = INIT_DATA_LEN + (MAX_SEQ as usize + 1) * CONT_DAT
 /// packet whose BCNT is larger is answered `ERR_INVALID_LEN` at once, and the rest of
 /// that message is then ignored as orphan continuation packets.
 ///
-/// Measured on a YubiKey 5C Nano 5.7.4 (`docs/MEASUREMENT.md`, probe `ping-max`): the
+/// Measured on the reference key (`docs/MEASUREMENT.md`, probe `ping-max`): the
 /// longest PING echoed is 1536 bytes; 1537, 1539, 1546, 1561, 1591, 1709, 1945, 3833 and
 /// 7609 bytes are answered `ERR_INVALID_LEN` about 4 ms after the first report, while
 /// the remaining continuation packets are still being written, and the next request
@@ -45,7 +45,7 @@ pub const PROTOCOL_VERSION: u8 = 2;
 /// How long an incomplete message may wait for its next packet before the device
 /// abandons it with `ERR_MSG_TIMEOUT` (CTAP 2.1 §11.2.5.2).
 ///
-/// Measured on a YubiKey 5C Nano 5.7.4 (`docs/MEASUREMENT.md`, probe `message-timeout`):
+/// Measured on the reference key (`docs/MEASUREMENT.md`, probe `message-timeout`):
 /// a PING initialization packet with BCNT 100 whose continuation is withheld is answered
 /// `ERR_MSG_TIMEOUT` 469.8 ms after the packet was written; the engine uses 470 ms.
 /// Whether every packet restarts the timeout was not measured, so the engine keeps its
@@ -55,7 +55,7 @@ pub const TRANSACTION_TIMEOUT_MS: Millis = 470;
 /// Longest channel lock CTAP 2.1 §11.2.9.2.2 allows for `CTAPHID_LOCK`, in seconds.
 ///
 /// The device does not implement `CTAPHID_LOCK`: it answers `ERR_INVALID_CMD` whatever
-/// the duration, so this value is never applied. Measured on a YubiKey 5C Nano 5.7.4
+/// the duration, so this value is never applied. Measured on the reference key
 /// (`docs/MEASUREMENT.md`, probes `lock` and `lock-expiry`). The constant stays for
 /// source compatibility.
 pub const MAX_LOCK_SECONDS: u8 = 10;
@@ -67,8 +67,7 @@ pub mod cmd {
     /// `CTAPHID_MSG`: a U2F raw message (§11.2.9.1.1).
     pub const MSG: u8 = 0x03;
     /// `CTAPHID_LOCK`: reserve the device for one channel (§11.2.9.2.2). Not
-    /// implemented by the device: answered `ERR_INVALID_CMD` (measured on a YubiKey 5C
-    /// Nano 5.7.4, `docs/MEASUREMENT.md`, probes `lock` and `lock-expiry`).
+    /// implemented by the device: answered `ERR_INVALID_CMD` (measured on the reference key, `docs/MEASUREMENT.md`, probes `lock` and `lock-expiry`).
     pub const LOCK: u8 = 0x04;
     /// `CTAPHID_INIT`: allocate or resynchronise a channel (§11.2.9.1.3).
     pub const INIT: u8 = 0x06;

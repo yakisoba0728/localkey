@@ -101,7 +101,7 @@ fn empty_cbor_request_holds_nothing_on_any_channel() {
     // finds nothing to cancel and a stray `respond` frames nothing.
     //
     // Known difference (docs/MEASUREMENT.md, probe empty-cbor, "The stuck-channel
-    // incident" and "Revised by principle"): the YubiKey 5C Nano 5.7.4 never answers this
+    // incident" and "Revised by principle"): the reference key never answers this
     // request and stays busy (other channels ERR_CHANNEL_BUSY, CANCEL ignored, no timeout)
     // until INIT on the channel. That stall is a defect not copied: "A request always
     // triggers a response" (§11.2.4) and a stalling application must not lock the device
@@ -135,7 +135,7 @@ fn empty_cbor_request_holds_nothing_on_any_channel() {
 
 #[test]
 fn every_request_above_1536_bytes_is_invalid_len() {
-    // Measured on a YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probe ping-max): PING
+    // Measured on the reference key (docs/MEASUREMENT.md, probe ping-max): PING
     // longer than 1536 bytes is ERR_INVALID_LEN at the initialization packet. GetInfo
     // `maxMsgSize` is 1536 on the same key, so CBOR, MSG and vendor requests get the same
     // limit (only PING was measured).

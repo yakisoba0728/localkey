@@ -308,7 +308,7 @@ fn read_state(rig: &mut Rig) -> Reading {
 /// compare the state read before and after a restart. Returns the number of save
 /// attempts and the step that failed.
 fn run(fail_at: Option<usize>) -> (usize, Option<&'static str>) {
-    let profile = DeviceProfile::yubikey_5c_nano_5_7_4(SERIAL);
+    let profile = DeviceProfile::yubikey_compat(SERIAL);
     let store = MemoryStore::new();
     let sweep = Rc::new(RefCell::new(Sweep {
         fail_at,
@@ -388,7 +388,7 @@ fn every_failed_save_leaves_memory_and_store_in_agreement() {
 fn constructor_state_is_saved_once_the_store_recovers() {
     let store = MemoryStore::new();
     store.fail_all(true);
-    let mut rig = Rig::with_store(DeviceProfile::yubikey_5c_nano_5_7_4(SERIAL), store.clone(), 3);
+    let mut rig = Rig::with_store(DeviceProfile::yubikey_compat(SERIAL), store.clone(), 3);
     rig.power_on();
     rig.select(AID_SD);
     let cplc = rig.send(&[0x80, 0xCA, 0x9F, 0x7F, 0x00]);

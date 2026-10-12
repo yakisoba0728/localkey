@@ -80,7 +80,7 @@ pub mod ins {
     /// Public key of an asymmetric credential.
     pub const GET_PUBLIC_KEY: u8 = 0x0A;
     /// CHANGE CREDENTIAL PASSWORD: firmware 5.8.0 and later only (yubikit
-    /// `require_version(self.version, (5, 8, 0))`); not supported by 5.7.4.
+    /// `require_version(self.version, (5, 8, 0))`); not supported by the reference firmware.
     pub const CHANGE_CREDENTIAL_PASSWORD: u8 = 0x0B;
     /// GET RESPONSE (ISO/IEC 7816-4 §7.6.1).
     pub const GET_RESPONSE: u8 = 0xC0;

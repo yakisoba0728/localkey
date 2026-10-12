@@ -19,7 +19,7 @@ use lk_codec::apdu::sw;
 
 /// An AES-128 key. The YubiKey 5.7 Security Domain only holds AES-128 SCP03 keys (its
 /// key information template reports type `88` with length `10`;
-/// `reference/yubikey-5c-nano-5.7.4/security-domain-reference-observation.json`).
+/// `reference/physical-key/security-domain-reference-observation.json`).
 pub(crate) type Key = [u8; 16];
 
 /// Amd D Table 4-1: derivation constant for the card cryptogram.

@@ -1,11 +1,11 @@
 //! authenticatorGetInfo (CTAP 2.1 §6.4) against the public GetInfo read from a real
-//! YubiKey 5C Nano 5.7.4: `reference/yubikey-5c-nano-5.7.4/reference-observation.json`.
+//! reference key: `reference/physical-key/reference-observation.json`.
 
 use super::json::{self, Json};
 use super::*;
 
 const REFERENCE: &str =
-    include_str!("../../../../reference/yubikey-5c-nano-5.7.4/reference-observation.json");
+    include_str!("../../../../reference/physical-key/reference-observation.json");
 
 fn reference() -> Json {
     json::parse(REFERENCE).get("reference").clone()
@@ -104,7 +104,7 @@ fn option(info: &Value, name: &str) -> Option<bool> {
 
 #[test]
 fn golden_get_info_key_set_and_values_match_reference_device() {
-    // Source: reference/yubikey-5c-nano-5.7.4/reference-observation.json ("present_cbor_keys",
+    // Source: reference/physical-key/reference-observation.json ("present_cbor_keys",
     // "get_info_fields"). The observed key had a PIN set and one discoverable credential.
     let reference = reference();
     let present: Vec<i64> = reference

@@ -398,7 +398,7 @@ class EngineSetup:
 class Daemon:
     """A localkeyd process with a fresh state directory and storage key."""
 
-    def __init__(self, binary: str, profile: str = "yubikey-5c-nano-5.7.4", base: str | None = None, verbose: bool = False):
+    def __init__(self, binary: str, profile: str = "yubikey", base: str | None = None, verbose: bool = False):
         self.tmp = tempfile.mkdtemp(prefix="lkm", dir=base)  # short path: sun_path is 104 bytes
         self.state = os.path.join(self.tmp, "state")
         self.key = os.path.join(self.tmp, "key")

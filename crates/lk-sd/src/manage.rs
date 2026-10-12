@@ -94,7 +94,7 @@ impl SecurityDomain {
     /// list, `00 CA 9F 7F` 42 bytes. yubikit's `SecurityDomainSession` always sends CLA
     /// `00` (`04` under SCP), so its reads are unaffected.
     ///
-    /// A YubiKey 5C Nano 5.7.4 answers plaintext `80 CA 00 66` with the `66` template as
+    /// The reference key answers plaintext `80 CA 00 66` with the `66` template as
     /// well (`docs/MEASUREMENT.md`, probe `cla-variants-sd`). Its other GP-class forms
     /// (`80` for `00E0`/`9F7F`/`BF21`/`FF33`/`FF34`, and `84` through a channel) are
     /// unmeasured; this follows the specification.

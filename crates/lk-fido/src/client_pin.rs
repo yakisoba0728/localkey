@@ -285,7 +285,7 @@ impl Authenticator {
             // §6.5.5.3; getPinUvAuthTokenUsingUvWithPermissions, §6.5.5.7.3). §8.1: "If the
             // authenticator implements a command code having subcommands, but does not
             // implement an invoked subcommand, it MUST return
-            // CTAP2_ERR_INVALID_SUBCOMMAND." Known difference: the YubiKey 5C Nano 5.7.4
+            // CTAP2_ERR_INVALID_SUBCOMMAND." Known difference: the reference key
             // answers getUVRetries CTAP2_ERR_PIN_AUTH_INVALID (0x33), the pinUvAuthParam
             // failure code of §8.2 (docs/MEASUREMENT.md, probe client-pin-uv-retries, and
             // "Revised by principle"); the specification is followed (the note after the
@@ -302,7 +302,7 @@ impl Authenticator {
     /// while the PIN is soft-blocked until a power cycle. pinUvAuthProtocol is not needed
     /// and its value is not checked.
     ///
-    /// Measured on a YubiKey 5C Nano 5.7.4 (`docs/MEASUREMENT.md`, probe
+    /// Measured on the reference key (`docs/MEASUREMENT.md`, probe
     /// `client-pin-retries`): without a soft block the answer is `00 A1 03 08` (`{3: 8}`),
     /// no powerCycleState (§6.5.5.2 makes it optional); the engine sent `4: false` before
     /// the measurement. The soft-blocked answer was not measured; it keeps `4: true`.

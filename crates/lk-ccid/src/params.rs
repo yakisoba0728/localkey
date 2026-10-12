@@ -8,7 +8,7 @@
 //! first rejected byte is reported.
 
 use crate::atr;
-use crate::descriptor::{ClassDescriptor, YUBIKEY_5C_NANO, feature};
+use crate::descriptor::{ClassDescriptor, YUBIKEY_COMPAT, feature};
 use crate::message::error::INDEX_PROTOCOL_DATA;
 
 /// `bProtocolNum` for T=1.
@@ -86,7 +86,7 @@ impl T1Parameters {
     /// - `bIFSC`: `01`–`FE` (ISO/IEC 7816-3 §11.4.2).
     /// - `bNadValue`: 0 unless the descriptor sets [`feature::NAD_NOT_ZERO`].
     pub(crate) fn validate(&self, block: &[u8; Self::LEN]) -> Result<Self, u8> {
-        self.validate_for(block, &YUBIKEY_5C_NANO)
+        self.validate_for(block, &YUBIKEY_COMPAT)
     }
 
     fn validate_for(&self, block: &[u8; Self::LEN], ccid: &ClassDescriptor) -> Result<Self, u8> {
@@ -187,8 +187,8 @@ mod tests {
     fn nad_accepted_when_descriptor_allows_it() {
         let card = T1Parameters::from_atr(&ATR);
         let ccid = ClassDescriptor {
-            features: YUBIKEY_5C_NANO.features | feature::NAD_NOT_ZERO,
-            ..YUBIKEY_5C_NANO
+            features: YUBIKEY_COMPAT.features | feature::NAD_NOT_ZERO,
+            ..YUBIKEY_COMPAT
         };
         let mut block = card.to_bytes();
         block[6] = 0x12;

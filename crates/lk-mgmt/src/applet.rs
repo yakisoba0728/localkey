@@ -13,7 +13,7 @@
 //! | `61xx` | more response data than Ne; fetch it with GET RESPONSE (`C0`) |
 //! | `6D00` | unknown instruction; GET RESPONSE with nothing pending |
 //!
-//! Measured on a YubiKey 5C Nano 5.7.4 (`docs/MEASUREMENT.md`): CLA `80` is served like
+//! Measured on the reference key (`docs/MEASUREMENT.md`): CLA `80` is served like
 //! `00` (probe `cla-variants-mgmt`), and GET RESPONSE with nothing pending is `6D00`,
 //! also right after a chained command part left a chain open (probes
 //! `get-response-idle-mgmt`, `cla-variants-mgmt`). These replace the `docs/CONTRACTS.md`
@@ -69,7 +69,7 @@ const EXTENDED_MAX_NE: usize = 65_536;
 /// Check the class byte (ISO/IEC 7816-4 §5.1.1): `00`, `10` for a chained command, or
 /// the proprietary class `80`.
 ///
-/// A YubiKey 5C Nano 5.7.4 serves `80 1D 00 00` exactly like `00 1D 00 00`
+/// The reference key serves `80 1D 00 00` exactly like `00 1D 00 00`
 /// (`docs/MEASUREMENT.md`, probe `cla-variants-mgmt`). The other classes follow
 /// `docs/CONTRACTS.md` (APDU conventions; unmeasured): secure-messaging bits are `6882`
 /// and any other class of `80` or more (`84`, `90`, …) is `6E00`; the first
@@ -167,8 +167,7 @@ impl MgmtApplet {
     }
 
     /// The SELECT response data, answered with `9000`: the ASCII text
-    /// `Virtual mgr - FW version major.minor.patch`, 30 bytes for 5.7.4, as a YubiKey 5C
-    /// Nano 5.7.4 sends it (`docs/MEASUREMENT.md`, probe `select-mgmt`).
+    /// `Virtual mgr - FW version major.minor.patch`, 30 bytes in the observation, as the reference key sends it (`docs/MEASUREMENT.md`, probe `select-mgmt`).
     ///
     /// yubikit-python `_ManagementSmartCardBackend` decodes the SELECT response as
     /// UTF-8 and reads the version with `Version.from_string`, which searches the text

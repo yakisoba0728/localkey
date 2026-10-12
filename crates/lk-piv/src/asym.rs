@@ -4,7 +4,7 @@
 //! ATTEST (`F9`) and GET METADATA (`F7`) for key slots.
 //!
 //! Status words not given by the specifications or the Yubico documentation are model
-//! policy (physical 5.7.4 status unmeasured) and listed in `docs/catalog/piv.md`.
+//! policy (reference key status unmeasured) and listed in `docs/catalog/piv.md`.
 
 use lk_codec::apdu::{Command, sw};
 use lk_codec::tlv;

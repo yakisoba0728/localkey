@@ -19,7 +19,7 @@ impl Version {
         [self.major, self.minor, self.patch]
     }
 
-    /// The CTAP GetInfo `firmwareVersion` integer (`0x050704` for 5.7.4).
+    /// The CTAP GetInfo `firmwareVersion` integer (major, minor, patch packed into three bytes).
     pub const fn as_u32(self) -> u32 {
         (self.major as u32) << 16 | (self.minor as u32) << 8 | self.patch as u32
     }
@@ -135,7 +135,7 @@ pub struct DeviceProfile {
     /// Validity of generated certificates as X.509 GeneralizedTime (`YYYYMMDDHHMMSSZ`).
     pub cert_not_before: String,
     pub cert_not_after: String,
-    /// Management DeviceInfo part number (tag `13`, ASCII). A YubiKey 5C Nano 5.7.4
+    /// Management DeviceInfo part number (tag `13`, ASCII). The reference key
     /// sends a 12-byte ASCII part number (`docs/MEASUREMENT.md`, probe
     /// `mgmt-read-config`); an empty string is sent as an empty value, which yubikit
     /// reads as "no part number".
@@ -183,9 +183,9 @@ impl DeviceProfile {
         }
     }
 
-    /// Public identity values of a YubiKey 5C Nano 5.7.4 (`reference/yubikey-5c-nano-5.7.4/`).
+    /// Public identity values of the reference key (`reference/physical-key/`).
     /// Attestation signatures remain this engine's own; no manufacturer key is reproduced.
-    pub fn yubikey_5c_nano_5_7_4(serial: u32) -> Self {
+    pub fn yubikey_compat(serial: u32) -> Self {
         Self {
             form_factor: form_factor::USB_C_NANO,
             usb_vendor_id: 0x1050,
@@ -238,7 +238,7 @@ mod tests {
     #[test]
     fn atrs_have_valid_check_bytes() {
         assert!(tck_ok(&DeviceProfile::own(1).atr));
-        assert!(tck_ok(&DeviceProfile::yubikey_5c_nano_5_7_4(1).atr));
+        assert!(tck_ok(&DeviceProfile::yubikey_compat(1).atr));
     }
 
     /// DeviceInfo tag `04` (yubikit `FORM_FACTOR`): the own identity claims no physical
@@ -248,14 +248,14 @@ mod tests {
     fn form_factor_per_profile() {
         assert_eq!(DeviceProfile::own(1).form_factor, super::form_factor::UNKNOWN);
         assert_eq!(super::form_factor::UNKNOWN, 0x00);
-        assert_eq!(DeviceProfile::yubikey_5c_nano_5_7_4(1).form_factor, super::form_factor::USB_C_NANO);
+        assert_eq!(DeviceProfile::yubikey_compat(1).form_factor, super::form_factor::USB_C_NANO);
     }
 
     /// The compatibility ATR is the published YubiKey 5 ATR.
     #[test]
     fn yubikey_atr_bytes() {
         assert_eq!(
-            DeviceProfile::yubikey_5c_nano_5_7_4(1).atr,
+            DeviceProfile::yubikey_compat(1).atr,
             [
                 0x3B, 0xFD, 0x13, 0x00, 0x00, 0x81, 0x31, 0xFE, 0x15, 0x80, 0x73, 0xC0, 0x21, 0xC0, 0x57, 0x59, 0x75,
                 0x62, 0x69, 0x4B, 0x65, 0x79, 0x40

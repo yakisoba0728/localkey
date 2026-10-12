@@ -1342,7 +1342,7 @@ mod tests {
     #[test]
     fn getinfo_option_names_from_device_are_in_canonical_order() {
         // The authenticatorGetInfo options keys, in the order the device reported them:
-        // reference/yubikey-5c-nano-5.7.4/reference-observation.json
+        // reference/physical-key/reference-observation.json
         // (reference.get_info_fields.options).
         let device_order = [
             "rk",

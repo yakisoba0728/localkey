@@ -92,7 +92,7 @@ fn script(rig: &mut Rig) -> Vec<(Millis, Output)> {
 /// vacuous: keys, nonces and attestation come from the seed).
 #[test]
 fn same_script_and_seed_give_byte_identical_outputs() {
-    let profile = DeviceProfile::yubikey_5c_nano_5_7_4(SERIAL);
+    let profile = DeviceProfile::yubikey_compat(SERIAL);
     let mut first = Rig::with_store(profile.clone(), MemoryStore::new(), 1);
     let mut second = Rig::with_store(profile.clone(), MemoryStore::new(), 1);
     let a = script(&mut first);

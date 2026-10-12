@@ -1,5 +1,5 @@
 //! OpenPGP card application (OpenPGP Smart Card Application Functional Specification
-//! 3.4.1, "spec") as a YubiKey 5C Nano 5.7.4 presents it: SIG/DEC/AUT keys plus the
+//! 3.4.1, "spec") as the reference key presents it: SIG/DEC/AUT keys plus the
 //! Yubico attestation slot, PW1/PW3 with resetting code, KDF-DO, data objects, signature
 //! counter, GET DATA / PUT DATA chaining, TERMINATE DF / ACTIVATE FILE.
 //!
@@ -19,13 +19,13 @@
 //! attestation issuer with a self-signed certificate (attest.rs) and saves it.
 //!
 //! Public objects (5F52, 7F66, 7F74, C0, FA, the 6E and 7A layouts) byte-match
-//! `reference/yubikey-5c-nano-5.7.4/openpgp-reference-observation.json`.
+//! `reference/physical-key/openpgp-reference-observation.json`.
 //!
 //! Framing rules (ISO/IEC 7816-4 §5.1 and the behaviour catalog's OpenPGP section):
 //! - CLA must be interindustry on the basic channel without secure messaging (`6E00` for
 //!   other classes, `6882` for the secure-messaging bits, `6881` for a logical channel),
 //!   or the proprietary `80`, which every command takes like `00` (measured on a YubiKey
-//!   5C Nano 5.7.4 for GET DATA: `80 CA 00 C4` answers the PW status bytes,
+//!   reference key for GET DATA: `80 CA 00 C4` answers the PW status bytes,
 //!   docs/MEASUREMENT.md, probe `cla-variants-openpgp`; the other commands follow by
 //!   extension; `90` and the other proprietary classes are unmeasured and stay `6E00`).
 //!   GET ATTESTATION takes the proprietary CLA 80 only (`84`, its secure-messaging form,
@@ -291,7 +291,7 @@ impl OpenPgp {
     /// GET RESPONSE (ISO 7816-4 §7.6.1). The CLA was checked before this point, so an
     /// unsupported CLA never consumes the pending data (catalog).
     ///
-    /// Measured on a YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md): with nothing to serve the
+    /// Measured on the reference key (docs/MEASUREMENT.md): with nothing to serve the
     /// answer is `6D00`, right after SELECT (probe `get-response-idle-openpgp`) and after
     /// a long response was read to its end (probe `chain-61xx`); during an unfinished
     /// command chain it is `6D00` too (probe `cla-variants-openpgp`, which replaced the

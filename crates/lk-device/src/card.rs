@@ -42,7 +42,7 @@
 //!    name, with right-truncated PIV and OpenPGP AIDs). If there is none, a non-empty
 //!    DF name that is itself a prefix of an applet's AID selects that applet, the first
 //!    in `AppId::ALL` order (Management, OTP, OATH, PIV, OpenPGP, HSM Auth, Security
-//!    Domain) whose AID starts with it (measured on a YubiKey 5C Nano 5.7.4,
+//!    Domain) whose AID starts with it (measured on the reference key,
 //!    `docs/MEASUREMENT.md` probe `select-partial-aid`). Re-selecting the selected
 //!    applet calls `select()` without `deselect()` (SP 800-73-4 Part 2 §3.1.1 keeps the
 //!    PIV security status); selecting another one deselects the previous one first.
@@ -359,7 +359,7 @@ impl Device {
     /// domain at the default ISD AID `A000000151000000` (§H.1.3, `lk_sd::AID`) and has no
     /// capability gate. It answered `6A82` before (unmeasured on the reference key).
     ///
-    /// Measured on a YubiKey 5C Nano 5.7.4 (`docs/MEASUREMENT.md`, probe
+    /// Measured on the reference key (`docs/MEASUREMENT.md`, probe
     /// `select-partial-aid`, OTP and OATH disabled, Management selected before):
     /// `A0000005` and `A000000527` select Management, `A0000003` PIV, `D276000124`
     /// OpenPGP and `A0000005272107` HSM Auth. Model policy: whether the key prefers

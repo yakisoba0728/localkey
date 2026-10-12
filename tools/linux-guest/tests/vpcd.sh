@@ -1,7 +1,7 @@
 # The vpcd transport, alone and with uhid, against the real vsmartcard vpcd (the image's
 # vsmartcard-vpcd package, loaded by pcscd from /etc/reader.conf.d/vpcd) and real host
 # software, all inside the guest: pcsc-tools, OpenSC, ykman, GnuPG (scdaemon through
-# pcscd), pyscard, libfido2, python-fido2. Profile yubikey-5c-nano-5.7.4 throughout; touches
+# pcscd), pyscard, libfido2, python-fido2. Profile yubikey throughout; touches
 # through localkeyd's control socket (`localkeyd ctl tap`, or py/lk_tap.py, which sends the
 # same `tap` request when the presence indicator turns to waiting).
 #
@@ -49,7 +49,7 @@ set -u
 PY=/localkey/py
 W=/run/lk-work
 mkdir -p "$W"
-YK=yubikey-5c-nano-5.7.4
+YK=yubikey
 MGMT=010203040506070801020304050607080102030405060708
 PIV_PIN=123456
 ATR="3b fd 13 00 00 81 31 fe 15 80 73 c0 21 c0 57 59 75 62 69 4b 65 79 40"
@@ -351,7 +351,7 @@ check "a pcscd running as root is accepted too (uid 0)" \
     log_has_since va "$mark" "vpcd: the peer on 127.0.0.1:35963 is owned by uid 0, an allowed uid"
 run opensc-tool -l
 run ykman --reader "$R" info | tee "$W/ykman-info"
-check "ykman info over vpcd: YubiKey 5C Nano 5.7.4" sh -c "grep -q 'YubiKey 5C Nano' '$W/ykman-info' && grep -q 'Firmware version: 5.7.4' '$W/ykman-info'"
+check "ykman info over vpcd: compatibility identity and firmware" sh -c "grep -q 'YubiKey' '$W/ykman-info' && grep -Eq 'Firmware version: [0-9]+[.][0-9]+[.][0-9]+' '$W/ykman-info'"
 serial=$(sed -n 's/^Serial number: //p' "$W/ykman-info")
 check "ykman's serial ($serial) is the daemon's" same "$serial" "$(status_of va serial)"
 run ykman --reader "$R" oath accounts add -t test JBSWY3DPEHPK3PXP
@@ -490,8 +490,8 @@ timeout 90 ykman list > "$W/ykman-list" 2> "$W/ykman-list.err"
 echo "[exit $?]"
 sed 's/^/    stdout: /' "$W/ykman-list"
 sed 's/^/    stderr: /' "$W/ykman-list.err"
-check "ykman list: one YubiKey 5C Nano with OTP+FIDO+CCID" sh -c \
-    "[ \$(grep -c . '$W/ykman-list') = 1 ] && grep -q -E 'YubiKey 5C Nano .*\\[OTP\\+FIDO\\+CCID\\].*Serial: $serial' '$W/ykman-list'"
+check "ykman list: one compatibility device with OTP+FIDO+CCID" sh -c \
+    "[ \$(grep -c . '$W/ykman-list') = 1 ] && grep -q -E 'YubiKey .*\\[OTP\\+FIDO\\+CCID\\].*Serial: $serial' '$W/ykman-list'"
 note "ykman's 'Failed opening device' warning is the empty second vpcd slot ('$YUBICO_NAME 00 01', no card)"
 run ykman info | tee "$W/ykman-info-b"
 check "ykman info: enabled USB interfaces OTP, FIDO, CCID" grep -q 'Enabled USB interfaces: OTP, FIDO, CCID' "$W/ykman-info-b"

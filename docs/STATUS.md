@@ -1,7 +1,7 @@
 # Implementation status
 
-Updated 2026-10-12. localkey is its own software security key; the YubiKey 5C Nano 5.7.4 is
-the reference it is compared against, not a device it copies (`docs/DESIGN.md` §2 and §12
+Updated 2026-10-13. localkey is its own software security key; a physical security key
+serves as its comparison reference (`docs/DESIGN.md` §2 and §12
 decision 8, `docs/CONTRACTS.md` "Reference, not replica"). Every engine phase of
 `docs/DESIGN.md` §10 is done. The program phase (`docs/DESIGN.md` §13, contract in
 `docs/PROGRAM.md`) has a working daemon with four transports; see "Program phase" below. The
@@ -12,7 +12,7 @@ that followed the comparison with the reference key ("Reference comparison" belo
 
 What "done" means here: behaviour is tested against the public specifications, published
 test vectors and the public bytes read from the reference key
-(`reference/yubikey-5c-nano-5.7.4/`). Where a specification defines a behaviour, the engine
+(`reference/physical-key/`). Where a specification defines a behaviour, the engine
 follows the specification, even where the reference differs (unless a widely used host stack
 depends on the reference's behaviour); where the specification leaves it open, the engine
 follows the reference; it never copies the reference's defects, and its default identity is
@@ -155,7 +155,7 @@ it upstream (RustCrypto/signatures) is still to do.
 
 The engine is compared with the reference key, not built to be identical to it. One
 read-only, command-by-command comparison was made on 2026-10-11: 116 probes, the same ones
-sent to a YubiKey 5C Nano 5.7.4 and to the engine. `docs/MEASUREMENT.md` holds the method,
+sent to the reference key and to the engine. `docs/MEASUREMENT.md` holds the method,
 the data, every difference and what was decided about it; `docs/CONTRACTS.md` "Reference,
 not replica" holds the binding decision order and the table of the 2026-10-12 changes.
 

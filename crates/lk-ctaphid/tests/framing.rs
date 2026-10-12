@@ -4,7 +4,7 @@
 //! Boundaries: 57 bytes fill the initialization packet, 58 and 116 need one
 //! continuation packet, 117 needs two.
 //!
-//! Requests stop at 1536 bytes, measured on a YubiKey 5C Nano 5.7.4
+//! Requests stop at 1536 bytes, measured on the reference key
 //! (`docs/MEASUREMENT.md`, probe `ping-max`): 1532 = 57 + 25 * 59 ends on SEQ 24, 1533
 //! is the first length that needs SEQ 25, 1536 is the longest PING echoed, and 1537 and
 //! longer are `ERR_INVALID_LEN` at the initialization packet. Before the measurement the

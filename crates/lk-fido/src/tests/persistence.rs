@@ -229,7 +229,7 @@ fn selection_waits_for_a_touch() {
 #[test]
 fn touch_timeout_is_30_seconds() {
     // CTAP 2.1 §5 Terminology, "User action timeout": at least 10 seconds, "Thirty
-    // seconds is a reasonable value." Known difference: the YubiKey 5C Nano 5.7.4 answers
+    // seconds is a reasonable value." Known difference: the reference key answers
     // selection without a touch after 28 451.8 ms (docs/MEASUREMENT.md, probe
     // selection-no-touch), its 30 s design value on a clock that runs about 5.4 % fast;
     // the clock drift is not copied ("Revised by principle"). This test expected 28 500 ms

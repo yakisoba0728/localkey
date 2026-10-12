@@ -33,12 +33,12 @@ pub struct UsbIdentity {
     pub fido_report_descriptor: Vec<u8>,
     /// The OTP HID report descriptor ([`OTP_REPORT_DESCRIPTOR`]).
     pub otp_report_descriptor: Vec<u8>,
-    /// The CCID class descriptor (`lk_ccid::descriptor::YUBIKEY_5C_NANO`, 54 bytes).
+    /// The CCID class descriptor (`lk_ccid::descriptor::YUBIKEY_COMPAT`, 54 bytes).
     pub ccid_class_descriptor: Vec<u8>,
 }
 
 /// `bcdUSB` 2.00 (`device_fields.bcdUSB` 512 in
-/// `reference/yubikey-5c-nano-5.7.4/usb-reference-observation.json`).
+/// `reference/physical-key/usb-reference-observation.json`).
 const BCD_USB: u16 = 0x0200;
 /// `bMaxPacketSize0` (`device_fields.bMaxPacketSize0` 64).
 const MAX_PACKET_SIZE_0: u8 = 64;
@@ -104,7 +104,7 @@ impl UsbIdentity {
     /// USB CCID Rev 1.1 §5.1), as returned by GET_DESCRIPTOR(CONFIGURATION).
     ///
     /// For FIDO+CCID this is byte for byte the measured `configuration_descriptor_hex`
-    /// of `reference/yubikey-5c-nano-5.7.4/usb-reference-observation.json`: the FIDO HID
+    /// of `reference/physical-key/usb-reference-observation.json`: the FIDO HID
     /// interface (HID descriptor naming the 34-byte report descriptor, endpoints
     /// `04`/`84`), then the CCID interface (the 54-byte class descriptor, endpoints
     /// `02`/`82`/`83`). Interfaces are numbered from 0 in the order OTP, FIDO, CCID, and
@@ -169,7 +169,7 @@ fn hid_descriptor(out: &mut Vec<u8>, report_len: usize) {
 }
 
 /// The FIDO HID report descriptor, byte-exact from
-/// `reference/yubikey-5c-nano-5.7.4/usb-reference-observation.json`
+/// `reference/physical-key/usb-reference-observation.json`
 /// (`hid_report_descriptor_hex`
 /// `06d0f10901a1010920150026ff007508954081020921150026ff00750895409102c0`): usage page
 /// `F1D0` (FIDO Alliance), usage 1 (CTAPHID), a 64-byte input report (usage `20`) and a
@@ -257,7 +257,7 @@ mod tests {
     }
 
     /// The FIDO report descriptor equals `hid_report_descriptor_hex` of
-    /// `reference/yubikey-5c-nano-5.7.4/usb-reference-observation.json`.
+    /// `reference/physical-key/usb-reference-observation.json`.
     #[test]
     fn fido_descriptor_matches_the_reference() {
         let reference = hex("06d0f10901a1010920150026ff007508954081020921150026ff00750895409102c0");

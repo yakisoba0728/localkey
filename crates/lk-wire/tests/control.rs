@@ -126,7 +126,7 @@ fn status_replies_key_value_lines_then_ok() -> TestResult {
     assert_eq!(
         control(server.path(), "status\n")?,
         "serial=12345678\n\
-         product=YubiKey 5C Nano\n\
+         product=YubiKey\n\
          interfaces=otp,fido,ccid\n\
          presence=idle\n\
          attached=true\n\

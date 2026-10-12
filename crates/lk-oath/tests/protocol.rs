@@ -55,7 +55,7 @@ fn unlock(card: &mut Card, key: &[u8]) -> u16 {
 /// challenge or algorithm without an access key.
 #[test]
 fn select_reports_version_and_salt() {
-    let mut host = TestHost::with_profile(DeviceProfile::yubikey_5c_nano_5_7_4(1));
+    let mut host = TestHost::with_profile(DeviceProfile::yubikey_compat(1));
     host.push_entropy(&[1, 2, 3, 4, 5, 6, 7, 8]);
     let mut card = Card::with_host(host);
     assert_eq!(card.oath.aid(), &[0xA0, 0x00, 0x00, 0x05, 0x27, 0x21, 0x01]);

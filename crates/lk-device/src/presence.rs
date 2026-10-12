@@ -44,7 +44,7 @@ use crate::{Device, Output, TouchEdge};
 /// interval later. The status is always `STATUS_UPNEEDED`: the engine is synchronous, so
 /// a pending command is always one waiting for user presence.
 ///
-/// Measured on a YubiKey 5C Nano 5.7.4 (`docs/MEASUREMENT.md`, probes
+/// Measured on the reference key (`docs/MEASUREMENT.md`, probes
 /// `selection-keepalive-cancel` and `selection-no-touch`): `KEEPALIVE(UPNEEDED)` every
 /// 94.86 ms on average (14 intervals 93.9 to 96.0 ms, 299 intervals 91.5 to 98.1 ms),
 /// the first one 93.8 ms and 85.9 ms after the request, never at once. The key's clock

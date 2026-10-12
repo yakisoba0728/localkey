@@ -10,7 +10,7 @@ use lk_core::{CardApplet, DeviceProfile, Record};
 use lk_sd::{AID, SecurityDomain};
 use lk_testkit::TestHost;
 
-/// `reference/yubikey-5c-nano-5.7.4/security-domain-reference-observation.json`,
+/// `reference/physical-key/security-domain-reference-observation.json`,
 /// `select_public_template` (25 bytes): the reference omits `9F65` (a known difference,
 /// see `select_response_follows_gp_table_11_82`).
 const REF_SELECT: &str = "6f178408a000000151000000a50b730906072a864886fc6b01";
@@ -52,12 +52,12 @@ fn restart(host: &mut TestHost) -> SecurityDomain {
 /// data field in command message". The value `FF` is the 255-byte limit of GP 2.3.1
 /// §11.1.5, this device's choice. P2 `0C` still answers `9000` without data.
 ///
-/// Known difference (rule: specification over reference): a YubiKey 5C Nano 5.7.4
+/// Known difference (rule: specification over reference): the reference key
 /// omits `9F65` and answers 25 bytes (`select_public_template` of the reference
 /// observation, kept here as `REF_SELECT`); the engine answered those 25 bytes before.
 #[test]
 fn select_response_follows_gp_table_11_82() {
-    for profile in [DeviceProfile::own(1), DeviceProfile::yubikey_5c_nano_5_7_4(1)] {
+    for profile in [DeviceProfile::own(1), DeviceProfile::yubikey_compat(1)] {
         let mut host = TestHost::with_profile(profile);
         let mut sd = SecurityDomain::new(None, &mut host);
         assert_eq!(sd.aid(), AID);

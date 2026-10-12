@@ -111,7 +111,7 @@ fn parameter_types_and_subcommands() {
     // subCommand → MISSING_PARAMETER; getPinUvAuthTokenUsingUvWithPermissions (0x06) and
     // getUVRetries (0x07) need built-in UV, absent from GetInfo, and unknown subcommands:
     // CTAP2_ERR_INVALID_SUBCOMMAND (§8.1, "does not implement an invoked subcommand").
-    // Known difference: the YubiKey 5C Nano 5.7.4 answers getUVRetries
+    // Known difference: the reference key answers getUVRetries
     // CTAP2_ERR_PIN_AUTH_INVALID (0x33) (docs/MEASUREMENT.md, probe client-pin-uv-retries,
     // and "Revised by principle"); the specification wins. This test expected 0x33 for
     // getUVRetries between the measurement and that revision.

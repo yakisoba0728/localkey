@@ -55,7 +55,7 @@ fn secure_messaging_bits_answer_6882() {
 
 /// Catalog: "OpenPGP GET DATA rejects unsupported command-chain CLA 10 with 6E00, leaving
 /// the next YubiKit GET DATA unaffected". The first half is contradicted by the
-/// measurement: a YubiKey 5C Nano 5.7.4 answers `10 CA 00 C4` with `9000` and no data,
+/// measurement: the reference key answers `10 CA 00 C4` with `9000` and no data,
 /// leaving the chain open (docs/MEASUREMENT.md, probe cla-variants-openpgp; this test
 /// expected 6E00 before). The next GET DATA of the same object completes the chain and is
 /// answered as usual; one of another object breaks it (6883) and is not executed.
@@ -126,7 +126,7 @@ fn other_command_discards_pending_response() {
 }
 
 /// Catalog: "OpenPGP GET RESPONSE during unfinished command chaining returns 6883". The
-/// status is contradicted by the measurement: a YubiKey 5C Nano 5.7.4 answers GET
+/// status is contradicted by the measurement: the reference key answers GET
 /// RESPONSE during an open chain with 6D00 (docs/MEASUREMENT.md, probe
 /// cla-variants-openpgp; this test expected 6883 before). The chain is dropped (model
 /// policy) and a later chained PUT DATA works.

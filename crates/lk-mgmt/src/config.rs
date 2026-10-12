@@ -18,7 +18,7 @@ pub const LOCK_CODE_LEN: usize = 16;
 /// The factory challenge-response touch timeout, and the value a configured `0` stands
 /// for.
 ///
-/// A YubiKey 5C Nano 5.7.4 reports `0F` (15 seconds) in DeviceInfo tag `07`
+/// The reference key reports `0F` (15 seconds) in DeviceInfo tag `07`
 /// (`docs/MEASUREMENT.md`, probe `mgmt-read-config`), so a fresh device stores 15. The
 /// YubiKey documentation gives 15 seconds as the default touch wait for OTP
 /// challenge-response; a host may still write `0`, which
@@ -272,8 +272,7 @@ impl Management {
     /// challenge-response timeout (1), `04` device flags (1), `05` lock code (16).
     /// Unknown fields are kept and written back. `None` or an unreadable record gives
     /// the factory state: the profile's default applications, auto-eject off, a
-    /// challenge-response timeout of 15 seconds (`0F`, as measured on a YubiKey 5C Nano
-    /// 5.7.4), no flags and no lock code. A stored record keeps its own value, `0`
+    /// challenge-response timeout of 15 seconds (`0F`, as measured on the reference key), no flags and no lock code. A stored record keeps its own value, `0`
     /// included.
     pub fn new(stored: Option<&[u8]>, host: &mut dyn Host) -> Self {
         let profile = host.profile();
@@ -377,7 +376,7 @@ impl Management {
     /// This is the form `lk_otp::MgmtBridge::device_info` expects: `lk-otp` adds the
     /// length byte itself and its HID layer appends the OTP CRC (yubikit-python
     /// `_ManagementOtpBackend.read_config` checks `check_crc` over `len || TLVs ||
-    /// CRC`). There are two pages, laid out as a YubiKey 5C Nano 5.7.4 sends them
+    /// CRC`). There are two pages, laid out as the reference key sends them
     /// (`docs/MEASUREMENT.md`, probe `mgmt-read-config`); page 0 ends with `MORE_DATA`
     /// (`10 01 01`).
     pub fn device_info_page(&self, page: u8, host: &dyn Host) -> Option<Vec<u8>> {
@@ -414,7 +413,7 @@ impl Management {
     /// `6D00`.
     ///
     /// yubikit-python's `set_mode` on firmware 5.0.0 and later never sends this
-    /// command; it builds a WRITE CONFIG instead (`write_device_config`). How 5.7.4
+    /// command; it builds a WRITE CONFIG instead (`write_device_config`). How the reference firmware
     /// firmware itself maps a legacy mode byte to capabilities is undocumented, so the
     /// engine does not guess (`docs/catalog/mgmt.md`, deferred). The method exists so
     /// that every transport answers SET MODE the same way: `lk-device` uses it for
@@ -580,7 +579,7 @@ mod tests {
     // yubikit-python `read_device_info` merges the pages without MORE_DATA.
     #[test]
     fn read_config_serves_the_two_measured_pages() {
-        let mut host = TestHost::with_profile(DeviceProfile::yubikey_5c_nano_5_7_4(1));
+        let mut host = TestHost::with_profile(DeviceProfile::yubikey_compat(1));
         let m = Management::new(None, &mut host);
         let p0 = m.read_config(0, &host).expect("page 0");
         let p1 = m.read_config(1, &host).expect("page 1");

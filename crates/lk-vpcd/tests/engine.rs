@@ -1,5 +1,5 @@
 //! The vpcd transport in front of the real engine: `lk_run::Runner` with an
-//! `lk_testkit::MemoryStore` and the YubiKey 5C Nano 5.7.4 profile, driven through a fake
+//! `lk_testkit::MemoryStore` and the reference key profile, driven through a fake
 //! vpcd on `127.0.0.1` (`docs/PROGRAM.md` "lk-vpcd").
 //!
 //! APDUs are written from YKOATH (Yubico's OATH protocol: SELECT `A0 00 00 05 27 21 01`,
@@ -35,7 +35,7 @@ const DISABLE_CCID: [u8; 12] = [0x00, 0x1C, 0x00, 0x00, 0x07, 0x06, 0x03, 0x02, 
 const REBOOT: [u8; 8] = [0x00, 0x1C, 0x00, 0x00, 0x03, 0x02, 0x0C, 0x00];
 
 fn profile() -> DeviceProfile {
-    DeviceProfile::yubikey_5c_nano_5_7_4(SERIAL)
+    DeviceProfile::yubikey_compat(SERIAL)
 }
 
 /// A serving runner whose vpcd transport connected to `vpcd`.

@@ -1,7 +1,7 @@
 //! The CCID class-specific descriptor (USB CCID Rev 1.1 §5.1).
 //!
-//! [`YUBIKEY_5C_NANO`] holds the values decoded from the device's configuration
-//! descriptor (`reference/yubikey-5c-nano-5.7.4/usb-reference-observation.json`, the
+//! [`YUBIKEY_COMPAT`] holds the values decoded from the device's configuration
+//! descriptor (`reference/physical-key/usb-reference-observation.json`, the
 //! `0x21` descriptor after the interface descriptor of class `0x0B`). The slot model in
 //! this crate takes its limits from it: one slot, T=1 only, short and extended APDU
 //! level exchange, 3072-byte messages, one busy slot, no PIN pad, no mechanics.
@@ -97,9 +97,9 @@ pub struct ClassDescriptor {
     pub max_busy_slots: u8,
 }
 
-/// The CCID descriptor of a YubiKey 5C Nano, firmware 5.7.4, decoded from
-/// `reference/yubikey-5c-nano-5.7.4/usb-reference-observation.json`.
-pub const YUBIKEY_5C_NANO: ClassDescriptor = ClassDescriptor {
+/// The CCID descriptor of the reference key, decoded from
+/// `reference/physical-key/usb-reference-observation.json`.
+pub const YUBIKEY_COMPAT: ClassDescriptor = ClassDescriptor {
     bcd_ccid: 0x0100,
     max_slot_index: 0,
     voltage_support: 0x07,
@@ -250,15 +250,15 @@ mod tests {
 
     #[test]
     fn encoding_round_trips() {
-        let bytes = YUBIKEY_5C_NANO.to_bytes();
+        let bytes = YUBIKEY_COMPAT.to_bytes();
         assert_eq!(bytes[0], 0x36);
         assert_eq!(bytes[1], 0x21);
-        assert_eq!(ClassDescriptor::parse(&bytes), Some(YUBIKEY_5C_NANO));
+        assert_eq!(ClassDescriptor::parse(&bytes), Some(YUBIKEY_COMPAT));
     }
 
     #[test]
     fn parse_rejects_wrong_length_or_type() {
-        let mut bytes = YUBIKEY_5C_NANO.to_bytes();
+        let mut bytes = YUBIKEY_COMPAT.to_bytes();
         assert_eq!(ClassDescriptor::parse(&bytes[..53]), None);
         bytes[1] = 0x22;
         assert_eq!(ClassDescriptor::parse(&bytes), None);
@@ -270,7 +270,7 @@ mod tests {
         // 0x00040000 short and extended APDU, none of them: character level.
         let with = |features| ClassDescriptor {
             features,
-            ..YUBIKEY_5C_NANO
+            ..YUBIKEY_COMPAT
         };
         assert_eq!(with(0x0000_00FE).exchange_level(), ExchangeLevel::Character);
         assert_eq!(with(0x0001_00FE).exchange_level(), ExchangeLevel::Tpdu);
@@ -279,6 +279,6 @@ mod tests {
             with(0x0004_00FE).exchange_level(),
             ExchangeLevel::ExtendedApdu
         );
-        assert_eq!(YUBIKEY_5C_NANO.max_data_len(), 3062);
+        assert_eq!(YUBIKEY_COMPAT.max_data_len(), 3062);
     }
 }

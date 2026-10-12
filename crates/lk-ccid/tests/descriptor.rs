@@ -1,14 +1,14 @@
 //! The CCID class descriptor of the reference device, decoded field by field
 //! (USB CCID Rev 1.1 §5.1), and the reader model limits taken from it.
 //!
-//! Source: `reference/yubikey-5c-nano-5.7.4/usb-reference-observation.json`,
+//! Source: `reference/physical-key/usb-reference-observation.json`,
 //! `configuration_descriptor_hex`: the 54-byte descriptor of type 0x21 that follows the
 //! interface descriptor of class 0x0B (Smart Card) in the configuration.
 
-use lk_ccid::descriptor::{ClassDescriptor, ExchangeLevel, YUBIKEY_5C_NANO, feature};
+use lk_ccid::descriptor::{ClassDescriptor, ExchangeLevel, YUBIKEY_COMPAT, feature};
 
 const OBSERVATION: &str =
-    include_str!("../../../reference/yubikey-5c-nano-5.7.4/usb-reference-observation.json");
+    include_str!("../../../reference/physical-key/usb-reference-observation.json");
 
 /// The CCID class descriptor as it appears in `configuration_descriptor_hex`.
 const CCID_DESCRIPTOR_HEX: &str = "36210001000702000000a00f0000a00f00000000b0040000b0040000\
@@ -59,8 +59,8 @@ fn reference_configuration_holds_the_ccid_descriptor() {
     let config = configuration_descriptor();
     let descriptor = ccid_descriptor(&config);
     assert_eq!(descriptor, hex(CCID_DESCRIPTOR_HEX));
-    assert_eq!(ClassDescriptor::parse(&descriptor), Some(YUBIKEY_5C_NANO));
-    assert_eq!(YUBIKEY_5C_NANO.to_bytes().to_vec(), descriptor);
+    assert_eq!(ClassDescriptor::parse(&descriptor), Some(YUBIKEY_COMPAT));
+    assert_eq!(YUBIKEY_COMPAT.to_bytes().to_vec(), descriptor);
 }
 
 #[test]
@@ -105,9 +105,9 @@ fn decoded_values_of_the_reference_descriptor() {
 
 #[test]
 fn features_advertise_extended_apdu_level_and_automatic_parameters() {
-    let f = YUBIKEY_5C_NANO.features;
+    let f = YUBIKEY_COMPAT.features;
     assert_eq!(
-        YUBIKEY_5C_NANO.exchange_level(),
+        YUBIKEY_COMPAT.exchange_level(),
         ExchangeLevel::ExtendedApdu
     );
     for bit in [
@@ -132,5 +132,5 @@ fn features_advertise_extended_apdu_level_and_automatic_parameters() {
     ] {
         assert_eq!(f & bit, 0, "{bit:#010x} clear");
     }
-    assert_eq!(YUBIKEY_5C_NANO.max_data_len(), 3062);
+    assert_eq!(YUBIKEY_COMPAT.max_data_len(), 3062);
 }

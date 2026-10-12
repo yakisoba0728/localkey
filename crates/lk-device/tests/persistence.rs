@@ -112,7 +112,7 @@ fn record_moved_to_another_name_is_unreadable() {
 #[test]
 fn wrong_storage_key_gives_factory_state() {
     let store = MemoryStore::new();
-    let profile = DeviceProfile::yubikey_5c_nano_5_7_4(SERIAL);
+    let profile = DeviceProfile::yubikey_compat(SERIAL);
     drop(Device::open(profile.clone(), Box::new(store.clone()), Box::new(SeededEntropy::new(1)), KEY));
     let written: Vec<Record> = ALL.into_iter().filter(|&r| store.get(r).is_some()).collect();
     assert!(!written.is_empty());
@@ -125,11 +125,11 @@ fn wrong_storage_key_gives_factory_state() {
 fn failing_loads_give_factory_state() {
     let store = MemoryStore::new();
     store.fail_loads(true);
-    let mut rig = Rig::with_store(DeviceProfile::yubikey_5c_nano_5_7_4(SERIAL), store, 3);
+    let mut rig = Rig::with_store(DeviceProfile::yubikey_compat(SERIAL), store, 3);
     assert_eq!(rig.dev.unreadable_records(), &ALL);
     rig.power_on();
     // The Management SELECT text as measured (docs/MEASUREMENT.md, probe `select-mgmt`).
-    assert_eq!(rig.select(AID_MGMT), b"Virtual mgr - FW version 5.7.4\x90\x00".to_vec());
+    assert_eq!(rig.select(AID_MGMT), rig.management_select_text());
 }
 
 /// A restart reads the identities created at first start and writes nothing back
@@ -188,7 +188,7 @@ fn unconfirmed_key_writes_no_identity_for_absent_records() {
         rig.store.remove(record);
     }
     let saves = rig.store.save_count();
-    let profile = DeviceProfile::yubikey_5c_nano_5_7_4(SERIAL);
+    let profile = DeviceProfile::yubikey_compat(SERIAL);
     let mut wrong = Device::open(profile, Box::new(rig.store.clone()), Box::new(SeededEntropy::new(40)), [0x11; 32]);
     assert_eq!(wrong.unreadable_records(), &[Record::Oath]);
     // Inputs retry deferred constructor saves; skipped ones are not deferred.

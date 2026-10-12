@@ -52,16 +52,16 @@ Appendix B. Test names refer to `crates/lk-hsmauth`: `tests/derivation.rs`,
 - Command data objects may come in any order; unknown or repeated tags are `6A80`; P1/P2 are ignored except for RESET: `put_rejects_wrong_key_material_for_algorithm`, `malformed_tlv_is_6a80_for_every_command`
 - A credential stored with zero password tries — the state between spending the last try and storing the deletion (wrong password) or the return to eight (right password), which spend-before-compare (`docs/CONTRACTS.md` "Retry counters") makes reachable by a power loss or a failed save — is deleted: the loader drops it and keeps the rest of the record, and the running card deletes it at the next command (its outstanding ephemeral key with it). While the store keeps failing it is listed with zero tries and every password attempt on it is refused (`63C0` or `6581`) without a comparison. Source for "no tries left = deleted": YESDK overview "a limit of 8 retries, after which the credential will be permanently deleted" and the catalog bullet above: `last_try_spent_before_touch_does_not_wipe_the_record`, `abandoned_or_declined_last_try_touch_keeps_the_credential`, `failed_restore_of_the_last_try_deletes_only_that_credential`, `eighth_wrong_password_with_failed_deletion_keeps_the_rest`, `finished_deletion_forgets_the_ephemeral_key`, `state::tests::zero_tries_credential_loads_as_deleted`
 - A declined or abandoned touch on the last try gives the try back before the zero-tries cleanup runs (in memory and in the record), so the credential keeps its one try: `abandoned_or_declined_last_try_touch_keeps_the_credential`
-- GET RESPONSE with nothing pending is `6D00`: measured on a YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probe `get-response-idle-hsmauth`; it was the model decision `6985`): `list_longer_than_256_bytes_uses_get_response`, `proprietary_class_80_is_served_like_00`. GET RESPONSE during an unfinished chain stays part of the chain check (`6883`, unmeasured for this application)
+- GET RESPONSE with nothing pending is `6D00`: measured on the reference key (docs/MEASUREMENT.md, probe `get-response-idle-hsmauth`; it was the model decision `6985`): `list_longer_than_256_bytes_uses_get_response`, `proprietary_class_80_is_served_like_00`. GET RESPONSE during an unfinished chain stays part of the chain check (`6883`, unmeasured for this application)
 - Touch timeout 15 000 ms: `touch_required_calculate_waits_for_touch` (model value; the host program owns the timing)
 
 ## Fixed by `docs/CONTRACTS.md` (binding conventions)
 
-- CLA (ISO/IEC 7816-4 §5.1.1): `00` and the chaining bit `10` are accepted, and so is `80`, exactly like `00` (measured on a YubiKey 5C Nano 5.7.4, docs/MEASUREMENT.md, probe `cla-variants-hsmauth`: `80 5E 00 00` answers `6D00` like `00 5E 00 00`; it was `6E00`; `proprietary_class_80_is_served_like_00`); any other class outside the first interindustry range (`84`, `90`, …; unmeasured) is `6E00`; secure-messaging bits are `6882` (the device's secure channel clears them after unwrapping, so a command still carrying them was never verified); a logical channel is `6881` (as lk-piv and lk-oath; ykhsmauth names both statuses): `unknown_instruction_class_and_malformed_apdus`
+- CLA (ISO/IEC 7816-4 §5.1.1): `00` and the chaining bit `10` are accepted, and so is `80`, exactly like `00` (measured on the reference key, docs/MEASUREMENT.md, probe `cla-variants-hsmauth`: `80 5E 00 00` answers `6D00` like `00 5E 00 00`; it was `6E00`; `proprietary_class_80_is_served_like_00`); any other class outside the first interindustry range (`84`, `90`, …; unmeasured) is `6E00`; secure-messaging bits are `6882` (the device's secure channel clears them after unwrapping, so a command still carrying them was never verified); a logical channel is `6881` (as lk-piv and lk-oath; ykhsmauth names both statuses): `unknown_instruction_class_and_malformed_apdus`
 - At most Ne bytes per response, the rest with `61xx` and GET RESPONSE; no Le field means 256 (short) or 65 536 (extended). Also for the keys of a touch-required CALCULATE. The real continuation shapes work: yubikit `00 C0 00 00 00` (and yubikit 5.0's extended `00 C0 00 00 00 00 00`), ykhsmauth `00 C0 00 00 XX` with XX from `61XX`: `short_le_limits_each_response_piece`, `list_longer_than_256_bytes_uses_get_response`
 - The data-less forms `CLA INS P1 P2 00` and `CLA INS P1 P2 00 00 00` are not an explicit Le (RESET): `reset_accepts_sdk_and_ambiguous_short_zero_forms`
 
-## Model policies replaced by measurement (YubiKey 5C Nano 5.7.4)
+## Model policies replaced by measurement (reference key)
 
 Differential measurement of 2026-10-11 (docs/MEASUREMENT.md): the same read-only probes
 (`tools/measure/probes.py`) sent to the physical key and to the engine. Each answer below
@@ -71,11 +71,11 @@ key their best evidence (rule 3 of `docs/CONTRACTS.md` "Reference, not replica")
 neither answer is a reference defect (rule 4). A numbered list, so that
 `tools/catalog_status.py` does not count these as catalog lines:
 
-1. GET RESPONSE with nothing pending answers `6D00`: measured on a YubiKey 5C Nano 5.7.4
+1. GET RESPONSE with nothing pending answers `6D00`: measured on the reference key
   (docs/MEASUREMENT.md, probe `get-response-idle-hsmauth`); it was `6985`. Tests:
   `proprietary_class_80_is_served_like_00`, `list_longer_than_256_bytes_uses_get_response`,
   lk-device `ccid::security_domain_and_hsm_auth_statuses_as_measured`.
-2. CLA `80` is served exactly like `00`: measured on a YubiKey 5C Nano 5.7.4
+2. CLA `80` is served exactly like `00`: measured on the reference key
   (docs/MEASUREMENT.md, probe `cla-variants-hsmauth`, with the undefined instruction `5E`:
   `6D00` in both classes); it was `6E00`. That defined instructions behave alike under
   `80` follows by extension (derived). `90`, `84` and the other proprietary classes keep

@@ -62,7 +62,7 @@ const CRED_RANDOM_WITH_UV: &[u8] = b"localkey hmac-secret CredRandomWithUV";
 const CRED_RANDOM_WITHOUT_UV: &[u8] = b"localkey hmac-secret CredRandomWithoutUV";
 
 /// The signature algorithms this authenticator supports, in GetInfo `algorithms` order
-/// (CTAP 2.1 §6.4; `reference/yubikey-5c-nano-5.7.4/reference-observation.json`).
+/// (CTAP 2.1 §6.4; `reference/physical-key/reference-observation.json`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Alg {
     /// ES256: ECDSA on P-256 with SHA-256, COSE -7 (RFC 9053 §2.1).

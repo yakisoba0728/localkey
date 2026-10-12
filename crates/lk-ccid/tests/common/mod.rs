@@ -16,7 +16,7 @@ pub const ATR: [u8; 23] = [
 pub const ATR_PARAMS: [u8; 7] = [0x13, 0x10, 0x00, 0x15, 0x00, 0xFE, 0x00];
 
 /// `abData` per message: dwMaxCCIDMessageLength 3072 minus the 10-byte header
-/// (reference/yubikey-5c-nano-5.7.4/usb-reference-observation.json).
+/// (reference/physical-key/usb-reference-observation.json).
 pub const MAX_DATA: usize = 3062;
 
 /// §6.2.5 with the descriptor's dwDefaultClock 4000 kHz and dwDataRate 307 200 bps,

@@ -25,7 +25,7 @@ fn parse_tag_list(data: &[u8]) -> Result<(ObjectId, &[u8]), u16> {
 
 /// Whether `data` starts with a `5C` tag list whose one-byte length announces more value
 /// bytes than the data field holds, as in `5C 01` with the tag missing. GET DATA answers
-/// it `6A82`: measured on a YubiKey 5C Nano 5.7.4 for `00 CB 3F FF 02 5C 01 7E`
+/// it `6A82`: measured on the reference key for `00 CB 3F FF 02 5C 01 7E`
 /// (docs/MEASUREMENT.md, probe `lc-le-piv-get-data`). Other malformed tag lists (no
 /// length byte, a long-form length, a bad tag) are unmeasured and stay `6A80`.
 fn tag_list_cut_short(data: &[u8]) -> bool {
@@ -40,8 +40,8 @@ fn tag_list_cut_short(data: &[u8]) -> bool {
 impl Piv {
     /// GET DATA (`INS CB`, SP 800-73-4 Part 2 §3.1.2).
     ///
-    /// - P1-P2 must be `3FFF`; any other value is `6A82` (measured on a YubiKey 5C Nano
-    ///   5.7.4 for `3FFE` and `0000`, docs/MEASUREMENT.md, probe `bad-p1p2-piv`; Part 2
+    /// - P1-P2 must be `3FFF`; any other value is `6A82` (measured on the reference key
+    ///   reference firmware for `3FFE` and `0000`, docs/MEASUREMENT.md, probe `bad-p1p2-piv`; Part 2
     ///   §3.1.2 does not name a status for it). A tag list cut short is `6A82`
     ///   ([`tag_list_cut_short`]); otherwise the data field must be exactly one `5C` tag
     ///   list (`6A80`). Le may be present or absent.

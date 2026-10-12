@@ -86,7 +86,7 @@ fn gnupg_rsa3072_and_4096_le_values() {
 
 /// GnuPG `iso7816_select_data` and OpenSC `pgp_select_data` send the standard tag list
 /// `60 04 5C 02 7F 21` (GnuPG with Le 00); yubikit adds a leading length byte only for
-/// firmware up to 5.4.3, which this 5.7.4 card does not need to accept.
+/// firmware up to 5.4.3, which this compatibility-profile card does not need to accept.
 #[test]
 fn gnupg_and_opensc_select_data_forms() {
     let mut card = Card::new();
@@ -112,7 +112,7 @@ fn gnupg_and_opensc_select_data_forms() {
 /// back to RSA, and OpenSC `pgp_update_new_algo_attr` always writes
 /// `SC_OPENPGP_MAX_EXP_BITS` = `00 20`. The crate accepts exponent lengths of 17 to 32 bits
 /// for every advertised RSA size and stores the value as written (model policy,
-/// `objects::RSA_E_BITS`; a physical 5.7.4's answer is unmeasured). GnuPG then sizes Le
+/// `objects::RSA_E_BITS`; the reference key's answer is unmeasured). GnuPG then sizes Le
 /// and the imported e from the 32 bits it reads back (`determine_rsa_response`,
 /// `build_privkey_template`): GENERATE with that Le gets 7F49 with e = 65537, and an
 /// import with e right-justified in 4 bytes signs verifiably.

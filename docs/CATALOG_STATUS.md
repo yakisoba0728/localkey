@@ -16,10 +16,10 @@ label:
 - `deferred`: something the bullet needs is missing, and the line says what.
 
 "Tested" means tested against the specifications, published vectors and the public bytes
-read from the reference key, a YubiKey 5C Nano 5.7.4 (`reference/yubikey-5c-nano-5.7.4/`).
+read from the reference key (`reference/physical-key/`).
 It does not mean that the engine is identical to that key, which is not the goal. One
 read-only command-by-command comparison with the reference was made
-(`docs/MEASUREMENT.md`): the lines it settled say "measured on a YubiKey 5C Nano 5.7.4"
+(`docs/MEASUREMENT.md`): the lines it settled say "measured on the reference key"
 with the probe; where a specification defines the answer and the key differs, the key's
 answer is recorded as an intentional difference (a known difference). A **model policy** is
 a choice where neither a specification nor the reference fixes the behaviour (the

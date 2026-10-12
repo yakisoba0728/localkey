@@ -997,7 +997,7 @@ mod tests {
             [hex("30 1F 06 03 55 1D 23 04 18 30 16 80 14"), id.to_vec()].concat()
         );
         // WebAuthn §8.2.1: AAGUID extension, OCTET STRING in extnValue, non-critical.
-        // AAGUID ff4dac45... is the device's (reference/yubikey-5c-nano-5.7.4/reference-observation.json).
+        // AAGUID ff4dac45... is the device's (reference/physical-key/reference-observation.json).
         let aaguid: [u8; 16] = hex("ff4dac45ede84ec2acedcf66103f4335")
             .try_into()
             .expect("16 bytes");
@@ -1181,7 +1181,7 @@ mod tests {
         let key = EcPrivateKey::generate(Curve::P256, &mut entropy);
         let public_key = PublicKey::EcP256(key.public_uncompressed());
         let key_id = lk_crypto::sha1(&public_key.subject_public_key()).to_vec();
-        // AAGUID from reference/yubikey-5c-nano-5.7.4/reference-observation.json.
+        // AAGUID from reference/physical-key/reference-observation.json.
         let aaguid: [u8; 16] = hex("ff4dac45ede84ec2acedcf66103f4335")
             .try_into()
             .expect("16 bytes");

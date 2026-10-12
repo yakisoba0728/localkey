@@ -1,11 +1,11 @@
 //! Shared values for the unit tests: identities built from the engine's public types and
-//! the reference observation of a YubiKey 5C Nano.
+//! the reference observation.
 
 use lk_core::UsbInterfaces;
 use lk_device::UsbIdentity;
 
 /// `configuration_descriptor_hex` of
-/// `reference/yubikey-5c-nano-5.7.4/usb-reference-observation.json` (FIDO+CCID).
+/// `reference/physical-key/usb-reference-observation.json` (FIDO+CCID).
 pub const REFERENCE_CONFIGURATION: &str = "09027d00020100800f090400000203000000092110010001222200070504034000020705840340000209040100030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020";
 
 /// Decode a hex string (test vectors only).
@@ -14,7 +14,7 @@ pub fn hex(text: &str) -> Vec<u8> {
 }
 
 /// The 54-byte CCID class descriptor of the reference configuration (the `0x21`
-/// descriptor after the interface of class `0x0B`; `lk_ccid::descriptor::YUBIKEY_5C_NANO`
+/// descriptor after the interface of class `0x0B`; `lk_ccid::descriptor::YUBIKEY_COMPAT`
 /// is decoded from it).
 pub fn ccid_class_descriptor() -> Vec<u8> {
     let reference = hex(REFERENCE_CONFIGURATION);

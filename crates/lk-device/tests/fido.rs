@@ -38,7 +38,7 @@ fn init_reports_profile_version_and_cbor_wink() {
     assert_eq!(payload, vec![9, 8, 7, 6, 5, 4, 3, 2, 0, 0, 0, 1, 2, 5, 7, 4, 0x05]);
 }
 
-/// `reference/yubikey-5c-nano-5.7.4/reference-observation.json`: GetInfo through the
+/// `reference/physical-key/reference-observation.json`: GetInfo through the
 /// whole device carries the reference AAGUID, firmware version 329476 and
 /// maxMsgSize 1536.
 #[test]
@@ -55,7 +55,7 @@ fn get_info_through_the_device_matches_reference_fields() {
 
 /// CTAP 2.1 §11.2.9.1.7: KEEPALIVE with STATUS_UPNEEDED every 95 ms while the command
 /// waits, the first one interval after the request, none at once (measured on a YubiKey
-/// 5C Nano 5.7.4: docs/MEASUREMENT.md, probes selection-keepalive-cancel and
+/// reference key: docs/MEASUREMENT.md, probes selection-keepalive-cancel and
 /// selection-no-touch; before the measurement the first one went out at once and the
 /// interval was 100 ms); a touch answers it; the presence indicator follows the wait.
 #[test]
@@ -103,7 +103,7 @@ fn late_tick_sends_one_keepalive() {
 /// "User action timeout": "Thirty seconds is a reasonable value"), which is not a multiple
 /// of the 95 ms KEEPALIVE interval: the host sees 315 KEEPALIVEs, the last at 29 925 ms,
 /// and then the answer alone at 30 000 ms, with no KEEPALIVE in that Tick. Known
-/// difference: the YubiKey 5C Nano 5.7.4 answers after 300 KEEPALIVEs, 28 451.8 ms after
+/// difference: the reference key answers after 300 KEEPALIVEs, 28 451.8 ms after
 /// the request (docs/MEASUREMENT.md, probe selection-no-touch), its 30 s design value on a
 /// clock that runs about 5.4 % fast; the drift is not copied ("Revised by principle").
 /// This test expected 28 500 ms and 300 KEEPALIVEs between the measurement and that
@@ -337,7 +337,7 @@ fn suspend_and_resume_keep_fido_state() {
 
 /// CTAP 2.1 §11.2.5.2: an incomplete message times out with ERR_MSG_TIMEOUT; the
 /// device reports the framer's deadline and a Tick at it delivers the error. Measured on
-/// a YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probe message-timeout: this very request,
+/// the reference key (docs/MEASUREMENT.md, probe message-timeout: this very request,
 /// a PING initialization packet with BCNT 100, is answered after 469.8 ms); the engine
 /// uses 470 ms (3000 ms model policy before the measurement).
 #[test]
@@ -357,8 +357,8 @@ fn ctaphid_message_timeout_is_a_device_deadline() {
 /// CTAP 2.1 §11.2.9.1.2 ("BCNT 1..(n + 1)", the CTAP command byte first) and §11.2.9.1.6
 /// (ERR_INVALID_LEN, "The length field (BCNT) is invalid for the request"): CTAPHID_CBOR
 /// with BCNT 0 is ERR_INVALID_LEN at once and holds nothing; no presence request starts,
-/// and another channel's PING works right away. Known difference: the YubiKey 5C Nano
-/// 5.7.4 never answers it and stays busy (other channels ERR_CHANNEL_BUSY, CANCEL ignored)
+/// and another channel's PING works right away. Known difference: the reference key
+/// reference firmware never answers it and stays busy (other channels ERR_CHANNEL_BUSY, CANCEL ignored)
 /// until INIT on the channel (docs/MEASUREMENT.md, probe empty-cbor, "The stuck-channel
 /// incident"). That stall is a defect not copied ("Revised by principle"): "A request
 /// always triggers a response" (§11.2.4) and a stalling application must not lock the
@@ -382,7 +382,7 @@ fn empty_cbor_request_is_invalid_len_and_holds_nothing() {
     assert!(out.iter().all(|o| !matches!(o, Output::FidoReport(_))));
 }
 
-/// Measured on a YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probe ping-max): the longest
+/// Measured on the reference key (docs/MEASUREMENT.md, probe ping-max): the longest
 /// PING echoed is 1536 bytes; a longer one is ERR_INVALID_LEN at once, its remaining
 /// packets are ignored and the next request works. Before the measurement the device
 /// echoed up to 7609 bytes.

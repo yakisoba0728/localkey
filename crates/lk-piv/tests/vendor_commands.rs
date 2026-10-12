@@ -14,7 +14,7 @@ use lk_testkit::TestHost;
 fn get_version_reports_profile_firmware() {
     let mut card = Card::new();
     assert_eq!(card.send("00FD0000"), (hex("050704"), 0x9000));
-    let mut card = Card::with_host(TestHost::with_profile(DeviceProfile::yubikey_5c_nano_5_7_4(1)));
+    let mut card = Card::with_host(TestHost::with_profile(DeviceProfile::yubikey_compat(1)));
     assert_eq!(card.send("00FD000000"), (hex("050704"), 0x9000));
 }
 
@@ -23,7 +23,7 @@ fn get_serial_reports_profile_serial_big_endian() {
     // TestHost default serial 12345678 = 0x00BC614E.
     let mut card = Card::new();
     assert_eq!(card.send("00F80000"), (hex("00BC614E"), 0x9000));
-    let mut card = Card::with_host(TestHost::with_profile(DeviceProfile::yubikey_5c_nano_5_7_4(31_415_926)));
+    let mut card = Card::with_host(TestHost::with_profile(DeviceProfile::yubikey_compat(31_415_926)));
     assert_eq!(card.send("00F8000000"), (hex("01DF5E76"), 0x9000));
 }
 

@@ -78,7 +78,7 @@ Model decisions that apply throughout (sources in the crate docs):
 - **Plaintext response chaining.** A long plaintext answer is served in pieces of at
   most Ne with `61xx` and GET RESPONSE `00 C0` (ISO/IEC 7816-4 §5.1.3). Any other
   command, handshakes included, discards what is left (§7.6.1), after which GET RESPONSE
-  answers `6982`: measured on a YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probe
+  answers `6982`: measured on the reference key (docs/MEASUREMENT.md, probe
   `get-response-idle-sd`; it was the model status `6985`; see "Model policies replaced
   by measurement" at the end).
 - **Certificate policies.** A critical certificatePolicies extension is processed as
@@ -136,7 +136,7 @@ Totals: 98 tested, 11 intentional differences, 11 deferred (120 bullets).
 
 ## SecurityDomain_metadata
 
-- observation of fixed public SELECT and GET DATA 0066/E0/9F7F: intentional difference: specification over reference for the SELECT response: GP Card Specification v2.3.1 §11.9.3.1 Table 11-82 makes `9F65` (maximum length of data field in command message) mandatory in the FCI, so the engine answers the observed template plus `9F65 01 FF` (29 bytes; `FF` is the GP 2.3.1 §11.1.5 limit of 255 bytes, this device's choice), where the reference sends 25 bytes without it (`select_response_follows_gp_table_11_82`, which keeps the observed bytes as the known difference); GET DATA `00 CA 0066/00E0/9F7F` returns the observed values (`card_recognition_data_matches_reference`, `key_information_matches_reference_schema`, `cplc_layout_and_stability`), `80 CA 00 66` in plaintext the `66` template, 65 bytes, measured on a YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probe `cla-variants-sd`; `proprietary_class_card_data_has_the_66_template`), and every GlobalPlatform-class GET DATA the whole object (GP 2.3.1 §11.3.3.1; unmeasured beyond plaintext `0066`: `gp_class_get_data_returns_whole_data_objects`)
+- observation of fixed public SELECT and GET DATA 0066/E0/9F7F: intentional difference: specification over reference for the SELECT response: GP Card Specification v2.3.1 §11.9.3.1 Table 11-82 makes `9F65` (maximum length of data field in command message) mandatory in the FCI, so the engine answers the observed template plus `9F65 01 FF` (29 bytes; `FF` is the GP 2.3.1 §11.1.5 limit of 255 bytes, this device's choice), where the reference sends 25 bytes without it (`select_response_follows_gp_table_11_82`, which keeps the observed bytes as the known difference); GET DATA `00 CA 0066/00E0/9F7F` returns the observed values (`card_recognition_data_matches_reference`, `key_information_matches_reference_schema`, `cplc_layout_and_stability`), `80 CA 00 66` in plaintext the `66` template, 65 bytes, measured on the reference key (docs/MEASUREMENT.md, probe `cla-variants-sd`; `proprietary_class_card_data_has_the_66_template`), and every GlobalPlatform-class GET DATA the whole object (GP 2.3.1 §11.3.3.1; unmeasured beyond plaintext `0066`: `gp_class_get_data_returns_whole_data_objects`)
 - exact SELECT 25 bytes and recognition 63 bytes; GP 2.3.1, SCP03 option 60, SCP11 option 9b06: intentional difference: specification over reference: the SELECT response is 29 bytes, the reference's 25 plus the `9F65 01 FF` that GP 2.3.1 Table 11-82 makes mandatory and the reference omits (`select_response_follows_gp_table_11_82`); the recognition data are the observed 63 bytes for CLA `00` (65 with the `66` template for the GlobalPlatform class), with GP 2.3.1, SCP03 option `60` and SCP11 option `9B06`: `card_recognition_data_matches_reference`, `init_update_response_matches_independent_known_answer` (INITIALIZE UPDATE reports `03 60`)
 - reference option advertises SCP11a/b/c, transient OCE, chains, S8, X509; no BF20: tested: `card_recognition_data_matches_reference`, `scp11a_and_scp11c_match_independent_known_answers`, `scp11b_matches_independent_known_answers`, `scp11a_with_full_omitted_root_and_direct_chains`, `oce_cache_invalidation` (the OCE is transient: SELECT and restart drop it)
 - unsupported BF20 X509 extension denied with 6A81 before chain/authentication: deferred: the encoding of the GP `BF20` element is not in the available sources, so it is not recognised; a certificate carrying an unrecognised critical extension is refused with `6982` (`certificate_chain_checks`)
@@ -250,7 +250,7 @@ Totals: 98 tested, 11 intentional differences, 11 deferred (120 bullets).
 - 81 checks per socket/IFD; v22 ZIP fails omitted-root check: intentional difference: legacy release-artifact and transport checks, not device behaviour; the omitted-root rule is tested by `allowlist_rules`
 - vendor prose model; physical serial scope and timing unmeasured: tested: `allowlist_rules` (every presented certificate checked when its PSO arrives; `6982` model status)
 
-## Model policies replaced by measurement (YubiKey 5C Nano 5.7.4)
+## Model policies replaced by measurement (reference key)
 
 Differential measurement of 2026-10-11 (docs/MEASUREMENT.md): the same read-only probes
 (`tools/measure/probes.py`) sent to the physical key and to the engine, with the Security
@@ -263,7 +263,7 @@ SecurityDomain_metadata lines above). A numbered list, so that
 `tools/catalog_status.py` does not count these as catalog lines:
 
 1. An instruction the Security Domain does not know answers `6982` outside a secure
-  channel: measured on a YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probe
+  channel: measured on the reference key (docs/MEASUREMENT.md, probe
   `undefined-ins-sd`: INS `5E`, `6E`, `93`); it was `6D00`. Inside a channel it stays
   `6D00` (unmeasured, model policy), and so do the known-but-refused arms (SET STATUS
   `6D00`, a known instruction in the wrong class `6E00`). Tests:
@@ -271,14 +271,14 @@ SecurityDomain_metadata lines above). A numbered list, so that
   `ccid::security_domain_and_hsm_auth_statuses_as_measured`.
 2. Plaintext GET RESPONSE with nothing pending answers `6982`, also right after a chained
   part (`10 CA 00 66`, `9000`) left a plaintext chain open, which it drops: measured on a
-  YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probes `get-response-idle-sd`,
+  reference key (docs/MEASUREMENT.md, probes `get-response-idle-sd`,
   `cla-variants-sd`); it was `6985`, and `6883` during a chain. Tests:
   `unserved_plaintext_commands_are_6982`, `get_response_is_discarded_by_an_intervening_command`,
   `random_scp11_inputs_never_panic` (its plaintext tail), lk-device
   `ccid::security_domain_and_hsm_auth_statuses_as_measured`.
 3. Plaintext `80 CA 00 66` answers the card recognition data inside its `66` template,
   65 bytes `66 3F 73 3D ...` (GP 2.3.1 Annex H.2), while `00 CA 00 66` keeps the bare
-  63-byte `73` template of the reference observation: measured on a YubiKey 5C Nano 5.7.4
+  63-byte `73` template of the reference observation: measured on the reference key
   (docs/MEASUREMENT.md, probe `cla-variants-sd`); both classes got the bare template
   before. The specification then extends this to every object and to the secure channel:
   GP 2.3.1 §11.3.3.1 (CLA b8 = 1 returns the whole BER-TLV data object, b8 = 0 its

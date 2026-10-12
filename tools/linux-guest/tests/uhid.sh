@@ -26,7 +26,7 @@ W=/run/lk-work
 mkdir -p "$W"
 PIN=314159
 STATIC=Hello1World
-YK=yubikey-5c-nano-5.7.4
+YK=yubikey
 export LK_LOG_QUIET=1
 results=()
 step=

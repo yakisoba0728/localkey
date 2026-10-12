@@ -299,7 +299,7 @@ impl Piv {
 
     /// GET METADATA (`INS F7`, Yubico extension, firmware 5.3 and later): P2 the
     /// reference; P1 is ignored, as GET VERSION and GET SERIAL ignore P1-P2. Measured on a
-    /// YubiKey 5C Nano 5.7.4: `00 F7 01 9A` with slot `9A` empty answers `6A88`, the same
+    /// reference key: `00 F7 01 9A` with slot `9A` empty answers `6A88`, the same
     /// as `00 F7 00 9A` (docs/MEASUREMENT.md, probe `bad-p1p2-piv`, which also shows GET
     /// VERSION with P1 `01` and GET SERIAL with P2 `01` answering `9000`). The empty slot
     /// cannot tell "P1 ignored" from "P1 other than `00` is `6A88`"; ignoring P1 for the

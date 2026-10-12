@@ -62,7 +62,7 @@ fn config(tlvs: &[(u8, &[u8])]) -> Vec<u8> {
 
 /// yubikit `read_device_info`: DeviceInfo is the same `len || TLVs` page on every
 /// transport (catalog Management "CCID and OTP HID device information", "CTAPHID vendor
-/// 0x42 / 0x43 commands"); its TLVs carry the profile's serial, firmware 5.7.4, the
+/// 0x42 / 0x43 commands"); its TLVs carry the profile's serial, firmware, the
 /// USB-C Nano form factor and the supported/enabled USB applications. Pages follow
 /// `MORE_DATA` (`10 01 01`) identically everywhere.
 #[test]
@@ -137,7 +137,7 @@ fn disabling_ccid_reenumerates_and_ignores_ccid_until_reenabled() {
     );
     assert_eq!(rig.power_on(), rig.profile.atr);
     // The Management SELECT text as measured (docs/MEASUREMENT.md, probe `select-mgmt`).
-    assert_eq!(rig.select(AID_MGMT), b"Virtual mgr - FW version 5.7.4\x90\x00".to_vec());
+    assert_eq!(rig.select(AID_MGMT), rig.management_select_text());
 }
 
 /// yubikit `DeviceConfig` REBOOT (`0C`) over CCID WRITE CONFIG: the answer, then

@@ -196,7 +196,7 @@ guest kernel and real host software, with tmpfs state directories and touches th
    `fido2-assert -G`/`-V`;
 3. python-fido2: `CtapHidDevice.list_devices()`, `Ctap2.get_info()`,
    make_credential/get_assertion with PIN tokens, `Fido2Client` + `Fido2Server`;
-4. ykman with `--profile yubikey-5c-nano-5.7.4`: `list`, `info`, `otp info`, HMAC-SHA1
+4. ykman with `--profile yubikey`: `list`, `info`, `otp info`, HMAC-SHA1
    challenge-response in slot 2 (checked against the generated key), a static password
    in slot 1 typed through the kernel's input layer (evdev) on a tap;
 5. re-enumeration: `ykman config usb --disable OTP` (over OTP HID) and `--enable OTP`
@@ -211,7 +211,7 @@ or `STEP <n> FAIL`; the exit code is 1 if any failed. What it established is rec
 ## The gadget scenario (`tests/gadget.sh`)
 
 `guest-run.sh -t 1800 gadget.sh` (about 2.5 minutes) runs `localkeyd run --transport gadget
---udc dummy_udc.0 --profile yubikey-5c-nano-5.7.4` against the guest's own USB host stack
+--udc dummy_udc.0 --profile yubikey` against the guest's own USB host stack
 (dummy_hcd's host side is bus 1), with real host software and touches through
 `localkeyd ctl tap`:
 
@@ -231,7 +231,7 @@ or `STEP <n> FAIL`; the exit code is 1 if any failed. What it established is rec
    `authorized` 0/1;
 5. re-enumeration: `ykman config usb --disable/--enable OTP` over CCID, OTP HID and FIDO
    HID, the FIDO+CCID configuration against the reference key's
-   (`reference/yubikey-5c-nano-5.7.4/usb-reference-observation.json`, copied into the
+   (`reference/physical-key/usb-reference-observation.json`, copied into the
    script), strace of the daemon's `ep0` opens and `UDC` writes;
 6. `kill -9` and restart: the leftover gadget is reclaimed, the state kept;
 
@@ -245,7 +245,7 @@ a real kernel").
 ## The vpcd scenario (`tests/vpcd.sh`)
 
 `guest-run.sh -t 1500 -f tools/service vpcd.sh` (about 3.5 minutes) runs `localkeyd run
---transport vpcd` and `--transport uhid,vpcd` with `--profile yubikey-5c-nano-5.7.4`
+--transport vpcd` and `--transport uhid,vpcd` with `--profile yubikey`
 against Ubuntu's vsmartcard-vpcd 3.3 and pcsc-lite 2.4.1 in the guest, with real host
 software, tmpfs state directories and touches through the control socket:
 
@@ -281,7 +281,7 @@ software, tmpfs state directories and touches through the control socket:
 6. `--transport uhid,vpcd`: two hidraw nodes (1050:0407) and the card; `fido2-token -L/-I`,
    `fido2-cred -M/-V` through UHID; ykman reaches the same serial through
    SmartCardConnection, OtpConnection and FidoConnection (`py/yk_connections.py`);
-   `ykman list` shows one "YubiKey 5C Nano (5.7.4) [OTP+FIDO+CCID]", `ykman info` all three
+   `ykman list` shows one compatibility device with OTP+FIDO+CCID, `ykman info` all three
    interfaces;
 7. CCID off and on with `ykman config usb` (REBOOT): disabling OATH, PIV, OPENPGP and
    HSMAUTH over CCID removes the card (the transport closes its connection and makes no

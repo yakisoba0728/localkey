@@ -17,7 +17,7 @@ requires exceptions: `lk_codec::apdu::Command` and now `lk_device::Output` imple
 in `docs/PROGRAM.md`).
 
 Goal (restated by the user on 2026-10-12): localkey is its own software security key, and
-the YubiKey 5C Nano 5.7.4 is the reference it is compared against, not a device to clone.
+a physical security key serves as the comparison reference.
 "Reference, not replica" near the end of this file gives the binding decision order for
 every externally visible behaviour; it overrides earlier wording here that treats the
 reference key as the target.
@@ -33,7 +33,7 @@ reference key as the target.
   - Do not read or copy the legacy implementation (Git tag `legacy-v0.64.0`, branch
     `legacy/v0.64-tooling`).
   - `reference/BEHAVIOR_CATALOG.md` describes expected behaviour in prose and may be used.
-  - `reference/yubikey-5c-nano-5.7.4/*.json` holds public bytes read from a real device.
+  - `reference/physical-key/*.json` holds public bytes read from a real device.
 - No third-party crates outside `lk-crypto`. No `unsafe`. No threads, clocks, files or OS calls.
 - Build and test with `CARGO_BUILD_JOBS=2 nice -n 10 cargo test -p <crate>`. Other agents may be
   building at the same time; cargo serialises on its lock, so wait instead of deleting `target/`.
@@ -67,7 +67,7 @@ reference key as the target.
 ## lk-core (fixed)
 
 `Millis`, `Entropy`, `Store`, `Record`, `StoreError`, `DeviceProfile` (`own`,
-`yubikey_5c_nano_5_7_4`), `Version`, `Capabilities`, `UsbInterfaces`, `ProductIds`, and the
+`yubikey_compat`), `Version`, `Capabilities`, `UsbInterfaces`, `ProductIds`, and the
 application contract in `applet.rs`:
 
 - `DeviceProfile` fields as built: `firmware`, `serial`, `form_factor`, `usb_vendor_id`,
@@ -355,7 +355,7 @@ The frozen crates' sources are the authority; these are the points other crates 
   - `control_abort(slot, seq)` covers the class-specific ABORT control request.
   - `apdu_response` returns an empty Vec for "send nothing" (the sequence was aborted or the
     card was reset).
-  - Extras: `is_active()`, `atr()`, `parameters_in_force()`, `descriptor::YUBIKEY_5C_NANO`,
+  - Extras: `is_active()`, `atr()`, `parameters_in_force()`, `descriptor::YUBIKEY_COMPAT`,
     `message` constants.
 - **lk-testkit**
   - `SeededEntropy::new(seed)` (frozen stream) and `bytes(n)`.
@@ -569,7 +569,7 @@ additions; existing callers compile unchanged.
   until then the interfaces, `usb_identity` and application gating stay as enumerated.
   Source: ykman `config usb` asks for `REBOOT` exactly when the set changes, and yubikit
   `set_mode` writes without it and tells the user to re-insert the key; neither would
-  be needed if the firmware re-enumerated by itself. Unmeasured on a physical 5.7.4
+  be needed if the firmware re-enumerated by itself. Unmeasured on the reference key
   (`docs/catalog/mgmt.md`, `device.md`; test
   `management::interface_change_without_reboot_waits_for_the_next_enumeration`).
   - **When the reboot happens** (added in the program phase, found with ykman on a real
@@ -590,7 +590,7 @@ additions; existing callers compile unchanged.
     `Management::to_record` returns a plain copy; the bytes lk-codec hands to callers),
     lk-codec's best-effort wipe, and compiler copies of fixed-size values.
   - Every status word, timing and cadence that no public source fixes is a model policy,
-    recorded in the crate's catalog file and unmeasured against a physical 5.7.4. (Refined
+    recorded in the crate's catalog file and unmeasured against the reference key. (Refined
     on 2026-10-12, "Reference, not replica": a model policy is a choice where neither a
     specification nor the reference fixes the behaviour.)
 
@@ -630,7 +630,7 @@ known gap required it.
 
 ## Measurement changes to the engine (as built, binding)
 
-A read-only command-by-command measurement of a YubiKey 5C Nano 5.7.4 (`docs/MEASUREMENT.md`)
+A read-only command-by-command measurement of the reference key (`docs/MEASUREMENT.md`)
 replaced these model policies. The sections above keep the values they were written with and
 point here where they changed; `docs/MEASUREMENT.md` "Engine changes" lists every change with
 its tests and probe. On 2026-10-12 every change below was reviewed under the decision order
@@ -638,7 +638,7 @@ of "Reference, not replica" (next section): each bullet says whether it was kept
 rule, and lines marked **Superseded (2026-10-12)** no longer describe the engine.
 
 - **lk-core**: `DeviceProfile::part_number: String` (DeviceInfo tag `13`): empty in `own`,
-  a 12-character placeholder in `yubikey_5c_nano_5_7_4`, never a real key's part number
+  a 12-character placeholder in `yubikey_compat`, never a real key's part number
   (kept, rules 3 and 5).
 - **lk-ctaphid**:
   - `MAX_MESSAGE_LEN` (1536): a longer request gets `ERR_INVALID_LEN` at its initialization
@@ -682,9 +682,8 @@ rule, and lines marked **Superseded (2026-10-12)** no longer describe the engine
 
 ## Reference, not replica (2026-10-12, binding)
 
-localkey is the user's own software security key. The YubiKey 5C Nano 5.7.4 is the
-**reference**: a well-made real key to compare against (`docs/MEASUREMENT.md`), not a device
-to clone. This section is binding for every engine and program crate. It overrides older
+localkey is the user's own software security key. A physical security key provides the
+comparison **reference** (`docs/MEASUREMENT.md`). This section is binding for every engine and program crate. It overrides older
 wording in this file, in `docs/DESIGN.md` and in the catalog files that treats the reference
 key as the target or ranks its measurement first (`docs/DESIGN.md` §2 and §12 decision 8
 record the decision in Korean).
@@ -716,7 +715,7 @@ Decision order for every externally visible behaviour:
    a fast oscillator is 30 s.
 5. **Own identity.** The default profile, `DeviceProfile::own`, carries no Yubico names,
    strings, AAGUID, part numbers or similar identifiers. The compatibility profile,
-   `DeviceProfile::yubikey_5c_nano_5_7_4`, stays only for testing: with host tools that
+   `DeviceProfile::yubikey_compat`, stays only for testing: with host tools that
    accept nothing else (ykman, libccid's reader list) and for the comparisons with the
    reference (`reference/` golden tests, `tools/measure/`). Yubico-protocol message
    formats stay where host tools parse them (the Management SELECT text, the DeviceInfo
@@ -749,7 +748,7 @@ tests and probes):
 | lk-sd | key information of an OCE CA public key | `B0 41` | `B0 40` | 1: GP 2.3.1 §11.3.3.1.1 (unmeasured) |
 | lk-device, lk-sd | SELECT whose (unwrapped) class codes a logical channel other than 0 | changed the basic channel's selection and ended a secure channel | `6881`, selection and secure channel unchanged; CLA `FF` answers `6E00`; lk-sd closes its channel only on a basic-channel SELECT | 1: ISO/IEC 7816-4:1995 §5.5, Table 16; the ATR says "no logical channel" (unmeasured) |
 | lk-device | SELECT by DF name with an empty name | `6A82` | selects the Security Domain | 1: GP 2.3.1 §11.9.2.3 (unmeasured) |
-| lk-core | `DeviceProfile::own` form factor | `04`, USB-C Nano | `00` (new `form_factor::UNKNOWN`, additive); `yubikey_5c_nano_5_7_4` sets `04` explicitly | 5 |
+| lk-core | `DeviceProfile::own` form factor | `04`, USB-C Nano | `00` (new `form_factor::UNKNOWN`, additive); `yubikey_compat` sets `04` explicitly | 5 |
 
 Kept after the same review (no change):
 
@@ -770,7 +769,7 @@ Kept after the same review (no change):
   hold any byte other than `FF`, because ykman documents and sends alphanumeric PINs; a new
   PUK must be 6 to 8 non-`FF` bytes padded with `FF`, so `FF`×8 is never a PUK, because
   yubikit's `PivSession.reset()` blocks the PUK by sending it and needs `63CX`.
-- rule 5: the own profile keeps firmware version 5.7.4, a vendor-defined number that
+- rule 5: the own profile keeps its vendor-defined firmware version, which
   yubikit uses to gate PIV, OpenPGP, OATH and Management features, not a Yubico
   identifier. Its AAGUID, USB strings, ATR historical bytes, OpenPGP manufacturer (`FF00`)
   and attestation subjects were already its own.

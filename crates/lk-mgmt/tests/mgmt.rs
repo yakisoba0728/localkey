@@ -7,8 +7,8 @@
 //! - Capability bits (`OTP 0x01 U2F 0x02 OPENPGP 0x08 PIV 0x10 OATH 0x20 HSMAUTH 0x100
 //!   FIDO2 0x200`, all = `0x033B`): yubikit `CAPABILITY`, mirrored by
 //!   `lk_core::Capabilities`.
-//! - Form factor `0x04` USB-C Nano, firmware 5.7.4: `lk_core::DeviceProfile`
-//!   (`reference/yubikey-5c-nano-5.7.4/`, `reference/legacy-v0.64-profiles.json`).
+//! - Form factor and firmware values: `lk_core::DeviceProfile`
+//!   (`reference/physical-key/`, `reference/legacy-v0.64-profiles.json`).
 //! - Serial numbers are the test profiles' own (12345678 = `00BC614E`, 31415926 =
 //!   `01DF5E76`).
 //! - CTAPHID vendor commands `0x42`/`0x43` and OTP slots `0x13`/`0x15`: yubikit
@@ -29,7 +29,7 @@ const LOCK: [u8; 16] = [
 ];
 const OTHER_LOCK: [u8; 16] = [0x5A; 16];
 
-// DeviceInfo pages laid out as a YubiKey 5C Nano 5.7.4 sends them
+// DeviceInfo pages laid out as the reference key sends them
 // (docs/MEASUREMENT.md, probe `mgmt-read-config`: page 0 tags `01 03 02 04 05 06 07 08
 // 0A 0F 20 21` ending with MORE_DATA `10 01 01`, page 1 tags `11 12 13 14 15 16 17 18`).
 // Before the measurement the engine sent one page `01 02 03 04 05 06 07 08 0A 14 15 16
@@ -46,7 +46,7 @@ const OWN_PAGE0: [u8; 51] = [
     // (docs/MEASUREMENT.md); the compatibility profile keeps that (`YK_PAGE0`). The own
     // profile reported `04` before.
     0x04, 0x01, 0x00, // form factor UNKNOWN
-    0x05, 0x03, 0x05, 0x07, 0x04, // version 5.7.4
+    0x05, 0x03, 0x05, 0x07, 0x04, // reference version
     0x06, 0x02, 0x00, 0x00, // auto-eject timeout
     0x07, 0x01, 0x0F, // challenge-response timeout 15 s (measured factory value)
     0x08, 0x01, 0x00, // device flags
@@ -69,7 +69,7 @@ const OWN_PAGE1: [u8; 29] = [
     0x18, 0x02, 0x00, 0x00, // reset blocked: none
 ];
 
-/// READ CONFIG page 0 TLVs of a factory `DeviceProfile::yubikey_5c_nano_5_7_4(31415926)`.
+/// READ CONFIG page 0 TLVs of a factory `DeviceProfile::yubikey_compat(31415926)`.
 const YK_PAGE0: [u8; 51] = [
     0x01, 0x02, 0x03, 0x3B, //
     0x03, 0x02, 0x03, 0x3B, //
@@ -112,7 +112,7 @@ fn own_info() -> Vec<u8> {
     merged_info(&OWN_PAGE0, &OWN_PAGE1)
 }
 
-/// DeviceInfo of a factory `DeviceProfile::yubikey_5c_nano_5_7_4(31415926)` device.
+/// DeviceInfo of a factory `DeviceProfile::yubikey_compat(31415926)` device.
 fn yk_info() -> Vec<u8> {
     merged_info(&YK_PAGE0, &YK_PAGE1)
 }
@@ -124,9 +124,16 @@ fn framed(tlvs: &[u8]) -> Vec<u8> {
     out
 }
 
-/// The Management SELECT text of firmware 5.7.4 with `9000` (docs/MEASUREMENT.md, probe
-/// `select-mgmt`; before the measurement the engine sent the bare `5.7.4`).
-const SELECT_TEXT_OK: &[u8] = b"Virtual mgr - FW version 5.7.4\x90\x00";
+/// The Management SELECT text from the reference key with `9000`
+/// (docs/MEASUREMENT.md, probe `select-mgmt`; previously the bare version string).
+fn select_text_ok() -> Vec<u8> {
+    let version = DeviceProfile::own(1).firmware;
+    let mut text = format!(
+        "Virtual mgr - FW version {}.{}.{}", version.major, version.minor, version.patch
+    ).into_bytes();
+    text.extend_from_slice(&[0x90, 0x00]);
+    text
+}
 
 fn applet(host: &mut TestHost) -> MgmtApplet {
     let stored = host.persisted(Record::Device);
@@ -193,16 +200,16 @@ fn info_value(info: &[u8], t: u32) -> Option<Vec<u8>> {
 #[test]
 fn select_returns_version_string() {
     // docs/MEASUREMENT.md, probe `select-mgmt`: the key answers SELECT with the 30
-    // ASCII bytes `Virtual mgr - FW version 5.7.4` and `9000` (the engine sent the bare
-    // `5.7.4` before). yubikit `_ManagementSmartCardBackend` reads the version with
+    // ASCII bytes `Virtual mgr - FW version <major>.<minor>.<patch>` and `9000` (the engine sent the bare
+    // version string before). yubikit `_ManagementSmartCardBackend` reads the version with
     // `Version.from_string` (see `yubikit_version_from_string`).
     let mut host = TestHost::new();
     let mut a = applet(&mut host);
     let select = Command::new(0x00, 0xA4, 0x04, 0x00)
         .with_data(AID)
         .to_bytes();
-    assert_eq!(a.select(&select, &mut host), SELECT_TEXT_OK.to_vec());
-    assert_eq!(SELECT_TEXT_OK.len(), 30 + 2);
+    assert_eq!(a.select(&select, &mut host), select_text_ok());
+    assert_eq!(select_text_ok().len(), 30 + 2);
     assert_eq!(
         yubikit_version_from_string(&data(&a.select(&select, &mut host))),
         vec![5, 7, 4]
@@ -213,9 +220,9 @@ fn select_returns_version_string() {
         .with_data(AID)
         .with_le(0)
         .to_bytes();
-    assert_eq!(a.select(&with_le, &mut host), SELECT_TEXT_OK.to_vec());
+    assert_eq!(a.select(&with_le, &mut host), select_text_ok());
     // A re-SELECT through process answers the same; another AID is not found.
-    assert_eq!(run(&mut a, &select, &mut host), SELECT_TEXT_OK.to_vec());
+    assert_eq!(run(&mut a, &select, &mut host), select_text_ok());
     let other = Command::new(0x00, 0xA4, 0x04, 0x00)
         .with_data(vec![0xA0, 0x00, 0x00, 0x03, 0x08])
         .to_bytes();
@@ -241,7 +248,7 @@ fn device_info_own_profile_matches_expected_bytes() {
 fn device_info_yubikey_profile_matches_expected_bytes() {
     // docs/MEASUREMENT.md, probe `mgmt-read-config`: page 0 is 52 bytes (`33 || ...`)
     // and page 1 42 bytes (`29 || ...`).
-    let mut host = TestHost::with_profile(DeviceProfile::yubikey_5c_nano_5_7_4(31_415_926));
+    let mut host = TestHost::with_profile(DeviceProfile::yubikey_compat(31_415_926));
     let mut a = applet(&mut host);
     assert_eq!(a.management().device_info(&host), yk_info());
     let resp = run(&mut a, &read_apdu(0), &mut host);
@@ -671,7 +678,7 @@ fn enabling_unsupported_capability_is_rejected() {
 
 #[test]
 fn fido_and_ccid_applications_enable_and_disable() {
-    let mut host = TestHost::with_profile(DeviceProfile::yubikey_5c_nano_5_7_4(1));
+    let mut host = TestHost::with_profile(DeviceProfile::yubikey_compat(1));
     let mut m = Management::new(None, &mut host);
     let pids = host.profile().usb_product_ids;
 
@@ -1260,7 +1267,7 @@ fn apdu_header_errors() {
 fn cla_80_is_served_like_00() {
     // docs/MEASUREMENT.md, probe `cla-variants-mgmt`: `80 1D 00 00` answers page 0 with
     // `9000`, the same 52 bytes as `00 1D 00 00` (the engine answered 6E00 before).
-    let mut host = TestHost::with_profile(DeviceProfile::yubikey_5c_nano_5_7_4(31_415_926));
+    let mut host = TestHost::with_profile(DeviceProfile::yubikey_compat(31_415_926));
     let mut a = applet(&mut host);
     let plain = run(&mut a, &[0x00, 0x1D, 0x00, 0x00], &mut host);
     let proprietary = run(&mut a, &[0x80, 0x1D, 0x00, 0x00], &mut host);
@@ -1807,7 +1814,7 @@ fn device_info_page_is_read_config_without_length_byte() {
     // byte (and its HID layer the CRC). yubikit `read_device_info`: len || TLVs.
     for profile in [
         DeviceProfile::own(12_345_678),
-        DeviceProfile::yubikey_5c_nano_5_7_4(31_415_926),
+        DeviceProfile::yubikey_compat(31_415_926),
     ] {
         let mut host = TestHost::with_profile(profile);
         let m = Management::new(None, &mut host);
@@ -2004,7 +2011,7 @@ fn unread_response_data_is_discarded_by_other_commands() {
             )
         },
         &|a, h| assert_eq!(status(&run(a, &[0x00, 0x1D], h)), sw::WRONG_LENGTH),
-        &|a, h| assert_eq!(a.select(&select, h), SELECT_TEXT_OK.to_vec()),
+        &|a, h| assert_eq!(a.select(&select, h), select_text_ok()),
         &|a, _| a.deselect(),
         &|a, _| a.reset(ResetKind::CardPowerOff),
     ];
@@ -2062,13 +2069,13 @@ fn select_serves_at_most_ne() {
     assert_eq!(a.select(&select, &mut host), b"Vi\x61\x1C".to_vec());
     assert_eq!(
         run(&mut a, &[0x00, 0xC0, 0x00, 0x00, 0x00], &mut host),
-        b"rtual mgr - FW version 5.7.4\x90\x00".to_vec()
+        select_text_ok()[2..].to_vec()
     );
     // yubikit `SmartCardProtocol.select` sends `00 A4 04 00 08 <AID>` (no Le).
     let plain = Command::new(0x00, 0xA4, 0x04, 0x00)
         .with_data(AID)
         .to_bytes();
-    assert_eq!(a.select(&plain, &mut host), SELECT_TEXT_OK.to_vec());
+    assert_eq!(a.select(&plain, &mut host), select_text_ok());
     // A re-SELECT through process uses the same rule.
     assert_eq!(run(&mut a, &select, &mut host), b"Vi\x61\x1C".to_vec());
 }
@@ -2221,7 +2228,7 @@ fn yubikit_parse_tlvs(
     }
 }
 
-/// yubikit's view of a factory 5.7.4 device (USB-only, all seven applications) whose
+/// yubikit's view of a factory compatibility-profile device (USB-only, all seven applications) whose
 /// profile has the form factor `form_factor` (`00` UNKNOWN for the own profile, `04`
 /// USB_C_NANO for the compatibility profile) and the part number `part_number` (`None`
 /// for an empty one).
@@ -2306,10 +2313,10 @@ fn yubikit_version_from_string(text: &[u8]) -> Vec<u8> {
 fn yubikit_version_search_reads_both_select_texts() {
     // The bare text the engine sent before the measurement and the measured text
     // (docs/MEASUREMENT.md, probe `select-mgmt`) give the same version.
-    assert_eq!(yubikit_version_from_string(b"5.7.4"), vec![5, 7, 4]);
+    assert_eq!(yubikit_version_from_string(b"1.2.3"), vec![1, 2, 3]);
     assert_eq!(
-        yubikit_version_from_string(b"Virtual mgr - FW version 5.7.4"),
-        vec![5, 7, 4]
+        yubikit_version_from_string(b"Virtual mgr - FW version 1.2.3"),
+        vec![1, 2, 3]
     );
     assert_eq!(yubikit_version_from_string(b"v 15.4.3"), vec![15, 4, 3]);
 }
@@ -2326,7 +2333,7 @@ fn yubikit_parse_tlvs_decodes_every_field() {
     for (profile, serial, form_factor) in [
         (DeviceProfile::own(12_345_678), 12_345_678u64, 0x00),
         (
-            DeviceProfile::yubikey_5c_nano_5_7_4(31_415_926),
+            DeviceProfile::yubikey_compat(31_415_926),
             31_415_926,
             0x04,
         ),
@@ -2337,7 +2344,7 @@ fn yubikit_parse_tlvs_decodes_every_field() {
         let want = factory_view(serial, form_factor, part_number.as_deref());
         assert_eq!(yubikit_ccid_info(&mut a, &mut host), want);
 
-        // CTAPHID: the session version comes from CTAPHID INIT (5.7.4 here).
+        // CTAPHID: the session version comes from CTAPHID INIT (reference firmware here).
         let (map, pages) = yubikit_read_pages(|page| {
             let reply = a
                 .management_mut()
@@ -2559,8 +2566,8 @@ fn send_config(
 
 #[test]
 fn ykman_config_usb_mode_and_lock_flows_byte_exact() {
-    // ykman `config usb`, `config set-lock-code` and `config mode` against firmware
-    // 5.7.4, each request computed from the DeviceInfo yubikit just read, over every
+    // ykman `config usb`, `config set-lock-code` and `config mode` against the compatibility profile,
+    // each request computed from the DeviceInfo yubikit just read, over every
     // transport yubikit can use for Management.
     for t in [Transport::Ccid, Transport::Ctaphid, Transport::Otp] {
         let mut host = TestHost::new();

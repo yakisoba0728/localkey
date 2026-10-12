@@ -1,7 +1,7 @@
 //! `authenticatorGetInfo` (CTAP 2.1 §6.4).
 //!
-//! With `DeviceProfile::yubikey_5c_nano_5_7_4` the response carries exactly the keys
-//! {1..16, 20} and the values of `reference/yubikey-5c-nano-5.7.4/reference-observation.json`.
+//! With `DeviceProfile::yubikey_compat` the response carries exactly the keys
+//! {1..16, 20} and the values of `reference/physical-key/reference-observation.json`.
 //! Two values follow this device's state rather than the observed key: `clientPin` is
 //! false until a PIN is set (the observed key had one), and
 //! `remainingDiscoverableCredentials` is 100 minus the stored discoverable credentials

@@ -15,7 +15,7 @@
 //! - PIN policy `AA` (`00` default, `01` never, `02` once, `03` always) and touch policy
 //!   `AB` (`00` default, `01` never, `02` always, `03` cached for 15 s): Yubico PIV
 //!   extensions, "PIN and touch policy". The biometric match policies `04`/`05` exist only
-//!   on YubiKey Bio and are rejected on the 5C Nano.
+//!   on YubiKey Bio and are rejected on the reference key.
 //! - Per-slot default PIN policies (Yubico PIV documentation, "Certificate slots"): `9C`
 //!   always, `9E` never, every other slot once. The default touch policy is never.
 //!

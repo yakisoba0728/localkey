@@ -22,20 +22,20 @@ fn oath_with_touch_credential(rig: &mut Rig) {
 /// USB CCID Rev 1.1 §6.1.1: IccPowerOn answers the ATR, here `DeviceProfile::atr`.
 #[test]
 fn power_on_returns_the_profile_atr() {
-    for profile in [DeviceProfile::own(1), DeviceProfile::yubikey_5c_nano_5_7_4(1)] {
+    for profile in [DeviceProfile::own(1), DeviceProfile::yubikey_compat(1)] {
         let mut rig = Rig::with_profile(profile.clone());
         assert_eq!(rig.power_on(), profile.atr);
     }
 }
 
 /// lk-mgmt: SELECT answers the firmware version text, 30 ASCII bytes as the key sends
-/// them (docs/MEASUREMENT.md, probe `select-mgmt`; the engine sent the bare `5.7.4`
+/// them (docs/MEASUREMENT.md, probe `select-mgmt`; the engine sent the bare version string
 /// before the measurement).
 #[test]
 fn select_management() {
     let mut rig = Rig::new();
     rig.power_on();
-    assert_eq!(rig.select(AID_MGMT), b"Virtual mgr - FW version 5.7.4\x90\x00".to_vec());
+    assert_eq!(rig.select(AID_MGMT), rig.management_select_text());
 }
 
 /// docs/MEASUREMENT.md, probe `select-partial-aid`: a SELECT by a partial DF name
@@ -48,7 +48,7 @@ fn select_management() {
 fn select_by_partial_df_name() {
     let mut rig = Rig::new();
     rig.power_on();
-    let mgmt = b"Virtual mgr - FW version 5.7.4\x90\x00".to_vec();
+    let mgmt = rig.management_select_text();
     assert_eq!(rig.select(&[0xA0, 0x00, 0x00, 0x05]), mgmt);
     assert_eq!(rig.select(&[0xA0, 0x00, 0x00, 0x05, 0x27]), mgmt);
     let piv = rig.select(&[0xA0, 0x00, 0x00, 0x03]);

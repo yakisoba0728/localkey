@@ -95,7 +95,7 @@ USB attributes) never match it. systemd's `fido_id` tags the FIDO node `uaccess`
 need. The rule tags both, matching the device path:
 
 - `--profile own` (the default): `0003:1209:0001.*`;
-- `--profile yubikey-5c-nano-5.7.4`: `0003:1050:0401` to `0407` except `0404` (CCID only,
+- `--profile yubikey`: `0003:1050:0401` to `0407` except `0404` (CCID only,
   no HID node).
 
 It sorts before `73-seat-late.rules`, which turns the `uaccess` tag into an ACL for the user
@@ -169,7 +169,7 @@ rule, `systemctl daemon-reload`, `udevadm control --reload`. The state in
   hardware you care about: the unit creates HID devices system-wide and inserts a card
   into pcscd. The rule's device path pattern matches only devices made through
   `/dev/uhid`, never a physical YubiKey, whose nodes sit under a USB host controller.
-- **The YubiKey profile looks like a YubiKey.** With `--profile yubikey-5c-nano-5.7.4`
+- **The YubiKey profile looks like a YubiKey.** With `--profile yubikey`
   every program on the machine sees Yubico's USB IDs and ATR. Attestation stays the
   engine's own; relying parties that check attestation are not fooled.
 - **`/dev/uhid` stays root-only.** Whoever can write it can create any HID device, a

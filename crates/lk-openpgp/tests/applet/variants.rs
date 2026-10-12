@@ -1,5 +1,5 @@
 //! Every slot/algorithm variant of the algorithm information FA (spec §4.4.3.13; the 43
-//! entries of `reference/yubikey-5c-nano-5.7.4/openpgp-reference-observation.json`),
+//! entries of `reference/physical-key/openpgp-reference-observation.json`),
 //! driven by the bytes the applet returns for GET DATA FA:
 //! - the 39 variants lk-crypto implements are imported (spec §4.4.3.12) and, except RSA
 //!   3072/4096 (same code path, generated once each in `generation.rs` because they take

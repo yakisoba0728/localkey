@@ -240,7 +240,7 @@ fn allocated_channel(call: &Call) -> Option<u32> {
 #[test]
 fn a_runner_serving_a_fanout_reaches_every_member() -> TestResult {
     let store = MemoryStore::new();
-    let profile = DeviceProfile::yubikey_5c_nano_5_7_4(12_345_678);
+    let profile = DeviceProfile::yubikey_compat(12_345_678);
     let runner = Runner::spawn(
         move || Ok(Device::open(profile, Box::new(store), Box::new(SeededEntropy::new(1)), [0x5A; 32])),
         RunnerConfig::default(),

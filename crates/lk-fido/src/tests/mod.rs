@@ -41,7 +41,7 @@ pub(super) fn device() -> (Authenticator, TestHost) {
 }
 
 pub(super) fn yubikey_device() -> (Authenticator, TestHost) {
-    let mut host = TestHost::with_profile(DeviceProfile::yubikey_5c_nano_5_7_4(31_415_926));
+    let mut host = TestHost::with_profile(DeviceProfile::yubikey_compat(31_415_926));
     let auth = Authenticator::new(None, &mut host);
     (auth, host)
 }

@@ -1,7 +1,7 @@
-# Comparison with the reference key (YubiKey 5C Nano 5.7.4)
+# Comparison with the reference key
 
-localkey is its own software security key. The YubiKey 5C Nano 5.7.4 is its **reference**: a
-well-made real key to compare against, not a device to copy (`docs/DESIGN.md` §2 and §12
+localkey is its own software security key. A physical security key provides its
+comparison **reference** (`docs/DESIGN.md` §2 and §12
 decision 8, `docs/CONTRACTS.md` "Reference, not replica"). Where a public specification
 defines a behaviour, the engine follows the specification and records the reference's
 behaviour as a known difference (unless a widely used host stack depends on the reference);
@@ -11,13 +11,14 @@ evidence; the reference's defects are never copied; and the default identity is 
 engine's own.
 
 On 2026-10-11, with the user's explicit permission (`docs/DESIGN.md` §13), one inserted
-YubiKey 5C Nano with firmware 5.7.4 was probed command by command with strictly read-only
+reference key was probed command by command with strictly read-only
 requests, and the same requests were sent to the engine (`localkeyd --profile
-yubikey-5c-nano-5.7.4`) with the key's observable state mirrored. This file records what
+yubikey`) with the key's observable state mirrored. This file records what
 was measured, how, what differs, and what was decided about each difference. It contains no
 serial number, key, fingerprint, name or other identifier of the key; the measurement files
 it refers to are the redacted ones (`tools/measure/normalize.py`).
 
+Model names and firmware text are omitted; version strings use `<major>.<minor>.<patch>`.
 Every status word, length and timing below is quoted from those files. "Physical" is the
 key, "engine" is `localkeyd` at commit a7c9a06 (branch `engine`) before any change this
 measurement led to. The measured tables are kept as they were recorded. The last sections
@@ -105,7 +106,7 @@ transaction open ends with an INIT on its own channel (`probes.py` `resync`), an
 
 ## State of the key
 
-- Firmware 5.7.4, form factor USB-C Nano (DeviceInfo `04` = `04`), USB product ID `0406`
+- Reference form factor USB-C Nano (DeviceInfo `04` = `04`), USB product ID `0406`
   ("YubiKey FIDO+CCID": the OTP HID interface is disabled).
 - DeviceInfo capabilities, supported and enabled over USB: `031E` (U2F, FIDO2, PIV,
   OpenPGP, HSM Auth, and bit `0004`, which yubikit does not name). OTP and OATH are neither
@@ -132,7 +133,7 @@ differently from the engine; every such difference was adopted then, and the rev
 
 | Probes | Physical | Engine | Class |
 | --- | --- | --- | --- |
-| `select-mgmt` (and every probe that selects Management) | `9000`, 30 bytes: ASCII `Virtual mgr - FW version 5.7.4` | `9000`, 5 bytes `5.7.4` | behavioural |
+| `select-mgmt` (and every probe that selects Management) | `9000`, 30 bytes: ASCII `Virtual mgr - FW version <major>.<minor>.<patch>` | `9000`, 5-byte bare version string | behavioural |
 | `mgmt-read-config` | page 0: 52 bytes, length `33`, tags in the order `01 03 02 04 05 06 07 08 0A 0F 20 21 10`, ending with `10 01 01` (more data); page 1: 42 bytes, length `29`, tags `11 12 13 14 15 16 17 18` | page 0: 51 bytes, tags `01 02 03 04 05 06 07 08 0A 14 15 16 18`, no `10`; page 1: `6A86` | behavioural |
 | (same) values | `0F 01 00`, `20 03 000000`, `21 03 000000`; page 1: `11 04 00000000`, `12 01 00`, `13` a 12-byte ASCII part number, `14 02 0000`, `15 02 0000`, `16 01 00`, `17 01 00`, `18 02 0000` | tags `0F`, `11`, `12`, `13`, `17`, `20`, `21` absent | behavioural |
 | (same) `07` | `0F` | `00` | behavioural (factory value; medium confidence) |
@@ -355,7 +356,7 @@ Each change has a regression test in the owning crate (or in lk-device) that cit
 file and the probe. Tests that encoded the old model policy were updated to the measured
 value with a comment naming the probe; none was removed without a replacement. The catalog
 lines concerned (`docs/catalog/{mgmt,sd,hsmauth,piv,openpgp,fido,device}.md`) now say
-"measured on a YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probe …)". Four lines that were
+"measured on the reference key (docs/MEASUREMENT.md, probe …)". Four lines that were
 `tested` against the legacy reference catalog became `intentional difference`, because the
 key contradicts them: the 7609-byte PING (in `fido.md` and `device.md`), OpenPGP GET
 RESPONSE during a chain answering `6883`, and OpenPGP GET DATA refusing CLA `10` with
@@ -366,7 +367,7 @@ RESPONSE during a chain answering `6883`, and OpenPGP GET DATA refusing CLA `10`
 
 | Change | Crate, file | Regression tests | Probe |
 | --- | --- | --- | --- |
-| Management SELECT answers `Virtual mgr - FW version <major>.<minor>.<patch>` (30 bytes for 5.7.4) instead of the bare version | lk-mgmt `applet.rs` (`MgmtApplet::select_text`) | `select_returns_version_string`, `select_serves_at_most_ne`, `yubikit_version_search_reads_both_select_texts` (`tests/mgmt.rs`); lk-device `ccid`, `scenario_ccid`, `scenario_mgmt` | `select-mgmt` |
+| Management SELECT answers `Virtual mgr - FW version <major>.<minor>.<patch>` (30 bytes in the observation) instead of the bare version | lk-mgmt `applet.rs` (`MgmtApplet::select_text`) | `select_returns_version_string`, `select_serves_at_most_ne`, `yubikit_version_search_reads_both_select_texts` (`tests/mgmt.rs`); lk-device `ccid`, `scenario_ccid`, `scenario_mgmt` | `select-mgmt` |
 | DeviceInfo is two fixed pages in the measured order (page 0 `01 03 02 04 05 06 07 08 0A 0F 20 21 10`, page 1 `11 12 13 14 15 16 17 18`) instead of greedy paging. New tag constants `FPS_VERSION` (`20`) and `STM_VERSION` (`21`). The part number (`13`) comes from the new `DeviceProfile::part_number` (lk-core): empty in the own profile, twelve `0` characters in the YubiKey profile | lk-mgmt `info.rs`, `config.rs`; lk-core `profile.rs` | `info::tests::pages_match_the_measured_layout`, `merged_is_both_pages_without_more_data`, `empty_part_number_is_an_empty_value`, `config::tests::read_config_serves_the_two_measured_pages`, `read_config_is_length_prefixed_device_info` (Le `01` → `6133`) | `mgmt-read-config`, `lc-le-mgmt` |
 | Factory challenge-response timeout byte (`07`) is `0F` (15 s); a written `00` still reads as 15 s | lk-mgmt `config.rs` (`Config::factory`) | `factory_challenge_response_timeout_means_default` | `mgmt-read-config` |
 | READ CONFIG over CCID ignores P2; a page past the last answers a bare `9000` without data | lk-mgmt `applet.rs` | `read_config_paging_bounds`; lk-device `ccid::management_reads_as_measured` | `bad-p1p2-mgmt` |
@@ -427,7 +428,7 @@ lk-fido long repeat test); `cargo clippy --workspace --all-targets` no warnings;
 
 ### Revised by principle, 2026-10-12
 
-localkey is its own security key; the YubiKey 5C Nano 5.7.4 is the reference it is compared
+localkey is its own security key; the reference key is the reference it is compared
 against, not a device to clone. Where a public specification defines a behaviour, the engine
 follows the specification even where the key differs, and it never copies the key's defects
 (hangs, missing answers, clock drift in timings); the full decision order is in
@@ -465,7 +466,7 @@ like an empty `CTAPHID_CBOR` on the key no longer matters for the engine: both a
 | Key information reports an OCE CA public key as `C0 06 KID KVN B0 40 F0 00` (was `B0 41`). GP 2.3.1 §11.3.3.1.1: for key type `B0` the component length is `40` for ECC 256 "excluding coding identifier '04'". PUT KEY and GENERATE answers keep their TLV length `41` | specification; the key holds no CA key, so this is unmeasured | unmeasured | lk-sd `data.rs` (`key_information`) | `scp11::ec_key_management` (`C0062101B040F000`) | — |
 | A SELECT whose (unwrapped) class codes a logical channel other than the basic channel answers `6881` and changes nothing: neither the selection nor a secure channel session; CLA `FF` answers `6E00`. ISO/IEC 7816-4:1995 §5.5: a logical channel is opened by a SELECT carrying its number in the class byte, and the ATR's third software function table byte `C0` says "no logical channel" (Table 87); Table 16 `6881` "Logical channel not supported". Before, such a SELECT changed the basic channel's selection | specification; unmeasured on the key | unmeasured | lk-device `card.rs` (`select_class_refusal`); lk-sd `channel.rs` (only a basic-channel SELECT closes the channel) | `card::tests::select_on_another_logical_channel_is_refused`, `ccid::select_on_another_logical_channel_answers_6881_and_changes_nothing`, `secure_channel::encrypted_select_on_another_logical_channel_keeps_the_session`; lk-sd `scp03::encrypted_select_on_another_logical_channel_keeps_the_session` | — |
 | A SELECT by DF name with an empty name (`00 A4 04 00 00`) selects the Security Domain (was `6A82`). GP 2.3.1 §11.9.2.3: "The Lc and data field of the SELECT command may be omitted if the Issuer Security Domain is being selected"; the Security Domain sits at the default ISD AID (§H.1.3) | specification; unmeasured on the key, and no listed host sends this form | unmeasured | lk-device `card.rs` (`find_applet`) | `tests::empty_df_name_selects_the_issuer_security_domain`, `tests::applet_lookup_by_df_name`, `ccid::empty_df_name_selects_the_security_domain` | — |
-| `DeviceProfile::own` reports form factor `00`, `FORM_FACTOR.UNKNOWN` (new `form_factor::UNKNOWN`), in DeviceInfo tag `04` and in the PIV (`41482.3.9`) and OpenPGP (`41482.5.9`) attestation extensions; `yubikey_5c_nano_5_7_4` keeps `04` | own identity: a software key has no physical shape, and `04` with firmware 5.7.x makes yubikit and ykman name the device "YubiKey 5C Nano". yubikit gates nothing on the form factor except its Bio checks | `04` (USB-C Nano); every run here uses the compatibility profile, so no probe shows it | lk-core `profile.rs` | lk-core `profile::tests::form_factor_per_profile`; lk-mgmt `device_info_own_profile_matches_expected_bytes`, `device_info_yubikey_profile_matches_expected_bytes`; lk-piv and lk-openpgp `form_factor_extension_follows_the_profile` | — |
+| `DeviceProfile::own` reports form factor `00`, `FORM_FACTOR.UNKNOWN` (new `form_factor::UNKNOWN`), in DeviceInfo tag `04` and in the PIV (`41482.3.9`) and OpenPGP (`41482.5.9`) attestation extensions; `yubikey_compat` keeps `04` | own identity: a software key has no physical shape, and `04` with firmware 5.7.x makes yubikit and ykman report a physical device model. yubikit gates nothing on the form factor except its Bio checks | `04` (USB-C Nano); every run here uses the compatibility profile, so no probe shows it | lk-core `profile.rs` | lk-core `profile::tests::form_factor_per_profile`; lk-mgmt `device_info_own_profile_matches_expected_bytes`, `device_info_yubikey_profile_matches_expected_bytes`; lk-piv and lk-openpgp `form_factor_extension_follows_the_profile` | — |
 
 ## Comparison after the changes
 
@@ -504,7 +505,7 @@ while PIV or Management (not the Security Domain) is selected.
 
 The engine after the revision by principle (`engine-reference`, the same mirrored state:
 `--engine-setup usb-enabled=0x031A --engine-setup fido-pin=…`, profile
-`yubikey-5c-nano-5.7.4`, probe sets `ccid-basic`, `ccid-errors`, `fido-hid`, `fido-cbor`,
+`yubikey`, probe sets `ccid-basic`, `ccid-errors`, `fido-hid`, `fido-cbor`,
 `fido-timing`, `fido-presence-timeout`) against the merged physical runs: **27 of 116 probes
 differ, 89 are identical** (after the changes: 13 and 103). The 13 probes that differed
 then differ in exactly the same places now, except `cla-variants-sd`, which also shows the

@@ -20,8 +20,8 @@
 //!    included: the measured device does not implement it, `docs/MEASUREMENT.md`, probes
 //!    `lock` and `lock-expiry`; whether a busy device answers LOCK with `CHANNEL_BUSY` or
 //!    `INVALID_CMD` was not measured), then a BCNT that the command does not allow
-//!    `ERR_INVALID_LEN` (above [`MAX_MESSAGE_LEN`], 1536, measured on a YubiKey 5C Nano
-//!    5.7.4 with probe `ping-max`; or outside the request layout of the command: an empty
+//!    `ERR_INVALID_LEN` (above [`MAX_MESSAGE_LEN`], 1536, measured on the reference key
+//!    with probe `ping-max`; or outside the request layout of the command: an empty
 //!    MSG or CBOR request, a WINK with data).
 //!
 //! A `CTAPHID_CBOR` request with BCNT 0 is answered `ERR_INVALID_LEN` at its
@@ -30,7 +30,7 @@
 //! `ERR_INVALID_LEN` means "The length field (BCNT) is invalid for the request"
 //! (§11.2.9.1.6). The application never sees it.
 //!
-//! Known difference from the reference device: a YubiKey 5C Nano 5.7.4 never answers an
+//! Known difference from the reference device: the reference key never answers an
 //! empty CBOR request and stays busy with it, with other channels `ERR_CHANNEL_BUSY`,
 //! CANCEL ignored and no timeout, until `CTAPHID_INIT` on that channel
 //! (`docs/MEASUREMENT.md`, probe `empty-cbor`, "The stuck-channel incident" and "Revised

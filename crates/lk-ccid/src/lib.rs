@@ -4,7 +4,7 @@
 //! session and frames the responses.
 //!
 //! The reader model follows the CCID descriptor of the reference device
-//! ([`descriptor::YUBIKEY_5C_NANO`]): one slot, T=1 only, short and extended APDU level
+//! ([`descriptor::YUBIKEY_COMPAT`]): one slot, T=1 only, short and extended APDU level
 //! exchange (`dwFeatures` = `0x000400FE`), at most 3072 bytes per message (3062 bytes of
 //! `abData`), one busy slot, no PIN pad, no mechanics, no clock stop.
 //!

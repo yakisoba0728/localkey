@@ -684,7 +684,7 @@ fn max_response(cmd: &Command) -> usize {
 /// Check the class byte (ISO/IEC 7816-4 §5.1.1): `00`, `10` for a chained command, or
 /// the proprietary class `80`.
 ///
-/// - `80` is accepted like `00`: a YubiKey 5C Nano 5.7.4 answers `80 5E 00 00` with
+/// - `80` is accepted like `00`: the reference key answers `80 5E 00 00` with
 ///   `6D00`, as it answers `00 5E 00 00` (`docs/MEASUREMENT.md`, probe
 ///   `cla-variants-hsmauth`; only an undefined instruction was measured with it).
 /// - Otherwise outside the first interindustry range (`20`–`FF`): `6E00` (unmeasured,

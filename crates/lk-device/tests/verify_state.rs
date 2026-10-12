@@ -16,7 +16,7 @@ use lk_core::{Capabilities, Millis, UsbInterfaces};
 use lk_crypto::hmac_sha1;
 use lk_device::{BusEvent, Input, Output, WTX_INTERVAL_MS};
 
-const USB_REFERENCE: &str = include_str!("../../../reference/yubikey-5c-nano-5.7.4/usb-reference-observation.json");
+const USB_REFERENCE: &str = include_str!("../../../reference/physical-key/usb-reference-observation.json");
 /// authenticatorSelection (CTAP 2.1 §6.9).
 const SELECTION: [u8; 1] = [0x0B];
 /// YKOATH LIST.
@@ -413,7 +413,7 @@ fn disabled_interfaces_ignore_their_inputs() {
 }
 
 /// `UsbIdentity::device_descriptor` and `configuration_descriptor` against
-/// `reference/yubikey-5c-nano-5.7.4/usb-reference-observation.json` in the measured
+/// `reference/physical-key/usb-reference-observation.json` in the measured
 /// FIDO+CCID configuration: the device fields (`bcdUSB`, `bMaxPacketSize0`, class,
 /// IDs, `bcdDevice`, `bNumConfigurations`) and the whole 125-byte configuration
 /// descriptor byte for byte (USB 2.0 §9.6.1, §9.6.3), with the HID report descriptor of

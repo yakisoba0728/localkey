@@ -16,7 +16,7 @@ const KEY: [u8; 32] = [7; 32];
 
 fn device() -> Device {
     Device::open(
-        DeviceProfile::yubikey_5c_nano_5_7_4(4242),
+        DeviceProfile::yubikey_compat(4242),
         Box::new(MemoryStore::new()),
         Box::new(SeededEntropy::new(9)),
         KEY,

@@ -1,7 +1,5 @@
 {
   "reference_profile": {
-    "model": "YubiKey 5C Nano",
-    "firmware": "5.7.4",
     "transport": "USB only",
     "identity": "own fresh software keys and serial; no factory manufacturer trust",
     "public_observation": "reference-observation.json; CTAPHID_INIT/GetInfo only; no serial, PIN attempts, credential changes or configuration writes",

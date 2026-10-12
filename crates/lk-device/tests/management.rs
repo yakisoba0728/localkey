@@ -297,7 +297,7 @@ fn ctaphid_capabilities_follow_fido_applications() {
     assert_eq!(rig.ctaphid(cid, CTAPHID_MSG, &[0, 3, 0, 0]), (CTAPHID_ERROR, vec![0x01]));
 }
 
-/// `reference/yubikey-5c-nano-5.7.4/usb-reference-observation.json` (FIDO+CCID
+/// `reference/physical-key/usb-reference-observation.json` (FIDO+CCID
 /// configuration): idVendor 4176, idProduct 1030, bcdDevice 1396, product
 /// "YubiKey FIDO+CCID" (reference-observation.json), the HID report descriptor, and the
 /// CCID class descriptor inside the configuration descriptor.
@@ -332,7 +332,7 @@ fn usb_identity_matches_the_reference_configuration() {
 #[test]
 fn seven_interface_combinations() {
     let mut rig = Rig::new();
-    let ids = DeviceProfile::yubikey_5c_nano_5_7_4(SERIAL).usb_product_ids;
+    let ids = DeviceProfile::yubikey_compat(SERIAL).usb_product_ids;
     let cases = [
         (Capabilities::OTP, ids.otp, "YubiKey OTP"),
         (Capabilities::U2F | Capabilities::FIDO2, ids.fido, "YubiKey FIDO"),

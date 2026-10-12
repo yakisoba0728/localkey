@@ -1,7 +1,7 @@
 # The gadget transport against a real kernel and real host software, all inside the guest:
 # ConfigFS + FunctionFS on dummy_hcd's dummy_udc.0, enumerated by the guest's own USB host
 # stack (usbhid, hidraw, input, usbfs), with libfido2, python-fido2, ykman, pcscd + libccid,
-# OpenSC and GnuPG as clients. Profile yubikey-5c-nano-5.7.4 throughout, so libccid, ykman
+# OpenSC and GnuPG as clients. Profile yubikey throughout, so libccid, ykman
 # and libfido2 recognise the device.
 #
 #   1 enumeration       lsusb -v; the host's device and configuration descriptors against
@@ -29,13 +29,13 @@ set -u
 PY=/localkey/py
 W=/run/lk-work
 mkdir -p "$W"
-YK=yubikey-5c-nano-5.7.4
+YK=yubikey
 UDC=dummy_udc.0
 STATIC=Hello1World
 MGMT=010203040506070801020304050607080102030405060708
 PIV_PIN=123456
 ATR="3b fd 13 00 00 81 31 fe 15 80 73 c0 21 c0 57 59 75 62 69 4b 65 79 40"
-# reference/yubikey-5c-nano-5.7.4/usb-reference-observation.json: configuration_descriptor_hex
+# reference/physical-key/usb-reference-observation.json: configuration_descriptor_hex
 # of the reference key (FIDO+CCID, 1050:0406).
 REF_0406_CONFIG="09027d00020100800f090400000203000000092110010001222200070504034000020705840340000209040100030b00000036210001000702000000a00f0000a00f00000000b0040000b0040000f60b00000000000000000000fe000400000c0000ffff00000001070502024000000705820240000007058303080020"
 export LK_LOG_QUIET=1
@@ -253,7 +253,7 @@ check "raw SELECT OpenPGP answered 90 00" grep -q -i 'SW1=0x90, SW2=0x00' "$W/ap
 run opensc-tool -s 00A4040008A000000308000010 -s 00FD000000 | tee "$W/apdu-piv"
 check "raw SELECT PIV + GET VERSION answered 90 00" sh -c "grep -c -i 'SW1=0x90, SW2=0x00' '$W/apdu-piv' | grep -q '^2'"
 run ykman --reader yubico info | tee "$W/ykman-info-ccid"
-check "ykman info over CCID" grep -q 'YubiKey 5C Nano' "$W/ykman-info-ccid"
+check "ykman info over CCID" grep -q 'YubiKey' "$W/ykman-info-ccid"
 run ykman --reader yubico oath accounts add -t test JBSWY3DPEHPK3PXP
 check "oath account added" sh -c 'timeout 60 ykman --reader yubico oath accounts list | grep -q "^test"'
 lk_tap yk > "$W/tap-oath" &

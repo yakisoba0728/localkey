@@ -132,7 +132,7 @@ fn fresh_applet_provisions_rsa2048_issuer() {
     assert!(cert.verify_rsa(&n, &e));
     assert!(cert.serial.len() <= 17 && cert.serial[0] & 0x80 == 0);
     // Observation `attestation_template_public_schema`: 1.3.6.1.4.1.41482.5.3 as a DER
-    // OCTET STRING of three bytes (here the profile firmware 5.7.4).
+    // OCTET STRING of three bytes (here the profile firmware).
     assert_eq!(cert.extension(3), Some(&hex("04 03 050704")[..]));
     card.reload();
     assert_eq!(card.get_ok(0x00FC), certificate);
@@ -408,7 +408,7 @@ fn oversized_attestation_rejected() {
 /// engine's own identity (docs/DESIGN.md §9: no manufacturer attestation).
 #[test]
 fn yubikey_profile_names() {
-    let mut card = Card::with_host(TestHost::with_profile(DeviceProfile::yubikey_5c_nano_5_7_4(12_345_678)));
+    let mut card = Card::with_host(TestHost::with_profile(DeviceProfile::yubikey_compat(12_345_678)));
     card.admin();
     card.set_attributes(0x00C3, attr::ED25519);
     card.generate(crt::AUT);

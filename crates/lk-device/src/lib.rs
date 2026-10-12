@@ -371,7 +371,7 @@ impl Device {
             interfaces: self.interfaces,
             fido_report_descriptor: FIDO_REPORT_DESCRIPTOR.to_vec(),
             otp_report_descriptor: OTP_REPORT_DESCRIPTOR.to_vec(),
-            ccid_class_descriptor: lk_ccid::descriptor::YUBIKEY_5C_NANO.to_bytes().to_vec(),
+            ccid_class_descriptor: lk_ccid::descriptor::YUBIKEY_COMPAT.to_bytes().to_vec(),
         }
     }
 

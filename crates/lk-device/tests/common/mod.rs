@@ -62,9 +62,9 @@ impl Default for Rig {
 }
 
 impl Rig {
-    /// A fresh device with the YubiKey 5C Nano 5.7.4 compatibility profile.
+    /// A fresh device with the reference key compatibility profile.
     pub fn new() -> Self {
-        Self::with_profile(DeviceProfile::yubikey_5c_nano_5_7_4(SERIAL))
+        Self::with_profile(DeviceProfile::yubikey_compat(SERIAL))
     }
 
     pub fn with_profile(profile: DeviceProfile) -> Self {
@@ -113,6 +113,15 @@ impl Rig {
         self.ccid_seq = 0;
     }
 
+    pub fn management_select_text(&self) -> Vec<u8> {
+        let version = self.profile.firmware;
+        let mut text = format!(
+            "Virtual mgr - FW version {}.{}.{}", version.major, version.minor, version.patch
+        ).into_bytes();
+        text.extend_from_slice(&[0x90, 0x00]);
+        text
+    }
+
     pub fn input(&mut self, input: Input<'_>) -> Vec<Output> {
         let out = self.dev.handle(self.now, input);
         if let Some(log) = self.log.as_mut() {
@@ -148,7 +157,7 @@ impl Rig {
     /// once, run the timer loop for `wait` ms (a KEEPALIVE(UPNEEDED) every
     /// `KEEPALIVE_INTERVAL_MS`, 95 ms, the first one interval after the request; CTAP 2.1
     /// §11.2.9.1.7), touch, and return the response and the times of the keepalives seen.
-    /// Measured on a YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probe
+    /// Measured on the reference key (docs/MEASUREMENT.md, probe
     /// selection-keepalive-cancel); before the measurement the helper expected an
     /// immediate KEEPALIVE and listed the request time first.
     pub fn cbor_touch(&mut self, cid: u32, request: &[u8], wait: Millis) -> (Vec<u8>, Vec<Millis>) {

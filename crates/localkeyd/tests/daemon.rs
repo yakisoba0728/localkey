@@ -16,8 +16,8 @@ const GET_INFO: [u8; 1] = [0x04];
 const SELECTION: [u8; 1] = [0x0B];
 /// CTAP2_OK (CTAP 2.1 §8.2).
 const CTAP2_OK: u8 = 0x00;
-/// AAGUIDs of `DeviceProfile::yubikey_5c_nano_5_7_4` and `DeviceProfile::own`.
-const AAGUID_YUBIKEY_5C_NANO: [u8; 16] = [
+/// AAGUIDs of `DeviceProfile::yubikey_compat` and `DeviceProfile::own`.
+const AAGUID_YUBIKEY_COMPAT: [u8; 16] = [
     0xff, 0x4d, 0xac, 0x45, 0xed, 0xe8, 0x4e, 0xc2, 0xac, 0xed, 0xcf, 0x66, 0x10, 0x3f, 0x43, 0x35,
 ];
 const AAGUID_OWN: [u8; 16] = [
@@ -44,14 +44,14 @@ fn get_info(host: &mut Host) -> Result<(Vec<u8>, Vec<String>), Box<dyn std::erro
 fn get_info_over_the_wire_carries_the_profile_aaguid_and_versions() -> TestResult {
     let dir = TestDir::new();
     keygen(&dir.key())?;
-    let daemon = Daemon::with_key(&dir, &["--profile", "yubikey-5c-nano-5.7.4", "-vv"])?;
+    let daemon = Daemon::with_key(&dir, &["--profile", "yubikey", "-vv"])?;
     let mut host = Host::connect(&dir)?;
     let identity = host.client.identity().clone();
     assert_eq!((identity.vendor_id, identity.product_id), (0x1050, 0x0407), "YubiKey OTP+FIDO+CCID");
     assert_eq!(identity.product, "YubiKey OTP+FIDO+CCID");
 
     let (aaguid, versions) = get_info(&mut host)?;
-    assert_eq!(aaguid, AAGUID_YUBIKEY_5C_NANO);
+    assert_eq!(aaguid, AAGUID_YUBIKEY_COMPAT);
     for version in ["U2F_V2", "FIDO_2_0", "FIDO_2_1"] {
         assert!(versions.iter().any(|v| v == version), "{version} in {versions:?}");
     }
@@ -347,7 +347,7 @@ fn usage_errors_exit_with_code_2() -> TestResult {
         &[][..],
         &["serve"],
         &["run", "--key-file", "/nonexistent"],
-        &["run", "--state", "/nonexistent", "--key-file", "/k", "--profile", "yubikey"],
+        &["run", "--state", "/nonexistent", "--key-file", "/k", "--profile", "invalid"],
         &["keygen"],
         &["ctl", "--control", "/nonexistent", "frobnicate"],
         &["run", "--state", "/nonexistent", "--key-file", "/k", "--transport", "gadget"],

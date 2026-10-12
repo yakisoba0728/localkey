@@ -1,4 +1,4 @@
-//! Answers measured on a physical YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md): each test
+//! Answers measured on a physical reference key (docs/MEASUREMENT.md): each test
 //! replays the APDUs of one probe of `tools/measure/probes.py` and expects the key's
 //! answers, except where SP 800-73-4 defines a different answer: then the test expects
 //! the specification's answer and names the key's as a known difference. Assertions
@@ -16,7 +16,7 @@ const DISCOVERY: &str = "7E124F0BA0000003080000100001005F2F024000";
 /// Probe `piv-verify-status-81`: VERIFY with the PUK reference is `6A88`, as SP 800-73-4
 /// Part 2 §3.2.1 requires for "any key reference value ... that cannot be verified by the
 /// PIV Card Application" (this card compares the PUK only inside CHANGE REFERENCE DATA and
-/// RESET RETRY COUNTER). Known difference (spec over reference): the YubiKey 5C Nano 5.7.4
+/// RESET RETRY COUNTER). Known difference (spec over reference): the reference key
 /// answers `00 20 00 81` with `6A80` (docs/MEASUREMENT.md); no listed host depends on it.
 #[test]
 fn verify_of_the_puk_reference_answers_6a88_per_sp800_73_4() {

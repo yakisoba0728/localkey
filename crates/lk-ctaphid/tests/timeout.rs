@@ -1,6 +1,6 @@
 //! Transaction timeout for incomplete messages (CTAP 2.1 §11.2.5.2).
 //!
-//! Measured on a YubiKey 5C Nano 5.7.4 (`docs/MEASUREMENT.md`, probe `message-timeout`):
+//! Measured on the reference key (`docs/MEASUREMENT.md`, probe `message-timeout`):
 //! a message is abandoned 470 ms after its latest packet (`lk_ctaphid::TRANSACTION_TIMEOUT_MS`;
 //! the model policy before the measurement was 3000 ms). That every packet restarts the
 //! timeout is still model policy (not measured).

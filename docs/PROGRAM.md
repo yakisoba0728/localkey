@@ -269,7 +269,7 @@ The daemon binary (`crates/localkeyd`). Argument parsing by hand (no third-party
 ```text
 localkeyd keygen (--key-file PATH | --print)
 localkeyd run --state DIR (--key-file PATH | --key-command CMD) [TRANSPORT]
-              [--profile own|yubikey-5c-nano-5.7.4] [--control PATH]
+              [--profile own|yubikey] [--control PATH]
               [--wall-clock] [--allow-unreadable] [--exit-on-stdin-eof] [-v | -vv]
 localkeyd ctl --control PATH (tap [long|pending] | down | up | power-cycle | status | watch
                               | shutdown)
