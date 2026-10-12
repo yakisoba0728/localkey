@@ -250,3 +250,20 @@ fn records_protected_at_open() {
     assert_eq!(protected_at_open(1, &[Record::Oath]), vec![Record::Oath], "key confirmed by one record");
     assert_eq!(protected_at_open(3, &[]), Vec::<Record>::new());
 }
+
+#[test]
+fn output_cleanup_wipes_every_payload_kind_and_keeps_presence() {
+    use crate::Output;
+    let mut outputs = [Output::FidoReport([0xA5; 64]), Output::OtpFeature([0xA5; 8]),
+        Output::OtpKeyboard([0xA5; 8]), Output::Ccid(vec![0xA5; 32]),
+        Output::CcidInterrupt(vec![0xA5; 2]), Output::PresenceIndicator(true)];
+    for output in &mut outputs {
+        output.wipe();
+        match output {
+            Output::FidoReport(report) => assert_eq!(*report, [0; 64]),
+            Output::OtpFeature(report) | Output::OtpKeyboard(report) => assert_eq!(*report, [0; 8]),
+            Output::Ccid(bytes) | Output::CcidInterrupt(bytes) => assert!(bytes.is_empty()),
+            other => assert_eq!(*other, Output::PresenceIndicator(true)),
+        }
+    }
+}

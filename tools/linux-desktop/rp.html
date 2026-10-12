@@ -1,0 +1,51 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>localkey browser verification</title>
+<style>body {font: 18px system-ui; max-width: 720px; margin: 60px auto;} button {padding:12px 20px; margin:8px;} pre {white-space:pre-wrap}</style>
+<h1>localkey browser verification</h1>
+<p>This local test uses the actual software key through Linux HID.</p>
+<label>User <input id="user" value="test-user"></label>
+<label><input id="required" type="checkbox">Resident key and PIN verification</label>
+<label><input id="discoverable" type="checkbox">Discoverable login</label>
+<div><button id="register" onclick="perform('register')">Register</button>
+<button id="login" onclick="perform('login')">Log in</button>
+<button id="cancel" onclick="controller?.abort()">Cancel request</button></div>
+<pre id="result">Ready</pre>
+<script>
+let controller;
+const decode = s => Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')), c => c.charCodeAt(0));
+const encode = b => btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+async function post(path, body) {
+  const response = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error);
+  return data;
+}
+async function perform(operation) {
+  const user = document.querySelector('#user').value;
+  const required = document.querySelector('#required').checked;
+  controller = new AbortController();
+  document.querySelector('#result').textContent = 'Waiting';
+  try {
+    const options = await post('/'+operation+'/begin', {user, uv: required?'required':'discouraged',
+      resident: required?'required':'discouraged', discoverable:document.querySelector('#discoverable').checked});
+    const publicKey = options.publicKey;
+    publicKey.challenge = decode(publicKey.challenge);
+    if (publicKey.user) publicKey.user.id = decode(publicKey.user.id);
+    for (const name of ['allowCredentials','excludeCredentials'])
+      if (publicKey[name]) publicKey[name].forEach(c => c.id = decode(c.id));
+    const credential = operation === 'register'
+      ? await navigator.credentials.create({publicKey, signal: controller.signal})
+      : await navigator.credentials.get({publicKey, signal: controller.signal});
+    const response = {clientDataJSON: encode(credential.response.clientDataJSON)};
+    for (const name of ['attestationObject','authenticatorData','signature','userHandle'])
+      if (credential.response[name]) response[name] = encode(credential.response[name]);
+    const result = await post('/'+operation+'/complete', {user, credential:{id:credential.id,
+      rawId:encode(credential.rawId),type:credential.type,response,
+      clientExtensionResults:credential.getClientExtensionResults()}});
+    document.querySelector('#result').textContent = JSON.stringify({ok:true,...result});
+  } catch (error) {
+    document.querySelector('#result').textContent = JSON.stringify({ok:false,name:error.name,error:error.message});
+  }
+}
+</script>

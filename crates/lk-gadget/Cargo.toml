@@ -5,11 +5,13 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 publish.workspace = true
+license.workspace = true
 
 [lints]
 workspace = true
 
 [dependencies]
 lk-core.workspace = true
+lk-crypto.workspace = true
 lk-device.workspace = true
 lk-run.workspace = true

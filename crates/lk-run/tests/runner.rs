@@ -334,6 +334,9 @@ fn inputs_before_serve_are_ignored() {
     let (watcher, watched) = mpsc::channel();
     bench.sender.send(Command::Watch(watcher)).unwrap();
     assert_eq!(watched.recv_timeout(WAIT), Ok(false));
+    let (reply, answer) = mpsc::channel();
+    bench.sender.send(Command::TapPending(reply)).unwrap();
+    assert!(!answer.recv_timeout(WAIT).unwrap());
     // A suspend that reached the device would make the resume below answer `50 03`, and
     // a press that reached it would keep the sensor held.
     bench.input(HostInput::Bus(BusEvent::Suspend));
@@ -376,6 +379,38 @@ fn a_pending_presence_request_gets_keepalives_without_input_and_a_tap_answers_it
     assert!(!bench.sync().presence_pending);
 }
 
+#[test]
+fn a_pending_only_tap_does_not_press_while_idle_and_answers_a_waiting_request() {
+    let bench = Bench::serving(RunnerConfig::default());
+    let (reply, answer) = mpsc::channel();
+    bench.sender.send(Command::TapPending(reply)).unwrap();
+    assert!(!answer.recv_timeout(WAIT).unwrap());
+    let cid = bench.init(NONCE_A);
+    bench.request_presence(cid);
+    let (reply, answer) = mpsc::channel();
+    bench.sender.send(Command::TapPending(reply)).unwrap();
+    assert!(answer.recv_timeout(WAIT).unwrap());
+    bench.expect_presence_granted(cid);
+}
+
+#[test]
+fn a_pending_only_tap_after_cancellation_is_rejected() {
+    let bench = Bench::serving(RunnerConfig::default());
+    let cid = bench.init(NONCE_A);
+    bench.request_presence(cid);
+    bench.fido(cid, 0x11, &[]); // CTAPHID_CANCEL
+    assert_eq!(message(&bench.next_skipping_keepalives()), (cid, CTAPHID_CBOR, vec![0x2D]));
+    assert_eq!(bench.next(), Event::Deliver(Output::PresenceIndicator(false)));
+    let (reply, answer) = mpsc::channel();
+    bench.sender.send(Command::TapPending(reply)).unwrap();
+    assert!(!answer.recv_timeout(WAIT).unwrap());
+    bench.request_presence(cid);
+    let (reply, answer) = mpsc::channel();
+    bench.sender.send(Command::TapPending(reply)).unwrap();
+    assert!(answer.recv_timeout(WAIT).unwrap(), "rejected tap did not leave the sensor held");
+    bench.expect_presence_granted(cid);
+}
+
 /// `Tap { hold_ms }` lets go of the sensor `hold_ms` later on its own: a later tap is
 /// a new touch.
 #[test]
@@ -403,6 +438,9 @@ fn a_tap_is_ignored_while_the_sensor_is_held() {
     thread::sleep(Duration::from_millis(400));
     // A request that starts during a hold waits for the next touch.
     bench.request_presence(cid);
+    let (reply, answer) = mpsc::channel();
+    bench.sender.send(Command::TapPending(reply)).unwrap();
+    assert!(!answer.recv_timeout(WAIT).unwrap());
     bench.tap(100);
     bench.only_keepalives_for(Duration::from_millis(600));
     assert!(bench.sync().presence_pending, "still held, so the tap was ignored");

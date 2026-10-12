@@ -34,7 +34,7 @@ pub use edwards::{Ed25519Key, X25519Key, ed25519_verify};
 pub use hash::{HashAlg, Hasher, digest, sha1, sha256, sha384, sha512};
 pub use mac::{aes_cmac, ct_eq, hkdf_sha256, hmac, hmac_sha1, hmac_sha256};
 pub use rsa::{RsaPrivateKey, rsa_public_op};
-pub use secret::{SecretBytes, wipe, wipe_vec};
+pub use secret::{SecretBytes, extend_secret, wipe, wipe_vec};
 
 use core::fmt;
 

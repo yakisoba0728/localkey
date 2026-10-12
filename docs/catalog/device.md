@@ -34,7 +34,10 @@ of a script that commits in every application, then a restart).
 "deferred: program phase" marks items that only make sense for an OS program (USB
 gadget drivers, IFD handlers, sockets, daemons, browsers, kernels): `docs/DESIGN.md`
 §4 and §13 put them outside the engine. The engine part of such a bullet, if any, is
-named after it.
+named after it. These labels retain the scope of the legacy fixtures: a deferred native
+fixture does not mean its transport is missing. `lk-uhid`, `lk-gadget`, `lk-wire` and
+`lk-vpcd` are implemented; the current host-tool coverage is in `docs/STATUS.md`
+"Program phase". Exact legacy AIO, IFD and browser suites remain distinct from those runs.
 
 ## Appendix A: transports
 
@@ -104,14 +107,14 @@ named after it.
 
 - AES-256-GCM — tested: `persistence::records_are_sealed_with_the_storage_key`, `storage::tests::matches_independent_format_vectors`, `tests::host_persists_sealed_and_reports_time`.
 - atomic writes — tested (engine part): one `Store::save` per record and per commit (`persistence::failed_save_rolls_back_only_that_command`), and a failing save at every save point never leaves memory and store disagreeing (`verify_persistence::every_failed_save_leaves_memory_and_store_in_agreement`); atomic replacement on disk is the program's `Store` (`lk_core::Store` contract).
-- mode0600 — deferred: program phase (file permissions of the state file).
-- process lock — deferred: program phase (the engine is one value owned by one program).
+- mode0600 — tested: lk-host `state::tests::a_saved_record_loads_back_and_the_next_save_replaces_it` (each record is mode 0600), `state::tests::a_missing_state_directory_is_created_with_mode_0700`; localkeyd `daemon::a_state_directory_open_to_others_is_a_startup_failure`.
+- process lock — tested: lk-host `state::tests::a_second_open_is_locked_until_the_first_store_is_dropped`, `state::tests::a_lock_file_left_by_a_dead_process_does_not_block_open`; localkeyd `daemon::a_second_daemon_on_the_same_state_exits_at_once_naming_the_lock`.
 - failure rollback — tested: `persistence::failed_save_rolls_back_only_that_command`, `ccid::storage_failure_reaches_the_applet`, `scenario_persistence::store_failure_leaves_state_unchanged`, `verify_persistence::every_failed_save_leaves_memory_and_store_in_agreement`, `verify_persistence::constructor_state_is_saved_once_the_store_recovers`, `tests::constructor_saves_are_protected_or_retried`.
 - restart persistence — tested: `persistence::state_survives_restart`, `persistence::restart_does_not_rewrite_records`, `persistence::one_corrupt_record_gives_factory_state_for_that_application_only`, `persistence::wrong_storage_key_gives_factory_state`, `persistence::unconfirmed_key_writes_no_identity_for_absent_records`, `persistence::confirmed_key_saves_absent_identities_next_to_a_damaged_record`, `tests::records_protected_at_open`, `scenario_persistence::every_application_survives_a_restart`, `scenario_persistence::wrong_storage_key_gives_factory_state_without_destroying_records`.
 
 Section count: appendix A 55 bullets and storage 6 bullets. Over every mapping section of
-this file, `tools/catalog_status.py` counts 98 lines (69 tested, 5 of them partly deferred
-or different, 5 intentional differences, 24 deferred) plus the 3 appendix A bullets owned by
+this file, `tools/catalog_status.py` counts 98 lines (71 tested, 5 of them partly deferred
+or different, 5 intentional differences, 22 deferred) plus the 3 appendix A bullets owned by
 lk-piv, lk-oath and lk-openpgp.
 
 ## FIDO bullets left to lk-device by `docs/catalog/fido.md`

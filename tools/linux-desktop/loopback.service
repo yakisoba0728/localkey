@@ -1,0 +1,11 @@
+[Unit]
+Description=Loopback for the isolated localkey desktop VM
+Before=lightdm.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/ip link set dev lo up
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -11,9 +11,10 @@ below describes the as-built API. Sections were written in phase order; where a 
 section refines an earlier one, the later section wins. "Final integration (as built)"
 near the end lists the last additions: the new curves, `Hasher` and `SecretBytes`, the
 complete `lk-device` API and the remaining known gaps. Public APIs grow only by
-addition; nothing that another crate uses has been renamed or removed. One exception was
-made in the program phase for zeroization: `lk_codec::apdu::Command` now implements `Drop`
-(see "Program phase changes to the engine").
+addition; nothing that another crate uses has been renamed or removed. Zeroization
+requires exceptions: `lk_codec::apdu::Command` and now `lk_device::Output` implement
+`Drop` (see "Program phase changes to the engine" and the transport maintenance contract
+in `docs/PROGRAM.md`).
 
 Goal (restated by the user on 2026-10-12): localkey is its own software security key, and
 the YubiKey 5C Nano 5.7.4 is the reference it is compared against, not a device to clone.
@@ -585,7 +586,7 @@ additions; existing callers compile unchanged.
   - brainpoolP512r1 (4 OpenPGP variants, 5 deferred catalog lines).
   - Zeroization (DESIGN §8; completed in the program phase, see below): every engine
     crate now wipes the secrets it holds. What is left: copies that leave a crate (an
-    `lk_otp::Ticket` is `Copy`; finished keyboard reports leave through device outputs;
+    `lk_otp::Ticket` is `Copy`; raw byte copies made by output consumers;
     `Management::to_record` returns a plain copy; the bytes lk-codec hands to callers),
     lk-codec's best-effort wipe, and compiler copies of fixed-size values.
   - Every status word, timing and cadence that no public source fixes is a model policy,
@@ -602,9 +603,10 @@ known gap required it.
   "Configuration changes apply at the next enumeration" above; `OTP_REBOOT_DELAY_MS`.
 - **lk-crypto**: `wipe(&mut [u8])` (zeroize's volatile wipe) and `wipe_vec(&mut Vec<u8>)`
   (zeroes the whole allocation, capacity included, and leaves the `Vec` empty with its
-  capacity kept).
+  capacity kept). `extend_secret(&mut Vec<u8>, &[u8])` appends bytes and wipes the
+  previous allocation when growth is required.
 - **lk-codec `apdu`** (zeroization):
-  - `Command` wipes its data on drop. This is the one change that is not an addition:
+  - `Command` wipes its data on drop. This changes field ownership:
     moving `cmd.data` out is now error E0509, and `..Default::default()` construction no
     longer compiles. `Command::into_data(self) -> Vec<u8>` hands the data over without a
     copy. Its `Debug` shows `data_len` instead of bytes.
@@ -779,3 +781,11 @@ Phase 0 requests are resolved in "Phase 0 as implemented". The requests raised b
 application reviews (lk-device clearing applet authorization when a secure channel ends,
 the extra `DeviceProfile` fields, `Host::unix_time`, the new curves, `Hasher`) are
 resolved in the sections above. None is open.
+
+## Transport maintenance change to the engine (2026-10-12, binding)
+
+`lk_device::Output` wipes every report and CCID payload on drop. Variant shapes and the
+`Device::handle` API stay the same. Non-Copy payloads must be borrowed or transferred with
+`std::mem::take`; moving a vector directly out of an Output is now E0509. The program
+payloads and I/O buffers follow the same cleanup contract (`docs/PROGRAM.md`, "Transport
+maintenance"). No third-party dependency was added outside `lk-crypto`.

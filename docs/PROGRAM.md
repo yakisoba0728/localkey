@@ -151,6 +151,11 @@ public types; the implementation must keep them.
   hold_ms`. A tap or a raw `Touch(Down)` while the sensor is already held is ignored, and so
   is a raw `Touch(Up)` while it is not held. `TAP_SHORT_MS` = 500 (within the OTP slot 1
   window 300–1500 ms), `TAP_LONG_MS` = 3000 (slot 2 window 2500–5000 ms).
+- **Conditional touch**: `Command::TapPending(Sender<bool>)` advances due work, checks
+  presence and applies a short edge at the same engine timestamp. It replies false
+  when idle/expired, held, suspended or not serving. `tap pending` on the control socket
+  maps this to `ok` or an error. The desktop helper uses this for `tap`, so delayed
+  administrator authentication cannot turn an expired/cancelled request into OTP typing.
 - **Suspend**: after passing `Bus(Suspend)` to the device the runner is suspended. While
   suspended, every output except `PresenceIndicator` and `Reenumerate` is queued, at most
   `config.suspend_queue_limit` (oldest dropped first, counted in `Status::dropped`). On
@@ -247,7 +252,8 @@ and `Frame` as a typed enum mirroring the table.
 A second socket for the user side (touch, status), line based, one command per connection:
 
 - Request: one line. Reply: zero or more lines, then `ok` or `error <reason>`, then close.
-- `tap` (short hold), `tap long`, `down`, `up`, `power-cycle`, `status`, `watch`.
+- `tap` (short hold), `tap long`, `tap pending` (conditional short hold), `down`, `up`,
+  `power-cycle`, `status`, `watch`.
 - `status` replies `key=value` lines: `serial`, `product`, `interfaces` (e.g. `otp,fido,ccid`),
   `presence` (`waiting`/`idle`), `attached` (whether a wire client is connected, when the
   transport is wire), `suspended`, `queued`, `dropped`, `unreadable` (comma list or empty),
@@ -265,7 +271,7 @@ localkeyd keygen (--key-file PATH | --print)
 localkeyd run --state DIR (--key-file PATH | --key-command CMD) [TRANSPORT]
               [--profile own|yubikey-5c-nano-5.7.4] [--control PATH]
               [--wall-clock] [--allow-unreadable] [--exit-on-stdin-eof] [-v | -vv]
-localkeyd ctl --control PATH (tap [long] | down | up | power-cycle | status | watch
+localkeyd ctl --control PATH (tap [long|pending] | down | up | power-cycle | status | watch
                               | shutdown)
 
 TRANSPORT (default wire):
@@ -525,9 +531,9 @@ and the items only a real kernel can settle. The points that refine the sections
     reports it once.
   - Observed: the kernel's keyboard and SysRq handlers open the OTP device themselves; a
     flood overflows the kernel's 32-event queue, which logs every dropped report (not rate
-    limited). A device with no bound driver gets no `UHID_STOP` after DESTROY, so its
-    reader thread and file stay until the process exits (accepted: waking a blocked read
-    needs `poll`, which std lacks); shutdown then takes about 1.1 s.
+    limited). A device with no bound driver gets no `UHID_STOP` after DESTROY. The
+    former blocking reader leaked its file in that case; nonblocking reads now notice
+    the writer has ended and close it (see "Transport maintenance").
   - udev: the FIDO node gets `uaccess` through `fido_id`. The OTP node lives under
     `/devices/virtual/misc/uhid/`, so USB-attribute rules cannot match it; a desktop user
     needs a rule such as `SUBSYSTEM=="hidraw", DEVPATH=="/devices/virtual/misc/uhid/0003:1209:0001.*", TAG+="uaccess"`
@@ -711,5 +717,24 @@ pcsc-lite 2.4.1 with OpenSC, ykman, pyscard and GnuPG.
 - **Still open**: a `ctl power-cycle` without an interface change leaves the vpcd card in
   the reader (the next APDU gets `6F00`, then the card is powered on again); pcscd's
   `--auto-exit` (Debian packaging) drops the card between clients; vpcd on macOS with a
-  real pcscd is untested; the program transports' own APDU/CTAP buffers are not wiped.
+  real pcscd is untested. Owned APDU/CTAP buffers now have cleanup (see the maintenance
+  section below); compiler copies and kernel or host-library buffers are outside it.
 
+## Transport maintenance (2026-10-12, binding)
+
+- UHID files are opened with Linux `O_NONBLOCK`. Readers preserve partial events across
+  idle reads and retry after 20 ms. Once their writer ends they close even if a driver
+  unbind prevented the kernel from sending STOP; queued reboot responses and owed replies
+  still precede DESTROY. `UhidIo` implementations must provide nonblocking or timed reads.
+- `HostInput`, `lk_device::Output`, wire `Frame`, UHID `Event`, and vpcd CCID `Reply` and
+  `Response` wipe owned payloads on drop, including abandoned or full queues. Payload
+  arrays use `lk_crypto::wipe`; vectors use `wipe_vec` (spare capacity included).
+- Serialized queues and I/O scratch buffers use `SecretBytes`. Wire frame consumption
+  wipes the vacated tail. CCID assembly wipes discarded partial messages and responses;
+  growth uses `extend_secret`, which wipes the previous allocation. Partial reads that
+  fail are wiped. The wire format, transport ordering and size limits are unchanged.
+- Adding Drop prevents moving non-Copy payload fields directly out of these types.
+  Borrow them, or use `std::mem::take` to transfer a vector. `Frame::into_input`,
+  `Frame::into_output` and `Frame::from_output` retain their ownership-transfer APIs.
+  A raw vector returned to a caller remains that caller's responsibility. Compiler
+  copies of fixed-size values and kernel or host-library buffers cannot be wiped here.

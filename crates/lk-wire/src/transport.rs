@@ -274,7 +274,7 @@ impl Slot {
 struct Connection {
     id: u64,
     /// Frames for the writer thread, in order.
-    frames: SyncSender<Vec<u8>>,
+    frames: SyncSender<lk_crypto::SecretBytes>,
     /// A handle to shut the socket down from any thread.
     stream: UnixStream,
 }
@@ -339,7 +339,7 @@ impl Shared {
         }
     }
 
-    fn spawn_threads(self: &Arc<Self>, id: u64, stream: &UnixStream, queue: Receiver<Vec<u8>>) -> io::Result<()> {
+    fn spawn_threads(self: &Arc<Self>, id: u64, stream: &UnixStream, queue: Receiver<lk_crypto::SecretBytes>) -> io::Result<()> {
         let writer = stream.try_clone()?;
         // macOS refuses to set a timeout once the client has closed the connection; writes
         // then fail at once and cannot block.
@@ -355,6 +355,7 @@ impl Shared {
     /// Queue a frame for the current client. A client whose queue is full or whose writer
     /// is gone is dropped (`docs/PROGRAM.md`: a write error drops that client).
     fn queue(&self, slot: &mut Slot, bytes: Vec<u8>) {
+        let bytes = lk_crypto::SecretBytes::new(bytes);
         let Some(client) = &slot.client else {
             return;
         };
@@ -395,7 +396,7 @@ impl Shared {
     /// The writer thread of client `id`: writes queued frames in order until the client
     /// leaves the slot and the queue is written, the socket fails, or a flush runs out of
     /// time; then it shuts the socket down.
-    fn write_loop(&self, id: u64, mut stream: UnixStream, queue: Receiver<Vec<u8>>) {
+    fn write_loop(&self, id: u64, mut stream: UnixStream, queue: Receiver<lk_crypto::SecretBytes>) {
         for bytes in queue {
             if !self.write_frame(id, &mut stream, &bytes) {
                 break;

@@ -532,6 +532,7 @@ name = "lk-gadget"
 version = "0.1.0"
 dependencies = [
  "lk-core",
+ "lk-crypto",
  "lk-device",
  "lk-run",
 ]
@@ -611,6 +612,7 @@ name = "lk-run"
 version = "0.1.0"
 dependencies = [
  "lk-core",
+ "lk-crypto",
  "lk-device",
  "lk-testkit",
 ]
@@ -638,6 +640,7 @@ name = "lk-uhid"
 version = "0.1.0"
 dependencies = [
  "lk-core",
+ "lk-crypto",
  "lk-device",
  "lk-run",
 ]
@@ -647,6 +650,7 @@ name = "lk-vpcd"
 version = "0.1.0"
 dependencies = [
  "lk-core",
+ "lk-crypto",
  "lk-device",
  "lk-run",
  "lk-testkit",
@@ -657,6 +661,7 @@ name = "lk-wire"
 version = "0.1.0"
 dependencies = [
  "lk-core",
+ "lk-crypto",
  "lk-device",
  "lk-run",
 ]

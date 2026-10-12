@@ -1,5 +1,6 @@
 //! The control socket (`docs/PROGRAM.md` "lk-wire", "Control socket"): the user side of the
 //! key. One command per connection:
+//! `tap pending` checks expiry and presses only a currently waiting request on the runner.
 //!
 //! - request: one line;
 //! - reply: zero or more lines, then `ok` or `error <reason>`, then close;
@@ -165,6 +166,8 @@ impl ControlServer {
 enum Request {
     /// `tap` ([`TAP_SHORT_MS`]) or `tap long` ([`TAP_LONG_MS`]).
     Tap { long: bool },
+    /// `tap pending`: a short tap only while a presence request still waits.
+    TapPending,
     /// `down`: press the sensor.
     Down,
     /// `up`: release it.
@@ -186,6 +189,7 @@ impl Request {
         let request = match words.as_slice() {
             ["tap"] => Request::Tap { long: false },
             ["tap", "long"] => Request::Tap { long: true },
+            ["tap", "pending"] => Request::TapPending,
             ["down"] => Request::Down,
             ["up"] => Request::Up,
             ["power-cycle"] => Request::PowerCycle,
@@ -208,6 +212,18 @@ fn serve(stream: UnixStream, runner: &Sender<Command>, shutdown: Option<&Shutdow
         Ok(Request::Status) => status(runner),
         Ok(Request::Tap { long }) => {
             send(runner, Command::Tap { hold_ms: if long { TAP_LONG_MS } else { TAP_SHORT_MS } })
+        }
+        Ok(Request::TapPending) => {
+            let (reply, answer) = mpsc::channel();
+            if runner.send(Command::TapPending(reply)).is_err() {
+                RUNNER_STOPPED.into()
+            } else {
+                match answer.recv_timeout(STATUS_TIMEOUT) {
+                    Ok(true) => "ok\n".into(),
+                    Ok(false) => "error no pending presence or sensor unavailable\n".into(),
+                    Err(_) => "error runner did not answer\n".into(),
+                }
+            }
         }
         Ok(Request::Down) => send(runner, Command::Input(HostInput::Touch(TouchEdge::Down))),
         Ok(Request::Up) => send(runner, Command::Input(HostInput::Touch(TouchEdge::Up))),

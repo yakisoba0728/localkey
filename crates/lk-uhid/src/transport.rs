@@ -96,8 +96,8 @@ pub const WRITE_QUEUE_EVENTS: usize = 1024;
 
 /// How long dropping the transport waits, in total, for the device threads to end, and how
 /// long a new device's writer waits for its predecessor's writer. A reader ends when it
-/// reads the `UHID_STOP` that follows `UHID_DESTROY`; a thread still running after this is
-/// left behind and reported.
+/// reads `UHID_STOP`, or its nonblocking read finds no event after the writer ended.
+/// A thread still running after this is left behind and reported.
 pub const DROP_TIMEOUT: Duration = Duration::from_secs(1);
 
 /// How long an unplugged device's DESTROY waits after the last GET_REPORT or SET_REPORT
@@ -384,7 +384,7 @@ struct HidDevice {
     queue: SyncSender<Op>,
     state: Arc<DeviceState>,
     /// Hands `Output::OtpFeature` to the OTP reader (OTP only).
-    feature: Option<SyncSender<[u8; report::OTP_FEATURE_SIZE]>>,
+    feature: Option<SyncSender<lk_crypto::SecretBytes>>,
     reader: Option<JoinHandle<()>>,
     writer: Option<JoinHandle<()>>,
     /// Disconnects when the writer thread ends; the device that replaces this one waits for
@@ -555,6 +555,13 @@ struct Writer<'a> {
     replied: Option<Instant>,
 }
 
+impl Drop for Writer<'_> {
+    fn drop(&mut self) {
+        self.state.gone();
+        lk_crypto::wipe(&mut self.buffer);
+    }
+}
+
 impl Writer<'_> {
     /// Write queued events in order until `Op::Close`, the end of the queue, a file whose
     /// other side is gone, or the device is retiring; a retiring device is unplugged
@@ -658,7 +665,9 @@ impl Writer<'_> {
             shared.notify(UhidNotice::Failed(format!("{interface}: {} cannot be encoded: {error}", event.name())));
             return ControlFlow::Continue(());
         }
-        match self.output.write_all(&self.buffer).and_then(|()| self.output.flush()) {
+        let result = self.output.write_all(&self.buffer).and_then(|()| self.output.flush());
+        lk_crypto::wipe(&mut self.buffer);
+        match result {
             Ok(()) => {
                 match &event {
                     Event::Create2(create) => {
@@ -744,37 +753,62 @@ struct Reader {
     state: Arc<DeviceState>,
     shared: Arc<Shared>,
     /// Feature reports handed back by `deliver` (OTP only).
-    answers: Option<Receiver<[u8; report::OTP_FEATURE_SIZE]>>,
+    answers: Option<Receiver<lk_crypto::SecretBytes>>,
     window: Window,
 }
 
 impl Reader {
     /// Read one whole event per read (`uhid_char_read` copies at most one event) until the
-    /// file ends, or the device is retiring and its `UHID_STOP` arrives. Pace after each
+    /// file ends, or the device is retiring and STOP arrives or the writer ends. Pace after each
     /// event (see the module docs).
     ///
     /// Reading starts once the kernel has accepted the CREATE2: before that a UHID file
     /// carries no events (`uhid_char_read` reads only what the device queued). A writer
     /// that ends without a CREATE2 (the device was retired before it was written, or the
     /// file failed) ends the reader at once, and with both halves dropped the file is
-    /// closed. A reader blocked in `read()` could not be woken: no event would ever come.
+    /// closed. Nonblocking or timed reads let an idle reader notice the writer ended
+    /// even when an unbound driver sends no STOP; partial events survive idle retries.
     fn run(mut self) {
         let interface = self.interface;
         if self.created.recv().is_err() {
             return;
         }
-        let mut buffer = [0; UHID_EVENT_SIZE];
+        let mut buffer = lk_crypto::SecretBytes::zeroed(UHID_EVENT_SIZE);
+        let mut filled = 0;
         loop {
-            if let Err(error) = self.input.read_exact(&mut buffer) {
-                if !self.state.retiring() {
-                    if error.kind() != io::ErrorKind::UnexpectedEof {
-                        self.shared.notify(UhidNotice::Failed(format!("{interface}: reading failed: {error}")));
+            match self.input.read(&mut buffer[filled..]) {
+                Ok(0) => {
+                    if !self.state.retiring() {
+                        self.shared.notify(UhidNotice::Ended { interface });
                     }
-                    self.shared.notify(UhidNotice::Ended { interface });
+                    break;
                 }
-                break;
+                Ok(count) => filled += count,
+                Err(error) if error.kind() == io::ErrorKind::Interrupted => continue,
+                Err(error) if matches!(error.kind(), io::ErrorKind::WouldBlock | io::ErrorKind::TimedOut) => {
+                    if !self.state.created.load(Ordering::SeqCst) {
+                        break;
+                    }
+                    thread::sleep(RETIRE_POLL);
+                    continue;
+                }
+                Err(error) => {
+                    if !self.state.retiring() {
+                        if error.kind() != io::ErrorKind::UnexpectedEof {
+                            self.shared.notify(UhidNotice::Failed(format!("{interface}: reading failed: {error}")));
+                        }
+                        self.shared.notify(UhidNotice::Ended { interface });
+                    }
+                    break;
+                }
             }
-            match Event::decode(&buffer) {
+            if filled < UHID_EVENT_SIZE {
+                continue;
+            }
+            filled = 0;
+            let event = Event::decode(&buffer);
+            lk_crypto::wipe(&mut buffer);
+            match event {
                 Ok(event) => {
                     if self.handle(event).is_break() {
                         break;
@@ -819,9 +853,9 @@ impl Reader {
                 self.state.opened.store(false, Ordering::SeqCst);
                 self.shared.notify(UhidNotice::Closed { interface });
             }
-            Event::Output { data, rtype } => self.output(&data, rtype),
+            Event::Output { ref data, rtype } => self.output(data, rtype),
             Event::GetReport { id, rnum, rtype } => self.get_report(id, rnum, rtype),
-            Event::SetReport { id, rnum, rtype, data } => self.set_report(id, rnum, rtype, &data),
+            Event::SetReport { id, rnum, rtype, ref data } => self.set_report(id, rnum, rtype, data),
             other => {
                 let name = other.name();
                 self.shared.notify(UhidNotice::Failed(format!("{interface}: unexpected {name} from the kernel")));
@@ -1028,6 +1062,11 @@ impl Reader {
                 self.answers
                     .as_ref()
                     .and_then(|answers| answers.try_iter().last())
+                    .map(|bytes| {
+                        let mut report = [0; report::OTP_FEATURE_SIZE];
+                        report.copy_from_slice(&bytes);
+                        report
+                    })
                     .ok_or("the device gave no feature report")
             }
             Wait::Retiring => Err(RETIRING),
@@ -1225,7 +1264,7 @@ impl Transport for UhidTransport {
                     .otp
                     .as_ref()
                     .and_then(|device| device.feature.as_ref())
-                    .is_some_and(|answers| answers.try_send(report).is_ok());
+                    .is_some_and(|answers| answers.try_send(lk_crypto::SecretBytes::from_slice(&report)).is_ok());
                 if !queued {
                     self.shared.drop_output();
                 }

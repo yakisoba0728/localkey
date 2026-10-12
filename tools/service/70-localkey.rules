@@ -2,7 +2,8 @@
 # of the HID devices localkeyd creates through /dev/uhid: the OTP keyboard (ykman otp,
 # challenge-response) and the FIDO authenticator (browsers, libfido2).
 #
-# An example only: nothing installs it. Copy it to /etc/udev/rules.d/70-localkey.rules,
+# Used by the Linux desktop preview installer; for the manual uhid,vpcd setup, copy it to
+# /etc/udev/rules.d/70-localkey.rules,
 # then `udevadm control --reload` and restart localkeyd (or `udevadm trigger
 # --subsystem-match=hidraw --action=change`). See README.md in this directory.
 #

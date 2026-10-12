@@ -280,7 +280,7 @@ impl<F: Read + Write> Ep0<F> {
     /// docs) is discarded and reported as `InvalidData`. `Interrupted` is returned as
     /// is: with no request pending an interrupted read consumed nothing.
     pub fn read_events(&mut self) -> io::Result<Vec<Event>> {
-        let mut buffer = [0u8; EVENT_SIZE * EVENTS_PER_READ];
+        let mut buffer = lk_crypto::SecretBytes::zeroed(EVENT_SIZE * EVENTS_PER_READ);
         let count = self.file.read(&mut buffer)?;
         if count == 0 {
             return Err(io::Error::from(io::ErrorKind::UnexpectedEof));
@@ -309,8 +309,16 @@ impl<F: Read + Write> Ep0<F> {
     /// shorter result. A zero-byte result is therefore not an end-of-file check.
     pub fn receive(&mut self, length: u16) -> io::Result<Vec<u8>> {
         let mut buffer = vec![0u8; usize::from(length).max(1)];
-        let count = repeat_interrupted(|| self.file.read(&mut buffer))?;
-        buffer.truncate(count.min(usize::from(length)));
+        let count = match repeat_interrupted(|| self.file.read(&mut buffer)) {
+            Ok(count) => count,
+            Err(error) => {
+                lk_crypto::wipe_vec(&mut buffer);
+                return Err(error);
+            }
+        };
+        let used = count.min(usize::from(length));
+        lk_crypto::wipe(&mut buffer[used..]);
+        buffer.truncate(used);
         Ok(buffer)
     }
 
@@ -321,6 +329,7 @@ impl<F: Read + Write> Ep0<F> {
     pub fn stall(&mut self, request: &CtrlRequest) {
         let mut byte = [0u8; 1];
         let _ = repeat_interrupted(|| if request.is_in() { self.file.read(&mut byte) } else { self.file.write(&byte) });
+        lk_crypto::wipe(&mut byte);
     }
 }
 

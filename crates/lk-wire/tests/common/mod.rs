@@ -70,6 +70,7 @@ impl Drop for TestDir {
 pub enum Seen {
     Input(HostInput),
     Tap(Millis),
+    TapPending,
     Status,
     Watch,
 }
@@ -94,6 +95,10 @@ impl FakeRunner {
                 let event = match command {
                     Command::Input(input) => Seen::Input(input),
                     Command::Tap { hold_ms } => Seen::Tap(hold_ms),
+                    Command::TapPending(reply) => {
+                        let _ = reply.send(status.presence_pending);
+                        Seen::TapPending
+                    }
                     Command::Status(reply) => {
                         let _ = reply.send(status.clone());
                         Seen::Status

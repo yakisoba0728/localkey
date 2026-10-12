@@ -52,8 +52,8 @@ label or this table is stale. The rule is the same for every file:
 | OpenPGP | `lk-openpgp` | 50 | 0 | 5 | 5 | 60 | [catalog/openpgp.md](catalog/openpgp.md) |
 | YubiHSM Auth | `lk-hsmauth` | 17 | 3 | 0 | 0 | 17 | [catalog/hsmauth.md](catalog/hsmauth.md) |
 | Security Domain / SCP03 / SCP11 | `lk-sd` | 98 | 0 | 11 | 11 | 120 | [catalog/sd.md](catalog/sd.md) |
-| Device / transports / storage | `lk-device` | 69 | 5 | 5 | 24 | 98 | [catalog/device.md](catalog/device.md) |
-| **All files** | | **372** | **13** | **37** | **42** | **451** | |
+| Device / transports / storage | `lk-device` | 71 | 5 | 5 | 22 | 98 | [catalog/device.md](catalog/device.md) |
+| **All files** | | **374** | **13** | **37** | **40** | **451** | |
 
 Bullets owned by another crate's file (not counted above): 3. Unlabelled bullets: 0.
 <!-- END tools/catalog_status.py -->
@@ -75,8 +75,13 @@ Reading the totals:
 
 ## What is deferred
 
-Grouped from the `deferred` lines at the final integration (`python3 tools/catalog_status.py
---list deferred` gives the current list):
+The table is a mapping of legacy fixture coverage, not a count of implementation tasks or
+a completion percentage. Program transports are implemented and have host-tool coverage
+(`docs/STATUS.md`, "Program phase"); deferred legacy AIO, IFD and browser fixtures do not
+imply those transports are absent. File modes and process locks are now mapped to their
+program tests. The SCP11 PSO/PIV device check is also implemented and mapped in `sd.md`.
+
+Grouped from the current `deferred` lines (`python3 tools/catalog_status.py --list deferred`):
 
 - **brainpoolP512r1** (OpenPGP, 5 lines): no RustCrypto crate exists for the curve, so
   its 4 algorithm-attribute variants answer `6A81`. The other 39 advertised variants are
@@ -84,15 +89,15 @@ Grouped from the `deferred` lines at the final integration (`python3 tools/catal
 - **OTP static-ticket details** (2 lines): the `STRONG_PW1`/`STRONG_PW2` character
   transforms are stored but not applied, because the public sources do not give the
   character positions. `MAN_UPDATE` manual regeneration is not implemented.
-- **Security Domain** (13 lines):
+- **Security Domain** (11 lines):
   - GP elements that are not in the available sources: the role policy identifiers, the
     `BF20` element and the subject-ID extension;
-  - one device-level check not yet written: an SCP11 PSO followed by PIV commands
-    (SCP03-wrapped PIV signing is tested);
-  - socket and IFD runs, which are program phase.
-- **Device** (24 lines): items that only exist in an OS program, such as UHID,
-  FunctionFS, IOUSBHost, the IFD handler, browsers, kernel power management, file modes
-  and process locks (`docs/DESIGN.md` §13), plus the catalog's "all firmware edge cases
+  - exact legacy SDK socket/IFD fixtures, logical-channel and GP transaction coverage.
+    SCP11 PSO followed by wrapped PIV signing is tested in
+    `lk-device/tests/secure_channel_scp11.rs` (SCP11a and SCP11c).
+- **Device** (22 lines): unreplayed legacy native fixtures and unimplemented platform
+  work, including AIO, IOUSBHost, the own IFD handler, browsers and detailed kernel power
+  management cases (`docs/DESIGN.md` §13), plus the catalog's "all firmware edge cases
   and timing" row: every device timing that neither a specification nor the measurement of
   the reference fixes stays model policy.
 

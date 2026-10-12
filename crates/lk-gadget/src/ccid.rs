@@ -92,6 +92,12 @@ pub struct Reassembler {
     state: State,
 }
 
+impl Drop for Reassembler {
+    fn drop(&mut self) {
+        self.reset();
+    }
+}
+
 impl fmt::Debug for Reassembler {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let state = match &self.state {
@@ -132,11 +138,13 @@ impl Reassembler {
             State::Idle => self.start(packet, short),
             State::Message { mut buffer, total } => {
                 let take = packet.len().min(total - buffer.len());
-                buffer.extend_from_slice(&packet[..take]);
+                lk_crypto::extend_secret(&mut buffer, &packet[..take]);
                 if buffer.len() == total {
                     Assembled::Message(buffer)
                 } else if short {
-                    Assembled::Dropped(DropReason::Truncated { expected: total, received: buffer.len() })
+                    let received = buffer.len();
+                    lk_crypto::wipe_vec(&mut buffer);
+                    Assembled::Dropped(DropReason::Truncated { expected: total, received })
                 } else {
                     self.state = State::Message { buffer, total };
                     Assembled::Pending
@@ -186,7 +194,11 @@ impl Reassembler {
     /// message. Returns what was dropped, if anything was gathered.
     pub fn reset(&mut self) -> Option<DropReason> {
         match std::mem::replace(&mut self.state, State::Idle) {
-            State::Message { buffer, .. } => Some(DropReason::Interrupted { received: buffer.len() }),
+            State::Message { mut buffer, .. } => {
+                let received = buffer.len();
+                lk_crypto::wipe_vec(&mut buffer);
+                Some(DropReason::Interrupted { received })
+            },
             State::Idle | State::Discard { .. } => None,
         }
     }

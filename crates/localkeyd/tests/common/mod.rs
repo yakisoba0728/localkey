@@ -413,14 +413,15 @@ impl Host {
         message.extend_from_slice(data);
         self.client.send(&HostInput::Ccid(message))?;
         loop {
-            let Frame::CcidBulkIn(reply) = self.frame()? else { continue };
+            let mut frame = self.frame()?;
+            let Frame::CcidBulkIn(ref mut reply) = frame else { continue };
             if reply.len() < 10 || reply[6] != seq {
                 continue;
             }
             if reply[0] == 0x80 && reply[7] & 0x80 != 0 {
                 continue;
             }
-            return Ok(reply);
+            return Ok(std::mem::take(reply));
         }
     }
 

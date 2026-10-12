@@ -1,0 +1,6 @@
+chromium	154.0.8037.92-1~deb13u1
+firefox-esr	153.4.0esr-1~deb13u1
+lightdm	1.32.0-6+b2
+python3-fido2	1.2.0-2
+systemd	257.13-1~deb13u1
+Linux localkey-desktop 7.0.0-38-generic #38-Ubuntu SMP PREEMPT_DYNAMIC Fri Sep  4 09:28:02 UTC 2026 aarch64 GNU/Linux

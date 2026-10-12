@@ -104,7 +104,7 @@ use std::time::{Duration, Instant};
 use lk_device::{Output, UsbIdentity};
 use lk_run::{Command, HostInput, Transport};
 
-use crate::ccid::{self, ApduExchange, Next, Reply, Response, Sequence};
+use crate::ccid::{self, ApduExchange, Next, Reply, Sequence};
 use crate::connect::{Connector, RemoteRefused, check_addr, is_loopback};
 use crate::peer::{PeerCheck, PeerRefusal, PeerVerdict, default_peer_check};
 use crate::protocol::{self, Control, MAX_PAYLOAD, Message};
@@ -300,7 +300,7 @@ pub struct VpcdStats {
 /// An item of the queue from the runner thread to the connection thread.
 enum Msg {
     /// A CCID bulk-in message (`Output::Ccid`).
-    Ccid(Vec<u8>),
+    Ccid(lk_crypto::SecretBytes),
     /// Look at the shared state: it changed.
     Wake,
 }
@@ -584,7 +584,7 @@ impl<'a> Session<'a> {
             }
             let mut reader = &self.stream;
             let payload = match protocol::read_message(&mut reader) {
-                Ok(Some(payload)) => payload,
+                Ok(Some(payload)) => lk_crypto::SecretBytes::new(payload),
                 Ok(None) => return self.ended().unwrap_or(End::Closed),
                 Err(error) => return self.ended().unwrap_or(End::ReadFailed(error)),
             };
@@ -688,7 +688,7 @@ impl<'a> Session<'a> {
                 self.powered = false;
                 Shared::count(&self.shared.errors);
                 self.shared.notify(VpcdNotice::ErrorResponse { reason });
-                ERROR_RESPONSE.to_vec()
+                lk_crypto::SecretBytes::from_slice(&ERROR_RESPONSE)
             }
         };
         self.send(&response, "response")
@@ -696,7 +696,7 @@ impl<'a> Session<'a> {
 
     /// Exchange one APDU with the device: power the slot on first unless it is known to
     /// be powered, then XfrBlocks until the response is complete.
-    fn exchange(&mut self, apdu: &[u8]) -> Result<Result<Vec<u8>, String>, End> {
+    fn exchange(&mut self, apdu: &[u8]) -> Result<Result<lk_crypto::SecretBytes, String>, End> {
         if !self.powered
             && let Err(reason) = self.power_on()?
         {
@@ -711,9 +711,11 @@ impl<'a> Session<'a> {
             };
             match exchange.accept(&reply) {
                 Next::Send => {}
-                Next::Done(Response(response)) if response.len() <= MAX_PAYLOAD => return Ok(Ok(response)),
-                Next::Done(Response(response)) => {
-                    return Ok(Err(format!("a response of {} bytes does not fit a vpcd message", response.len())));
+                Next::Done(mut response) if response.0.len() <= MAX_PAYLOAD => {
+                    return Ok(Ok(lk_crypto::SecretBytes::new(std::mem::take(&mut response.0))));
+                }
+                Next::Done(response) => {
+                    return Ok(Err(format!("a response of {} bytes does not fit a vpcd message", response.0.len())));
                 }
                 Next::Failed(fault) => return Ok(Err(fault.to_string())),
             }
@@ -856,8 +858,8 @@ impl<'a> Session<'a> {
 
     /// Write one answer to vpcd, as one framed message in one write.
     fn send(&mut self, payload: &[u8], what: &'static str) -> Result<(), End> {
-        let frame = protocol::encode(payload)
-            .map_err(|error| End::WriteFailed(io::Error::new(io::ErrorKind::InvalidData, error)))?;
+        let frame = lk_crypto::SecretBytes::new(protocol::encode(payload)
+            .map_err(|error| End::WriteFailed(io::Error::new(io::ErrorKind::InvalidData, error)))?);
         let mut writer = &self.stream;
         if let Err(error) = writer.write_all(&frame) {
             return Err(self.ended().unwrap_or(End::WriteFailed(error)));
@@ -1034,10 +1036,10 @@ impl Transport for VpcdTransport {
         }
     }
 
-    fn deliver(&mut self, output: Output) {
-        match output {
+    fn deliver(&mut self, mut output: Output) {
+        match &mut output {
             Output::Ccid(message) => {
-                if self.outputs.try_send(Msg::Ccid(message)).is_err() {
+                if self.outputs.try_send(Msg::Ccid(lk_crypto::SecretBytes::new(std::mem::take(message)))).is_err() {
                     Shared::count(&self.shared.stale);
                 }
             }

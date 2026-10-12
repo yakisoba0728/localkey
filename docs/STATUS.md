@@ -102,9 +102,10 @@ Behaviour the engine does not have:
   refused as having an unknown critical extension.
 - **Zeroization** (DESIGN §8, completed in the program phase): every engine crate wipes
   the secrets it holds. Left: copies that leave a crate (`lk_otp::Ticket` is `Copy`,
-  keyboard reports, `Management::to_record`, bytes lk-codec hands to callers), lk-codec's
-  best-effort wipe (no `zeroize` there), the program transports' own buffers, and
-  compiler copies of fixed-size values.
+  raw keyboard-report copies, `Management::to_record`, bytes lk-codec hands to callers), lk-codec's
+  best-effort wipe (no `zeroize` there), raw bytes handed to callers, and compiler
+  copies of fixed-size values. Owned device outputs and program transport buffers now
+  have cleanup (see the maintenance section below).
 - **Management flags**: touch-eject, remote-wakeup and auto-eject are stored and reported,
   but nothing acts on them.
 
@@ -211,15 +212,101 @@ transports and vpcd were then run on a real kernel with real host tools.
 | Crate | Role | Tests |
 | --- | --- | ---: |
 | `lk-host` | state directory (0700, process lock, atomic per-record saves), OS entropy, storage key file or user command, serial | 51 |
-| `lk-run` | runner thread that owns the `Device` (clock, deadlines, taps, suspend queue, presence watchers); `Fanout` | 34 |
-| `lk-wire` | private Unix-socket transport (framed `Input`/`Output`) and the line control socket (incl. `shutdown`) | 99 |
-| `lk-uhid` | Linux FIDO HID and OTP HID through `/dev/uhid` | 72 |
+| `lk-run` | runner thread that owns the `Device` (clock, deadlines, taps, suspend queue, presence watchers); `Fanout` | 38 |
+| `lk-wire` | private Unix-socket transport (framed `Input`/`Output`) and the line control socket (incl. `shutdown`, `tap pending`) | 101 |
+| `lk-uhid` | Linux FIDO HID and OTP HID through `/dev/uhid` | 74 |
 | `lk-gadget` | Linux ConfigFS + FunctionFS composite USB gadget (OTP, FIDO, CCID) | 156 |
 | `lk-vpcd` | CCID as a card in pcscd's vsmartcard `vpcd` reader, with peer authentication | 121 |
 | `localkeyd` | the daemon: `keygen`, `run --transport wire\|uhid\|gadget\|vpcd\|uhid,vpcd`, `ctl` | 88 |
 
 All program crates are std only, without `unsafe`, like the engine. `tools/service/` holds
 a systemd unit and a udev rule as examples.
+
+### Linux desktop distribution preparation (2026-10-12)
+
+The user selected Linux first (CLI, touch UI and installable bundle), public
+source/binary distribution and Apache-2.0. The workspace now inherits that license;
+`LICENSE` and `NOTICE` are present. This is a desktop preview, not a public release.
+
+- `tools/linux/`: user-session Tk touch window, an isolated root helper with only
+  `status`, `watch`, `tap`, `tap long` on a fixed private socket, and a polkit action
+  requiring administrator authentication from an active local session. UI exit
+  closes the helper's watch through its stdin pipe even while presence stays idle.
+  The UI never touches automatically, and enables touch only for pending presence.
+  The helper's short tap uses `tap pending`; expiry/check/edge share a runner timestamp
+  so late authentication or cancellation cannot produce an idle OTP tap.
+- A separate HID-only `localkeyd.service` and installer/uninstaller. The installer
+  reuses existing keys, refuses to create a new key for existing state, and leaves
+  keys/state on uninstall. `--destdir` only stages program files; symlink escapes
+  are refused. Optional PC/SC remains the manual `tools/service/` setup.
+- `tools/package_linux.py`: validates static ELF architecture, includes original
+  dependency, Rust standard-library and static musl notices, a source/binary
+  manifest and checksums, and normalizes archive metadata. Only an explicit private-test bundle can use the current `1209:0001`
+  PID. No automatic publication. The checksum is integrity, not signed provenance.
+- Eight helper/packager/policy tests and three Tk tests passed on Linux under Xvfb;
+  shellcheck, desktop-file validation and local polkit DTD validation passed.
+  A disk-output preflight regression also passed: repository/root paths are rejected
+  before any permission change (12 desktop tests in CI, including this check).
+  Relevant Rust suites (`lk-run`, `lk-wire`, `localkeyd`): 227 passed, including
+  idle/cancelled/expired and held-sensor conditional touch regression cases.
+  Measurement-harness tests: 31 passed. Workspace Clippy with `-D warnings`: clean.
+  All 22 workspace manifests inherit Apache-2.0; the dependency policy and catalog checks remain clean.
+- Offline/no-NIC aarch64 guest `desktop.sh`: rc=0. Verified bundle checksums,
+  explicit test opt-in, staging, uninstall preserving key/state markers, reinstall,
+  symlink refusal, service/udev syntax, installed helper rejecting shutdown, own HID
+  enumeration, libfido2 credential/attestation verification and assertion/signature
+  verification after daemon restart. The guest runs a custom PID 1, so this does
+  **not** validate the unit's runtime sandbox or systemd install/start lifecycle.
+- Real Debian 13 systemd/LightDM/Xfce desktop VMs, fresh disks on aarch64 and
+  x86_64: **26 checks passed each**. Own-profile Chromium/Firefox registration,
+  login, required PIN/resident keys and UV, cancellation and 30-second presence
+  timeout, conditional late-touch refusal, actual administrator authentication,
+  user key/state/helper denial and polkit denial outside a desktop session all
+  passed. Actual install, upgrade, uninstall preserving key/state, missing-key
+  reinstall refusal, wrong-key startup exit 3 without record modification, and
+  recent matched backup restoration with both PIN logins also passed. The RP
+  verifies real signatures, own attestation/AAGUID, origin/RP/challenge/UP/UV and
+  increasing counters. Versions, selected JSON/screenshots, reproduction and
+  explicit limits: `docs/LINUX_DESKTOP_VERIFICATION.md`.
+- `.github/workflows/linux-preview.yml` checks engines, licenses, catalog, UI and
+  private-test build/staging on Ubuntu 24.04 x86_64/aarch64 runners. Current runs:
+  <https://github.com/yakisoba0728/localkey/actions/workflows/linux-preview.yml>.
+  Physical desktops, live inactive/SSH policy checks, browser discoverable-account
+  selection and full reboot with saved RP credentials remain smoke checks; an
+  assigned PID and a reviewed signed release remain publication gates.
+- Both static musl preview bundles were generated locally. x86_64 cross-build
+  succeeded and its keygen/wire-status/conditional-touch/shutdown CLI lifecycle
+  passed under emulation; aarch64 HID execution is covered by the guest above.
+  The x86_64 binary also passed the real systemd desktop VM flow above.
+- `tools/pidcodes/`: organization/PID pages and a PR body prepared for candidate
+  `1209:4c4b`. The full upstream tree and open PRs were checked on 2026-10-12:
+  no conflict found. No submission/allocation; the candidate is not used or reserved.
+  Software-only allocation needs upstream review. Public source is licensed
+  Apache-2.0; `1209:0001` continues to block public binary packaging.
+
+### Transport maintenance (2026-10-12)
+
+- Closed the UHID reader/file leak when a driver unbind leaves DESTROY without STOP:
+  nonblocking reads and a 20 ms idle retry preserve partial events and notice the writer
+  ended. Regression tests cover repeated re-enumeration without STOP and split events
+  across read timeouts.
+- Owned reports, APDU/CTAP payloads, serialized queues and scratch buffers now have
+  cleanup on release or reuse, including queue failure, partial-message discard and
+  buffer growth. The public Drop/ownership changes and remaining copy boundaries are
+  recorded in `docs/PROGRAM.md` "Transport maintenance".
+- Reconciled the catalog: file modes and process locking have program tests, and the
+  obsolete "SCP11 PSO then PIV not written" note is removed. Current counts are 451
+  mapping lines: 374 tested (13 partly deferred or different), 37 intentional differences,
+  40 deferred. Deferred legacy fixture coverage is not an implementation-task count.
+- macOS: `cargo test --workspace --locked -- --include-ignored`: **2389 passed, 0 failed,
+  0 ignored**, including the 10,001-registration FIDO repeat test. Clippy with
+  `--workspace --all-targets --locked -- -D warnings`: clean. License policy and catalog
+  checks: clean. Measurement-harness unit tests: 31 passed (fake backends only).
+- Offline, no-NIC Linux guest: `uhid.sh`, `gadget.sh` and `vpcd.sh` all rc=0. UHID shutdown
+  after driver unbind completed in 310 ms, exit 0, without a reader timeout. The guest
+  run now asserts clean shutdown and no reader left behind. `gadget.sh` and `vpcd.sh`
+  used the final rebuilt static binary, including scratch-buffer cleanup; no physical
+  reference key or host HID/PCSC device was used.
 
 ### Verification (2026-10-12, after the revision by principle)
 
@@ -291,9 +378,9 @@ a systemd unit and a udev rule as examples.
   `bcdUSB`/DEVICE_QUALIFIER/BOS follow the controller. Other controllers (dwc2, dwc3, musb,
   chipidea) are untested.
 - **uhid**: HID only (CCID comes from `vpcd` or the gadget). The OTP hidraw node needs a
-  udev rule for desktop users (`tools/service/70-localkey.rules`). A device whose HID
-  driver was unbound by someone else leaks one reader thread per re-enumeration (needs
-  `poll`).
+  udev rule for desktop users (`tools/service/70-localkey.rules`). Readers now use
+  nonblocking I/O and a 20 ms idle retry, so an unbound HID driver no longer leaves a
+  reader behind when DESTROY produces no STOP event.
 - **vpcd**: the link has no authentication of its own; localkeyd refuses non-loopback
   addresses unless told otherwise and, on Linux only, checks that the peer socket belongs
   to root, `pcscd` or itself (`docs/PROGRAM.md`). ykman needs the reader renamed to contain
@@ -309,7 +396,8 @@ a systemd unit and a udev rule as examples.
   `ctl shutdown`, on stdin EOF with `--exit-on-stdin-eof`, or when killed. Every save is
   atomic, so a kill loses nothing acknowledged; a killed gadget is reclaimed at the next
   start.
-- The program transports do not wipe their own APDU/CTAP buffers.
+- Owned program APDU/CTAP buffers are wiped on release; compiler copies and buffers
+  outside this process are not covered (see the maintenance section below).
 - The guest image pins Ubuntu's kernel 7.0.0-38; it must be bumped when Ubuntu supersedes it.
 
 ## What is still open

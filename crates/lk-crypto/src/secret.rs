@@ -102,6 +102,16 @@ pub fn wipe_vec(buf: &mut Vec<u8>) {
     buf.zeroize();
 }
 
+/// Append bytes, wiping the old allocation if the buffer has to grow.
+pub fn extend_secret(buf: &mut Vec<u8>, bytes: &[u8]) {
+    if bytes.len() > buf.capacity() - buf.len() {
+        let old = SecretBytes::new(core::mem::take(buf));
+        *buf = Vec::with_capacity(old.len().saturating_add(bytes.len()).max(old.len().saturating_mul(2)));
+        buf.extend_from_slice(&old);
+    }
+    buf.extend_from_slice(bytes);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -149,5 +159,17 @@ mod tests {
         wipe_vec(&mut buf);
         assert!(buf.is_empty());
         assert_eq!(buf.capacity(), capacity, "the allocation is kept for reuse");
+    }
+
+    #[test]
+    fn extending_a_secret_preserves_bytes_across_growth_and_reuses_room() {
+        let mut buf = Vec::with_capacity(4);
+        extend_secret(&mut buf, &[1, 2]);
+        let pointer = buf.as_ptr();
+        extend_secret(&mut buf, &[3, 4]);
+        assert_eq!(buf.as_ptr(), pointer, "room is reused");
+        extend_secret(&mut buf, &[5, 6, 7, 8, 9]);
+        assert_eq!(buf, [1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        wipe_vec(&mut buf);
     }
 }

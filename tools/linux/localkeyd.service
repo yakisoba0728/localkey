@@ -1,0 +1,44 @@
+[Unit]
+Description=localkey software security key (Linux HID)
+Wants=modprobe@uhid.service
+After=modprobe@uhid.service
+
+[Service]
+Type=exec
+ExecStart=/usr/local/bin/localkeyd run --state /var/lib/localkey --key-file /etc/localkey/storage.key --transport uhid --profile own -v
+ExecStop=-/usr/local/bin/localkeyd ctl --control /var/lib/localkey/control.sock shutdown
+TimeoutStopSec=30s
+Restart=on-failure
+RestartSec=2s
+RestartPreventExitStatus=2 3
+StateDirectory=localkey
+StateDirectoryMode=0700
+UMask=0077
+CapabilityBoundingSet=
+AmbientCapabilities=
+NoNewPrivileges=yes
+DevicePolicy=closed
+DeviceAllow=/dev/uhid rw
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ProtectProc=invisible
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictAddressFamilies=AF_UNIX
+IPAddressDeny=any
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+[Install]
+WantedBy=multi-user.target

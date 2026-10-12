@@ -1,0 +1,104 @@
+#!/usr/bin/python3 -I
+"""A user-session touch window. Privileged requests go through polkit's helper."""
+import os
+import queue
+import subprocess
+import threading
+import tkinter as tk
+from tkinter import ttk
+
+HELPER = ["/usr/bin/pkexec", "/usr/local/libexec/localkey-control"]
+
+
+class TouchWindow:
+    def __init__(self, root):
+        self.root = root
+        self.events = queue.Queue()
+        self.watcher = None
+        self.connected = False
+        self.waiting = False
+        self.busy = False
+        root.title("localkey · Touch")
+        root.minsize(360, 200)
+        root.protocol("WM_DELETE_WINDOW", self.close)
+        panel = ttk.Frame(root, padding=24)
+        panel.pack(fill="both", expand=True)
+        ttk.Label(panel, text="localkey", font=("TkDefaultFont", 18, "bold")).pack(anchor="w")
+        self.status = tk.StringVar(value="Connect to your software key.")
+        ttk.Label(panel, textvariable=self.status, wraplength=360).pack(anchor="w", pady=(12, 16))
+        self.touch = ttk.Button(panel, text="Touch", command=self.tap, state="disabled")
+        self.touch.pack(fill="x")
+        self.connect = ttk.Button(panel, text="Connect", command=self.start_watch)
+        self.connect.pack(fill="x", pady=(8, 12))
+        ttk.Label(panel, text="Check the request in your app before touching.\n"
+                  "This window cannot identify the requesting app.", wraplength=360).pack(anchor="w")
+        root.after(100, self.update)
+
+    def start_watch(self):
+        self.connect.configure(state="disabled")
+        self.status.set("Waiting for administrator authentication…")
+        try:
+            self.watcher = subprocess.Popen(HELPER + ["watch"], stdin=subprocess.PIPE,
+                                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                            text=True, bufsize=1)
+        except OSError as error:
+            self.events.put(("end", str(error)))
+            return
+        threading.Thread(target=self.watch, args=(self.watcher,), daemon=True).start()
+
+    def watch(self, process):
+        with process.stdout:
+            for line in process.stdout:
+                self.events.put(("line", line.strip()[:500]))
+        code = process.wait()
+        self.events.put(("end", f"Disconnected (exit {code}). Start the service, then connect again."))
+
+    def tap(self):
+        self.busy = True
+        self.touch.configure(state="disabled")
+        self.status.set("Confirming touch…")
+        threading.Thread(target=self.send_tap, daemon=True).start()
+
+    def send_tap(self):
+        try:
+            result = subprocess.run(HELPER + ["tap"], stdin=subprocess.DEVNULL,
+                                    capture_output=True, text=True)
+            message = "Touch sent." if result.returncode == 0 else (result.stderr.strip() or result.stdout.strip() or "Touch refused.")
+        except OSError as error:
+            message = str(error)
+        self.events.put(("tap", message[:500]))
+
+    def update(self):
+        while not self.events.empty():
+            kind, message = self.events.get_nowait()
+            if kind == "line" and message in {"presence idle", "presence waiting"}:
+                self.connected = True
+                self.waiting = message.endswith("waiting")
+                self.status.set("Touch requested. Check your app, then touch." if self.waiting
+                                else "Ready. No touch is currently requested.")
+            elif kind == "end":
+                self.connected = False
+                if self.watcher and self.watcher.stdin:
+                    self.watcher.stdin.close()
+                self.watcher = None
+                self.connect.configure(state="normal")
+                self.status.set(message)
+            else:
+                if kind == "tap":
+                    self.busy = False
+                self.status.set(message)
+            self.touch.configure(state="normal" if self.connected and self.waiting and not self.busy else "disabled")
+        self.root.after(100, self.update)
+
+    def close(self):
+        if self.watcher and self.watcher.stdin:
+            self.watcher.stdin.close()
+        self.root.destroy()
+
+
+if __name__ == "__main__":
+    if os.geteuid() == 0:
+        raise SystemExit("Run localkey-touch as your desktop user, without sudo.")
+    window = tk.Tk()
+    TouchWindow(window)
+    window.mainloop()

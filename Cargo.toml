@@ -7,7 +7,7 @@ version = "0.1.0"
 edition = "2024"
 rust-version = "1.89"
 publish = false
-# The project's own license is still undecided (see docs/DESIGN.md §12).
+license = "Apache-2.0"
 
 [workspace.dependencies]
 lk-core = { path = "crates/lk-core" }

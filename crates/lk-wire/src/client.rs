@@ -40,8 +40,8 @@ impl Client {
         let mut stream = UnixStream::connect(path).map_err(|source| WireError::Io { path: path.to_owned(), source })?;
         let mut inbox = Inbox::default();
         match read_frame(&mut stream, &mut inbox, timeout)? {
-            Some(Frame::Identity(identity)) => Ok(Client { stream, inbox, identity }),
-            Some(Frame::Error(reason)) => Err(WireError::Refused(reason)),
+            Some(Frame::Identity(ref identity)) => Ok(Client { stream, inbox, identity: identity.clone() }),
+            Some(Frame::Error(ref reason)) => Err(WireError::Refused(reason.clone())),
             Some(frame) => Err(WireError::Protocol(format!(
                 "expected IDENTITY first, got frame type 0x{:02x}",
                 frame.frame_type()
@@ -58,7 +58,7 @@ impl Client {
     /// Send one host input. An input the frame format cannot carry (a CCID message under 10
     /// bytes or over the cap) is [`WireError::Frame`] and nothing is sent.
     pub fn send(&mut self, input: &HostInput) -> Result<(), WireError> {
-        let bytes = Frame::from_input(input).encode()?;
+        let bytes = lk_crypto::SecretBytes::new(Frame::from_input(input).encode()?);
         self.stream
             .write_all(&bytes)
             .map_err(|error| if closed(&error) { WireError::Closed } else { WireError::Socket(error) })

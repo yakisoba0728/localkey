@@ -229,6 +229,7 @@ impl fmt::Debug for Create2 {
 /// `Debug` shows the size of report data, never its bytes: an output report carries a
 /// CTAP payload, a feature report an OTP slot secret (`docs/PROGRAM.md` "Rules for program
 /// crates").
+/// Owned report payloads are wiped on drop.
 #[derive(Clone, PartialEq, Eq)]
 pub enum Event {
     /// `UHID_CREATE2`.
@@ -257,6 +258,16 @@ pub enum Event {
     SetReport { id: u32, rnum: u8, rtype: ReportType, data: Vec<u8> },
     /// `UHID_SET_REPORT_REPLY`.
     SetReportReply { id: u32, err: u16 },
+}
+
+impl Drop for Event {
+    fn drop(&mut self) {
+        match self {
+            Self::Output { data, .. } | Self::GetReportReply { data, .. }
+            | Self::Input2 { data } | Self::SetReport { data, .. } => lk_crypto::wipe_vec(data),
+            _ => {}
+        }
+    }
 }
 
 impl fmt::Debug for Event {
@@ -933,7 +944,7 @@ mod tests {
         bytes[U + CREATE2_UNIQ + 2] = 0;
         bytes[U + CREATE2_UNIQ + 3] = b'z';
         match Event::decode(&bytes) {
-            Ok(Event::Create2(create)) => {
+            Ok(Event::Create2(ref create)) => {
                 assert_eq!(create.name, "x".repeat(128));
                 assert_eq!(create.uniq, "12");
             }

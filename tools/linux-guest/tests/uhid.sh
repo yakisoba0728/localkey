@@ -351,6 +351,8 @@ t0=$(date +%s%N)
 lk_stop own > "$W/stop-unbound" 2>&1
 rc=$?
 note "daemon stopped in $(( ($(date +%s%N) - t0) / 1000000 )) ms, exit code $rc"
+check "clean shutdown after driver unbind" same "$rc" 0
+check "no reader thread left behind" sh -c "! grep -q 'reader thread did not end' '$(log_of own)'"
 tail -n +"$((mark + 1))" "$(log_of own)" | grep -v -E 'uhid: (otp|fido) (<-|->) INPUT2|OUTPUT' | sed 's/^/    log: /'
 check "UHID_STOP on unbind, UHID_START on bind" \
     sh -c "tail -n +$((mark + 1)) '$(log_of own)' | grep -c 'fido device st' | grep -q '^[3-9]'"

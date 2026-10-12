@@ -5,7 +5,7 @@
 //! localkeyd run --state DIR (--key-file PATH | --key-command CMD) [TRANSPORT]
 //!               [--profile own|yubikey-5c-nano-5.7.4] [--control PATH]
 //!               [--wall-clock] [--allow-unreadable] [--exit-on-stdin-eof] [-v | -vv]
-//! localkeyd ctl --control PATH (tap [long] | down | up | power-cycle | status | watch | shutdown)
+//! localkeyd ctl --control PATH (tap [long|pending] | down | up | power-cycle | status | watch | shutdown)
 //!
 //! TRANSPORT (default wire):
 //!   [--transport wire] [--wire PATH]
@@ -86,7 +86,7 @@ usage:
   localkeyd run --state DIR (--key-file PATH | --key-command CMD) [TRANSPORT]
                 [--profile own|yubikey-5c-nano-5.7.4] [--control PATH]
                 [--wall-clock] [--allow-unreadable] [--exit-on-stdin-eof] [-v | -vv]
-  localkeyd ctl --control PATH (tap [long] | down | up | power-cycle | status | watch
+  localkeyd ctl --control PATH (tap [long|pending] | down | up | power-cycle | status | watch
                                 | shutdown)
 
 TRANSPORT, how the device reaches a USB host (default wire):
@@ -358,6 +358,7 @@ pub struct CtlOptions {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Request {
     Tap { long: bool },
+    TapPending,
     Down,
     Up,
     PowerCycle,
@@ -373,6 +374,7 @@ impl Request {
         let request = match words {
             ["tap"] => Request::Tap { long: false },
             ["tap", "long"] => Request::Tap { long: true },
+            ["tap", "pending"] => Request::TapPending,
             ["down"] => Request::Down,
             ["up"] => Request::Up,
             ["power-cycle"] => Request::PowerCycle,
@@ -389,6 +391,7 @@ impl Request {
         match self {
             Request::Tap { long: false } => "tap",
             Request::Tap { long: true } => "tap long",
+            Request::TapPending => "tap pending",
             Request::Down => "down",
             Request::Up => "up",
             Request::PowerCycle => "power-cycle",
@@ -775,11 +778,11 @@ fn parse_ctl(args: &[OsString]) -> Result<Invocation, UsageError> {
     }
     let control = control.ok_or_else(|| usage("ctl needs --control PATH"))?;
     if words.is_empty() {
-        return Err(usage("ctl needs a command: tap [long], down, up, power-cycle, status, watch or shutdown"));
+        return Err(usage("ctl needs a command: tap [long|pending], down, up, power-cycle, status, watch or shutdown"));
     }
     let request = Request::parse(&words).ok_or_else(|| {
         usage(format!(
-            "unknown ctl command: {} (expected tap [long], down, up, power-cycle, status, watch or shutdown)",
+            "unknown ctl command: {} (expected tap [long|pending], down, up, power-cycle, status, watch or shutdown)",
             words.join(" ")
         ))
     })?;
@@ -1214,6 +1217,7 @@ mod tests {
         for (words, request) in [
             (&["tap"][..], Request::Tap { long: false }),
             (&["tap", "long"], Request::Tap { long: true }),
+            (&["tap", "pending"], Request::TapPending),
             (&["down"], Request::Down),
             (&["up"], Request::Up),
             (&["power-cycle"], Request::PowerCycle),
@@ -1239,15 +1243,15 @@ mod tests {
         assert_eq!(error(&["ctl", "status"]), "ctl needs --control PATH");
         assert_eq!(
             error(&["ctl", "--control", "/c"]),
-            "ctl needs a command: tap [long], down, up, power-cycle, status, watch or shutdown"
+            "ctl needs a command: tap [long|pending], down, up, power-cycle, status, watch or shutdown"
         );
         assert_eq!(
             error(&["ctl", "--control", "/c", "tap", "short"]),
-            "unknown ctl command: tap short (expected tap [long], down, up, power-cycle, status, watch or shutdown)"
+            "unknown ctl command: tap short (expected tap [long|pending], down, up, power-cycle, status, watch or shutdown)"
         );
         assert_eq!(
             error(&["ctl", "--control", "/c", "shutdown", "now"]),
-            "unknown ctl command: shutdown now (expected tap [long], down, up, power-cycle, status, watch or shutdown)"
+            "unknown ctl command: shutdown now (expected tap [long|pending], down, up, power-cycle, status, watch or shutdown)"
         );
     }
 

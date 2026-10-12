@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=localkey Touch
+Comment=Observe and touch your localkey software security key
+Exec=/usr/local/bin/localkey-touch
+Icon=security-high
+Terminal=false
+Categories=System;Security;

@@ -227,6 +227,7 @@ impl UhidIo for FakeIo {
         }
         let (ours, theirs) = UnixStream::pair()?;
         let reader = ours.try_clone()?;
+        reader.set_read_timeout(Some(KERNEL_POLL))?;
         let _ = self.kernels.send(Kernel::spawn(theirs, self.mode)?);
         let writer = KernelWriter { stream: ours, refuse_input: Arc::clone(&self.refuse_input) };
         Ok((Box::new(reader), Box::new(writer)))
@@ -268,6 +269,7 @@ impl UhidIo for PairIo {
     fn open(&mut self) -> io::Result<UhidHalves> {
         let (ours, theirs) = UnixStream::pair()?;
         let reader = ours.try_clone()?;
+        reader.set_read_timeout(Some(KERNEL_POLL))?;
         let _ = self.kernels.send(theirs);
         Ok((Box::new(reader), Box::new(ours)))
     }
@@ -321,7 +323,7 @@ pub struct Device {
 impl Device {
     fn from(kernel: Kernel) -> Device {
         match kernel.next_raw() {
-            (raw, Event::Create2(create)) => Device { kernel, create, raw },
+            (raw, Event::Create2(ref create)) => Device { kernel, create: create.clone(), raw },
             (_, other) => panic!("the first event of a device is {other:?}, not CREATE2"),
         }
     }

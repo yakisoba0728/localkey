@@ -546,8 +546,8 @@ fn a_ccid_message_longer_than_the_advertised_maximum_message_length_is_not_passe
         thread::sleep(Duration::from_millis(1));
     }
     match harness.input() {
-        HostInput::Ccid(message) if message == largest => {}
-        HostInput::Ccid(message) => {
+        HostInput::Ccid(ref message) if *message == largest => {}
+        HostInput::Ccid(ref message) => {
             panic!("a {}-byte message was passed on instead of the 3072-byte one", message.len())
         }
         other => panic!("unexpected input {other:?}"),

@@ -511,20 +511,35 @@ fn dropping_the_transport_destroys_every_device_and_joins_its_threads() {
 }
 
 #[test]
-fn dropping_waits_a_bounded_time_for_a_device_the_kernel_never_stops() {
+fn dropping_closes_a_device_even_when_the_kernel_sends_no_stop() {
     let harness = Harness::with_mode(KernelMode { auto_start: true, auto_stop: false });
     harness.enumerate(&identity(0x0406, FIDO_CCID));
     let fido = harness.device();
     assert_eq!(harness.input(), POWER_CYCLE);
     let took = harness.drop_transport();
     assert_eq!(fido.kernel.next(), Event::Destroy);
-    assert!(took >= DROP_TIMEOUT - Duration::from_millis(100), "took {took:?}");
-    assert!(took < DROP_TIMEOUT * 4, "took {took:?}");
-    harness
-        .notice(|notice| matches!(notice, UhidNotice::Failed(reason) if reason.contains("reader thread did not end")));
-    // The reader left behind ends once the kernel side closes.
-    fido.kernel.close();
+    assert!(took < DROP_TIMEOUT, "took {took:?}");
     assert!(fido.kernel.closes());
+    assert!(!harness.notices().iter().any(|notice| matches!(notice, UhidNotice::Failed(_))));
+}
+
+#[test]
+fn repeated_enumeration_closes_old_files_without_stop_events() {
+    let harness = Harness::with_mode(KernelMode { auto_start: true, auto_stop: false });
+    harness.enumerate(&identity(0x0406, FIDO_CCID));
+    let mut fido = harness.device();
+    assert_eq!(harness.input(), POWER_CYCLE);
+    for _ in 0..5 {
+        harness.enumerate(&identity(0x0406, FIDO_CCID));
+        assert_eq!(fido.kernel.next(), Event::Destroy);
+        assert!(fido.kernel.closes(), "the retired reader releases its file without STOP");
+        fido = harness.device();
+        assert_eq!(harness.input(), POWER_CYCLE);
+    }
+    harness.drop_transport();
+    assert_eq!(fido.kernel.next(), Event::Destroy);
+    assert!(fido.kernel.closes());
+    assert!(!harness.notices().iter().any(|notice| matches!(notice, UhidNotice::Failed(_))));
 }
 
 #[test]
@@ -799,6 +814,7 @@ impl UhidIo for HeldIo {
     fn open(&mut self) -> io::Result<UhidHalves> {
         let (ours, theirs) = UnixStream::pair()?;
         let reader = ours.try_clone()?;
+        reader.set_read_timeout(Some(Duration::from_millis(20)))?;
         let _ = self.kernels.send(theirs);
         let writer = HeldWriter { stream: ours, holding: self.holding.clone(), release: Arc::clone(&self.release) };
         Ok((Box::new(reader), Box::new(writer)))
@@ -1040,4 +1056,23 @@ fn the_destroy_after_a_reply_leaves_the_caller_time_to_take_it() {
     // The fake kernel's thread hands the reply over a little after it was written.
     assert!(gap >= DESTROY_AFTER_REPLY - Duration::from_millis(20), "DESTROY {gap:?} after the reply");
     assert!(gap < DESTROY_AFTER_REPLY + Duration::from_secs(1), "DESTROY {gap:?} after the reply");
+}
+
+#[test]
+fn a_partial_event_survives_read_timeouts() {
+    let (kernels_tx, kernels) = mpsc::channel();
+    let (runner, commands) = mpsc::channel();
+    let mut transport = UhidTransport::new(Box::new(PairIo { kernels: kernels_tx }), runner);
+    transport.enumerate(&identity(0x0406, FIDO_CCID));
+    let mut kernel = kernels.recv_timeout(WAIT).expect("the file opened");
+    assert!(matches!(read_event(&mut kernel), Ok(Event::Create2(_))));
+    assert!(matches!(commands.recv_timeout(WAIT), Ok(Command::Input(HostInput::Bus(BusEvent::PowerCycle)))));
+    let bytes = Event::Output { data: vec![0xA5; 64], rtype: ReportType::Output }.encode().expect("the event encodes");
+    kernel.write_all(&bytes[..11]).expect("the prefix writes");
+    thread::sleep(Duration::from_millis(80));
+    assert!(commands.try_recv().is_err(), "an incomplete event is not forwarded");
+    kernel.write_all(&bytes[11..]).expect("the rest writes");
+    assert!(matches!(commands.recv_timeout(WAIT), Ok(Command::Input(HostInput::FidoReport(report))) if report == [0xA5; 64]));
+    drop(transport);
+    assert_eq!(read_event(&mut kernel).expect("DESTROY writes"), Event::Destroy);
 }

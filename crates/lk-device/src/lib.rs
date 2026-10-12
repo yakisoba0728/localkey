@@ -111,6 +111,7 @@ pub enum BusEvent {
 }
 
 /// Everything the device asks its host to do.
+/// Owned report and CCID payloads are wiped on drop; borrow vectors or transfer them with `mem::take`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Output {
     /// One 64-byte CTAPHID input report for the FIDO HID interface.
@@ -129,6 +130,23 @@ pub enum Output {
     /// brings a stored interface change into effect); the host must re-enumerate with
     /// this set ([`Device::usb_identity`] describes it).
     Reenumerate(UsbInterfaces),
+}
+
+impl Output {
+    fn wipe(&mut self) {
+        match self {
+            Self::FidoReport(bytes) => lk_crypto::wipe(bytes),
+            Self::OtpFeature(bytes) | Self::OtpKeyboard(bytes) => lk_crypto::wipe(bytes),
+            Self::Ccid(bytes) | Self::CcidInterrupt(bytes) => lk_crypto::wipe_vec(bytes),
+            _ => {}
+        }
+    }
+}
+
+impl Drop for Output {
+    fn drop(&mut self) {
+        self.wipe();
+    }
 }
 
 /// The composite device.

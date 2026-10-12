@@ -1401,6 +1401,7 @@ mod tests {
     impl UhidIo for PairUhid {
         fn open(&mut self) -> io::Result<UhidHalves> {
             let (ours, kernel) = UnixStream::pair()?;
+            ours.set_read_timeout(Some(Duration::from_millis(20)))?;
             lock(&self.kernel).push(kernel);
             Ok((Box::new(ours.try_clone()?), Box::new(ours)))
         }
@@ -1802,6 +1803,7 @@ mod tests {
     impl UhidIo for RefusingUhid {
         fn open(&mut self) -> io::Result<UhidHalves> {
             let (ours, kernel) = UnixStream::pair()?;
+            ours.set_read_timeout(Some(Duration::from_millis(20)))?;
             lock(&self.kernel).push(kernel);
             Ok((Box::new(ours), Box::new(Refusing)))
         }

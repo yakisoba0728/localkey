@@ -118,7 +118,7 @@ impl fmt::Display for FrameError {
 
 impl std::error::Error for FrameError {}
 
-/// One frame of the table, typed.
+/// One frame of the table, typed. Owned payloads are wiped on drop.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Frame {
     /// `0x01`
@@ -154,6 +154,15 @@ pub enum Frame {
 }
 
 impl Frame {
+    fn wipe(&mut self) {
+        match self {
+            Self::FidoOut(bytes) | Self::FidoIn(bytes) => lk_crypto::wipe(bytes),
+            Self::OtpSetFeature(bytes) | Self::OtpKeyboard(bytes) | Self::OtpFeature(bytes) => lk_crypto::wipe(bytes),
+            Self::CcidBulkOut(bytes) | Self::CcidBulkIn(bytes) | Self::CcidInterrupt(bytes) => lk_crypto::wipe_vec(bytes),
+            _ => {}
+        }
+    }
+
     /// The type byte.
     pub fn frame_type(&self) -> u8 {
         match self {
@@ -202,7 +211,10 @@ impl Frame {
             Frame::Error(reason) => out.extend_from_slice(reason.as_bytes()),
         }
         let length = u32::try_from(out.len() - HEADER_LEN + 1).unwrap_or(u32::MAX);
-        check_header(self.origin(), length, frame_type)?;
+        if let Err(error) = check_header(self.origin(), length, frame_type) {
+            lk_crypto::wipe_vec(&mut out);
+            return Err(error);
+        }
         out[..4].copy_from_slice(&length.to_be_bytes());
         Ok(out)
     }
@@ -221,45 +233,51 @@ impl Frame {
     }
 
     /// The host input a host frame carries; `None` for device frames.
-    pub fn into_input(self) -> Option<HostInput> {
-        Some(match self {
-            Frame::FidoOut(report) => HostInput::FidoReport(report),
-            Frame::OtpSetFeature(report) => HostInput::OtpSetFeature(report),
+    pub fn into_input(mut self) -> Option<HostInput> {
+        Some(match &mut self {
+            Frame::FidoOut(report) => HostInput::FidoReport(*report),
+            Frame::OtpSetFeature(report) => HostInput::OtpSetFeature(*report),
             Frame::OtpGetFeature => HostInput::OtpGetFeature,
-            Frame::CcidBulkOut(message) => HostInput::Ccid(message),
-            Frame::CcidAbort { slot, seq } => HostInput::CcidControlAbort { slot, seq },
-            Frame::Touch(edge) => HostInput::Touch(edge),
-            Frame::Bus(event) => HostInput::Bus(event),
+            Frame::CcidBulkOut(message) => HostInput::Ccid(std::mem::take(message)),
+            Frame::CcidAbort { slot, seq } => HostInput::CcidControlAbort { slot: *slot, seq: *seq },
+            Frame::Touch(edge) => HostInput::Touch(*edge),
+            Frame::Bus(event) => HostInput::Bus(*event),
             _ => return None,
         })
     }
 
     /// The frame that carries a device output; `None` for `Output::Reenumerate`, which the
     /// runner turns into an enumeration (an IDENTITY frame) instead.
-    pub fn from_output(output: Output) -> Option<Frame> {
-        Some(match output {
-            Output::FidoReport(report) => Frame::FidoIn(report),
-            Output::OtpFeature(report) => Frame::OtpFeature(report),
-            Output::OtpKeyboard(report) => Frame::OtpKeyboard(report),
-            Output::Ccid(message) => Frame::CcidBulkIn(message),
-            Output::CcidInterrupt(message) => Frame::CcidInterrupt(message),
-            Output::PresenceIndicator(waiting) => Frame::Presence(waiting),
+    pub fn from_output(mut output: Output) -> Option<Frame> {
+        Some(match &mut output {
+            Output::FidoReport(report) => Frame::FidoIn(*report),
+            Output::OtpFeature(report) => Frame::OtpFeature(*report),
+            Output::OtpKeyboard(report) => Frame::OtpKeyboard(*report),
+            Output::Ccid(message) => Frame::CcidBulkIn(std::mem::take(message)),
+            Output::CcidInterrupt(message) => Frame::CcidInterrupt(std::mem::take(message)),
+            Output::PresenceIndicator(waiting) => Frame::Presence(*waiting),
             Output::Reenumerate(_) => return None,
         })
     }
 
     /// The device output a device frame carries; `None` for IDENTITY, ERROR and host
     /// frames.
-    pub fn into_output(self) -> Option<Output> {
-        Some(match self {
-            Frame::FidoIn(report) => Output::FidoReport(report),
-            Frame::OtpFeature(report) => Output::OtpFeature(report),
-            Frame::OtpKeyboard(report) => Output::OtpKeyboard(report),
-            Frame::CcidBulkIn(message) => Output::Ccid(message),
-            Frame::CcidInterrupt(message) => Output::CcidInterrupt(message),
-            Frame::Presence(waiting) => Output::PresenceIndicator(waiting),
+    pub fn into_output(mut self) -> Option<Output> {
+        Some(match &mut self {
+            Frame::FidoIn(report) => Output::FidoReport(*report),
+            Frame::OtpFeature(report) => Output::OtpFeature(*report),
+            Frame::OtpKeyboard(report) => Output::OtpKeyboard(*report),
+            Frame::CcidBulkIn(message) => Output::Ccid(std::mem::take(message)),
+            Frame::CcidInterrupt(message) => Output::CcidInterrupt(std::mem::take(message)),
+            Frame::Presence(waiting) => Output::PresenceIndicator(*waiting),
             _ => return None,
         })
+    }
+}
+
+impl Drop for Frame {
+    fn drop(&mut self) {
+        self.wipe();
     }
 }
 

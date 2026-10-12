@@ -145,7 +145,7 @@ fn runner_answering(shared: Arc<Shared>, commands: mpsc::Receiver<Command>, dela
                 Command::Input(HostInput::OtpGetFeature) => {
                     thread::sleep(delay);
                     if let Some(answer) = answers.next() {
-                        *shared.otp_feature() = Some(answer);
+                        *shared.otp_feature() = Some(lk_crypto::SecretBytes::from_slice(&answer));
                     }
                 }
                 Command::Status(reply) => {
@@ -183,8 +183,8 @@ fn an_otp_feature_answer_is_the_one_delivered_before_the_marker() {
     let shared = shared_with(runner);
     runner_answering(Arc::clone(&shared), commands, Duration::ZERO, vec![[1; 8], [2; 8]]);
     let mut wait = OtpWait::default();
-    assert_eq!(wait.fetch(&shared, &SessionState::default()), Some([1; 8]));
-    assert_eq!(wait.fetch(&shared, &SessionState::default()), Some([2; 8]));
+    assert_eq!(wait.fetch(&shared, &SessionState::default()), Some(lk_crypto::SecretBytes::from_slice(&[1; 8])));
+    assert_eq!(wait.fetch(&shared, &SessionState::default()), Some(lk_crypto::SecretBytes::from_slice(&[2; 8])));
 }
 
 #[test]
@@ -234,7 +234,7 @@ fn an_otp_feature_request_takes_the_delivered_answer_when_the_session_drains() {
             let mut unanswered = Vec::new();
             for command in commands {
                 match command {
-                    Command::Input(HostInput::OtpGetFeature) => *shared.otp_feature() = Some([7; 8]),
+                    Command::Input(HostInput::OtpGetFeature) => *shared.otp_feature() = Some(lk_crypto::SecretBytes::from_slice(&[7; 8])),
                     Command::Status(reply) => {
                         unanswered.push(reply);
                         assert_eq!(state.drain(Duration::ZERO), Owed { responses: 0, control: false });
@@ -245,7 +245,7 @@ fn an_otp_feature_request_takes_the_delivered_answer_when_the_session_drains() {
         });
     }
     let start = Instant::now();
-    assert_eq!(OtpWait::default().fetch(&shared, &state), Some([7; 8]));
+    assert_eq!(OtpWait::default().fetch(&shared, &state), Some(lk_crypto::SecretBytes::from_slice(&[7; 8])));
     assert!(start.elapsed() < OTP_REPORT_TIMEOUT, "{:?}", start.elapsed());
 }
 

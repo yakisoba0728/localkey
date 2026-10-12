@@ -238,7 +238,8 @@ API 초안은 `crates/lk-core/src/lib.rs`와 `crates/lk-device/src/lib.rs`에 �
   - 허용 목록: MIT, Apache-2.0, BSD-2/3-Clause, ISC, Zlib, Unicode-3.0.
   - `python3 tools/license_check.py`가 허용 목록과 "외부 의존은 `lk-crypto`에만" 규칙을 검사한다.
   - `--write`로 `THIRD_PARTY.md`를 다시 만든다.
-  - 바이너리를 배포할 때 필요한 것은 그 목록의 고지문을 함께 넣는 것뿐이다.
+  - 바이너리에는 목록뿐 아니라 원본 라이선스·저작권·NOTICE 파일을 포함한다.
+    `tools/package_linux.py`가 의존성 원본에서 모아 `licenses/`에 넣는다.
 - **RSA**: `rsa` 0.10(`=0.10.0-rc.19` 고정, §12-6). 복호화 타이밍 공격(Marvin, RUSTSEC-2023-0071)
   공지가 있지만, 키가 프로세스 메모리에 있는 소프트웨어 보안키 용도로는 받아들일 수 있는 위험으로 보고
   기록해 둔다. 3DES는 `des`를 쓴다.
@@ -249,9 +250,11 @@ API 초안은 `crates/lk-core/src/lib.rs`와 `crates/lk-device/src/lib.rs`에 �
     - `lk-hsmauth`, `lk-sd`, `lk-device`, `lk-otp`, `lk-mgmt`, OpenPGP 키 재료는 `Drop`에서 지운다.
     - `lk-codec`의 `Command`, `CommandChain`, `ResponseQueue`는 다 쓰거나 버릴 때 지운다. `lk-codec`은
       `lk-crypto`에 의존하지 않으므로 `black_box`로 지키는 0 쓰기를 쓴다(최선 노력).
-    - 남은 것: 크레이트 밖으로 나간 복사본(`lk_otp::Ticket`은 `Copy`, 키보드 리포트, `Management::to_record`,
-      `lk-codec`이 호출자에게 넘긴 바이트), 프로그램 전송 계층의 버퍼, 컴파일러가 만드는 고정 크기 값의
-      복사본. 목록은 `docs/STATUS.md`에 있다.
+    - 프로그램 전송 계층의 소유 버퍼와 `lk-device::Output`은 다 쓰거나 버릴 때 지운다. 큐 포화·연결
+      종료·부분 메시지 폐기·버퍼 확대도 포함한다(`docs/PROGRAM.md` "Transport maintenance").
+    - 남은 것: 크레이트 밖으로 나간 원시 복사본(`lk_otp::Ticket`은 `Copy`, `Management::to_record`,
+      `lk-codec`이 호출자에게 넘긴 바이트), 컴파일러가 만드는 고정 크기 값의 복사본, 커널과 호스트
+      라이브러리의 버퍼. 목록은 `docs/STATUS.md`에 있다.
 
 ## 9. 장치 정체성 프로필
 
@@ -298,8 +301,9 @@ VID/PID, 제품 문자열, AAGUID, 펌웨어 버전, 시리얼, 증명서 체인
 2026-10-10에 사용자가 결정을 위임했습니다. 각 결정은 되돌리기 쉬운 쪽을 택했습니다. 결정 8(목표와 판단 순서)은
 2026-10-12에 사용자가 직접 정했고, 그와 다른 앞의 결정 내용보다 우선합니다.
 
-1. **프로젝트 라이선스**: 지금은 붙이지 않는다(모든 권리 보유). 공개하기 전이면 언제든 바꿀 수 있는
-   유일한 선택지다. 기존 MIT 고지문은 legacy 포크와 함께 기록에만 남는다.
+1. **프로젝트 라이선스**: 처음에는 붙이지 않았으나, 2026-10-12 사용자가 소스·바이너리 공개 배포와
+   **Apache-2.0**을 직접 선택했다. `LICENSE`, `NOTICE`와 워크스페이스 라이선스에 반영했다.
+   기존 MIT 고지문은 legacy 포크와 함께 기록에만 남는다.
 2. **정체성 프로필(§9)**: `DeviceProfile::own()`(기본)과 `DeviceProfile::yubikey_5c_nano_5_7_4()`(옵션)
    두 가지를 둔다. 호환 프로필은 `reference/`의 실물 공개 바이트와 골든 테스트로 비교하려고 둔다.
    어느 프로필도 제조사 증명 서명을 재현하지 않는다.
@@ -385,7 +389,11 @@ VID/PID, 제품 문자열, AAGUID, 펌웨어 버전, 시리얼, 증명서 체인
   - macOS: IOHIDUserDevice, IOUSBHost. Apple의 제한된 권한과 서명이 필요하다. macOS에서 vpcd 경로는
     시험하지 않았다.
   - 키체인 직접 연동: 지금은 `--key-command`로 사용자가 연결한다.
-  - 터치 UI, 설치 패키지.
+  - Linux 데스크톱 배포 검증: 터치 UI·polkit 도우미·설치/제거·묶음 생성 도구는
+    `tools/linux/`에 만들었다. aarch64·x86_64의 Debian 13 데스크톱 VM에서 실제 systemd
+    설치·업그레이드·복구·관리자 인증과 Chromium·Firefox 등록·로그인·PIN·상주 키·취소·시간 초과를
+    검증했다(`docs/LINUX_DESKTOP_VERIFICATION.md`). 실물 데스크톱·원격/비활성 세션 추가 확인,
+    자체 PID 배정과 서명된 공개 릴리스가 남았다. 현재 시험용 PID로는 공개 묶음을 만들지 못한다.
   - 기준 키를 더 재는 일. 명령 단위 차분 비교는 2026-10-11에 읽기 전용으로 한 번 했다
     (`docs/MEASUREMENT.md`, `tools/measure/`). 그때 잴 수 없던 것이 남았다: 기준 키에서 꺼져 있던 OTP와
     OATH, 카드 터치 시간 초과, U2F 요청 창과 래치, raw CCID. 기준 키를 쓰는 시험은 사용자의 명시적 허가가

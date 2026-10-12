@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=localkey desktop verification
+Exec=/localkey/session.sh
+Terminal=false
+OnlyShowIn=XFCE;

@@ -78,6 +78,7 @@ const WATCHER_CHECK_AT: usize = 64;
 /// `Debug` shows the size of a payload, never its bytes: a CCID message can carry a PIN,
 /// an OTP feature report a slot key, a FIDO report a CTAP payload (`docs/PROGRAM.md`
 /// "Rules for program crates").
+/// Owned payloads are wiped on drop, including commands abandoned in a queue.
 #[derive(Clone, PartialEq, Eq)]
 pub enum HostInput {
     FidoReport([u8; 64]),
@@ -90,6 +91,15 @@ pub enum HostInput {
 }
 
 impl HostInput {
+    fn wipe(&mut self) {
+        match self {
+            Self::FidoReport(bytes) => lk_crypto::wipe(bytes),
+            Self::OtpSetFeature(bytes) => lk_crypto::wipe(bytes),
+            Self::Ccid(bytes) => lk_crypto::wipe_vec(bytes),
+            _ => {}
+        }
+    }
+
     /// The borrowed engine input.
     pub fn as_input(&self) -> Input<'_> {
         match self {
@@ -101,6 +111,12 @@ impl HostInput {
             HostInput::Touch(edge) => Input::Touch(*edge),
             HostInput::Bus(event) => Input::Bus(*event),
         }
+    }
+}
+
+impl Drop for HostInput {
+    fn drop(&mut self) {
+        self.wipe();
     }
 }
 
@@ -130,6 +146,9 @@ pub enum Command {
     /// Press the sensor now and release it `hold_ms` later ([`TAP_SHORT_MS`],
     /// [`TAP_LONG_MS`]).
     Tap { hold_ms: Millis },
+    /// A short tap only while presence is pending. Reply false if it expired, the
+    /// sensor is held, suspended, or no transport is serving; never becomes an idle OTP tap.
+    TapPending(Sender<bool>),
     /// Reply with the current [`Status`].
     Status(Sender<Status>),
     /// Register a presence watcher: it gets the current state at once, then every change.
@@ -145,6 +164,7 @@ impl fmt::Debug for Command {
         match self {
             Command::Input(input) => f.debug_tuple("Input").field(input).finish(),
             Command::Tap { hold_ms } => f.debug_struct("Tap").field("hold_ms", hold_ms).finish(),
+            Command::TapPending(_) => f.write_str("TapPending"),
             Command::Status(_) => f.write_str("Status"),
             Command::Watch(_) => f.write_str("Watch"),
             Command::Attach(transport) => f.debug_tuple("Attach").field(transport).finish(),
@@ -566,7 +586,24 @@ impl RunLoop {
     fn command(&mut self, command: Command) -> ControlFlow<()> {
         match command {
             Command::Input(input) => self.input(&input),
-            Command::Tap { hold_ms } => self.tap(hold_ms),
+            Command::Tap { hold_ms } => self.tap(self.now(), hold_ms),
+            Command::TapPending(reply) => {
+                let now = self.now();
+                let accepted = if self.transport.is_none() || self.held || self.suspended {
+                    false
+                } else {
+                    // Check expiry and apply the edge at the same engine timestamp.
+                    let outputs = self.feed(now, Input::Tick);
+                    self.dispatch(outputs);
+                    if self.device.presence_pending() {
+                        self.tap(now, TAP_SHORT_MS);
+                        true
+                    } else {
+                        false
+                    }
+                };
+                let _ = reply.send(accepted);
+            }
             Command::Status(reply) => {
                 let _ = reply.send(self.status());
             }
@@ -667,11 +704,10 @@ impl RunLoop {
 
     /// Press the sensor now and schedule its release (`docs/PROGRAM.md` "lk-run", Taps).
     /// Ignored before [`Runner::serve`] and while the sensor is held.
-    fn tap(&mut self, hold_ms: Millis) {
+    fn tap(&mut self, now: Millis, hold_ms: Millis) {
         if self.transport.is_none() || self.held {
             return;
         }
-        let now = self.now();
         self.held = true;
         self.release_at = Some(now.saturating_add(hold_ms));
         let outputs = self.feed(now, Input::Touch(TouchEdge::Down));
@@ -795,6 +831,42 @@ mod tests {
 
     fn now_seconds() -> u64 {
         unix_seconds().expect("the system clock is after 1970")
+    }
+
+    #[test]
+    fn input_cleanup_wipes_payloads_and_keeps_control_events() {
+        let mut inputs = [HostInput::FidoReport([0xA5; 64]), HostInput::OtpSetFeature([0xA5; 8]),
+            HostInput::Ccid(vec![0xA5; 32]), HostInput::Bus(BusEvent::Reset)];
+        for input in &mut inputs {
+            input.wipe();
+            match input {
+                HostInput::FidoReport(report) => assert_eq!(*report, [0; 64]),
+                HostInput::OtpSetFeature(report) => assert_eq!(*report, [0; 8]),
+                HostInput::Ccid(bytes) => assert!(bytes.is_empty()),
+                other => assert_eq!(*other, HostInput::Bus(BusEvent::Reset)),
+            }
+        }
+    }
+
+    #[test]
+    fn a_pending_only_tap_rechecks_expiry_at_the_edge_timestamp() {
+        let mut state = state();
+        state.transport = Some(Box::new(Fanout::default()));
+        let mut init = [0; 64];
+        init[..7].copy_from_slice(&[0xFF, 0xFF, 0xFF, 0xFF, 0x86, 0, 8]);
+        let outputs = state.device.handle(0, Input::FidoReport(&init));
+        let Some(Output::FidoReport(report)) = outputs.first() else { panic!("INIT reply") };
+        let mut selection = [0; 64];
+        selection[..4].copy_from_slice(&report[15..19]);
+        selection[4..8].copy_from_slice(&[0x90, 0, 1, 0x0B]);
+        state.device.handle(0, Input::FidoReport(&selection));
+        assert!(state.device.presence_pending());
+        state.start = Instant::now() - Duration::from_secs(86400);
+        let (reply, answer) = mpsc::channel();
+        assert!(state.command(Command::TapPending(reply)).is_continue());
+        assert_eq!(answer.try_recv(), Ok(false));
+        assert!(!state.device.presence_pending());
+        assert!(!state.held && state.release_at.is_none(), "expired request never presses the sensor");
     }
 
     /// `docs/PROGRAM.md` "lk-run", Presence watchers: a watcher whose receiver is gone

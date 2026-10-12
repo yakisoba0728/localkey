@@ -217,6 +217,12 @@ pub struct Reply {
     pub data: Vec<u8>,
 }
 
+impl Drop for Reply {
+    fn drop(&mut self) {
+        lk_crypto::wipe_vec(&mut self.data);
+    }
+}
+
 impl fmt::Debug for Reply {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Reply")
@@ -385,6 +391,12 @@ pub enum Next {
 #[derive(Clone, PartialEq, Eq)]
 pub struct Response(pub Vec<u8>);
 
+impl Drop for Response {
+    fn drop(&mut self) {
+        lk_crypto::wipe_vec(&mut self.0);
+    }
+}
+
 impl fmt::Debug for Response {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_tuple("Response").field(&format_args!("{} bytes", self.0.len())).finish()
@@ -409,6 +421,13 @@ pub struct ApduExchange {
     max_data: usize,
     awaiting: Awaiting,
     response: Vec<u8>,
+}
+
+impl Drop for ApduExchange {
+    fn drop(&mut self) {
+        lk_crypto::wipe_vec(&mut self.apdu);
+        lk_crypto::wipe_vec(&mut self.response);
+    }
 }
 
 impl fmt::Debug for ApduExchange {
@@ -481,7 +500,7 @@ impl ApduExchange {
         if self.response.len().saturating_add(data.len()) > MAX_RESPONSE {
             return Err(Fault::ResponseTooLong);
         }
-        self.response.extend_from_slice(data);
+        lk_crypto::extend_secret(&mut self.response, data);
         Ok(())
     }
 

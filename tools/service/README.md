@@ -6,9 +6,14 @@ reach the kernel as HID devices through `/dev/uhid` (`lk-uhid`); CCID reaches pc
 card in the vsmartcard `vpcd` reader (`lk-vpcd`). See `docs/PROGRAM.md`, "PC/SC through
 vpcd, transport combinations, clean shutdown (third step)".
 
-**These are examples. Nothing in this repository installs them, and no test uses them.**
+**These are examples. Nothing in this repository installs these two files as a service.**
 Installing them changes the machine's systemd, udev and PC/SC configuration; do it by hand,
 on a machine meant to use the virtual key, after reading the safety notes below.
+
+The Linux desktop preview in `../linux/README.md` installs a separate HID-only
+`localkeyd.service` plus a user-session touch UI and a polkit helper. It does not install
+this `uhid,vpcd` unit or change PC/SC. Both units share `/var/lib/localkey`; stop one
+before using the other. The packager reuses `70-localkey.rules` from this directory.
 
 | File | What it is |
 | --- | --- |

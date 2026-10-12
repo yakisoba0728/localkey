@@ -10,6 +10,15 @@
 `uhid,vpcd` 조합은 USB 장치 컨트롤러 없이 장치 전체를 노출합니다. Linux 전송과 vpcd는 네트워크가 없는
 QEMU 게스트에서 실제 호스트 소프트웨어로 검증했습니다.
 
+Linux 데스크톱 배포 준비: `tools/linux/README.md`. 사용자 권한 터치 창, 관리자 인증 도우미,
+키·상태를 보존하는 설치/제거 도구와 체크섬·라이선스가 포함된 묶음 생성기를 제공합니다.
+Debian 13 데스크톱 VM의 aarch64·x86_64에서 실제 systemd 설치·업그레이드·복구와
+Chromium·Firefox 등록·로그인·PIN·상주 키·취소·시간 초과 검증을 통과했습니다.
+환경과 증거는 [Linux 데스크톱 검증 기록](docs/LINUX_DESKTOP_VERIFICATION.md)에 있습니다.
+현재 `1209:0001`은 내부 시험용 PID이며, 자체 PID 배정과 서명된 릴리스 전에는 공개 바이너리로 배포하지
+않습니다. [PID 신청 초안](tools/pidcodes/README.md)은 준비했고 아직 제출하지 않았습니다.
+프로젝트 라이선스는 Apache-2.0(`LICENSE`)입니다.
+
 - 엔진은 전송 계층과 분리된 동기식 결정론 상태 기계입니다. 스레드, 시계, 파일, OS 호출이 없습니다. 같은
   입력, 같은 시각, 같은 난수에서 항상 같은 출력을 냅니다.
 - 대상: FIDO2/U2F(CTAP 2.1), OTP, OATH, PIV, OpenPGP, YubiHSM Auth, Security Domain(SCP03/SCP11),
@@ -69,7 +78,10 @@ QEMU 게스트에서 실제 호스트 소프트웨어로 검증했습니다.
 | `crates/lk-vpcd` | (프로그램) vsmartcard `vpcd` 리더의 가상 카드로 CCID 노출(PC/SC) |
 | `crates/localkeyd` | (프로그램) 데몬 바이너리: `keygen`, `run`, `ctl` |
 | `tools/service/` | systemd 유닛과 udev 규칙 예시(설치하지 않음) |
+| `tools/linux/`, `tools/package_linux.py` | Linux 데스크톱 터치 UI·제한된 polkit 도우미·설치/제거와 배포 묶음 생성(현재 내부 시험용) |
+| `.github/workflows/linux-preview.yml` | Linux x86_64·aarch64 빌드, 기존 검사, 헤드리스 UI·설치 스테이징 검사(게시하지 않음) |
 | `tools/linux-guest/` | 네트워크 없는 QEMU Linux 게스트를 만들고 실제 호스트 도구로 전송을 시험하는 스크립트 |
+| `tools/linux-desktop/` | systemd·실제 사용자 세션·실제 브라우저로 설치와 WebAuthn을 검증하는 aarch64·x86_64 VM |
 | `docs/` | 설계(`DESIGN.md`), 공개 API 계약(`CONTRACTS.md`), 프로그램 계약(`PROGRAM.md`), 상태(`STATUS.md`), 기준 키 비교(`MEASUREMENT.md`), 카탈로그 대조(`CATALOG_STATUS.md`, `catalog/`) |
 | `reference/` | 기준 키에서 읽은 공개 바이트, legacy 동작 카탈로그, 프로필 값 |
 | `tools/measure/` | 기준 키와 엔진에 같은 읽기 전용 요청을 보내 비교하는 도구(`docs/MEASUREMENT.md`) |
@@ -86,6 +98,7 @@ CARGO_BUILD_JOBS=2 cargo test -p lk-fido --lib -- --ignored   # 오래 걸리는
 python3 tools/license_check.py            # 라이선스 정책 검사
 python3 tools/license_check.py --write    # THIRD_PARTY.md 갱신
 python3 tools/catalog_status.py --check   # 카탈로그 대조표 검사 (--write로 갱신)
+python3 -m unittest discover -s tools/linux -p 'test_*.py'  # 배포·권한 경계 검사 (UI는 Xvfb에서)
 ```
 
 `cargo test`에는 OS 장치, 네트워크, 실물 키를 쓰는 테스트가 없습니다. 장치 시나리오는
@@ -156,7 +169,7 @@ loop {
     // `now`는 프로그램의 단조 시계(ms)입니다. 엔진은 시계를 읽지 않습니다.
     let input = wait_for_input_or(dev.next_deadline()); // 전송 입력이 없으면 Input::Tick
     for output in dev.handle(now(), input) {
-        match output {
+        match &output {
             Output::FidoReport(report) => { /* FIDO HID IN 리포트 */ }
             Output::OtpFeature(report) => { /* 다음 GET_REPORT 값 */ }
             Output::OtpKeyboard(report) => { /* 키보드 IN 리포트 */ }

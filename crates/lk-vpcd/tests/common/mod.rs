@@ -612,7 +612,7 @@ impl Harness {
     /// The next CCID message the transport sent to the runner.
     pub fn input(&self) -> BulkOut {
         match self.host_input(WAIT) {
-            HostInput::Ccid(message) => BulkOut::parse(&message),
+            HostInput::Ccid(ref message) => BulkOut::parse(message),
             other => panic!("the transport sent {other:?}, not a CCID message"),
         }
     }

@@ -62,7 +62,7 @@ use lk_run::{Command, HostInput, Status, Transport};
 
 use crate::ccid::{Assembled, Reassembler};
 use crate::configfs::{ConfigFs, first_udc};
-use crate::control::{Action, BusTracker, Control, OTP_FEATURE_LEN};
+use crate::control::{Action, BusTracker, Control};
 use crate::descriptor::{Layout, Role};
 use crate::ffs::{self, CtrlRequest, Event};
 use crate::io::{Ep0, Ep0File, GadgetIo, KernelIo};
@@ -345,7 +345,7 @@ struct Shared {
     runner: Sender<Command>,
     observer: Option<Observer>,
     /// The last `Output::OtpFeature` delivered, for the GET_REPORT in progress.
-    otp_feature: Mutex<Option<[u8; OTP_FEATURE_LEN]>>,
+    otp_feature: Mutex<Option<lk_crypto::SecretBytes>>,
 }
 
 impl Shared {
@@ -359,7 +359,7 @@ impl Shared {
         self.runner.send(Command::Input(input)).is_ok()
     }
 
-    fn otp_feature(&self) -> MutexGuard<'_, Option<[u8; OTP_FEATURE_LEN]>> {
+    fn otp_feature(&self) -> MutexGuard<'_, Option<lk_crypto::SecretBytes>> {
         // One assignment per update: a panic elsewhere cannot leave it inconsistent.
         self.otp_feature.lock().unwrap_or_else(PoisonError::into_inner)
     }
@@ -386,7 +386,7 @@ struct SessionState {
     changed: Condvar,
     /// The IN queues by endpoint role. Closing them (dropping the senders) ends the
     /// writer threads once they are idle.
-    queues: Mutex<Vec<(Role, SyncSender<Vec<u8>>)>>,
+    queues: Mutex<Vec<(Role, SyncSender<lk_crypto::SecretBytes>)>>,
     /// Raised when a re-enumeration starts draining the session (see the module docs).
     draining: AtomicBool,
     owed: Mutex<Owed>,
@@ -426,7 +426,7 @@ impl SessionState {
         self.configured.load(Ordering::SeqCst)
     }
 
-    fn queues(&self) -> MutexGuard<'_, Vec<(Role, SyncSender<Vec<u8>>)>> {
+    fn queues(&self) -> MutexGuard<'_, Vec<(Role, SyncSender<lk_crypto::SecretBytes>)>> {
         // Pushes and a clear only: a panic elsewhere cannot leave it inconsistent.
         self.queues.lock().unwrap_or_else(PoisonError::into_inner)
     }
@@ -770,6 +770,7 @@ impl GadgetTransport {
     /// that endpoint, after the session ended, or when its queue is full. A response
     /// ([`is_response`]) is owed from here until its writer has handled it.
     fn queue(&self, role: Role, data: Vec<u8>) {
+        let data = lk_crypto::SecretBytes::new(data);
         let Some(session) = &self.session else {
             return;
         };
@@ -820,13 +821,13 @@ impl Transport for GadgetTransport {
         }
     }
 
-    fn deliver(&mut self, output: Output) {
-        match output {
+    fn deliver(&mut self, mut output: Output) {
+        match &mut output {
             Output::FidoReport(report) => self.queue(Role::FidoIn, report.to_vec()),
             Output::OtpKeyboard(report) => self.queue(Role::OtpIn, report.to_vec()),
-            Output::Ccid(message) => self.queue(Role::CcidBulkIn, message),
-            Output::CcidInterrupt(message) => self.queue(Role::CcidInterruptIn, message),
-            Output::OtpFeature(report) => *self.shared.otp_feature() = Some(report),
+            Output::Ccid(message) => self.queue(Role::CcidBulkIn, std::mem::take(message)),
+            Output::CcidInterrupt(message) => self.queue(Role::CcidInterruptIn, std::mem::take(message)),
+            Output::OtpFeature(report) => *self.shared.otp_feature() = Some(lk_crypto::SecretBytes::from_slice(report)),
             Output::PresenceIndicator(_) | Output::Reenumerate(_) => {}
         }
     }
@@ -970,7 +971,7 @@ impl Ep0Loop {
                 "ack"
             }
             Action::Receive { length, then } => {
-                if let Ok(data) = self.ep0.receive(length)
+                if let Ok(data) = self.ep0.receive(length).map(lk_crypto::SecretBytes::new)
                     && let Some(input) = then.input(&data)
                 {
                     self.shared.send(input);
@@ -1083,7 +1084,7 @@ struct OtpWait {
 }
 
 impl OtpWait {
-    fn fetch(&mut self, shared: &Shared, state: &SessionState) -> Option<[u8; OTP_FEATURE_LEN]> {
+    fn fetch(&mut self, shared: &Shared, state: &SessionState) -> Option<lk_crypto::SecretBytes> {
         let deadline = Instant::now() + OTP_REPORT_TIMEOUT;
         if let Some(previous) = self.previous.take() {
             // During a drain the runner answers no marker: the earlier answer may still
@@ -1129,7 +1130,7 @@ impl OtpWait {
 /// with zeros to the report size (the report descriptor fixes 64 bytes); a zero-length
 /// read is ignored. Inputs are paced ([`Pacer`]).
 fn fido_read_loop(mut file: Box<dyn Read + Send>, shared: &Shared, state: &SessionState) {
-    let mut buffer = [0u8; crate::control::FIDO_REPORT_LEN];
+    let mut buffer = lk_crypto::SecretBytes::zeroed(crate::control::FIDO_REPORT_LEN);
     let mut pacer = Pacer::default();
     while !state.stopping() {
         let generation = state.generation();
@@ -1146,13 +1147,14 @@ fn fido_read_loop(mut file: Box<dyn Read + Send>, shared: &Shared, state: &Sessi
             Err(error) if error.kind() == io::ErrorKind::Interrupted => {}
             Err(_) => state.wait_change(generation, RETRY_WAIT),
         }
+        lk_crypto::wipe(&mut buffer);
     }
 }
 
 /// The CCID bulk OUT reader: one packet per read into the [`Reassembler`]. Inputs are
 /// paced ([`Pacer`]).
 fn ccid_read_loop(mut file: Box<dyn Read + Send>, mut reassembler: Reassembler, shared: &Shared, state: &SessionState) {
-    let mut buffer = vec![0u8; reassembler.read_len()];
+    let mut buffer = lk_crypto::SecretBytes::zeroed(reassembler.read_len());
     let mut pacer = Pacer::default();
     while !state.stopping() {
         let generation = state.generation();
@@ -1188,6 +1190,7 @@ fn ccid_read_loop(mut file: Box<dyn Read + Send>, mut reassembler: Reassembler, 
                 state.wait_change(generation, RETRY_WAIT);
             }
         }
+        lk_crypto::wipe(&mut buffer);
     }
 }
 
@@ -1195,7 +1198,7 @@ fn ccid_read_loop(mut file: Box<dyn Read + Send>, mut reassembler: Reassembler, 
 /// session stops. An item that cannot be written (the endpoint is disabled) is dropped.
 fn write_loop(
     mut file: Box<dyn Write + Send>,
-    items: &Receiver<Vec<u8>>,
+    items: &Receiver<lk_crypto::SecretBytes>,
     role: Role,
     zlp: Option<usize>,
     shared: &Shared,

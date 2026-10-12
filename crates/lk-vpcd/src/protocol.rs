@@ -191,7 +191,10 @@ pub fn read_message(reader: &mut dyn Read) -> io::Result<Option<Vec<u8>>> {
         }
     }
     let mut payload = vec![0; usize::from(u16::from_be_bytes(length))];
-    reader.read_exact(&mut payload)?;
+    if let Err(error) = reader.read_exact(&mut payload) {
+        lk_crypto::wipe_vec(&mut payload);
+        return Err(error);
+    }
     Ok(Some(payload))
 }
 

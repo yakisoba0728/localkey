@@ -1,0 +1,55 @@
+name: Linux preview checks
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            target: x86_64-unknown-linux-musl
+          - runner: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-musl
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 40
+    env:
+      CARGO_BUILD_JOBS: 2
+      RUSTUP_TOOLCHAIN: 1.98.1
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install build and UI test tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools python3-tk xvfb xauth shellcheck desktop-file-utils
+          rustup toolchain install 1.98.1 --profile minimal --component clippy --target '${{ matrix.target }}'
+      - name: Engine and program checks
+        run: |
+          cargo test --workspace --locked -- --include-ignored
+          cargo clippy --workspace --all-targets --locked -- -D warnings
+          python3 tools/license_check.py
+          python3 tools/catalog_status.py --check
+          python3 -m unittest discover -s tools/measure -p 'test_*.py'
+      - name: Desktop and installer checks
+        run: |
+          shellcheck tools/linux/install.sh tools/linux-desktop/*.sh
+          python3 -m py_compile tools/linux-desktop/*.py
+          desktop-file-validate tools/linux/localkey-touch.desktop
+          xvfb-run -a python3 -m unittest discover -s tools/linux -p 'test_*.py'
+      - name: Build and stage the private-test bundle
+        run: |
+          cargo build --release --locked -p localkeyd --target '${{ matrix.target }}'
+          python3 tools/package_linux.py --binary 'target/${{ matrix.target }}/release/localkeyd' \
+            --target '${{ matrix.target }}' --output "$RUNNER_TEMP/bundles" --development
+          tar -xzf "$RUNNER_TEMP"/bundles/*.tar.gz -C "$RUNNER_TEMP/bundles"
+          bundle=$(find "$RUNNER_TEMP/bundles" -mindepth 1 -maxdepth 1 -type d)
+          "$bundle/install.sh" install --development --destdir "$RUNNER_TEMP/stage"
+          test ! -e "$RUNNER_TEMP/stage/etc/localkey/storage.key"
+          "$bundle/install.sh" uninstall --destdir "$RUNNER_TEMP/stage"

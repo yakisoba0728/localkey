@@ -33,16 +33,25 @@ impl Inbox {
         let Some((frame, used)) = codec::decode(&self.buffer, origin)? else {
             return Ok(None);
         };
-        self.buffer.drain(..used);
+        let remaining = self.buffer.len() - used;
+        self.buffer.copy_within(used.., 0);
+        lk_crypto::wipe(&mut self.buffer[remaining..]);
+        self.buffer.truncate(remaining);
         Ok(Some((frame, used - HEADER_LEN)))
     }
 
     /// One read from `reader` into the buffer; `Ok(0)` is the end of the stream.
     pub(crate) fn fill(&mut self, reader: &mut impl Read) -> io::Result<usize> {
-        let mut chunk = [0; CHUNK];
+        let mut chunk = lk_crypto::SecretBytes::zeroed(CHUNK);
         let read = reader.read(&mut chunk)?;
-        self.buffer.extend_from_slice(&chunk[..read]);
+        lk_crypto::extend_secret(&mut self.buffer, &chunk[..read]);
         Ok(read)
+    }
+}
+
+impl Drop for Inbox {
+    fn drop(&mut self) {
+        lk_crypto::wipe_vec(&mut self.buffer);
     }
 }
 

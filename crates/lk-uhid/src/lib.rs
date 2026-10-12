@@ -236,13 +236,12 @@
 //! - Driver unbind: unbinding hid-generic (`/sys/bus/hid/drivers/hid-generic/unbind`)
 //!   sends `UHID_STOP` and removes the hidraw node (logged, the reader goes on); binding
 //!   again sends `UHID_START` (`dev_flags` 0). A DESTROY of a device that no driver has
-//!   bound gets no `UHID_STOP`: the reader stays blocked in `read()`. At shutdown that
-//!   costs [`DROP_TIMEOUT`] ("fido: the reader thread did not end in time"; the daemon
-//!   exited 1.1–1.4 s after its stdin closed); at a re-enumeration the old reader and its
-//!   file (holding no device) stay until the process exits. A blocking `read()` cannot be
-//!   woken without an event, and std offers `O_NONBLOCK` (`custom_flags`) but no
-//!   `poll(2)`, so only a reader that sleeps and retries could notice, at a cost on every
-//!   device all the time; not done. The same holds for a device that no driver ever binds.
+//!   bound gets no `UHID_STOP`. Readers now use nonblocking reads, retrying idle reads
+//!   after 20 ms and preserving partial events. Once the writer ends, an idle reader
+//!   closes its file even without STOP, including after re-enumeration or shutdown.
+//!   `UhidIo` implementations must supply nonblocking or timed reads. The former blocking
+//!   reader stayed behind in this case; the maintenance regression tests cover repeated
+//!   re-enumeration without STOP and partial reads across timeouts.
 //! - A hidraw client that writes 5000 reports as fast as it can (0.14–0.74 s) overruns the
 //!   kernel's 32-event queue: `uhid_queue` drops the excess and logs "Output queue is
 //!   full" once per dropped report with `hid_warn`, not rate-limited (22, 127, 196, 770

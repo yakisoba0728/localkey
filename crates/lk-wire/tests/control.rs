@@ -82,6 +82,21 @@ fn tap_long_sends_a_long_tap() -> TestResult {
 }
 
 #[test]
+fn pending_tap_reports_whether_the_runner_still_has_a_request() -> TestResult {
+    for waiting in [true, false] {
+        let dir = TestDir::new();
+        let mut current = status();
+        current.presence_pending = waiting;
+        let runner = FakeRunner::start(current, vec![]);
+        let server = serve(&dir, &runner)?;
+        let expected = if waiting { "ok\n" } else { "error no pending presence or sensor unavailable\n" };
+        assert_eq!(control(server.path(), "tap pending\n")?, expected);
+        assert_eq!(runner.next(), Seen::TapPending);
+    }
+    Ok(())
+}
+
+#[test]
 fn down_and_up_press_and_release_the_sensor() -> TestResult {
     let dir = TestDir::new();
     let runner = FakeRunner::plain();
@@ -304,7 +319,7 @@ fn a_stopped_runner_gives_an_error() -> TestResult {
     let (sender, receiver) = mpsc::channel::<Command>();
     drop(receiver);
     let server = ControlServer::bind(&dir.join("c"), sender)?;
-    for request in ["tap\n", "tap long\n", "down\n", "up\n", "power-cycle\n", "status\n", "watch\n"] {
+    for request in ["tap\n", "tap long\n", "tap pending\n", "down\n", "up\n", "power-cycle\n", "status\n", "watch\n"] {
         assert_eq!(control(server.path(), request)?, "error runner stopped\n", "{request:?}");
     }
     Ok(())

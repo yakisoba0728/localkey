@@ -1,0 +1,58 @@
+#!/usr/bin/python3 -I
+"""Root helper for polkit: fixed socket, four allowed requests, no shell commands."""
+import os
+import selectors
+import socket
+import sys
+
+CONTROL = "/var/lib/localkey/control.sock"
+REQUESTS = {("status",), ("watch",), ("tap",), ("tap", "long")}
+
+
+def relay(words, path, stdin, stdout):
+    request = tuple(words)
+    if request not in REQUESTS:
+        raise ValueError("allowed requests: status, watch, tap, tap long")
+    watch = request == ("watch",)
+    with socket.socket(socket.AF_UNIX) as stream:
+        stream.settimeout(None if watch else 30)
+        stream.connect(path)
+        line = "tap pending" if request == ("tap",) else " ".join(words)
+        stream.sendall((line + "\n").encode())
+        if watch:
+            with selectors.DefaultSelector() as ready:
+                ready.register(stream, selectors.EVENT_READ)
+                ready.register(stdin, selectors.EVENT_READ)
+                while True:
+                    for key, _ in ready.select():
+                        if key.fileobj is stdin:
+                            if not os.read(stdin.fileno(), 1024):
+                                return 0  # Closing the UI closes its root watcher too.
+                        else:
+                            data = stream.recv(4096)
+                            if not data:
+                                return 0
+                            stdout.write(data)
+                            stdout.flush()
+        reply = bytearray()
+        while data := stream.recv(4096):
+            reply.extend(data)
+            if len(reply) > 65536:
+                raise ValueError("control reply too long")
+        stdout.write(reply)
+        stdout.flush()
+        return 0 if reply.endswith(b"ok\n") else 1
+
+
+def main():
+    try:
+        if os.geteuid() != 0:
+            raise ValueError("use pkexec /usr/local/libexec/localkey-control")
+        return relay(sys.argv[1:], CONTROL, sys.stdin.buffer, sys.stdout.buffer)
+    except (OSError, ValueError) as error:
+        print(f"localkey-control: {error}", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

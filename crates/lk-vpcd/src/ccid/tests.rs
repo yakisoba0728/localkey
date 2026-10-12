@@ -253,7 +253,7 @@ fn a_chained_command_can_have_a_chained_response() {
     assert_eq!(exchange.accept(&data_block(1, 0x01, &[0xAA; 10])), Next::Send);
     assert_eq!(xfr_parts(&exchange.message(2), 2).0, level::RESPONSE_CONTINUATION);
     let done = exchange.accept(&data_block(2, 0x02, &[0x90, 0x00]));
-    let Next::Done(Response(response)) = done else { panic!("expected the response, got {done:?}") };
+    let Next::Done(Response(ref response)) = done else { panic!("expected the response, got {done:?}") };
     assert_eq!(response.len(), 12);
 }
 

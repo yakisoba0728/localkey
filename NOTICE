@@ -1,0 +1,11 @@
+localkey
+Copyright 2026 yakisoba0728 and localkey contributors
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+Third-party Rust components and their licenses are listed in THIRD_PARTY.md.
+Binary bundles include their original license and notice files in licenses/.
+Bundles also include the Rust standard-library copyright/license notices and
+the musl 1.2.5 COPYRIGHT for the static Linux runtime.
+
+localkey is an independent software security key. YubiKey and Yubico names are
+used to describe the reference device and optional interoperability tests.

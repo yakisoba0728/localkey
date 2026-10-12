@@ -5,7 +5,7 @@
 use std::fmt;
 use std::fs::OpenOptions;
 use std::io::{self, Read, Write};
-use std::os::unix::fs::FileTypeExt;
+use std::os::unix::fs::{FileTypeExt, OpenOptionsExt};
 use std::path::{Path, PathBuf};
 
 /// The two halves of one open UHID file: events from the kernel are read from the first,
@@ -19,9 +19,10 @@ pub type UhidHalves = (Box<dyn Read + Send>, Box<dyn Write + Send>);
 /// Each call to [`UhidIo::open`] is one `open("/dev/uhid")`: one file registers at most one
 /// device (`Documentation/hid/uhid.rst`). The reader gets one whole `struct uhid_event`
 /// per `read` of [`crate::event::UHID_EVENT_SIZE`] bytes and the writer takes one whole
-/// event per `write`; a test implementation must keep to that (a stream that the other
-/// side writes whole events to, as `UnixStream::pair()` halves do, is read correctly with
-/// `read_exact`).
+/// event per `write`. Test streams may split an event over several reads; the reader
+/// retains partial events across idle reads.
+/// Reads must be nonblocking or time out, so retirement can close a file even when the
+/// HID driver was unbound and the kernel sends no STOP event.
 pub trait UhidIo: Send + fmt::Debug {
     /// Open a new UHID file.
     fn open(&mut self) -> io::Result<UhidHalves>;
@@ -31,7 +32,7 @@ pub trait UhidIo: Send + fmt::Debug {
 pub const DEFAULT_UHID_PATH: &str = "/dev/uhid";
 
 /// The real [`UhidIo`]: opens a character device, `/dev/uhid` by default, for reading and
-/// writing (blocking, close-on-exec as std opens every file).
+/// writing (nonblocking on Linux, close-on-exec as std opens every file).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DevUhid {
     path: PathBuf,
@@ -60,7 +61,7 @@ impl UhidIo for DevUhid {
     /// device (a mistyped path must not become a regular file that swallows events).
     fn open(&mut self) -> io::Result<UhidHalves> {
         let file =
-            OpenOptions::new().read(true).write(true).open(&self.path).map_err(|error| {
+            OpenOptions::new().read(true).write(true).custom_flags(NONBLOCK_FLAGS).open(&self.path).map_err(|error| {
                 io::Error::new(error.kind(), format!("cannot open {}: {error}", self.path.display()))
             })?;
         if !file.metadata()?.file_type().is_char_device() {
@@ -73,6 +74,16 @@ impl UhidIo for DevUhid {
         Ok((Box::new(reader), Box::new(file)))
     }
 }
+
+// Linux O_NONBLOCK, with the same architecture overrides as lk-gadget's endpoint files.
+#[cfg(all(target_os = "linux", any(target_arch = "mips", target_arch = "mips64", target_arch = "mips32r6", target_arch = "mips64r6")))]
+const NONBLOCK_FLAGS: i32 = 0x0080;
+#[cfg(all(target_os = "linux", any(target_arch = "sparc", target_arch = "sparc64")))]
+const NONBLOCK_FLAGS: i32 = 0x4000;
+#[cfg(all(target_os = "linux", not(any(target_arch = "mips", target_arch = "mips64", target_arch = "mips32r6", target_arch = "mips64r6", target_arch = "sparc", target_arch = "sparc64"))))]
+const NONBLOCK_FLAGS: i32 = 0o4000;
+#[cfg(not(target_os = "linux"))]
+const NONBLOCK_FLAGS: i32 = 0;
 
 #[cfg(test)]
 mod tests {

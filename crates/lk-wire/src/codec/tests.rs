@@ -494,3 +494,19 @@ fn error_reasons_name_types_and_sizes() {
     assert_eq!(FrameError::Identity("trailing bytes").to_string(), "malformed IDENTITY: trailing bytes");
     assert_eq!(FrameError::Utf8 { frame_type: 0xFF }.to_string(), "frame type 0xff carries invalid UTF-8");
 }
+
+#[test]
+fn frame_cleanup_wipes_all_payload_kinds() {
+    let mut frames = [Frame::FidoOut([0xA5; 64]), Frame::FidoIn([0xA5; 64]),
+        Frame::OtpSetFeature([0xA5; 8]), Frame::OtpKeyboard([0xA5; 8]), Frame::OtpFeature([0xA5; 8]),
+        Frame::CcidBulkOut(vec![0xA5; 16]), Frame::CcidBulkIn(vec![0xA5; 16]), Frame::CcidInterrupt(vec![0xA5; 2])];
+    for frame in &mut frames {
+        frame.wipe();
+        match frame {
+            Frame::FidoOut(report) | Frame::FidoIn(report) => assert_eq!(*report, [0; 64]),
+            Frame::OtpSetFeature(report) | Frame::OtpKeyboard(report) | Frame::OtpFeature(report) => assert_eq!(*report, [0; 8]),
+            Frame::CcidBulkOut(bytes) | Frame::CcidBulkIn(bytes) | Frame::CcidInterrupt(bytes) => assert!(bytes.is_empty()),
+            _ => panic!("only payload frames are tested"),
+        }
+    }
+}
