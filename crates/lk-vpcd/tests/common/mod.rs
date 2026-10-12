@@ -541,11 +541,17 @@ impl Harness {
         Ok(Harness { ops, inputs, notices, attempts, seen, runner: Some(runner) })
     }
 
-    /// A harness enumerated with CCID, its connection accepted by `vpcd`.
+    /// A harness enumerated with CCID, with the accepted connection's peer check complete.
     pub fn connected(vpcd: &FakeVpcd) -> (Harness, Conn) {
         let harness = Harness::new(vpcd.addr());
         harness.enumerate(&with_ccid());
         let conn = vpcd.accept();
+        // TCP accept precedes the peer check and registration on the connection thread.
+        let deadline = Instant::now() + WAIT;
+        while harness.stats().connections == 0 {
+            assert!(Instant::now() < deadline, "the accepted connection was not registered");
+            thread::sleep(Duration::from_millis(5));
+        }
         (harness, conn)
     }
 
