@@ -13,17 +13,13 @@ pub(crate) enum Transaction {
     Assembling(Assembly),
     /// A complete request was handed to the application, which has not answered yet.
     Processing { cid: u32, cmd: u8 },
-    /// A `CTAPHID_CBOR` request with BCNT 0 holds the device without ever being answered
-    /// or handed to the application; only `CTAPHID_INIT` on `cid` or a USB reset ends it
-    /// (measured on a YubiKey 5C Nano 5.7.4: `docs/MEASUREMENT.md`, probe `empty-cbor`).
-    Stalled { cid: u32 },
 }
 
 impl Transaction {
     pub(crate) fn cid(&self) -> u32 {
         match self {
             Self::Assembling(assembly) => assembly.cid,
-            Self::Processing { cid, .. } | Self::Stalled { cid } => *cid,
+            Self::Processing { cid, .. } => *cid,
         }
     }
 }

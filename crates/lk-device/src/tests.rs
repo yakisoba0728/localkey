@@ -46,12 +46,27 @@ fn applet_lookup_by_df_name() {
     assert_eq!(dev.find_applet_for_test(&[0xA0, 0x00, 0x00, 0x05, 0x27, 0x21]), Some(AppId::Oath), "OATH comes before HSM Auth");
     assert_eq!(dev.find_applet_for_test(&[0xA0, 0x00, 0x00, 0x01, 0x51, 0x00, 0x00, 0x00]), Some(AppId::SecurityDomain));
     assert_eq!(dev.find_applet_for_test(&[0xA0, 0x00, 0x00, 0x01, 0x51]), Some(AppId::SecurityDomain));
-    assert_eq!(dev.find_applet_for_test(&[]), None, "an empty DF name selects nothing");
+    assert_eq!(dev.find_applet_for_test(&[]), Some(AppId::SecurityDomain), "an empty DF name is the ISD");
     assert_eq!(dev.find_applet_for_test(&[0xA0, 0x00, 0x00, 0x05, 0x27, 0x99]), None);
     dev.caps = Capabilities(Capabilities::ALL.0 & !Capabilities::OATH);
     assert_eq!(dev.find_applet_for_test(lk_oath::AID), None);
     assert_eq!(dev.find_applet_for_test(&[0xA0, 0x00, 0x00, 0x05, 0x27, 0x21]), Some(AppId::HsmAuth), "OATH disabled");
     assert_eq!(dev.find_applet_for_test(lk_mgmt::AID), Some(AppId::Management));
+}
+
+/// GP Card Specification v2.3.1 §11.9.2.3: "The Lc and data field of the SELECT command
+/// may be omitted if the Issuer Security Domain is being selected"; the issuer security
+/// domain is the Security Domain at the default ISD AID (§H.1.3, `lk_sd::AID`). An empty
+/// DF name selects it whatever the capabilities (it has no capability gate). Before, an
+/// empty name found nothing (`6A82`); unmeasured on the reference key.
+#[test]
+fn empty_df_name_selects_the_issuer_security_domain() {
+    let mut dev = device();
+    assert_eq!(AppId::SecurityDomain.aid(), lk_sd::AID);
+    assert_eq!(dev.find_applet_for_test(&[]), Some(AppId::SecurityDomain));
+    dev.caps = Capabilities(0);
+    assert_eq!(dev.find_applet_for_test(&[]), Some(AppId::SecurityDomain));
+    assert_eq!(dev.find_applet_for_test(lk_sd::AID), Some(AppId::SecurityDomain));
 }
 
 /// docs/MEASUREMENT.md, probe `select-partial-aid`, with the key's enabled set (`031A`:

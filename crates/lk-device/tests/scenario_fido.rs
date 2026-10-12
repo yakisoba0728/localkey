@@ -289,14 +289,17 @@ fn other_channel_is_busy_while_make_credential_waits() {
     assert_eq!(get_info(&mut rig, first).as_map().unwrap().len(), 17);
 }
 
-/// lk-fido `TOUCH_TIMEOUT_MS` (28.5 s) with CTAP 2.1 §6.1.2 step 14 ("If the user declines
+/// lk-fido `TOUCH_TIMEOUT_MS` (30 s, CTAP 2.1 §5 "User action timeout": "Thirty seconds
+/// is a reasonable value") with CTAP 2.1 §6.1.2 step 14 ("If the user declines
 /// permission, or the operation times out, then end the operation by returning
 /// CTAP2_ERR_OPERATION_DENIED"): without a touch the MakeCredential ends exactly when the
-/// timeout passes, after a KEEPALIVE every 95 ms; a touch afterwards does nothing.
-/// Measured on a YubiKey 5C Nano 5.7.4 for selection (docs/MEASUREMENT.md, probe
-/// selection-no-touch: 300 KEEPALIVEs, then the timeout answer 28 451.8 ms after the
-/// request); before the measurement this test expected 30 000 ms and 300 KEEPALIVEs
-/// after an immediate one, every 100 ms.
+/// timeout passes, after a KEEPALIVE every 95 ms; a touch afterwards does nothing. Known
+/// difference: the YubiKey 5C Nano 5.7.4 answers selection after 300 KEEPALIVEs,
+/// 28 451.8 ms after the request (docs/MEASUREMENT.md, probe selection-no-touch), its 30 s
+/// design value on a clock that runs about 5.4 % fast, not copied ("Revised by
+/// principle"). This test expected 28 500 ms and 300 KEEPALIVEs between the measurement
+/// and that revision, and 30 000 ms with 300 KEEPALIVEs after an immediate one, every
+/// 100 ms, before the measurement.
 #[test]
 fn make_credential_presence_timeout() {
     let mut rig = Rig::new();
@@ -317,12 +320,12 @@ fn make_credential_presence_timeout() {
             }
         }
     }
-    assert_eq!(lk_fido::TOUCH_TIMEOUT_MS, 28_500);
-    assert_eq!(answer, Some((start + 28_500, CTAPHID_CBOR, vec![status::OPERATION_DENIED])));
-    // One every 95 ms, the first one interval after the request; at 28 500 ms the
-    // keepalive timer fires just before the timeout (`presence.rs`: equal times fire in
-    // `Timer` order), so exactly 300 are sent.
-    let expected: Vec<u64> = (1..=300).map(|i| start + KEEPALIVE_INTERVAL_MS * i).collect();
+    assert_eq!(lk_fido::TOUCH_TIMEOUT_MS, 30_000);
+    assert_eq!(answer, Some((start + 30_000, CTAPHID_CBOR, vec![status::OPERATION_DENIED])));
+    // One every 95 ms, the first one interval after the request; the 315th is due at
+    // 29 925 ms and the 316th (30 020 ms) never comes, because the timeout at 30 000 ms
+    // ends the wait first.
+    let expected: Vec<u64> = (1..=315).map(|i| start + KEEPALIVE_INTERVAL_MS * i).collect();
     assert_eq!(keepalive_times, expected);
     assert!(rig.tap().iter().all(|o| !matches!(o, Output::FidoReport(_))));
 }

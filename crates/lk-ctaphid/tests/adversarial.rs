@@ -56,21 +56,17 @@ fn rejected_broadcast_init_allocates_no_channel() {
         error_events(BROADCAST, ERR_CHANNEL_BUSY)
     );
     assert_eq!(dev.respond(a, CBOR, &[0x00]).len(), 1);
-    // While an empty CBOR request stalls the device (docs/MEASUREMENT.md, probe
-    // empty-cbor). This step held a CTAPHID_LOCK before the measurement showed the
-    // device does not implement it (probe lock).
-    assert_eq!(dev.report(3, &init_packet(a, CBOR, 0, &[])), vec![]);
+    // An empty CBOR request is ERR_INVALID_LEN and holds nothing (CTAP 2.1 §11.2.9.1.2,
+    // §11.2.9.1.6). This step held a CTAPHID_LOCK before the measurement showed the
+    // device does not implement it (probe lock), and then the reference device's stall
+    // on an empty CBOR request (docs/MEASUREMENT.md, probe empty-cbor), a defect not
+    // copied ("Revised by principle").
     assert_eq!(
-        dev.report(3, &broadcast_init),
-        error_events(BROADCAST, ERR_CHANNEL_BUSY)
-    );
-    // INIT on the stalled channel frees the device and allocates nothing.
-    assert_eq!(
-        sends(&dev.report(4, &init_packet(a, INIT, 8, &[0x3C; 8]))).len(),
-        1
+        dev.report(3, &init_packet(a, CBOR, 0, &[])),
+        error_events(a, ERR_INVALID_LEN)
     );
     // Once free, the next identifier follows the first one directly.
-    assert_eq!(allocate(&mut dev, 5), a + 1);
+    assert_eq!(allocate(&mut dev, 3), a + 1);
 }
 
 #[test]

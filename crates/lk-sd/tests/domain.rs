@@ -11,8 +11,12 @@ use lk_sd::{AID, SecurityDomain};
 use lk_testkit::TestHost;
 
 /// `reference/yubikey-5c-nano-5.7.4/security-domain-reference-observation.json`,
-/// `select_public_template` (25 bytes).
+/// `select_public_template` (25 bytes): the reference omits `9F65` (a known difference,
+/// see `select_response_follows_gp_table_11_82`).
 const REF_SELECT: &str = "6f178408a000000151000000a50b730906072a864886fc6b01";
+/// The engine's SELECT response, 29 bytes: the reference template with `9F65 01 FF`
+/// added inside `A5` (GP Card Specification v2.3.1 §11.9.3.1, Table 11-82).
+const SELECT_FCI: &str = "6f1b8408a000000151000000a50f730906072a864886fc6b019f6501ff";
 /// Same file, `card_recognition_data` (63 bytes, the response to `00CA006600`).
 const REF_RECOGNITION: &str = "733d06072a864886fc6b01600c060a2a864886fc6b02020301630906072a864886fc6b03640b06092a864886fc6b040360640c060a2a864886fc6b04119b06";
 
@@ -41,19 +45,36 @@ fn restart(host: &mut TestHost) -> SecurityDomain {
     SecurityDomain::new(stored.as_deref(), host)
 }
 
-/// The reference SELECT command `00a4040008a00000015100000000` returns the observed
-/// 25-byte template in both profiles.
+/// The reference SELECT command `00a4040008a00000015100000000` returns the File Control
+/// Information of GP Card Specification v2.3.1 §11.9.3.1, Table 11-82, in both
+/// profiles (GlobalPlatform data, not identity): `6F` with `84` (AID) and `A5`, all
+/// mandatory, and in `A5` the optional `73` and the mandatory `9F65` "Maximum length of
+/// data field in command message". The value `FF` is the 255-byte limit of GP 2.3.1
+/// §11.1.5, this device's choice. P2 `0C` still answers `9000` without data.
+///
+/// Known difference (rule: specification over reference): a YubiKey 5C Nano 5.7.4
+/// omits `9F65` and answers 25 bytes (`select_public_template` of the reference
+/// observation, kept here as `REF_SELECT`); the engine answered those 25 bytes before.
 #[test]
-fn select_response_matches_reference() {
+fn select_response_follows_gp_table_11_82() {
     for profile in [DeviceProfile::own(1), DeviceProfile::yubikey_5c_nano_5_7_4(1)] {
         let mut host = TestHost::with_profile(profile);
         let mut sd = SecurityDomain::new(None, &mut host);
         assert_eq!(sd.aid(), AID);
         let resp = sd.select(&hex("00a4040008a00000015100000000"), &mut host);
-        assert_eq!(resp, [hex(REF_SELECT), hex("9000")].concat());
-        assert_eq!(resp.len() - 2, 25);
+        assert_eq!(resp, [hex(SELECT_FCI), hex("9000")].concat());
+        assert_eq!(resp.len() - 2, 29);
         assert_eq!(sd.select(&hex("00a4040c08a000000151000000"), &mut host), hex("9000"));
     }
+    // The reference template with `9F65 01 FF` appended inside `A5` (and both template
+    // lengths grown by 4): nothing else differs from the observation.
+    let reference = hex(REF_SELECT);
+    assert_eq!(reference.len(), 25);
+    let mut expected = reference.clone();
+    expected[1] += 4;
+    expected[13] += 4;
+    expected.extend_from_slice(&[0x9F, 0x65, 0x01, 0xFF]);
+    assert_eq!(expected, hex(SELECT_FCI));
 }
 
 /// GET DATA `0066` returns the observed 63 bytes.
@@ -96,7 +117,11 @@ fn cplc_layout_and_stability() {
     sd.select(&hex("00a4040008a000000151000000"), &mut host);
     assert_eq!(cplc(&mut sd, &mut host), first);
     let (mut s, mut ch) = open(&mut sd, &mut host, &StaticKeys::DEFAULT, 0xFF, 0x33);
+    // Through the channel (`84` unwrapped to `80`) the GP class returns the whole `9F7F`
+    // object (GP 2.3.1 §11.3.3.1), the same 42 bytes inside.
     let (data, sw) = send(&mut sd, &mut ch, &mut host, &mut s, 0x80, 0xCA, 0x9F, 0x7F, &[]);
+    assert_eq!((data, sw), ([&[0x9F, 0x7F, 0x2A][..], &first].concat(), 0x9000));
+    let (data, sw) = send(&mut sd, &mut ch, &mut host, &mut s, 0x00, 0xCA, 0x9F, 0x7F, &[]);
     assert_eq!((data, sw), (first.clone(), 0x9000));
     // Ordinary deletion of the SCP11b key keeps the CPLC.
     let (data, sw) = send(&mut sd, &mut ch, &mut host, &mut s, 0x80, 0xE4, 0x00, 0x00, &hex("D001 13D20101"));
@@ -168,7 +193,7 @@ fn get_response_is_discarded_by_an_intervening_command() {
 #[test]
 fn unserved_plaintext_commands_are_6982() {
     let (mut sd, mut host) = fresh();
-    assert_eq!(sd.select(&hex("00a4040008a000000151000000"), &mut host), [hex(REF_SELECT), hex("9000")].concat());
+    assert_eq!(sd.select(&hex("00a4040008a000000151000000"), &mut host), [hex(SELECT_FCI), hex("9000")].concat());
     for ins in [0x5E, 0x6E, 0x93] {
         assert_eq!(plain(&mut sd, &mut host, &[0x00, ins, 0x00, 0x00]), hex("6982"), "INS {ins:02X}");
     }
@@ -185,7 +210,8 @@ fn unserved_plaintext_commands_are_6982() {
 /// docs/MEASUREMENT.md, probe `cla-variants-sd`: `80 CA 00 66` answers the card
 /// recognition data inside its `66` template (GP 2.3.1 Annex H.2), 65 bytes `66 3F 73 3D
 /// ...`; `00 CA 00 66` answers the bare 63-byte `73` template. Before the measurement
-/// both classes got the bare template.
+/// both classes got the bare template. The other objects follow the same class rule
+/// (GP 2.3.1 §11.3.3.1, `gp_class_get_data_returns_whole_data_objects`).
 #[test]
 fn proprietary_class_card_data_has_the_66_template() {
     let (mut sd, mut host) = fresh();
@@ -196,8 +222,61 @@ fn proprietary_class_card_data_has_the_66_template() {
     // Ne applies to the wrapped form too.
     let first = plain(&mut sd, &mut host, &hex("80CA006610"));
     assert_eq!(status(&first), 0x6131);
-    // Other objects are unmeasured with CLA 80 and keep their plain form.
-    assert_eq!(plain(&mut sd, &mut host, &hex("80CA00E000")), plain(&mut sd, &mut host, &hex("00CA00E000")));
+    // Other objects come inside their tag too (GP 2.3.1 §11.3.3.1; unmeasured with CLA
+    // 80 on the reference key; they kept their plain form before).
+    let bare = plain(&mut sd, &mut host, &hex("00CA00E000"));
+    assert_eq!(plain(&mut sd, &mut host, &hex("80CA00E000")), [&[0xE0, 0x1A][..], &bare].concat());
+}
+
+/// GP Card Specification v2.3.1 §11.3.3.1: "bit b8 = 1" of CLA returns the full BER-TLV
+/// data object, b8 = 0 only its value, for every P1P2 except `2F00`; §11.1.4.1 Table
+/// 11-11 makes `80` and `84` GlobalPlatform classes; §11.3.3.1.1: "the key information
+/// is returned in the template 'E0'". So with CLA `80` in plaintext and `84` through a
+/// secure channel (unwrapped to `80`) every object comes inside the tag P1P2 names:
+/// `66`, `E0`, `9F7F`, `BF21`, `FF33`/`FF34`. CLA `00` (and `04` through a channel, as
+/// yubikit sends) keeps the bare values of the reference observation.
+///
+/// Known difference: the reference key's GP-class forms other than plaintext `80 CA 00
+/// 66` are unmeasured (docs/MEASUREMENT.md "What could not be measured"); before this
+/// change the engine answered them bare, and `84 CA 00 66` with the bare 63 bytes.
+#[test]
+fn gp_class_get_data_returns_whole_data_objects() {
+    let (mut sd, mut host) = fresh();
+    let recognition = hex(REF_RECOGNITION);
+    let info = key_info(&mut sd, &mut host);
+    let cplc = cplc(&mut sd, &mut host);
+    let bare_and_whole = |p1: u8, p2: u8, value: &[u8]| -> (Vec<u8>, Vec<u8>) {
+        let whole = match (p1, p2) {
+            (0x00, tag) => [&[tag, u8::try_from(value.len()).unwrap()][..], value].concat(),
+            (t1, t2) => [&[t1, t2, u8::try_from(value.len()).unwrap()][..], value].concat(),
+        };
+        (value.to_vec(), whole)
+    };
+    let objects = [
+        bare_and_whole(0x00, 0x66, &recognition),
+        bare_and_whole(0x00, 0xE0, &info),
+        bare_and_whole(0x9F, 0x7F, &cplc),
+    ];
+    for ((p1, p2), (bare, whole)) in [(0x00, 0x66), (0x00, 0xE0), (0x9F, 0x7F)].into_iter().zip(&objects) {
+        let resp = plain(&mut sd, &mut host, &[0x80, 0xCA, p1, p2, 0x00]);
+        assert_eq!(resp, [whole.clone(), hex("9000")].concat(), "80 CA {p1:02X}{p2:02X}");
+        let resp = plain(&mut sd, &mut host, &[0x00, 0xCA, p1, p2, 0x00]);
+        assert_eq!(resp, [bare.clone(), hex("9000")].concat(), "00 CA {p1:02X}{p2:02X}");
+    }
+    assert_eq!(objects[0].1.len(), 65);
+    assert_eq!(&objects[1].1[..2], &[0xE0, 0x1A]);
+    assert_eq!(objects[2].1.len(), 45);
+
+    let (mut s, mut ch) = open(&mut sd, &mut host, &StaticKeys::DEFAULT, 0xFF, 0x33);
+    for ((p1, p2), (bare, whole)) in [(0x00, 0x66), (0x00, 0xE0), (0x9F, 0x7F)].into_iter().zip(&objects) {
+        assert_eq!(send(&mut sd, &mut ch, &mut host, &mut s, 0x80, 0xCA, p1, p2, &[]), (whole.clone(), 0x9000), "84 CA {p1:02X}{p2:02X}");
+        assert_eq!(send(&mut sd, &mut ch, &mut host, &mut s, 0x00, 0xCA, p1, p2, &[]), (bare.clone(), 0x9000), "04 CA {p1:02X}{p2:02X}");
+    }
+    // Errors are the same in both classes.
+    assert_eq!(send(&mut sd, &mut ch, &mut host, &mut s, 0x80, 0xCA, 0x00, 0x01, &[]), (vec![], 0x6A88));
+    assert_eq!(send(&mut sd, &mut ch, &mut host, &mut s, 0x80, 0xCA, 0xFF, 0x33, &[]), (vec![], 0x6A88));
+    assert_eq!(send(&mut sd, &mut ch, &mut host, &mut s, 0x80, 0xCA, 0xBF, 0x21, &[]), (vec![], 0x6A80));
+    assert_eq!(plain(&mut sd, &mut host, &hex("80CA000100")), hex("6A88"));
 }
 
 /// PUT KEY of a whole set: KCVs returned (GP 2.3.1 §11.8.2.3), the factory set is
@@ -720,6 +799,6 @@ fn only_select_by_name_selects_the_domain() {
     assert_eq!((resp, new.is_some()), (hex("9000"), true), "the half-open handshake survived");
     // A SELECT by name through process() selects and ends the session.
     let resp = plain(&mut sd, &mut host, &hex("00A4040008A00000015100000000"));
-    assert_eq!(resp, hex("6f178408a000000151000000a50b730906072a864886fc6b019000"));
+    assert_eq!(resp, [hex(SELECT_FCI), hex("9000")].concat());
     assert!(!ch.is_open());
 }

@@ -168,6 +168,10 @@ fn nested_initialize_update_keeps_the_outer_channel() {
 
 /// lk-sd: commands for the selected Security Domain go through
 /// `SecurityDomain::process_secure` (GET DATA key information, GP 2.3.1 §11.3).
+/// `84 CA 00 E0` is a GlobalPlatform-class command, so the `C0` entries come inside the
+/// `E0` template (GP 2.3.1 §11.3.3.1, §11.3.3.1.1; they came bare before, and the
+/// reference key's GP-class form is unmeasured); `04 CA 00 E0`, as yubikit sends it,
+/// gets the bare entries.
 #[test]
 fn security_domain_commands_under_its_own_channel() {
     let mut rig = Rig::new();
@@ -175,11 +179,52 @@ fn security_domain_commands_under_its_own_channel() {
     assert_eq!(sw(&rig.select(AID_SD)), 0x9000);
     let mut session = Scp03::open(&mut rig);
     let get = session.wrap(0x80, 0xCA, 0x00, 0xE0, &[], Some(0));
+    let (whole, status) = session.unwrap(&rig.apdu(&get));
+    assert_eq!(status, 0x9000);
+    let get = session.wrap(0x00, 0xCA, 0x00, 0xE0, &[], Some(0));
     let (data, status) = session.unwrap(&rig.apdu(&get));
     assert_eq!(status, 0x9000);
     // The reference schema: `C0` key information entries, the first for SCP03 set 1
     // (`reference/yubikey-5c-nano-5.7.4/security-domain-reference-observation.json`).
     assert_eq!(&data[..6], &[0xC0, 0x04, 0x01, 0xFF, 0x88, 0x10]);
+    assert_eq!(whole, [&[0xE0, data.len() as u8][..], &data].concat());
+}
+
+/// ISO/IEC 7816-4:1995 §5.5.2: an encrypted SELECT whose (unwrapped) class codes logical
+/// channel 1 (`05`, unwrapped to `01`) is refused with `6881` (Table 16) before anything
+/// is selected (`card.rs` step 4): the selection, the PIV PIN verified under the channel
+/// and the channel itself stay, and the next wrapped command passes its R-MAC check.
+/// Before, any SELECT ended the session whatever its class. Unmeasured on the reference
+/// key.
+#[test]
+fn encrypted_select_on_another_logical_channel_keeps_the_session() {
+    let mut rig = Rig::new();
+    rig.power_on();
+    rig.select(AID_PIV);
+    let mut session = Scp03::open(&mut rig);
+    let verify = session.wrap(0x00, 0x20, 0x00, 0x80, &[0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0xFF, 0xFF], None);
+    assert_eq!(session.unwrap(&rig.apdu(&verify)), (vec![], 0x9000));
+    let select = session.wrap(0x01, 0xA4, 0x04, 0x00, AID_SD, Some(0));
+    assert_eq!(select[0], 0x05);
+    assert_eq!(rig.apdu(&select), vec![0x68, 0x81], "an error status comes back bare");
+    // Still PIV, still verified, still the same channel.
+    let status = session.wrap(0x00, 0x20, 0x00, 0x80, &[], None);
+    assert_eq!(session.unwrap(&rig.apdu(&status)), (vec![], 0x9000));
+    // A SELECT of the basic channel still ends the session after its response.
+    let select = session.wrap(0x00, 0xA4, 0x04, 0x00, AID_PIV, Some(0));
+    assert_eq!(session.unwrap(&rig.apdu(&select)).1, 0x9000);
+    assert_eq!(rig.apdu(&[0x00, 0x20, 0x00, 0x80]), vec![0x63, 0xC3], "the PIN status in plaintext: not verified");
+
+    // A plaintext SELECT on channel 1 inside a channel is still plaintext: it ends the
+    // session and its authorization (Yubico yk5-apps-scp), then answers `6881` and
+    // selects nothing (PIV stays selected, its PIN no longer verified).
+    let mut session = Scp03::open(&mut rig);
+    let verify = session.wrap(0x00, 0x20, 0x00, 0x80, &[0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0xFF, 0xFF], None);
+    assert_eq!(session.unwrap(&rig.apdu(&verify)), (vec![], 0x9000));
+    assert_eq!(rig.apdu(&apdu(0x01, 0xA4, 0x04, 0x00, AID_SD, Some(0))), vec![0x68, 0x81]);
+    assert_eq!(rig.apdu(&[0x00, 0x20, 0x00, 0x80]), vec![0x63, 0xC3], "PIV selected, PIN verification gone");
+    let status = session.wrap(0x00, 0x20, 0x00, 0x80, &[], None);
+    assert_eq!(rig.apdu(&status), vec![0x68, 0x82], "no channel left to unwrap it");
 }
 
 /// Catalog SecurityDomain_plaintext: plaintext handshake commands inside an established

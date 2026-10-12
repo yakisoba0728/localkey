@@ -37,8 +37,7 @@ fn generate_rsa2048_sig_and_sign() {
     assert_eq!(n.len(), 256);
     assert!(n[0] & 0x80 != 0);
     assert_eq!(e, vec![0x01, 0x00, 0x01]);
-    // Factory attestation key status 02 (was 01): docs/MEASUREMENT.md, probe openpgp-get-006e.
-    assert_eq!(card.key_status(), [0x01, 0x00, 0x00, 0x02]);
+    assert_eq!(card.key_status(), [0x01, 0x00, 0x00, 0x01]);
     assert_eq!(card.verify(0x81, b"123456"), 0x9000);
     let digest_info = digest_info_sha256(b"message");
     let (signature, sw) = card.sign(&digest_info);
@@ -232,8 +231,7 @@ fn generate_header_and_crt_rules() {
     for bad in ["B6 03 840102", "B8 03 840101", "A4 03 840181", "B7 00", "B6 00 00", "", "B6 01 00"] {
         assert_eq!(card.ext(0x47, 0x80, 0x00, &hex(bad)).1, 0x6A80, "{bad}");
     }
-    // Factory attestation key status 02 (was 01): docs/MEASUREMENT.md, probe openpgp-get-006e.
-    assert_eq!(card.key_status(), [0, 0, 0, 2]);
+    assert_eq!(card.key_status(), [0, 0, 0, 1]);
     // Extended CRTs with the matching reference are accepted.
     for (crt, index) in [("B6 03 840101", 0), ("B8 03 840102", 1), ("A4 03 840103", 2)] {
         assert_eq!(card.ext(0x47, 0x80, 0x00, &hex(crt)).1, 0x9000);

@@ -298,7 +298,10 @@ impl SecureChannel {
     /// - A missing or wrong C-MAC, malformed ciphertext or padding, or an unparsable APDU
     ///   ends the session; the error status is returned without R-MAC (Amd D §6.2.5).
     /// - An encrypted SELECT (`A4 04`) is unwrapped normally and ends the session after
-    ///   its response.
+    ///   its response, if it is a SELECT of the basic channel. One whose class codes
+    ///   another logical channel is refused by the device with `6881` without selecting
+    ///   anything (ISO/IEC 7816-4:1995 §5.5; lk-device `card.rs`), so it is not a session
+    ///   boundary and the session goes on.
     pub fn unwrap_command(&mut self, apdu: &[u8]) -> Result<Vec<u8>, u16> {
         self.awaiting = false;
         if self.state != State::Open || !self.is_current() {
@@ -375,7 +378,7 @@ impl SecureChannel {
             payload.to_vec()
         };
 
-        if is_select(&cmd) {
+        if is_select(&cmd) && on_basic_channel(cmd.cla) {
             self.state = State::CloseAfterResponse;
         }
         let plain = Command {
@@ -446,6 +449,14 @@ impl SecureChannel {
 /// a SELECT ends the session as a boundary; any other INS `A4` is an ordinary command.
 fn is_select(cmd: &Command) -> bool {
     cmd.ins == crate::ins::SELECT && cmd.p1 == 0x04
+}
+
+/// Whether a CLA codes the basic logical channel 0: bits b2-b1 clear in `00`-`3F` and
+/// `80`-`BF` (ISO/IEC 7816-4:1995 §5.5.2; GP 2.3.1 §11.1.4.1 Table 11-11); the further
+/// interindustry classes `40`-`7F` and `C0`-`FE` code channels 4-19 (GP 2.3.1 §11.1.4.2
+/// Table 11-12), and `FF` is invalid. The secure-messaging bits do not change it.
+fn on_basic_channel(cla: u8) -> bool {
+    matches!(cla, 0x00..=0x3F | 0x80..=0xBF) && cla & 0x03 == 0
 }
 
 /// Whether a status word is protected by R-MAC/R-ENCRYPTION: `9000` and the warning

@@ -176,7 +176,9 @@ CTAP_STATUS = {
     0x32: "PIN_BLOCKED",
     0x35: "PIN_NOT_SET",
     0x36: "PUAT_REQUIRED",
-    0x3E: "UNAUTHORIZED_PERMISSION",
+    # CTAP 2.1 §8.2. 0x33 (PIN_AUTH_INVALID) stays unnamed ("?"), as in the recorded runs.
+    0x3E: "INVALID_SUBCOMMAND",
+    0x40: "UNAUTHORIZED_PERMISSION",
     0x7F: "OTHER",
 }
 

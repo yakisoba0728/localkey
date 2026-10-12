@@ -1,21 +1,25 @@
 # Implementation status
 
-Updated 2026-10-11. Every engine phase of `docs/DESIGN.md` §10 is done. The program phase
-(`docs/DESIGN.md` §13, contract in `docs/PROGRAM.md`) has a working daemon with four
-transports; see "Program phase" below. The engine sections describe the state at the final
-engine integration (2026-10-10), plus the engine changes the program phase made (OTP HID
-reboot timing, complete zeroization, the SCP11 device check; `docs/CONTRACTS.md` "Program
-phase changes to the engine").
+Updated 2026-10-12. localkey is its own software security key; the YubiKey 5C Nano 5.7.4 is
+the reference it is compared against, not a device it copies (`docs/DESIGN.md` §2 and §12
+decision 8, `docs/CONTRACTS.md` "Reference, not replica"). Every engine phase of
+`docs/DESIGN.md` §10 is done. The program phase (`docs/DESIGN.md` §13, contract in
+`docs/PROGRAM.md`) has a working daemon with four transports; see "Program phase" below. The
+engine sections describe the state at the final engine integration (2026-10-10), plus the
+engine changes the program phase made (OTP HID reboot timing, complete zeroization, the
+SCP11 device check; `docs/CONTRACTS.md` "Program phase changes to the engine") and those
+that followed the comparison with the reference key ("Reference comparison" below).
 
 What "done" means here: behaviour is tested against the public specifications, published
-test vectors and the public bytes read from a real key (`reference/yubikey-5c-nano-5.7.4/`).
-On 2026-10-11 one physical YubiKey 5C Nano 5.7.4 was compared command by command with
-read-only probes (116 probes, `docs/MEASUREMENT.md`), and the engine adopted every
-behavioural difference that measurement established (37 probes differed before, 13 after;
-the 13 are state, host artifacts or unclear cases). Every status word, timing and cadence
-that neither a public source nor that measurement fixes is a model policy, recorded with
-its reasoning in the crate's catalog file (`docs/catalog/`). Nothing in this repository
-claims parity with the physical device.
+test vectors and the public bytes read from the reference key
+(`reference/yubikey-5c-nano-5.7.4/`). Where a specification defines a behaviour, the engine
+follows the specification, even where the reference differs (unless a widely used host stack
+depends on the reference's behaviour); where the specification leaves it open, the engine
+follows the reference; it never copies the reference's defects, and its default identity is
+its own. A **model policy** is a choice where neither a specification nor the reference fixes
+the behaviour; each one is recorded with its reasoning in the crate's catalog file
+(`docs/catalog/`). Nothing in this repository claims that the engine is identical to the
+reference key, and being identical is not the goal.
 
 ## Phases
 
@@ -70,6 +74,9 @@ access and a malformed plaintext SELECT after a secure channel ends.
   | lk-sd | 109 |
   | lk-device | 210 |
 
+  These per-crate counts are those of the final integration; the current workspace totals
+  are under "Program phase", "Verification (2026-10-12, after the revision by principle)".
+
 - `cargo clippy --workspace --all-targets`: no warnings.
 - `python3 tools/license_check.py`: no problems. 68 linked third-party crates, 10
   build-time only, all permissive, all reached only through lk-crypto. `cargo tree -d`
@@ -101,8 +108,8 @@ Behaviour the engine does not have:
 - **Management flags**: touch-eject, remote-wakeup and auto-eject are stored and reported,
   but nothing acts on them.
 
-Interop gaps the reviews found and left unchanged, because no public source shows the
-physical answer:
+Interop gaps the reviews found and left unchanged, because neither a specification nor the
+reference key shows the answer:
 
 - OpenSC's PIV GET CHALLENGE (GENERAL AUTHENTICATE with P1 `00`, P2 `9B`) answers `6A86`,
   so `pkcs11-tool --generate-random` may fail. This comes from the reviewer's recollection
@@ -122,11 +129,14 @@ physical answer:
   - one large-blob sequence edge answers `INVALID_SEQ`;
   - the OpenPGP KDF lock lifts once every user key is deleted.
 
-Model policies (unmeasured, documented in each catalog file):
+Model policies (neither a specification nor the reference fixes them; each is documented in
+its catalog file):
 
-- every status word no source or measurement fixes;
+- every status word that neither a specification nor the measurement of the reference
+  fixes;
 - the CCID time-extension cadence (500 ms);
 - the U2F request window and latch (3 s each);
+- the restart of the CTAPHID message timeout on every accepted packet;
 - Management configuration changes apply at the next enumeration; only `REBOOT`
   re-enumerates at once (ykman `config usb`, yubikit `set_mode`); over OTP HID the reboot
   follows the host's status read, or comes 1 s later (`OTP_REBOOT_DELAY_MS`, added in the
@@ -136,15 +146,60 @@ Model policies (unmeasured, documented in each catalog file):
 - the card touch timeouts (15 s);
 - the OTP button windows.
 
-Measured on a YubiKey 5C Nano 5.7.4 and adopted (`docs/MEASUREMENT.md`, "Engine changes"),
-no longer model policies: the KEEPALIVE cadence (95 ms, the first one an interval after the
-request), the FIDO user-presence timeout (28.5 s), the CTAPHID message timeout (470 ms),
-the 1536-byte request limit, `CTAPHID_LOCK` (not implemented: `ERR_INVALID_CMD`), the stall
-after an empty `CTAPHID_CBOR`, and the card and CTAP2 status words listed there.
-
 Upstream note: ecdsa 0.17 disagrees with rfc6979 on how to truncate P-521 digests of 66
 bytes or more, which can reveal the key. lk-crypto works around this, with tests. Filing
 it upstream (RustCrypto/signatures) is still to do.
+
+## Reference comparison
+
+The engine is compared with the reference key, not built to be identical to it. One
+read-only, command-by-command comparison was made on 2026-10-11: 116 probes, the same ones
+sent to a YubiKey 5C Nano 5.7.4 and to the engine. `docs/MEASUREMENT.md` holds the method,
+the data, every difference and what was decided about it; `docs/CONTRACTS.md` "Reference,
+not replica" holds the binding decision order and the table of the 2026-10-12 changes.
+
+- **Adopted from the reference** (the specification leaves it open, rule 2, or the protocol
+  is Yubico's own, rule 3): the KEEPALIVE cadence (95 ms, the first one an interval after
+  the request), the CTAPHID message timeout (470 ms), the 1536-byte request limit,
+  `CTAPHID_LOCK` not implemented (`ERR_INVALID_CMD`), getPINRetries without
+  `powerCycleState`, the Management SELECT text and DeviceInfo pages, CLA `80` in
+  Management, HSM Auth, PIV and OpenPGP, the statuses of an idle GET RESPONSE, and the other
+  card status words of `docs/MEASUREMENT.md` "Engine changes". SELECT by a partial DF name,
+  also adopted, is what ISO/IEC 7816-4 §6.11 allows (rule 1).
+- **Intentional differences decided on 2026-10-12** (`docs/MEASUREMENT.md` "Revised by
+  principle"):
+  - measured on the key, and now different by design:
+    - an empty `CTAPHID_CBOR` gets `ERR_INVALID_LEN` and holds nothing; the key stalls the
+      whole device (rule 4; CTAP 2.1 §11.2.4, §11.2.5.2);
+    - the FIDO user-presence timeout is 30 s, with 315 KEEPALIVEs; the key's 28.45 s and
+      300 KEEPALIVEs are a 30 s timer on a fast clock (rule 4; CTAP 2.1 §5);
+    - clientPIN getUVRetries answers `CTAP2_ERR_INVALID_SUBCOMMAND` (`3E`); the key `33`
+      (rule 1; CTAP 2.1 §8.1);
+    - PIV VERIFY with P2 `81` answers `6A88`; the key `6A80` (rule 1; SP 800-73-4 Part 2
+      §3.2.1);
+    - OpenPGP reports the factory attestation key as generated, `DE … 81 01`; the key `02`
+      (rule 1; OpenPGP card 3.4.1 §4.4.3.8);
+    - the Security Domain's SELECT response carries `9F65 01 FF` (29 bytes); the key's 25
+      bytes omit it (rule 1; GP 2.3.1 Table 11-82).
+  - required by the specification, not measured on the key (rule 1):
+    - GlobalPlatform-class GET DATA (`80`, and `84` through a secure channel) returns the
+      whole data object (GP 2.3.1 §11.3.3.1);
+    - an OCE CA public key's key information is `B0 40` (§11.3.3.1.1);
+    - a SELECT on a logical channel other than 0 answers `6881` and changes nothing; CLA
+      `FF` answers `6E00` (ISO/IEC 7816-4 §5.5);
+    - an empty DF name selects the Security Domain (GP 2.3.1 §11.9.2.3).
+  - identity (rule 5): the own profile reports form factor `00` (UNKNOWN); the
+    compatibility profile keeps the reference's `04`.
+- **Kept under the compatibility exception** (known deviations from SP 800-73-4 Part 2
+  §2.4.3): a PIV PIN may hold any byte other than `FF` (ykman offers alphanumeric PINs), and
+  `FF`×8 is never a valid PUK (yubikit's PIV reset relies on it).
+- **Against the recorded physical runs** (`docs/MEASUREMENT.md` "Comparison after the
+  revision"): 27 of 116 probes differ and 89 are identical (13 and 103 before the revision).
+  The 27 are key state (6 probes), unclear cases of CLA `0C` and of SELECT with odd P2
+  (5), one host artefact, and 15 probes that show the intentional differences above (one
+  of them, `cla-variants-sd`, also contains the unclear CLA `0C` case). `selection-no-touch`
+  compares as identical only within the tool's timing tolerances; by design it answers at
+  30 s, the key at 28.45 s.
 
 ## Program phase
 
@@ -165,6 +220,21 @@ transports and vpcd were then run on a real kernel with real host tools.
 
 All program crates are std only, without `unsafe`, like the engine. `tools/service/` holds
 a systemd unit and a udev rule as examples.
+
+### Verification (2026-10-12, after the revision by principle)
+
+- macOS: `cargo test --workspace` **2378 passed, 0 failed, 1 ignored** (the lk-fido long
+  repeat test). `cargo clippy --workspace --all-targets`: no warnings.
+  `tools/license_check.py` (78 third-party crates, all through lk-crypto) and
+  `tools/catalog_status.py --check` (451 lines: 372 tested, 13 of them partly deferred or
+  different, 37 intentional differences, 42 deferred): clean.
+- Linux (Docker, offline, `--network none`): **2379 passed, 0 failed, 1 ignored**; clippy clean.
+- Engine against the recorded physical runs (`docs/MEASUREMENT.md`, "Comparison after the
+  revision"): 27 of 116 probes differ, each explained as key state, host artefact, unclear,
+  or an intentional difference of the revision.
+- Guest scenarios (`uhid.sh`, `gadget.sh`, `vpcd.sh`, compatibility profile): rc=0 each.
+  The first `uhid.sh` attempt lost the head of the evdev key stream in step 4 under host
+  load (the hidraw reports were complete and correct); the re-run passed.
 
 ### Verification (2026-10-12, after the measurement alignment)
 
@@ -244,9 +314,12 @@ a systemd unit and a udev rule as examples.
 
 ## What is still open
 
-- **Measurement**: a command-by-command comparison with a physical key, only with the
-  user's explicit permission (DESIGN §13). It is the only way to turn the model policies
-  above into measured behaviour.
+- **Further measurement of the reference key**, only with the user's explicit permission
+  (DESIGN §13): what the comparison of 2026-10-11 could not reach (OTP and OATH, which are
+  disabled on the measured key; the card touch timeouts; the U2F window and latch; raw
+  CCID; SELECT with P2 other than `00` while PIV is selected; a broadcast INIT during a
+  touch wait; a repeated series for the message timeout). A result decides a model policy
+  by rule 2, or shows a design value by rule 4.
 - **macOS transports** (see "Known gaps of the program").
 - `Device` is `!Send`; `lk-run` builds it on its own thread, so nothing needs it to be
   `Send` now.

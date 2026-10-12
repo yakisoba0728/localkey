@@ -280,15 +280,20 @@ impl Authenticator {
             subcommand::GET_PIN_UV_AUTH_TOKEN_USING_PIN_WITH_PERMISSIONS => {
                 self.get_pin_uv_auth_token_using_pin(&req, host)
             }
-            // No built-in user verification: GetInfo has no "uv" option (§6.5.5.3).
-            // getUVRetries is answered CTAP2_ERR_PIN_AUTH_INVALID (0x33), measured on a
-            // YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probe client-pin-uv-retries;
-            // it was CTAP2_ERR_INVALID_SUBCOMMAND before the measurement).
-            subcommand::GET_UV_RETRIES => Err(status::PIN_AUTH_INVALID),
-            // getPinUvAuthTokenUsingUvWithPermissions (§6.5.5.7.3) was not measured.
-            subcommand::GET_PIN_UV_AUTH_TOKEN_USING_UV_WITH_PERMISSIONS => {
-                Err(status::INVALID_SUBCOMMAND)
-            }
+            // No built-in user verification: GetInfo has no "uv" option, so the UV
+            // subcommands are not implemented (getUVRetries counts "built-in UV attempts",
+            // §6.5.5.3; getPinUvAuthTokenUsingUvWithPermissions, §6.5.5.7.3). §8.1: "If the
+            // authenticator implements a command code having subcommands, but does not
+            // implement an invoked subcommand, it MUST return
+            // CTAP2_ERR_INVALID_SUBCOMMAND." Known difference: the YubiKey 5C Nano 5.7.4
+            // answers getUVRetries CTAP2_ERR_PIN_AUTH_INVALID (0x33), the pinUvAuthParam
+            // failure code of §8.2 (docs/MEASUREMENT.md, probe client-pin-uv-retries, and
+            // "Revised by principle"); the specification is followed (the note after the
+            // §8.1 rule allows for older authenticators that do not), and no host stack
+            // depends on 0x33. The engine copied 0x33 between the measurement and that
+            // revision.
+            subcommand::GET_PIN_UV_AUTH_TOKEN_USING_UV_WITH_PERMISSIONS
+            | subcommand::GET_UV_RETRIES => Err(status::INVALID_SUBCOMMAND),
             _ => Err(status::INVALID_SUBCOMMAND),
         }
     }

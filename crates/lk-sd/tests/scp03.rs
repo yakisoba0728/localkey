@@ -46,8 +46,15 @@ fn init_update_response_matches_independent_known_answer() {
     assert_eq!(resp, hex("00000000000000000000FF0360B0B1B2B3B4B5B6B72ACB7522D7BDC0EF9000"));
 }
 
-/// EXTERNAL AUTHENTICATE, a yubikit-style GET DATA with an encrypted empty field and a
-/// PUT KEY, byte for byte (Python/OpenSSL).
+/// EXTERNAL AUTHENTICATE, a GET DATA with an encrypted empty field and a PUT KEY, byte
+/// for byte (Python/OpenSSL).
+///
+/// The GET DATA has CLA `84`, a GlobalPlatform class (GP 2.3.1 §11.1.4.1 Table 11-11),
+/// so its answer is the whole `66` object, 65 bytes (GP 2.3.1 §11.3.3.1, b8 = 1). The
+/// wrapped response was recomputed independently with Python `cryptography` (response
+/// ICV `AES(S-ENC, 80 || 0..0 || counter 1)`, AES-CBC, R-MAC = CMAC(S-RMAC, C-MAC ||
+/// data || 9000), Amd D §6.2.6-§6.2.7) after the same script reproduced the earlier
+/// vector for the bare 63-byte template, which this command got before.
 #[test]
 fn wrapped_exchange_matches_independent_known_answers() {
     let (mut sd, mut host) = fresh();
@@ -64,7 +71,7 @@ fn wrapped_exchange_matches_independent_known_answers() {
     let resp = device_after_unwrap(&mut sd, &mut ch, &mut host, &hex("80CA006600"));
     assert_eq!(
         resp,
-        hex("BA129F0D0254595FFF25261EE94269B128845177C3FF9458433DAFFADD72718797BBC1BE0AB894C2579EFC0F688C2BCDB1E2097BC2E145AF133BD0DCE1F63948CA6C1F0DAF24F7409000")
+        hex("CC682FA78B3ECA5382D875B2E50AC8878502D0CF04454846E67E8FC4088741F250B71C907D9A91ADE06F9967D83D3CB8E366A2455D274D6CDCD202A4C508D33E6D3B00D64D8AF339C364BAFB15B0D45E1B67DE449B948C059000")
     );
 
     let cmd2 = hex(
@@ -100,16 +107,17 @@ fn full_handshake_at_every_security_level() {
             assert_eq!(ch.security_level(), lvl);
 
             // GET DATA 0066 through the channel: the raw wrapped response reveals the
-            // level.
+            // level. CLA `84` is a GlobalPlatform class, so the answer is the whole `66`
+            // object, 65 bytes (GP 2.3.1 §11.3.3.1).
             let apdu = s.wrap(0x80, 0xCA, 0x00, 0x66, &[], Some(0), false);
             let raw = device_transmit(&mut sd, &mut ch, &mut host, &apdu);
             let (data, sw) = s.unwrap(&raw).unwrap();
             assert_eq!(sw, 0x9000);
-            assert_eq!(data, hex("733d06072a864886fc6b01600c060a2a864886fc6b02020301630906072a864886fc6b03640b06092a864886fc6b040360640c060a2a864886fc6b04119b06"));
+            assert_eq!(data, hex("663f733d06072a864886fc6b01600c060a2a864886fc6b02020301630906072a864886fc6b03640b06092a864886fc6b040360640c060a2a864886fc6b04119b06"));
             let expected_len = match (lvl & level::R_ENCRYPTION != 0, lvl & level::R_MAC != 0) {
-                (true, true) => 64 + 8 + 2,
-                (false, true) => 63 + 8 + 2,
-                (false, false) => 63 + 2,
+                (true, true) => 80 + 8 + 2,
+                (false, true) => 65 + 8 + 2,
+                (false, false) => 65 + 2,
                 (true, false) => unreachable!(),
             };
             assert_eq!(raw.len(), expected_len, "level {lvl:02X}");
@@ -133,7 +141,7 @@ fn full_handshake_at_every_security_level() {
             assert_eq!((resp.len(), sw), (0, 0x6A88));
             let (resp, sw) = send(&mut sd, &mut ch, &mut host, &mut s, 0x80, 0xCA, 0x00, 0xE0, &[]);
             assert_eq!(sw, 0x9000);
-            assert_eq!(resp, hex("C004010188 10C004020188 10C004030188 10C00613 01B120F000"));
+            assert_eq!(resp, hex("E01A C004010188 10C004020188 10C004030188 10C00613 01B120F000"));
 
             // The new keys authenticate; the factory set is gone.
             let (_s2, _ch2) = open(&mut sd, &mut host, &new, 0x01, lvl);
@@ -267,7 +275,8 @@ fn extended_length_commands_mac_the_extended_lc() {
     assert_eq!(&plain[307..], &[0x00, 0x00]);
     let resp = device_after_unwrap(&mut sd, &mut ch, &mut host, &plain);
     let (data, sw) = s.unwrap(&resp).unwrap();
-    assert_eq!((data.len(), sw), (63, 0x9000));
+    // CLA `84`: the whole `66` object (GP 2.3.1 §11.3.3.1).
+    assert_eq!((data.len(), sw), (65, 0x9000));
 
     // Short data in the extended form (as Yubico's SDK sends it).
     let apdu = s.wrap(0x80, 0xCA, 0x00, 0xE0, &[], Some(0), true);
@@ -365,10 +374,33 @@ fn encrypted_select_protects_its_response_then_closes() {
     let resp = device_transmit(&mut sd, &mut ch, &mut host, &apdu);
     let (data, sw) = s.unwrap(&resp).unwrap();
     assert_eq!(sw, 0x9000);
-    assert_eq!(data, hex("6f178408a000000151000000a50b730906072a864886fc6b01"));
+    // GP 2.3.1 Table 11-82 FCI with `9F65` (the reference's 25 bytes lack it).
+    assert_eq!(data, hex("6f1b8408a000000151000000a50f730906072a864886fc6b019f6501ff"));
     assert!(!ch.is_open());
     let apdu = s.wrap(0x80, 0xCA, 0x00, 0xE0, &[], None, false);
     assert_eq!(ch.unwrap_command(&apdu), Err(0x6982));
+}
+
+/// An encrypted SELECT whose class codes another logical channel (`05`, unwrapped to
+/// `01`) is not a session boundary: lk-device answers it `6881` without selecting
+/// anything (ISO/IEC 7816-4:1995 §5.5.2; lk-device `card.rs`), so the session goes on and
+/// the next protected command works.
+#[test]
+fn encrypted_select_on_another_logical_channel_keeps_the_session() {
+    let (mut sd, mut host) = fresh();
+    let (mut s, mut ch) = open(&mut sd, &mut host, &StaticKeys::DEFAULT, 0xFF, 0x33);
+    let apdu = s.wrap(0x01, 0xA4, 0x04, 0x00, lk_sd::AID, Some(0), false);
+    assert_eq!(apdu[0], 0x05);
+    let plain = ch.unwrap_command(&apdu).unwrap();
+    assert_eq!(&plain[..4], &[0x01, 0xA4, 0x04, 0x00]);
+    assert_eq!(ch.wrap_response(&hex("6881")), hex("6881"), "error statuses are bare");
+    assert!(ch.is_open());
+    assert_eq!(send(&mut sd, &mut ch, &mut host, &mut s, 0x80, 0xCA, 0x00, 0x66, &[]).1, 0x9000);
+    // The same SELECT on the basic channel still ends the session after its response.
+    let apdu = s.wrap(0x00, 0xA4, 0x04, 0x00, lk_sd::AID, Some(0), false);
+    let (_, sw) = s.unwrap(&device_transmit(&mut sd, &mut ch, &mut host, &apdu)).unwrap();
+    assert_eq!(sw, 0x9000);
+    assert!(!ch.is_open());
 }
 
 /// Selecting another applet (the device calls `end_session`/`deselect`) or a reset ends
@@ -463,7 +495,7 @@ fn nested_handshake_through_an_outer_channel() {
     assert_eq!(outer.unwrap(&wrapped).unwrap(), (vec![], 0x9000));
     let mut ch = new.unwrap();
     let (data, sw) = send(&mut sd, &mut ch, &mut host, &mut inner, 0x80, 0xCA, 0x00, 0x66, &[]);
-    assert_eq!((data.len(), sw), (63, 0x9000));
+    assert_eq!((data.len(), sw), (65, 0x9000), "the whole `66` object for CLA `84`");
 }
 
 /// Command chaining with one C-MAC per part: the parts are unwrapped one by one, keep
@@ -559,7 +591,7 @@ fn extended_external_authenticate_macs_the_extended_lc() {
         assert_eq!(ch.is_some(), expected == 0x9000);
         let Some(mut ch) = ch else { continue };
         let (data, sw) = send_ext(&mut sd, &mut ch, &mut host, &mut s, 0x80, 0xCA, 0x00, 0x66, &[]);
-        assert_eq!((data.len(), sw), (63, 0x9000));
+        assert_eq!((data.len(), sw), (65, 0x9000), "the whole `66` object for CLA `84`");
         let new = StaticKeys::from_seed(0x31);
         let data = s.put_key_data(0x31, &new);
         assert_eq!(send_ext(&mut sd, &mut ch, &mut host, &mut s, 0x80, 0xD8, 0x00, 0x81, &data), (put_key_response(0x31, &new), 0x9000));

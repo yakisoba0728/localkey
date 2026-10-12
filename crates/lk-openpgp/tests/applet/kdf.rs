@@ -198,8 +198,7 @@ fn kdf_locked_while_a_key_exists() {
     use crate::common::{attr, crt, import_data};
     let mut card = Card::new();
     card.admin();
-    // Factory attestation key status 02 (was 01): docs/MEASUREMENT.md, probe openpgp-get-006e.
-    assert_eq!(card.key_status(), [0, 0, 0, 2]);
+    assert_eq!(card.key_status(), [0, 0, 0, 1]);
     let pw3 = s2k256(&SALT_PW3, b"12345678", 64);
     assert_eq!(card.put(0x00F9, &kdf_do(0x08, 64, None)), 0x9000);
     assert_eq!(card.verify(0x83, &pw3), 0x9000);
@@ -224,8 +223,7 @@ fn kdf_locked_while_a_key_exists() {
     // Removing the key (attribute change, spec §4.4.3.10) lifts the lock.
     assert_eq!(card.verify(0x83, &pw3), 0x9000);
     card.set_attributes(0x00C3, attr::P256_ECDSA);
-    // Factory attestation key status 02 (was 01): docs/MEASUREMENT.md, probe openpgp-get-006e.
-    assert_eq!(card.key_status(), [0, 0, 0, 2]);
+    assert_eq!(card.key_status(), [0, 0, 0, 1]);
     assert_eq!(card.put(0x00F9, &[0x81, 0x01, 0x00]), 0x9000);
 
     // An imported DEC key locks it too.

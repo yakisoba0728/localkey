@@ -40,7 +40,7 @@ Appendix B. Test names refer to `crates/lk-hsmauth`: `tests/derivation.rs`,
 - Labels are 1–64 UTF-8 bytes and may contain NUL (YESDK `Credential.Label`): `label_rules_count_utf8_bytes_and_compare_exactly`
 - 32 credentials (YESDK `AddCredentialCommand`): `capacity_is_32_credentials_then_no_space`
 
-## Model decisions (no public source fixes these)
+## Model decisions (neither Yubico's documentation, yubikit nor the reference key fixes these)
 
 - Which mismatches give `6984`: a card cryptogram or receipt that does not verify, or a context that does not carry the outstanding ephemeral key: `asymmetric_receipt_mismatch_is_rejected`, `asymmetric_calculate_without_challenge_is_rejected`
 - An optional `78` card cryptogram on a symmetric CALCULATE is verified (ykhsmauth `ykhsmauth_calculate_ex` adds `78` only when `card_crypto_len > YKHSMAUTH_CARD_CRYPTO_LEN` (8), so never for a symmetric session; YESDK never sends one; yubikit `calculate_session_keys_symmetric` sends it only when the caller passes `card_crypto`): `symmetric_card_cryptogram_is_verified_when_supplied`
@@ -65,7 +65,10 @@ Appendix B. Test names refer to `crates/lk-hsmauth`: `tests/derivation.rs`,
 
 Differential measurement of 2026-10-11 (docs/MEASUREMENT.md): the same read-only probes
 (`tools/measure/probes.py`) sent to the physical key and to the engine. Each answer below
-was a model decision and now follows the key. A numbered list, so that
+was a model decision and now follows the key: YubiHSM Auth is a Yubico-proprietary
+protocol, so Yubico's documentation and yubikit are its specification and the reference
+key their best evidence (rule 3 of `docs/CONTRACTS.md` "Reference, not replica"), and
+neither answer is a reference defect (rule 4). A numbered list, so that
 `tools/catalog_status.py` does not count these as catalog lines:
 
 1. GET RESPONSE with nothing pending answers `6D00`: measured on a YubiKey 5C Nano 5.7.4

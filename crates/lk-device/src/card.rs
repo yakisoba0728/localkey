@@ -27,7 +27,17 @@
 //!    the current channel and a new channel then replaces it (lk-sd crate docs; catalog
 //!    SecurityDomain_handoff).
 //! 4. **SELECT** (`xx A4 04 xx` only; `00 A4 00 0x` is OATH CALCULATE ALL,
-//!    `docs/CONTRACTS.md` "Applications A"). The applet whose AID is a prefix of the
+//!    `docs/CONTRACTS.md` "Applications A"). Only the basic channel is served: a
+//!    (unwrapped) CLA that codes another logical channel answers `6881` and changes
+//!    nothing, neither the selection nor the secure channel session (ISO/IEC 7816-4:1995
+//!    §5.5: a logical channel is opened by a SELECT carrying its number in the class
+//!    byte, and the ATR's card capabilities, third software function table byte `C0`,
+//!    say "no logical channel"; Table 16 `6881` "Logical channel not supported"). CLA
+//!    `FF` (ISO/IEC 7816-4:1995 Table 8: reserved for PTS) answers `6E00`. An empty DF
+//!    name selects the Security Domain, the issuer security domain (GP Card
+//!    Specification v2.3.1 §11.9.2.3: "The Lc and data field of the SELECT command may
+//!    be omitted if the Issuer Security Domain is being selected"). Otherwise the
+//!    applet whose AID is a prefix of the
 //!    DF name is selected (the longest such AID; ISO/IEC 7816-4 §5.3.1 selection by DF
 //!    name, with right-truncated PIV and OpenPGP AIDs). If there is none, a non-empty
 //!    DF name that is itself a prefix of an applet's AID selects that applet, the first
@@ -299,6 +309,12 @@ impl Device {
 
     /// Step 4: SELECT by DF name.
     fn select(&mut self, command: &[u8], wrap: bool, max: usize) -> Vec<u8> {
+        if let Some(refusal) = select_class_refusal(command) {
+            // Not a SELECT of the basic channel: nothing is selected or deselected and
+            // the secure channel session goes on (the channel does not treat it as a
+            // session boundary). `finish` still revokes if the channel ended.
+            return self.finish(None, apdu::status(refusal), wrap, max);
+        }
         self.apps.sd.end_session();
         if wrap {
             // An encrypted SELECT ends the session, and the authorization gained under it
@@ -336,6 +352,13 @@ impl Device {
     /// non-empty `name`, the first enabled applet in [`AppId::ALL`] order whose AID
     /// starts with `name` (selection by a partial DF name).
     ///
+    /// An empty `name` (`00 A4 04 00 00`, or no Lc and data field) selects the Security
+    /// Domain: GP Card Specification v2.3.1 §11.9.2.3, "The Lc and data field of the
+    /// SELECT command may be omitted if the Issuer Security Domain is being selected. In
+    /// this case, Le shall be set to '00'"; the Security Domain is the issuer security
+    /// domain at the default ISD AID `A000000151000000` (§H.1.3, `lk_sd::AID`) and has no
+    /// capability gate. It answered `6A82` before (unmeasured on the reference key).
+    ///
     /// Measured on a YubiKey 5C Nano 5.7.4 (`docs/MEASUREMENT.md`, probe
     /// `select-partial-aid`, OTP and OATH disabled, Management selected before):
     /// `A0000005` and `A000000527` select Management, `A0000003` PIV, `D276000124`
@@ -344,6 +367,9 @@ impl Device {
     /// (Management, OTP, OATH and HSM Auth for `A000000527`) is not established; table
     /// order reproduces the measurement.
     fn find_applet(&self, name: &[u8]) -> Option<AppId> {
+        if name.is_empty() {
+            return Some(AppId::SecurityDomain);
+        }
         AppId::ALL
             .into_iter()
             .filter(|&id| name.starts_with(id.aid()) && self.app_enabled(id))
@@ -351,7 +377,7 @@ impl Device {
             .or_else(|| {
                 AppId::ALL
                     .into_iter()
-                    .find(|&id| !name.is_empty() && id.aid().starts_with(name) && self.app_enabled(id))
+                    .find(|&id| id.aid().starts_with(name) && self.app_enabled(id))
             })
     }
 
@@ -457,6 +483,39 @@ fn is_select(command: &[u8]) -> bool {
     matches!(command, [_, 0xA4, 0x04, _, ..])
 }
 
+/// The logical channel a CLA codes, or `None` for the invalid class `FF`.
+///
+/// - `00`-`3F` and the proprietary `80`-`BF` (the GlobalPlatform classes `80`-`8F`
+///   among them, GP Card Specification v2.3.1 §11.1.4.1 Table 11-11): bits b2-b1
+///   (ISO/IEC 7816-4:1995 §5.4.1 Table 9, §5.5.2: "the bits b1 and b2 code the logical
+///   channel number"), channels 0-3.
+/// - The further interindustry classes `40`-`7F` and their proprietary counterparts
+///   `C0`-`FE` (ISO/IEC 7816-4:2005 §5.1.1 Table 3; GP 2.3.1 §11.1.4.2 Table 11-12):
+///   bits b4-b1 code channels 4 to 19.
+fn logical_channel(cla: u8) -> Option<u8> {
+    match cla {
+        0x00..=0x3F | 0x80..=0xBF => Some(cla & 0x03),
+        0x40..=0x7F | 0xC0..=0xFE => Some(4 + (cla & 0x0F)),
+        0xFF => None,
+    }
+}
+
+/// The status a SELECT gets from its (unwrapped) class alone, before anything else is
+/// looked at: `6881` for a logical channel other than the basic channel 0 (ISO/IEC
+/// 7816-4:1995 §5.5.1: the number of channels is in the card capabilities, and the
+/// ATR's third software function table byte `C0` has b5-b4 = `00` "no logical channel",
+/// Table 87; Table 16 `6881` "Logical channel not supported"; GP 2.3.1 Table 11-10
+/// `6881` "Logical channel not supported or is not active"), `6E00` for CLA `FF`
+/// (ISO/IEC 7816-4:1995 Table 8: reserved for PTS). `None`: a SELECT on the basic
+/// channel, processed normally.
+fn select_class_refusal(command: &[u8]) -> Option<u16> {
+    match logical_channel(*command.first()?) {
+        Some(0) => None,
+        Some(_) => Some(sw::LOGICAL_CHANNEL_NOT_SUPPORTED),
+        None => Some(sw::CLA_NOT_SUPPORTED),
+    }
+}
+
 /// Whether a SELECT response selected the applet (see the module documentation).
 fn selection_succeeded(response: &[u8]) -> bool {
     apdu::split_response(response).is_some_and(|(_, status)| status == sw::OK || matches!(status >> 8, 0x61..=0x63))
@@ -510,6 +569,26 @@ mod tests {
         assert!(is_select(&[0x84, 0xA4, 0x04, 0x0C]));
         assert!(!is_select(&[0x00, 0xA4, 0x00, 0x01]));
         assert!(!is_select(&[0x00, 0xA4, 0x04]));
+    }
+
+    /// ISO/IEC 7816-4:1995 §5.5.2 / ISO/IEC 7816-4:2005 Table 3 / GP 2.3.1 Table 11-12:
+    /// which logical channel a class byte codes; only channel 0 is a SELECT the device
+    /// serves (`6881` otherwise, `6E00` for `FF`). The encrypted GlobalPlatform SELECT
+    /// (`84`, unwrapped to `80`) and the chained and secure-messaging first
+    /// interindustry classes stay on channel 0.
+    #[test]
+    fn select_on_another_logical_channel_is_refused() {
+        for cla in [0x00u8, 0x04, 0x0C, 0x10, 0x80, 0x84, 0x90, 0x20] {
+            assert_eq!(logical_channel(cla), Some(0), "{cla:02X}");
+            assert_eq!(select_class_refusal(&[cla, 0xA4, 0x04, 0x00]), None, "{cla:02X}");
+        }
+        for (cla, channel) in [(0x01u8, 1), (0x02, 2), (0x03, 3), (0x13, 3), (0x81, 1), (0x87, 3), (0x40, 4), (0x4F, 19), (0x60, 4), (0x7F, 19), (0xC0, 4), (0xFE, 18)] {
+            assert_eq!(logical_channel(cla), Some(channel), "{cla:02X}");
+            assert_eq!(select_class_refusal(&[cla, 0xA4, 0x04, 0x00]), Some(sw::LOGICAL_CHANNEL_NOT_SUPPORTED), "{cla:02X}");
+        }
+        assert_eq!(logical_channel(0xFF), None);
+        assert_eq!(select_class_refusal(&[0xFF, 0xA4, 0x04, 0x00]), Some(sw::CLA_NOT_SUPPORTED));
+        assert_eq!(select_class_refusal(&[]), None);
     }
 
     /// docs/CONTRACTS.md "Applications B": `62xx` is a successful selection.

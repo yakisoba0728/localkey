@@ -227,16 +227,18 @@ fn selection_waits_for_a_touch() {
 }
 
 #[test]
-fn touch_timeout_is_the_measured_28_5_seconds() {
-    // docs/MEASUREMENT.md, probe selection-no-touch: selection without a touch is answered
-    // CTAP2_ERR_USER_ACTION_TIMEOUT 28 451.8 ms after the request, after 300 KEEPALIVEs;
-    // the engine waits 28 500 ms = 300 x 95 ms (lk-device KEEPALIVE_INTERVAL_MS). It was
-    // the model policy 30 000 ms before the measurement.
-    assert_eq!(crate::TOUCH_TIMEOUT_MS, 28_500);
+fn touch_timeout_is_30_seconds() {
+    // CTAP 2.1 §5 Terminology, "User action timeout": at least 10 seconds, "Thirty
+    // seconds is a reasonable value." Known difference: the YubiKey 5C Nano 5.7.4 answers
+    // selection without a touch after 28 451.8 ms (docs/MEASUREMENT.md, probe
+    // selection-no-touch), its 30 s design value on a clock that runs about 5.4 % fast;
+    // the clock drift is not copied ("Revised by principle"). This test expected 28 500 ms
+    // (300 x 95 ms) between the measurement and that revision.
+    assert_eq!(crate::TOUCH_TIMEOUT_MS, 30_000);
     let (mut auth, mut host) = device();
     assert_eq!(
         auth.cbor(&[0x0B], &mut host),
-        Outcome::NeedTouch { timeout_ms: 28_500 }
+        Outcome::NeedTouch { timeout_ms: 30_000 }
     );
     assert_eq!(
         auth.presence_resolved(false, &mut host),

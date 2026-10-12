@@ -122,6 +122,72 @@ fn unknown_aid_is_6a82_and_keeps_the_selection() {
     assert_eq!(sw(&config), 0x9000, "READ CONFIG still reaches Management");
 }
 
+/// ISO/IEC 7816-4:1995 §5.5.2-§5.5.3: the class byte of a SELECT codes the logical
+/// channel it is for, and a SELECT with another channel number opens that channel. This
+/// device has none (the ATR's third software function table byte `C0`: "no logical
+/// channel", Table 87), so a SELECT on channel 1-3 (CLA `01`-`03`, `81`-`83`) or 4-19
+/// (`40`-`7F`, `C0`-`FE`, GP 2.3.1 §11.1.4.2 Table 11-12) answers `6881` (Table 16
+/// "Logical channel not supported"; GP 2.3.1 Table 11-10) and changes nothing: the
+/// basic channel's selection and the Security Domain's half-open handshake stay. CLA
+/// `FF` (Table 8: reserved for PTS) answers `6E00`. Before, the class was ignored and
+/// the SELECT moved the basic channel's selection. Unmeasured on the reference key.
+#[test]
+fn select_on_another_logical_channel_answers_6881_and_changes_nothing() {
+    let mut rig = Rig::new();
+    rig.power_on();
+    rig.select(AID_MGMT);
+    let config = rig.apdu(&[0x00, 0x1D, 0x00, 0x00, 0x00]);
+    assert_eq!(sw(&config), 0x9000);
+    // A half-open SCP03 handshake (INITIALIZE UPDATE answered, EXTERNAL AUTHENTICATE
+    // still to come) would be dropped by a SELECT that ends the session.
+    let initialize = rig.apdu(&apdu(0x80, 0x50, 0x00, 0x00, &[0x11; 8], None));
+    assert_eq!((initialize.len(), sw(&initialize)), (29 + 2, 0x9000));
+    for cla in [0x01u8, 0x02, 0x03, 0x11, 0x81, 0x83, 0x40, 0x4F, 0x61, 0x7F, 0xC0, 0xC1, 0xFE] {
+        for aid in [AID_SD, AID_PIV, &[][..]] {
+            let select = apdu(cla, 0xA4, 0x04, 0x00, aid, Some(0));
+            assert_eq!(rig.apdu(&select), vec![0x68, 0x81], "CLA {cla:02X}, AID {aid:02X?}");
+        }
+    }
+    assert_eq!(rig.apdu(&apdu(0xFF, 0xA4, 0x04, 0x00, AID_SD, Some(0))), vec![0x6E, 0x00]);
+    // Management is still selected and answers as before.
+    assert_eq!(rig.apdu(&[0x00, 0x1D, 0x00, 0x00, 0x00]), config);
+    // The handshake was not dropped: an EXTERNAL AUTHENTICATE with a wrong C-MAC is
+    // checked against it (`6982`), where one without a pending handshake answers `6985`
+    // (lk-sd `handshake.rs`).
+    let external = rig.apdu(&apdu(0x84, 0x82, 0x33, 0x00, &[0u8; 16], None));
+    assert_eq!(external, vec![0x69, 0x82]);
+    assert_eq!(rig.apdu(&apdu(0x84, 0x82, 0x33, 0x00, &[0u8; 16], None)), vec![0x69, 0x85], "now nothing is pending");
+    // The basic channel still selects, with CLA `00` and the GlobalPlatform class `80`.
+    assert_eq!(sw(&rig.apdu(&apdu(0x80, 0xA4, 0x04, 0x00, AID_SD, Some(0)))), 0x9000);
+    assert_eq!(sw(&rig.select(AID_MGMT)), 0x9000);
+}
+
+/// GP Card Specification v2.3.1 §11.9.2.3: "The Lc and data field of the SELECT command
+/// may be omitted if the Issuer Security Domain is being selected. In this case, Le
+/// shall be set to '00'". `00 A4 04 00 00` selects the Security Domain (the ISD, §H.1.3)
+/// and answers its File Control Information (GP 2.3.1 Table 11-82); like every SELECT
+/// it ends a secure channel session. Before, an empty DF name answered `6A82`.
+/// Unmeasured on the reference key.
+#[test]
+fn empty_df_name_selects_the_security_domain() {
+    let mut rig = Rig::new();
+    rig.power_on();
+    rig.select(AID_MGMT);
+    let fci = hex("6F1B8408A000000151000000A50F730906072A864886FC6B019F6501FF9000");
+    assert_eq!(rig.apdu(&[0x00, 0xA4, 0x04, 0x00, 0x00]), fci);
+    assert_eq!(rig.select(AID_SD), fci, "the same answer as a SELECT by the full AID");
+    // The Security Domain is selected: its GET DATA `0066` answers.
+    rig.select(AID_MGMT);
+    assert_eq!(rig.apdu(&[0x00, 0xA4, 0x04, 0x00, 0x00]), fci);
+    let recognition = rig.apdu(&[0x00, 0xCA, 0x00, 0x66, 0x00]);
+    assert_eq!((recognition.len(), &recognition[..2], sw(&recognition)), (63 + 2, &[0x73, 0x3D][..], 0x9000));
+    // A secure channel session ends with it.
+    let mut session = Scp03::open(&mut rig);
+    assert_eq!(rig.apdu(&[0x00, 0xA4, 0x04, 0x00, 0x00]), fci);
+    let get = session.wrap(0x00, 0xCA, 0x00, 0x66, &[], Some(0));
+    assert_eq!(rig.apdu(&get), vec![0x69, 0x82], "no channel left to unwrap it");
+}
+
 /// Model policy (`card.rs` step 5): `6D00` with no application selected.
 #[test]
 fn no_selection_answers_6d00() {

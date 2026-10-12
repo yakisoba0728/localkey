@@ -5,17 +5,26 @@ the legacy v0.64 implementation) is mapped, in the file of the crate that owns i
 label:
 
 - `tested`: the named tests pass and exercise what the engine can show of the bullet;
-- `intentional difference`: the engine deliberately behaves or verifies differently, and
-  the line says why;
+- `intentional difference`: the engine deliberately behaves or verifies differently from
+  the bullet, or from the reference key, and the line says why. The reasons follow the
+  decision order of `docs/CONTRACTS.md` "Reference, not replica" (`docs/DESIGN.md` §2 and
+  §12 decision 8): a specification that defines the behaviour ("spec over reference", rule
+  1, or the host compatibility exception), the reference key where the specification is
+  open and the bullet says otherwise (rule 2), a reference defect not copied (rule 4), the
+  own identity (rule 5), or something the engine does not have by design (a program-phase
+  transport, legacy state, a legacy release artifact);
 - `deferred`: something the bullet needs is missing, and the line says what.
 
 "Tested" means tested against the specifications, published vectors and the public bytes
-in `reference/yubikey-5c-nano-5.7.4/`. It does not mean the engine was compared with a
-physical YubiKey. One read-only command-by-command measurement of a YubiKey 5C Nano 5.7.4
-was made (`docs/MEASUREMENT.md`); the lines it settled say "measured on a YubiKey 5C Nano
-5.7.4" with the probe, and four lines it contradicted are now intentional differences.
-Every other status word or timing that no public source fixes is a model policy recorded
-in the crate's file (`docs/DESIGN.md` §2, §13).
+read from the reference key, a YubiKey 5C Nano 5.7.4 (`reference/yubikey-5c-nano-5.7.4/`).
+It does not mean that the engine is identical to that key, which is not the goal. One
+read-only command-by-command comparison with the reference was made
+(`docs/MEASUREMENT.md`): the lines it settled say "measured on a YubiKey 5C Nano 5.7.4"
+with the probe; where a specification defines the answer and the key differs, the key's
+answer is recorded as an intentional difference (a known difference). A **model policy** is
+a choice where neither a specification nor the reference fixes the behaviour (the
+specification leaves it open and the reference was not measured, or its answer could not be
+observed); each one is recorded with its reasoning in the crate's file.
 
 ## Summary
 
@@ -35,16 +44,16 @@ label or this table is stale. The rule is the same for every file:
 <!-- BEGIN tools/catalog_status.py -->
 | Area | Crate | Tested | of which partly deferred or different | Intentional difference | Deferred | Lines | Mapping |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| FIDO2 / U2F | `lk-fido` | 42 | 0 | 3 | 0 | 45 | [catalog/fido.md](catalog/fido.md) |
+| FIDO2 / U2F | `lk-fido` | 42 | 1 | 3 | 0 | 45 | [catalog/fido.md](catalog/fido.md) |
 | OTP | `lk-otp` | 37 | 0 | 5 | 2 | 44 | [catalog/otp.md](catalog/otp.md) |
 | OATH | `lk-oath` | 22 | 1 | 3 | 0 | 25 | [catalog/oath.md](catalog/oath.md) |
-| Management | `lk-mgmt` | 8 | 1 | 2 | 0 | 10 | [catalog/mgmt.md](catalog/mgmt.md) |
+| Management | `lk-mgmt` | 8 | 2 | 2 | 0 | 10 | [catalog/mgmt.md](catalog/mgmt.md) |
 | PIV | `lk-piv` | 29 | 1 | 3 | 0 | 32 | [catalog/piv.md](catalog/piv.md) |
 | OpenPGP | `lk-openpgp` | 50 | 0 | 5 | 5 | 60 | [catalog/openpgp.md](catalog/openpgp.md) |
 | YubiHSM Auth | `lk-hsmauth` | 17 | 3 | 0 | 0 | 17 | [catalog/hsmauth.md](catalog/hsmauth.md) |
-| Security Domain / SCP03 / SCP11 | `lk-sd` | 100 | 0 | 9 | 11 | 120 | [catalog/sd.md](catalog/sd.md) |
-| Device / transports / storage | `lk-device` | 69 | 4 | 5 | 24 | 98 | [catalog/device.md](catalog/device.md) |
-| **All files** | | **374** | **10** | **35** | **42** | **451** | |
+| Security Domain / SCP03 / SCP11 | `lk-sd` | 98 | 0 | 11 | 11 | 120 | [catalog/sd.md](catalog/sd.md) |
+| Device / transports / storage | `lk-device` | 69 | 5 | 5 | 24 | 98 | [catalog/device.md](catalog/device.md) |
+| **All files** | | **372** | **13** | **37** | **42** | **451** | |
 
 Bullets owned by another crate's file (not counted above): 3. Unlabelled bullets: 0.
 <!-- END tools/catalog_status.py -->
@@ -84,17 +93,26 @@ Grouped from the `deferred` lines at the final integration (`python3 tools/catal
 - **Device** (24 lines): items that only exist in an OS program, such as UHID,
   FunctionFS, IOUSBHost, the IFD handler, browsers, kernel power management, file modes
   and process locks (`docs/DESIGN.md` §13), plus the catalog's "all firmware edge cases
-  and timing" row: every device timing is model policy until measured on hardware.
+  and timing" row: every device timing that neither a specification nor the measurement of
+  the reference fixes stays model policy.
 
 The intentional differences are mostly the same kind of program-phase or legacy item:
 legacy state migration, legacy release-artifact checks, SDK socket and IFD fixtures, and
 the separate legacy backend process. The rest are behaviour choices, each with its
 source in the crate's file:
 
-- OATH accepts an only-increasing challenge equal to the last one;
-- PIV rejects an explicit Le on GENERAL AUTHENTICATE;
-- the Security Domain deletes a key at zero tries;
-- `Input::FidoReport` is exactly 64 bytes.
+- choices against the legacy bullet: OATH accepts an only-increasing challenge equal to the
+  last one; PIV accepts an explicit Le on GENERAL AUTHENTICATE (SP 800-73-4 allows it); the
+  Security Domain deletes a key at zero tries; `Input::FidoReport` is exactly 64 bytes;
+- the reference key where the specification is open (rule 2), against the legacy bullet:
+  requests over 1536 bytes are refused (no 7609-byte PING), OpenPGP GET RESPONSE during an
+  unfinished chain answers `6D00`, OpenPGP GET DATA accepts chaining CLA `10`;
+- known differences from the reference key (2026-10-12): the Security Domain's SELECT
+  response carries `9F65` (spec over reference). Others are recorded inside `tested` lines
+  or in the note sections, which are not counted: the empty `CTAPHID_CBOR` and the 30 s
+  presence timeout (reference defects not copied), getUVRetries `3E`, PIV VERIFY `81`
+  `6A88` and the OpenPGP factory attestation key status `01` (spec over reference), and the
+  own profile's form factor `00` (own identity).
 
 ## Per-crate mapping
 
@@ -111,4 +129,5 @@ source in the crate's file:
 | Device, transports, storage | [catalog/device.md](catalog/device.md) | `lk-device` (with `lk-ctaphid`, `lk-ccid`) |
 
 Each file also records the model policies of its crate (status words, timings and other
-choices no public source fixes) and the findings of its reviews.
+choices that neither a specification nor the reference key fixes), the known differences
+from the reference, and the findings of its reviews.

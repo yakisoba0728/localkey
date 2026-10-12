@@ -197,7 +197,9 @@ fn every_application_survives_a_restart() {
     let get = session.wrap(0x80, 0xCA, 0x00, 0xE0, &[], Some(0));
     let (info, status) = session.unwrap(&rig.apdu(&get));
     assert_eq!(status, 0x9000);
-    assert_eq!(&info[..4], &[0xC0, 0x04, 0x01, 0x02], "key information names KVN 02");
+    // `84 CA 00 E0` is a GlobalPlatform-class command: the `C0` entries come inside the
+    // `E0` template (GP 2.3.1 §11.3.3.1, §11.3.3.1.1; they came bare before).
+    assert_eq!(&info[..6], &[0xE0, 0x1A, 0xC0, 0x04, 0x01, 0x02], "key information names KVN 02");
 }
 
 /// `docs/CONTRACTS.md` "Persisted state": records that do not open under the storage key

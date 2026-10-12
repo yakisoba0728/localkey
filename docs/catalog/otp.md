@@ -58,7 +58,7 @@ Test names refer to `crates/lk-otp`: `tests/hid_protocol.rs`, `tests/modes.rs`,
 
 ## Other model decisions (no catalog bullet)
 
-- Factory state has both slots empty (a real key ships with a Yubico-cloud slot 1 credential, which this engine cannot reproduce).
+- Factory state has both slots empty (a real key ships with a Yubico-cloud slot 1 credential; that credential is Yubico's identity, not this key's, so the own identity carries none: rule 5 of `docs/CONTRACTS.md` "Reference, not replica").
 - Fast trigger applies when slot 1 is touch-triggered and slot 2 is not configured.
 - A dormant slot counts as configured (`CONFIGx_VALID`) but not touch-triggered; it types nothing and refuses challenge-response.
 - NDEF slot commands (`0x08`/`0x09`) are rejected: the 5C Nano has no NFC interface.

@@ -80,84 +80,57 @@ fn msg_and_vendor_commands_reach_the_application() {
 }
 
 #[test]
-fn empty_cbor_request_stalls_the_device_until_init_on_its_channel() {
-    // Measured on a YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probe empty-cbor, and
-    // "The stuck-channel incident"): CTAPHID_CBOR with BCNT 0 is never answered (no
-    // answer, no KEEPALIVE within 2 s); another channel's PING is ERR_CHANNEL_BUSY;
-    // CANCEL on the channel is not answered and changes nothing (still busy 3 s after
-    // the request); INIT on the channel is answered with the same CID and frees the
-    // device. This test asserted ERR_INVALID_LEN before the measurement (CTAP 2.1
-    // §11.2.9.1.2 asks for at least the command byte but names no error).
+fn empty_cbor_request_is_invalid_len() {
+    // CTAP 2.1 §11.2.9.1.2: a CBOR request carries at least the command byte.
     let mut dev = device();
-    let a = allocate(&mut dev, 0);
-    let b = allocate(&mut dev, 0);
-    assert_eq!(dev.report(1, &init_packet(a, CBOR, 0, &[])), vec![]);
-    // Nothing reaches the application, and no timer will ever end the stall.
+    let cid = allocate(&mut dev, 0);
+    assert_eq!(
+        dev.report(1, &init_packet(cid, CBOR, 0, &[])),
+        error_events(cid, ERR_INVALID_LEN)
+    );
     assert_eq!(dev.outstanding(), None);
     assert_eq!(dev.next_deadline(), None);
-    assert_eq!(dev.tick(2_000), vec![]);
-    assert_eq!(dev.tick(u64::MAX / 2), vec![]);
-    // Another channel is busy, and so is the stalled channel itself for anything but INIT.
-    assert_eq!(
-        dev.report(2_000, &init_packet(b, PING, 1, &[0x5A])),
-        error_events(b, ERR_CHANNEL_BUSY)
-    );
-    assert_eq!(
-        dev.report(2_000, &init_packet(BROADCAST, INIT, 8, &[1; 8])),
-        error_events(BROADCAST, ERR_CHANNEL_BUSY)
-    );
-    assert_eq!(
-        dev.report(2_000, &init_packet(a, PING, 1, &[0x5A])),
-        error_events(a, ERR_CHANNEL_BUSY)
-    );
-    assert_eq!(
-        dev.report(2_000, &init_packet(a, CBOR, 1, &[0x04])),
-        error_events(a, ERR_CHANNEL_BUSY)
-    );
-    // CANCEL on the channel: never answered, no Cancel for the application, still busy.
-    assert_eq!(dev.report(2_001, &init_packet(a, CANCEL, 0, &[])), vec![]);
-    assert_eq!(
-        dev.report(3_000, &init_packet(b, PING, 1, &[0x5A])),
-        error_events(b, ERR_CHANNEL_BUSY)
-    );
-    // A malformed INIT is not a resynchronisation.
-    assert_eq!(
-        dev.report(3_000, &init_packet(a, INIT, 7, &[1; 7])),
-        error_events(a, ERR_INVALID_LEN)
-    );
-    assert_eq!(
-        dev.report(3_000, &init_packet(b, PING, 1, &[0x5A])),
-        error_events(b, ERR_CHANNEL_BUSY)
-    );
-    // INIT on the stalled channel: an INIT answer with the same CID (no Abort, the
-    // application never had the request), and the device is free again.
-    let reports = sends(&dev.report(3_001, &init_packet(a, INIT, 8, &[7; 8])));
-    let (cid, cmd, payload) = reassemble(&reports);
-    assert_eq!((cid, cmd), (a, INIT));
-    assert_eq!(&payload[..8], &[7; 8]);
-    assert_eq!(&payload[8..12], &a.to_be_bytes(), "same CID");
-    assert_ping_echo(&mut dev, 3_002, b, 1);
-    assert_ping_echo(&mut dev, 3_002, a, 1);
+    assert_ping_echo(&mut dev, 2, cid, 1);
 }
 
 #[test]
-fn empty_cbor_stall_ignores_a_late_respond_and_ends_with_a_usb_reset() {
-    // docs/MEASUREMENT.md, probe empty-cbor: only INIT on the channel was seen to end
-    // the stall. A USB reset drops every transaction and channel (`Ctaphid::reset`), so
-    // it ends the stall as well (model policy: not measured). A stray `respond` for the
-    // channel frames nothing, because the application never had the request.
+fn empty_cbor_request_holds_nothing_on_any_channel() {
+    // CTAP 2.1 §11.2.9.1.2 ("BCNT 1..(n + 1)") and §11.2.9.1.6 (ERR_INVALID_LEN, "The
+    // length field (BCNT) is invalid for the request"): the empty request is refused at
+    // once and ends there. Other channels are served right away, CANCEL on the channel
+    // finds nothing to cancel and a stray `respond` frames nothing.
+    //
+    // Known difference (docs/MEASUREMENT.md, probe empty-cbor, "The stuck-channel
+    // incident" and "Revised by principle"): the YubiKey 5C Nano 5.7.4 never answers this
+    // request and stays busy (other channels ERR_CHANNEL_BUSY, CANCEL ignored, no timeout)
+    // until INIT on the channel. That stall is a defect not copied: "A request always
+    // triggers a response" (§11.2.4) and a stalling application must not lock the device
+    // out (§11.2.5, §11.2.5.2). This test asserted the stall between the measurement and
+    // that revision.
     let mut dev = device();
     let a = allocate(&mut dev, 0);
-    assert_eq!(dev.report(1, &init_packet(a, CBOR, 0, &[])), vec![]);
-    assert_eq!(dev.respond(a, CBOR, &[0x00]), Vec::<Report>::new());
+    let b = allocate(&mut dev, 0);
     assert_eq!(
-        dev.report(2, &init_packet(a, PING, 0, &[])),
-        error_events(a, ERR_CHANNEL_BUSY),
-        "still stalled"
+        dev.report(1, &init_packet(a, CBOR, 0, &[])),
+        error_events(a, ERR_INVALID_LEN)
     );
-    dev.reset();
-    let fresh = allocate(&mut dev, 3);
-    assert_ping_echo(&mut dev, 3, fresh, 1);
+    assert_eq!(dev.outstanding(), None);
+    assert_eq!(dev.next_deadline(), None);
+    assert_eq!(dev.tick(2_000), vec![]);
+    assert_ping_echo(&mut dev, 2, b, 1);
+    assert_eq!(allocate(&mut dev, 2), b + 1, "broadcast INIT is not kept out");
+    assert_eq!(dev.report(3, &init_packet(a, CANCEL, 0, &[])), vec![]);
+    assert_eq!(dev.respond(a, CBOR, &[0x00]), Vec::<Report>::new());
+    // A real CBOR request on the same channel then reaches the application.
+    assert_eq!(
+        dev.report(4, &init_packet(a, CBOR, 1, &[0x04])),
+        vec![Event::Request {
+            cid: a,
+            cmd: CBOR,
+            payload: vec![0x04]
+        }]
+    );
+    assert_eq!(dev.respond(a, CBOR, &[0x00]).len(), 1);
 }
 
 #[test]

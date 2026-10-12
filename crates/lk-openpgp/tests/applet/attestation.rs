@@ -119,8 +119,7 @@ fn rsa_spki(n: &[u8], e: &[u8]) -> Vec<u8> {
 fn fresh_applet_provisions_rsa2048_issuer() {
     let mut card = Card::fresh(TestHost::new().seeded(4242));
     assert!(card.host.persisted(Record::OpenPgp).is_some());
-    // Factory attestation key status 02 (was 01): docs/MEASUREMENT.md, probe openpgp-get-006e.
-    assert_eq!(card.key_status(), [0, 0, 0, 0x02]);
+    assert_eq!(card.key_status(), [0, 0, 0, 0x01]);
     assert_eq!(card.get_ok(0x00DA), hex(attr::RSA2048));
     let (n, e) = issuer_rsa(&mut card);
     assert_eq!(n.len(), 256);
@@ -200,7 +199,9 @@ fn attest_generated_sig_key() {
     assert_eq!(cert.extension(6), Some(&hex("020102")[..]));
     assert_eq!(cert.extension(7), Some(&der::integer_u64(12_345_678)[..]));
     assert_eq!(cert.extension(8), Some(&hex("0401 02")[..]));
-    assert_eq!(cert.extension(9), Some(&hex("0401 04")[..]));
+    // The own profile's form factor byte, whatever it is (`form_factor_extension_follows_the_profile`).
+    let form_factor = DeviceProfile::own(12_345_678).form_factor;
+    assert_eq!(cert.extension(9), Some(&der::octet_string(&[form_factor])[..]));
     // Attestation does not move the signature counter.
     assert_eq!(card.signature_counter(), 2);
     // Two attestations differ (fresh serial).
@@ -345,8 +346,7 @@ fn reset_retains_issuer_and_signs_new_keys() {
     assert_eq!(card.send(&hex("00E60000")).1, 0x9000);
     assert_eq!(card.send(&hex("00440000")).1, 0x9000);
     card.reload();
-    // Factory attestation key status 02 (was 01): docs/MEASUREMENT.md, probe openpgp-get-006e.
-    assert_eq!(card.key_status(), [0, 0, 0, 0x02]);
+    assert_eq!(card.key_status(), [0, 0, 0, 0x01]);
     assert_eq!(card.get_ok(0x00FC), issuer_certificate);
     assert_eq!(issuer_rsa(&mut card), (n.clone(), e.clone()));
     card.admin();
@@ -418,7 +418,27 @@ fn yubikey_profile_names() {
     assert_eq!(Cert::common_name(&cert.subject), "YubiKey OPGP Attestation AUT");
     assert!(!Cert::common_name(&cert.issuer).contains("Yubico"));
     assert_eq!(cert.extension(7), Some(&der::integer_u64(12_345_678)[..]));
+    // The compatibility profile claims the reference's shape: USB-C Nano (04).
     assert_eq!(cert.extension(9), Some(&hex("0401 04")[..]));
+}
+
+/// Extension 1.3.6.1.4.1.41482.5.9 carries the profile's form factor byte with the FIPS
+/// (80) and CSPN (40) bits cleared, including `00` (yubikit `FORM_FACTOR.UNKNOWN`), the
+/// truthful value for a software key without a physical shape (own identity: no Yubico
+/// product shape is claimed).
+#[test]
+fn form_factor_extension_follows_the_profile() {
+    for (form_factor, expected) in [(0x00, "0401 00"), (0x04, "0401 04"), (0xC4, "0401 04")] {
+        let profile = DeviceProfile { form_factor, ..DeviceProfile::own(12_345_678) };
+        let mut card = Card::with_host(TestHost::with_profile(profile));
+        card.admin();
+        card.set_attributes(0x00C1, attr::ED25519);
+        card.generate(crt::SIG);
+        assert_eq!(card.verify(0x81, b"123456"), 0x9000);
+        assert_eq!(card.attest(0x01).1, 0x9000);
+        let cert = Cert::parse(&card.certificate(2));
+        assert_eq!(cert.extension(9), Some(&hex(expected)[..]), "{form_factor:02X}");
+    }
 }
 
 impl Card {

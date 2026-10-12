@@ -123,14 +123,24 @@ fn icc_power_on_returns_a_well_formed_atr() {
 /// - Management: the version text, READ CONFIG `1D` (`len || TLVs`);
 /// - OTP: the status bytes (version first), the serial slot `10`;
 /// - HSM Auth: version tag `79`, GET VERSION `07`;
-/// - Security Domain: the `select_public_template` and GET DATA `0066` card recognition
-///   data of `security-domain-reference-observation.json`.
+/// - Security Domain: the `select_public_template` of
+///   `security-domain-reference-observation.json` with the `9F65` that GP Card
+///   Specification v2.3.1 Table 11-82 makes mandatory added inside `A5` (the reference
+///   omits it: a known difference, specification over reference), and the GET DATA
+///   `0066` card recognition data of the same file.
 ///
 /// An unknown AID answers `6A82` and keeps the selection.
 #[test]
 fn select_routes_between_all_seven_applications() {
     let reference = json::parse(SD_REFERENCE);
-    let sd_select = hex(reference.get("select_public_template").as_str());
+    let reference_select = hex(reference.get("select_public_template").as_str());
+    // GP 2.3.1 §11.9.3.1 Table 11-82: `9F65 01 FF` inside `A5`, both template lengths
+    // grown by 4 (the reference's 25 bytes lack it; the engine sent those before).
+    let mut sd_select = reference_select.clone();
+    sd_select[1] += 4;
+    sd_select[13] += 4;
+    sd_select.extend_from_slice(&[0x9F, 0x65, 0x01, 0xFF]);
+    assert_eq!(sd_select, hex("6F1B8408A000000151000000A50F730906072A864886FC6B019F6501FF"));
     let recognition = hex(reference.get("card_recognition_data").as_str());
     let mut rig = Rig::new();
     rig.power_on();

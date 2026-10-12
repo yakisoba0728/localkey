@@ -4,7 +4,8 @@
 //!
 //! Sources, in the order `docs/DESIGN.md` §2 ranks them:
 //! 1. `reference/yubikey-5c-nano-5.7.4/security-domain-reference-observation.json`:
-//!    the SELECT response, GET DATA `0066`, the `00E0` schema and the CPLC length.
+//!    the SELECT response (to which `9F65`, mandatory in GP 2.3.1 Table 11-82, is
+//!    added), GET DATA `0066`, the `00E0` schema and the CPLC length.
 //! 2. GlobalPlatform Card Specification v2.3.1 (SELECT §11.9, GET DATA §11.3, PUT KEY
 //!    §11.8, DELETE §11.2, Annex H) and Amendment D v1.1.2, SCP03.
 //! 3. Yubico, YubiKey 5 technical manual, "Secure Channel" (yk5-apps-scp): default keys,
@@ -391,7 +392,9 @@ impl SecurityDomain {
         let any_class = gp_class || cmd.cla == 0x00;
         let protocol = channel.map(SecureChannel::protocol);
         match cmd.ins {
-            ins::GET_DATA if any_class => self.get_data(&cmd, gp_class && !secure),
+            // GP 2.3.1 §11.3.3.1: the GlobalPlatform class (`80`, also `84` unwrapped by a
+            // channel) returns whole data objects, CLA `00` their values.
+            ins::GET_DATA if any_class => self.get_data(&cmd, gp_class),
             // GP 2.3.1 §11.9.2.1: the Security Domain is selected by name (P1 `04`), the
             // only SELECT the device recognises (docs/CONTRACTS.md "Applications A as
             // implemented"); any other INS `A4` is not a SELECT and changes nothing.
@@ -497,8 +500,9 @@ impl CardApplet for SecurityDomain {
     }
 
     /// SELECT (GP 2.3.1 §11.9): ends any session and returns the File Control
-    /// Information observed on the reference device. P2 with "no response data"
-    /// (`0C`) answers `9000` alone.
+    /// Information of GP 2.3.1 Table 11-82 (the reference device's template plus the
+    /// mandatory `9F65`; `data::SELECT_FCI`). P2 with "no response data" (`0C`) answers
+    /// `9000` alone.
     fn select(&mut self, apdu: &[u8], _host: &mut dyn Host) -> Vec<u8> {
         self.end_session();
         match Command::parse(apdu) {

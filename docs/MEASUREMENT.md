@@ -1,17 +1,30 @@
-# Measurement against a physical YubiKey 5C Nano 5.7.4
+# Comparison with the reference key (YubiKey 5C Nano 5.7.4)
+
+localkey is its own software security key. The YubiKey 5C Nano 5.7.4 is its **reference**: a
+well-made real key to compare against, not a device to copy (`docs/DESIGN.md` §2 and §12
+decision 8, `docs/CONTRACTS.md` "Reference, not replica"). Where a public specification
+defines a behaviour, the engine follows the specification and records the reference's
+behaviour as a known difference (unless a widely used host stack depends on the reference);
+where the specification leaves it open, the engine follows the reference; Yubico's own
+protocols follow Yubico's documentation and yubikit, with the reference as their best
+evidence; the reference's defects are never copied; and the default identity is the
+engine's own.
 
 On 2026-10-11, with the user's explicit permission (`docs/DESIGN.md` §13), one inserted
 YubiKey 5C Nano with firmware 5.7.4 was probed command by command with strictly read-only
 requests, and the same requests were sent to the engine (`localkeyd --profile
 yubikey-5c-nano-5.7.4`) with the key's observable state mirrored. This file records what
-was measured, how, what differs, and why. It contains no serial number, key, fingerprint,
-name or other identifier of the key; the measurement files it refers to are the redacted
-ones (`tools/measure/normalize.py`).
+was measured, how, what differs, and what was decided about each difference. It contains no
+serial number, key, fingerprint, name or other identifier of the key; the measurement files
+it refers to are the redacted ones (`tools/measure/normalize.py`).
 
 Every status word, length and timing below is quoted from those files. "Physical" is the
 key, "engine" is `localkeyd` at commit a7c9a06 (branch `engine`) before any change this
-measurement leads to. The last two sections, "Engine changes" and "Comparison after the
-changes", describe the engine after those changes.
+measurement led to. The measured tables are kept as they were recorded. The last sections
+describe what followed: "Engine changes" (every behavioural difference was adopted on
+2026-10-11; the review of 2026-10-12 under the decision order kept most of those changes
+and reverted five), "Comparison after the changes", "Revised by principle, 2026-10-12", and
+"Comparison after the revision", which describes the engine as it is now.
 
 ## How it was measured
 
@@ -75,7 +88,9 @@ Before the changes it found 37 of 116 probes different and 79 identical. The ide
 probes were also compared packet by packet (all non-timing fields); nothing differs inside
 them except the timings listed under "Timings". After the changes (`engine-aligned`) 13
 probes differ and 103 are identical; no probe that was identical before differs now (see
-"Comparison after the changes").
+"Comparison after the changes"). After the revision by principle of 2026-10-12
+(`engine-reference`) 27 differ and 89 are identical, the 14 new differences each by design
+(see "Comparison after the revision").
 
 ### The stuck-channel incident
 
@@ -107,8 +122,9 @@ transaction open ends with an INIT on its own channel (`probes.py` `resync`), an
 
 ## Results
 
-Classification: **behavioural** (the firmware behaves differently; the engine should
-change), **state-dependent** (caused by the key's stored state or configuration),
+Classification, as recorded on 2026-10-11: **behavioural** (the firmware behaves
+differently from the engine; every such difference was adopted then, and the review of
+2026-10-12 kept some of them different by design, see "Engine changes"), **state-dependent** (caused by the key's stored state or configuration),
 **host-artifact** (caused by macOS PC/SC), **unclear**. Probe ids are those of
 `tools/measure/probes.py`.
 
@@ -216,8 +232,9 @@ measurement files and could not be verified. Either way it is not adopted: the e
 models what the device answers, not how long it computes, and it adds no processing
 latency anywhere.
 
-The CTAP status names printed by the measuring tool are partly wrong: `tools/measure/common.py`
-labels `3E` "UNAUTHORIZED_PERMISSION" and has no name for `33`. In CTAP 2.1 §8.2, `33` is
+The CTAP status names printed by the measuring tool were partly wrong (corrected on
+2026-10-12, see the end of this file): `tools/measure/common.py` labelled `3E`
+"UNAUTHORIZED_PERMISSION" and had no name for `33`. In CTAP 2.1 §8.2, `33` is
 `CTAP2_ERR_PIN_AUTH_INVALID`, `3E` is `CTAP2_ERR_INVALID_SUBCOMMAND` and `40` is
 `CTAP2_ERR_UNAUTHORIZED_PERMISSION`. lk-fido uses the CTAP 2.1 values.
 
@@ -251,6 +268,14 @@ time extension 500 ms, card touch timeouts 15 s, U2F window and latch 3 s, OTP r
 stay model policy; if they are nominal values on the same clock they would measure about
 5.4 % shorter, which a later measurement can check. The recommended values were adopted
 (see "Engine changes").
+
+Revised on 2026-10-12 by the decision order (rule 4, no clock-drift artefacts): the
+presence timeout is the 30 s design value, not 28 500 ms; on the 95 ms grid a host now sees
+315 KEEPALIVEs and then the answer alone (see "Revised by principle"). The 95 ms interval
+and the first KEEPALIVE one interval after the request stay, because they are within CTAP
+2.1 §11.2.9.1.7 ("at least every 100ms"; exactly 100 ms on the host's clock would overrun it
+with scheduling jitter). The 470 ms message timeout stays too: it does not fit the clock
+ratio of the other two timers closely enough to make 500 ms evident (see "Engine changes").
 
 ## What could not be measured
 
@@ -293,6 +318,39 @@ DATA (host artifact), the getInfo latency (unclear, and the engine models no pro
 time), and the state-dependent DeviceInfo capability masks and
 `remainingDiscoverableCredentials`.
 
+On 2026-10-12 every change below was reviewed under the decision order of `docs/CONTRACTS.md`
+"Reference, not replica" (`docs/DESIGN.md` §12 decision 8): rule 1 specification (with the
+host compatibility exception), rule 2 the reference where the specification is open, rule
+3 Yubico's documentation and yubikit for Yubico's own protocols, rule 4 no reference
+defects, rule 5 own identity. Five changes were reverted; the rest were kept:
+
+| Change | Probe | 2026-10-12 | Rule and reason |
+| --- | --- | --- | --- |
+| Management SELECT text `Virtual mgr - FW version …` | `select-mgmt` | kept | rule 3: Yubico-proprietary, yubikit reads the version from the text; rule 5 keeps a message format hosts parse |
+| DeviceInfo as two fixed pages, tags `20`/`21`, part number from the profile | `mgmt-read-config`, `lc-le-mgmt` | kept | rule 3: yubikit `DeviceInfo.parse_tlvs` and `read_device_info`; rule 5: the own profile's part number is empty |
+| Factory challenge-response timeout `0F` | `mgmt-read-config` | kept | rule 3: Yubico documents 15 s as the default |
+| READ CONFIG over CCID ignores P2; past the last page a bare `9000` | `bad-p1p2-mgmt` | kept | rule 3; yubikit never asks for a page that the previous one did not announce |
+| CLA `80` served like `00` | `cla-variants-mgmt`, `-hsmauth`, `-piv`, `-openpgp` | kept | rule 2: ISO/IEC 7816-4 leaves the proprietary class to the application, and neither SP 800-73-4 nor OpenPGP card 3.4 defines an answer |
+| GET RESPONSE with nothing pending, and during an open chain | `get-response-idle-*`, `chain-61xx`, `cla-variants-*` | kept | rule 2: ISO/IEC 7816-4 defines no status for "nothing pending". OpenPGP's `6D00` during an open chain is kept at medium confidence: if ISO/IEC 7816-4 makes `6883` mandatory there, that case goes back to `6883` |
+| Security Domain unknown instruction `6982` outside a channel | `undefined-ins-sd` | kept | rule 2: GP 2.3.1 Table 11-10 lists both `6982` and `6D00` for any command |
+| Security Domain `80 CA 00 66` inside tag `66` | `cla-variants-sd` | kept, extended | rule 1: GP 2.3.1 §11.3.3.1, now applied to every GlobalPlatform-class GET DATA |
+| SELECT by a partial DF name | `select-partial-aid` | kept | rule 1: ISO/IEC 7816-4 §6.11 allows a right-truncated DF name, and the ATR announces it; the tie order stays model policy |
+| PIV VERIFY with P2 `81` answers `6A80` | `piv-verify-status-81` | **reverted** to `6A88` | rule 1: SP 800-73-4 Part 2 §3.2.1 |
+| PIV GET DATA with P1P2 other than `3FFF` answers `6A82` | `bad-p1p2-piv` | kept | rule 2: SP 800-73-4 Part 2 §3.1.2 lists `6A82` and defines no status for a wrong P1-P2 |
+| PIV GET METADATA ignores P1 | `bad-p1p2-piv` | kept | rule 3: a Yubico extension |
+| PIV GET DATA with a cut-short tag list answers `6A82` | `lc-le-piv-get-data` | kept | rule 2: within the §3.1.2 status list |
+| OpenPGP GET DATA accepts chaining CLA `10` | `cla-variants-openpgp` | kept | rule 2: chaining is not defined for GET DATA (OpenPGP card 3.4.1 §7.2.6, §7.7) |
+| OpenPGP `DE` reports the factory attestation key as imported (`02`) | `openpgp-get-006e` | **reverted** to `01` | rule 1: OpenPGP card 3.4.1 §4.4.3.8; the engine generates that key on the device |
+| Requests over 1536 bytes are `ERR_INVALID_LEN` | `ping-max`, `ping-7609` | kept | rule 2: CTAP 2.1 §8 leaves the maximum to the device (at least 1024, announced as `maxMsgSize`) |
+| `CTAPHID_LOCK` not implemented | `lock`, `lock-expiry` | kept | rule 2: LOCK is optional (CTAP 2.1 §11.2.6, §11.2.9.2) |
+| An empty `CTAPHID_CBOR` stalls the device | `empty-cbor` | **reverted** to `ERR_INVALID_LEN` | rule 4: a reference defect (CTAP 2.1 §11.2.4, §11.2.5.2); rule 1: the request is "BCNT 1..(n + 1)" (§11.2.9.1.2) |
+| CTAPHID message timeout 470 ms | `message-timeout` | kept | rule 2: CTAP 2.1 §11.2.5.2 gives no value. Rule 4 does not apply yet: the single sample, after removing the host latency, is about 7 ms short of the 474 ms a 500 ms timer would give on the key's clock, so 500 ms is not evident; a repeated series can decide it |
+| No KEEPALIVE at once | `selection-keepalive-cancel` | kept | rule 2: within CTAP 2.1 §11.2.9.1.7 |
+| KEEPALIVE every 95 ms | `selection-no-touch` | kept | rule 2: within §11.2.9.1.7 "at least every 100ms" |
+| Presence timeout 28 500 ms (300 × 95 ms) | `selection-no-touch` | **reverted** to 30 000 ms | rule 4: a 30 s timer on a fast clock (28 451.8 / 30 000 = 0.9484); CTAP 2.1 §5 "Thirty seconds is a reasonable value" |
+| getPINRetries without `powerCycleState` | `client-pin-retries` | kept | rule 2: the field is optional (CTAP 2.1 §6.5.5) |
+| getUVRetries answers `33` | `client-pin-uv-retries` | **reverted** to `3E` | rule 1: CTAP 2.1 §8.1 |
+
 Each change has a regression test in the owning crate (or in lk-device) that cites this
 file and the probe. Tests that encoded the old model policy were updated to the measured
 value with a comment naming the probe; none was removed without a replacement. The catalog
@@ -315,14 +373,14 @@ RESPONSE during a chain answering `6883`, and OpenPGP GET DATA refusing CLA `10`
 | CLA `80` is served like CLA `00` in Management, HSM Auth, PIV and OpenPGP; other proprietary classes keep `6E00`, and OpenPGP GET ATTESTATION keeps its CLA-`80`-only rule | lk-mgmt `applet.rs`, lk-hsmauth `applet.rs`, lk-piv `lib.rs`, lk-openpgp `lib.rs` | `cla_80_is_served_like_00` (lk-mgmt), `proprietary_class_80_is_served_like_00` (lk-hsmauth), `class_variants` (lk-piv `tests/measured.rs`, lk-openpgp `tests/applet/measured.rs`) | `cla-variants-mgmt`, `-hsmauth`, `-piv`, `-openpgp` |
 | GET RESPONSE with nothing pending: Management `6D00`, HSM Auth `6D00`, Security Domain `6982`, PIV `6A80`, OpenPGP `6D00` (was `6985` in all five). GET RESPONSE while a command chain is open: Management and OpenPGP `6D00`, Security Domain `6982`, and the chain is dropped (was `6883`) | lk-mgmt `applet.rs`, lk-hsmauth `applet.rs`, lk-sd `lib.rs`, lk-piv `lib.rs`, lk-openpgp `lib.rs` | `get_response_without_pending_data_is_6d00` (lk-mgmt), `unserved_plaintext_commands_are_6982` (lk-sd), `get_response_with_nothing_pending_answers_6a80` (lk-piv), `get_response_with_nothing_pending_answers_6d00`, `response_chaining_and_the_end_of_it`, `get_response_during_chain_returns_6d00` (lk-openpgp); lk-device `ccid::security_domain_and_hsm_auth_statuses_as_measured` | `get-response-idle-*`, `chain-61xx`, `cla-variants-mgmt`, `-sd`, `-openpgp` |
 | Security Domain outside a secure channel answers an unknown instruction `6982` (was `6D00`) | lk-sd `lib.rs` (`dispatch`) | `unserved_plaintext_commands_are_6982`, `unknown_get_data_tag` | `undefined-ins-sd` |
-| Security Domain GET DATA `0066` with CLA `80` wraps the card recognition data in tag `66` (65 bytes); CLA `00` unchanged | lk-sd `manage.rs` | `proprietary_class_card_data_has_the_66_template`; lk-device `scenario_ccid::select_routes_between_all_seven_applications` | `cla-variants-sd` |
+| Security Domain GET DATA `0066` with CLA `80` wraps the card recognition data in tag `66` (65 bytes); CLA `00` unchanged (extended to every GlobalPlatform-class GET DATA on 2026-10-12, see "Revised by principle") | lk-sd `manage.rs` | `proprietary_class_card_data_has_the_66_template`; lk-device `scenario_ccid::select_routes_between_all_seven_applications` | `cla-variants-sd` |
 | SELECT by a partial DF name: when no applet AID is a prefix of the name, the first enabled applet in `AppId::ALL` order whose AID starts with the name is selected (was `6A82`) | lk-device `card.rs` (`find_applet`) | `tests::partial_df_names_select_as_measured`, `tests::applet_lookup_by_df_name`, `ccid::select_by_partial_df_name` | `select-partial-aid` |
-| PIV VERIFY with P2 `81` answers `6A80`; other unsupported references keep `6A88` | lk-piv `pin.rs` | `verify_of_the_puk_reference_answers_6a80` (`tests/measured.rs`), `pin_puk::verify_header_guards_consume_no_retry` | `piv-verify-status-81` |
+| PIV VERIFY with P2 `81` answers `6A80`; other unsupported references keep `6A88` (revised 2026-10-12, see "Revised by principle") | lk-piv `pin.rs` | `verify_of_the_puk_reference_answers_6a80` (`tests/measured.rs`), `pin_puk::verify_header_guards_consume_no_retry` | `piv-verify-status-81` |
 | PIV GET DATA with P1P2 other than `3FFF` answers `6A82` (was `6A86`; PUT DATA unchanged) | lk-piv `data.rs` | `bad_p1_p2_answers` | `bad-p1p2-piv` |
 | PIV GET METADATA ignores P1 (empty slot `9A` with P1 `01`: `6A88`) | lk-piv `admin.rs` | `bad_p1_p2_answers`, `vendor_commands::metadata_for_factory_references` | `bad-p1p2-piv` |
 | PIV GET DATA whose `5C` tag list runs past the data field answers `6A82`; other malformed lists keep `6A80` | lk-piv `data.rs` | `get_data_length_forms_and_a_cut_short_tag_list` | `lc-le-piv-get-data` |
 | OpenPGP GET DATA accepts chaining CLA `10` (`9000` without data, the chain stays open) | lk-openpgp `lib.rs` (`chainable`) | `framing::get_data_accepts_chaining_cla_10`, `class_variants` | `cla-variants-openpgp` |
-| OpenPGP key information `DE` reports the factory attestation key as imported (`02`, was `01`). Attestation checks the attested slot's status, so it keeps working; stored states holding `01` are not migrated | lk-openpgp `attest.rs` (`FACTORY_ISSUER_STATUS`), `objects.rs` | `factory_attestation_key_status_is_imported`, `public_objects::application_related_data_layout_matches_observation` | `openpgp-get-006e` |
+| OpenPGP key information `DE` reports the factory attestation key as imported (`02`, was `01`). Attestation checks the attested slot's status, so it keeps working; stored states holding `01` are not migrated (revised 2026-10-12, see "Revised by principle") | lk-openpgp `attest.rs` (`FACTORY_ISSUER_STATUS`), `objects.rs` | `factory_attestation_key_status_is_imported`, `public_objects::application_related_data_layout_matches_observation` | `openpgp-get-006e` |
 
 ### FIDO HID
 
@@ -330,13 +388,13 @@ RESPONSE during a chain answering `6883`, and OpenPGP GET DATA refusing CLA `10`
 | --- | --- | --- | --- |
 | A request longer than 1536 bytes gets `ERR_INVALID_LEN` at its initialization packet, for every command, and its remaining packets are ignored. New public `MAX_MESSAGE_LEN` = 1536; responses may still be up to `MAX_PAYLOAD` (7609 bytes) | lk-ctaphid `protocol.rs`, `framer.rs` | `framing::maximum_ping_is_1536_bytes_and_ends_on_sequence_25`, `bcnt_above_1536_is_invalid_len_at_once_and_the_late_fragments_are_ignored`, `commands::every_request_above_1536_bytes_is_invalid_len`; lk-device `fido::ping_longer_than_1536_bytes_is_invalid_len_and_the_rest_is_ignored`, `scenario_fido::max_message_size_boundary` | `ping-max`, `ping-7609` |
 | `CTAPHID_LOCK` is not implemented: `ERR_INVALID_CMD` for any length, and nothing is reserved. The lock state, its timer and `src/lock.rs` are gone; `MAX_LOCK_SECONDS`, `cmd::LOCK` and `err::LOCK_REQUIRED` stay | lk-ctaphid `framer.rs` | `tests/lock.rs` (5 tests, among them `measured_probe_other_channels_are_served_right_after_a_lock`); lk-device `scenario_fido::ctaphid_lock_is_invalid_cmd_and_reserves_nothing` | `lock`, `lock-expiry` |
-| `CTAPHID_CBOR` with BCNT 0 is never answered: the device stays busy (other channels `ERR_CHANNEL_BUSY`, CANCEL ignored, no timeout) until INIT on that channel or a USB reset. The application never sees it (new internal `Transaction::Stalled`) | lk-ctaphid `framer.rs`, `transaction.rs` | `commands::empty_cbor_request_stalls_the_device_until_init_on_its_channel`, `empty_cbor_stall_ignores_a_late_respond_and_ends_with_a_usb_reset`, `cancel::cancel_of_a_stalled_empty_cbor_request_is_ignored`, `reset::reset_ends_an_empty_cbor_stall`; lk-device `fido::empty_cbor_request_stalls_the_device_until_init_on_its_channel` | `empty-cbor` |
+| `CTAPHID_CBOR` with BCNT 0 is never answered: the device stays busy (other channels `ERR_CHANNEL_BUSY`, CANCEL ignored, no timeout) until INIT on that channel or a USB reset. The application never sees it (new internal `Transaction::Stalled`) (revised 2026-10-12, see "Revised by principle") | lk-ctaphid `framer.rs`, `transaction.rs` | `commands::empty_cbor_request_stalls_the_device_until_init_on_its_channel`, `empty_cbor_stall_ignores_a_late_respond_and_ends_with_a_usb_reset`, `cancel::cancel_of_a_stalled_empty_cbor_request_is_ignored`, `reset::reset_ends_an_empty_cbor_stall`; lk-device `fido::empty_cbor_request_stalls_the_device_until_init_on_its_channel` | `empty-cbor` |
 | CTAPHID message timeout `TRANSACTION_TIMEOUT_MS` = 470 (was 3000) | lk-ctaphid `protocol.rs` | `timeout::measured_timeout_is_470_ms`, `measured_probe_ping_with_bcnt_100_and_no_continuation_times_out_at_470_ms`; lk-device `fido::ctaphid_message_timeout_is_a_device_deadline` | `message-timeout` |
 | No KEEPALIVE when a command starts waiting for a touch; the first one is due one interval later | lk-device `presence.rs` (`wait_fido`) | `fido::waiting_command_sends_keepalives_and_resolves_on_touch`, the `verify_timing` grid tests | `selection-keepalive-cancel` |
 | `KEEPALIVE_INTERVAL_MS` = 95 (was 100) | lk-device `presence.rs` | `fido::late_tick_sends_one_keepalive`, `verify_timing::keepalive_cadence_stays_on_the_grid_with_a_late_host` | `selection-no-touch` |
-| CTAP2 user-presence timeout `TOUCH_TIMEOUT_MS` = 28 500 (300 × 95 ms; was 30 000): 300 KEEPALIVEs, then `CTAP2_ERR_USER_ACTION_TIMEOUT` | lk-fido `lib.rs` | `persistence::touch_timeout_is_the_measured_28_5_seconds`; lk-device `verify_timing::measured_probe_selection_without_touch_sends_300_keepalives_then_times_out` | `selection-no-touch` |
+| CTAP2 user-presence timeout `TOUCH_TIMEOUT_MS` = 28 500 (300 × 95 ms; was 30 000): 300 KEEPALIVEs, then `CTAP2_ERR_USER_ACTION_TIMEOUT` (revised 2026-10-12, see "Revised by principle") | lk-fido `lib.rs` | `persistence::touch_timeout_is_the_measured_28_5_seconds`; lk-device `verify_timing::measured_probe_selection_without_touch_sends_300_keepalives_then_times_out` | `selection-no-touch` |
 | clientPIN getPINRetries omits `powerCycleState` (key `4`) unless the PIN is soft-blocked: `{3: 8}` | lk-fido `client_pin.rs` | `get_pin_retries_with_a_pin_set_is_byte_identical_to_the_measured_key`, `get_pin_retries_reports_retries_and_power_cycle_state` | `client-pin-retries` |
-| clientPIN getUVRetries (`07`) answers `CTAP2_ERR_PIN_AUTH_INVALID` (`33`); `06` and unknown subcommands keep `CTAP2_ERR_INVALID_SUBCOMMAND` | lk-fido `client_pin.rs` | `parameter_types_and_subcommands` | `client-pin-uv-retries` |
+| clientPIN getUVRetries (`07`) answers `CTAP2_ERR_PIN_AUTH_INVALID` (`33`); `06` and unknown subcommands keep `CTAP2_ERR_INVALID_SUBCOMMAND` (revised 2026-10-12, see "Revised by principle") | lk-fido `client_pin.rs` | `parameter_types_and_subcommands` | `client-pin-uv-retries` |
 
 ### Deliberately not extended
 
@@ -344,9 +402,10 @@ RESPONSE during a chain answering `6883`, and OpenPGP GET DATA refusing CLA `10`
   measured only for Management, the Security Domain and OpenPGP.
 - READ CONFIG over CTAPHID (`0x42`) and OTP HID serve the same two pages, but a page past
   the last still answers `6A86` / `ERR_INVALID_PAR`: only CCID was measured.
-- The Security Domain wraps the CLA `80` card data in tag `66` only outside a secure
-  channel. Under SCP03/SCP11 (`84` unwrapped to `80`) the bare object stays: the
-  independent known-answer vectors use it, and that path was not measured.
+- The Security Domain's GlobalPlatform-class GET DATA was extended beyond the measured
+  plaintext `80 CA 00 66` by the specification (GP Card Specification v2.3.1 §11.3.3.1),
+  not by this measurement; see "Revised by principle". The physical key's GP-class forms
+  other than plaintext `80 CA 00 66` remain unmeasured (see "What could not be measured").
 - DeviceInfo tag `13` carries a placeholder of the measured length (12 bytes), not the
   key's part number, which may identify a production batch.
 - Unmeasured and unchanged: CLA `90`, `84` and the other proprietary classes (`6E00`); CLA
@@ -355,15 +414,58 @@ RESPONSE during a chain answering `6883`, and OpenPGP GET DATA refusing CLA `10`
   the restart of the message timeout on every packet; `powerCycleState: true` while
   soft-blocked; clientPIN `06`; data-less OpenPGP commands other than GET DATA with CLA
   `10` (`6E00`).
-- Extrapolated from the measurement and marked as such in the tests: PIV VERIFY `81` with
-  data or an Le answers `6A80` too; PIV GET METADATA with P1 `01` on an existing object
-  answers like P1 `00`; CLA `80` on instructions other than the measured reads; requests
-  over 1536 bytes on CBOR, MSG and vendor commands are refused like PING; OpenPGP drops an
-  open chain on GET RESPONSE (whether the key keeps it was not observed).
+- Extrapolated from the measurement and marked as such in the tests: PIV GET METADATA with
+  P1 `01` on an existing object answers like P1 `00`; CLA `80` on instructions other than
+  the measured reads; requests over 1536 bytes on CBOR, MSG and vendor commands are refused
+  like PING; OpenPGP drops an open chain on GET RESPONSE (whether the key keeps it was not
+  observed). (PIV VERIFY `81` with data or an Le was extrapolated to `6A80` too; since the
+  revision by principle every form answers `6A88`.)
 
 Checks after the changes: `cargo test --workspace` 2369 passed, 0 failed, 1 ignored (the
 lk-fido long repeat test); `cargo clippy --workspace --all-targets` no warnings;
 `tools/license_check.py` and `tools/catalog_status.py --check` clean.
+
+### Revised by principle, 2026-10-12
+
+localkey is its own security key; the YubiKey 5C Nano 5.7.4 is the reference it is compared
+against, not a device to clone. Where a public specification defines a behaviour, the engine
+follows the specification even where the key differs, and it never copies the key's defects
+(hangs, missing answers, clock drift in timings); the full decision order is in
+`docs/CONTRACTS.md` "Reference, not replica". The changes below revise earlier ones under
+that rule; the card table also holds changes made by the specification, or by the rule that
+the own profile carries no Yubico identifiers, where the key was not measured (marked
+"unmeasured"). The measured tables above stay as they were; the probes named below now differ
+from the key again by design, and each such behaviour of the key is recorded as a known
+difference here and as an `intentional difference` in the catalog. "Comparison after the
+changes" describes the engine before this revision, "Comparison after the revision" at the
+end of this file the engine after it.
+
+#### FIDO HID
+
+| Change | Rule | Known difference (the key) | Crate, file | Regression tests | Probe |
+| --- | --- | --- | --- | --- | --- |
+| `CTAPHID_CBOR` with BCNT 0 is `ERR_INVALID_LEN` (`03`) at the initialization packet again and holds nothing, like an empty `CTAPHID_MSG`; the internal `Transaction::Stalled` is gone. CTAP 2.1 §11.2.9.1.2: the request is "BCNT 1..(n + 1)", the CTAP command byte first; §11.2.9.1.6: `ERR_INVALID_LEN` is "The length field (BCNT) is invalid for the request" | reference defect not copied: "A request always triggers a response" (§11.2.4); "potentially stalling applications should however, be handled properly" (§11.2.5); the transaction timeout exists "to prevent a stalling application to cause the device to be completely locked out" (§11.2.5.2). The CTAP 2.2 text is the same | no answer and no KEEPALIVE; other channels `ERR_CHANNEL_BUSY`, CANCEL ignored; the device stays busy across host sessions until INIT on the stuck channel ("The stuck-channel incident") | lk-ctaphid `framer.rs`, `transaction.rs` | `commands::empty_cbor_request_is_invalid_len`, `commands::empty_cbor_request_holds_nothing_on_any_channel`, `cancel::cancel_after_a_refused_empty_cbor_request_is_ignored`, `adversarial::rejected_broadcast_init_allocates_no_channel`, the oracle of `fuzz.rs`; lk-device `fido::empty_cbor_request_is_invalid_len_and_holds_nothing` | `empty-cbor` |
+| CTAP2 user-presence timeout `TOUCH_TIMEOUT_MS` = 30 000 (was 28 500) for every waiting command. With the measured 95 ms KEEPALIVE grid a host sees 315 KEEPALIVEs, the last at 29 925 ms, then the answer alone at 30 000 ms. CTAP 2.1 §5, "User action timeout": "chosen by the authenticator but MUST be at least 10 seconds. Thirty seconds is a reasonable value." | reference defect not copied (clock drift): 28 451.8 / 30 000 = 0.9484, the same ratio as the KEEPALIVE interval (94.86 / 100 = 0.9486), so the key runs a 30 s timer on a fast oscillator; the engine uses the design value | `CTAP2_ERR_USER_ACTION_TIMEOUT` 28 451.8 ms after the request, after 300 KEEPALIVEs | lk-fido `lib.rs` | `persistence::touch_timeout_is_30_seconds`; lk-device `verify_timing::selection_without_touch_sends_315_keepalives_then_times_out_at_30_s` (was `measured_probe_selection_without_touch_sends_300_keepalives_then_times_out`), `keepalive_cadence_stays_on_the_grid_with_a_late_host`, `keepalive_cadence_survives_jitter`, `touch_exactly_at_the_fido_timeout_is_a_button_press`, `fido::presence_timeout_answers_the_command`, `scenario_fido::make_credential_presence_timeout` | `selection-no-touch` |
+| clientPIN getUVRetries (`07`) answers `CTAP2_ERR_INVALID_SUBCOMMAND` (`3E`) again, like getPinUvAuthTokenUsingUvWithPermissions (`06`): the engine has no built-in UV (no `uv` option). CTAP 2.1 §8.1: "If the authenticator implements a command code having subcommands, but does not implement an invoked subcommand, it MUST return CTAP2_ERR_INVALID_SUBCOMMAND"; §6.5.5.3: the UV retries count is "the number of built-in UV attempts" | spec over reference: `33` is `CTAP2_ERR_PIN_AUTH_INVALID`, a pinUvAuthParam failure (§8.2), which does not apply to this request; the note after the §8.1 rule allows for authenticators of earlier versions that do not follow it. No listed host depends on `33`: libfido2 `fido2-token -I` (`tools/token.c`) prints "uv retries: undefined" for any error, ykman `fido info` asks only when the `bioEnroll` option is present, python-fido2 `ClientPin.get_uv_retries` raises `CtapError` for any code | status `33` | lk-fido `client_pin.rs` | `client_pin::parameter_types_and_subcommands` | `client-pin-uv-retries` |
+
+Unchanged by this revision: the KEEPALIVE cadence (95 ms, the first one an interval after
+the request) is within CTAP 2.1 §11.2.9.1.7 ("at least every 100ms") and stays as measured.
+The open question under "What could not be measured" whether an empty `CTAPHID_MSG` behaves
+like an empty `CTAPHID_CBOR` on the key no longer matters for the engine: both are
+`ERR_INVALID_LEN` by §11.2.9.1.1 and §11.2.9.1.2.
+
+#### Card applications (CCID)
+
+| Change | Rule | Known difference (the key) | Crate, file | Regression tests | Probe |
+| --- | --- | --- | --- | --- | --- |
+| PIV VERIFY with P2 `81` answers `6A88` again, like every other reference this card cannot verify, with or without data, Le or P1 `FF`; no retry is spent. SP 800-73-4 Part 2 §3.2.1: "If any key reference value is specified that cannot be verified by the PIV Card Application, then the PIV Card Application shall return the status word 6A 88"; the PUK is compared only inside CHANGE REFERENCE DATA and RESET RETRY COUNTER | specification over reference. No listed host sends VERIFY with P2 `81`: yubico-piv-tool's VERIFY hardcodes P2 `80`, yubikit reads the PUK retries with GET METADATA, OpenSC has no PUK VERIFY | `6A80` | lk-piv `pin.rs` | `measured::verify_of_the_puk_reference_answers_6a88_per_sp800_73_4` (was `verify_of_the_puk_reference_answers_6a80`), `pin_puk::verify_header_guards_consume_no_retry` | `piv-verify-status-81` |
+| OpenPGP key information `DE` reports the factory attestation key (ref `81`) as generated, `01` (was `02`): the engine generates it on the device at first start. OpenPGP card 3.4.1 §4.4.3.8: `01` "Key generated by the card", `02` "Key imported into the card". Stored states holding `02` are not migrated (they cannot be told from a key imported into `DA`); attestation is unaffected | specification over reference: on the key `02` is true (Yubico injects its attestation key at manufacture), so copying it would make the engine say something false about its own key. No host depends on it: yubikit maps any of `00`/`01`/`02`, GnuPG `KEY-STATUS` only echoes the pairs | `DE 08 01 00 02 00 03 00 81 02` | lk-openpgp `attest.rs` (`FACTORY_ISSUER_STATUS`), `objects.rs` | `measured::factory_attestation_key_status_is_generated` (was `factory_attestation_key_status_is_imported`), `measured::response_chaining_and_the_end_of_it`, `public_objects::application_related_data_layout_matches_observation` | `openpgp-get-006e`, `chain-61xx`, `chain-extended-le` |
+| The Security Domain's SELECT response carries `9F65 01 FF` inside `A5` (29 bytes: `6F 1B 84 08 A000000151000000 A5 0F 73 09 … 9F 65 01 FF`), in both profiles. GP Card Specification v2.3.1 §11.9.3.1 Table 11-82 makes `9F65` "Maximum length of data field in command message" mandatory in a Security Domain's FCI; `FF` is the 255-byte limit of §11.1.5, a device choice since the key sends no value. Extended and chained commands stay accepted | specification over reference. yubikit only selects the Security Domain and does not parse the FCI; no listed host parses it | the observed 25 bytes without `9F65` | lk-sd `data.rs` (`SELECT_FCI`) | `domain::select_response_follows_gp_table_11_82` (keeps the observed 25 bytes as the known difference; was `select_response_matches_reference`); lk-device `scenario_ccid::select_routes_between_all_seven_applications` | `select-sd` and the SELECT that opens `sd-get-00e0`, `sd-get-0066`, `sd-get-9f7f`, `undefined-ins-sd`, `bad-p1p2-sd`, `lc-le-sd`, `get-response-idle-sd`, `cla-variants-sd` |
+| Every GlobalPlatform-class GET DATA (CLA `80`, and `84` through SCP03/SCP11) returns the whole data object (`66`, `E0`, `9F7F`, `BF21`, `FF33`/`FF34`); CLA `00`, and `04` under SCP as yubikit sends it, keeps the bare value. GP 2.3.1 §11.3.3.1: with b8 = 1 the response "shall contain the TLV coded data object", with b8 = 0 "only the value". The independent SCP03 and SCP11b known-answer vectors, which wrap `84 CA 00 66`, were recomputed for the 65-byte object | specification; on the key only plaintext `80 CA 00 66` was measured, and it already matches | unmeasured beyond plaintext `80 CA 00 66` | lk-sd `lib.rs` (`dispatch`), `manage.rs` | `domain::gp_class_get_data_returns_whole_data_objects`, `domain::proprietary_class_card_data_has_the_66_template`, `scp03::wrapped_exchange_matches_independent_known_answers`, `scp11::scp11b_matches_independent_known_answers`, `scp11::scp11b_with_the_factory_certificate` | — |
+| Key information reports an OCE CA public key as `C0 06 KID KVN B0 40 F0 00` (was `B0 41`). GP 2.3.1 §11.3.3.1.1: for key type `B0` the component length is `40` for ECC 256 "excluding coding identifier '04'". PUT KEY and GENERATE answers keep their TLV length `41` | specification; the key holds no CA key, so this is unmeasured | unmeasured | lk-sd `data.rs` (`key_information`) | `scp11::ec_key_management` (`C0062101B040F000`) | — |
+| A SELECT whose (unwrapped) class codes a logical channel other than the basic channel answers `6881` and changes nothing: neither the selection nor a secure channel session; CLA `FF` answers `6E00`. ISO/IEC 7816-4:1995 §5.5: a logical channel is opened by a SELECT carrying its number in the class byte, and the ATR's third software function table byte `C0` says "no logical channel" (Table 87); Table 16 `6881` "Logical channel not supported". Before, such a SELECT changed the basic channel's selection | specification; unmeasured on the key | unmeasured | lk-device `card.rs` (`select_class_refusal`); lk-sd `channel.rs` (only a basic-channel SELECT closes the channel) | `card::tests::select_on_another_logical_channel_is_refused`, `ccid::select_on_another_logical_channel_answers_6881_and_changes_nothing`, `secure_channel::encrypted_select_on_another_logical_channel_keeps_the_session`; lk-sd `scp03::encrypted_select_on_another_logical_channel_keeps_the_session` | — |
+| A SELECT by DF name with an empty name (`00 A4 04 00 00`) selects the Security Domain (was `6A82`). GP 2.3.1 §11.9.2.3: "The Lc and data field of the SELECT command may be omitted if the Issuer Security Domain is being selected"; the Security Domain sits at the default ISD AID (§H.1.3) | specification; unmeasured on the key, and no listed host sends this form | unmeasured | lk-device `card.rs` (`find_applet`) | `tests::empty_df_name_selects_the_issuer_security_domain`, `tests::applet_lookup_by_df_name`, `ccid::empty_df_name_selects_the_security_domain` | — |
+| `DeviceProfile::own` reports form factor `00`, `FORM_FACTOR.UNKNOWN` (new `form_factor::UNKNOWN`), in DeviceInfo tag `04` and in the PIV (`41482.3.9`) and OpenPGP (`41482.5.9`) attestation extensions; `yubikey_5c_nano_5_7_4` keeps `04` | own identity: a software key has no physical shape, and `04` with firmware 5.7.x makes yubikit and ykman name the device "YubiKey 5C Nano". yubikit gates nothing on the form factor except its Bio checks | `04` (USB-C Nano); every run here uses the compatibility profile, so no probe shows it | lk-core `profile.rs` | lk-core `profile::tests::form_factor_per_profile`; lk-mgmt `device_info_own_profile_matches_expected_bytes`, `device_info_yubikey_profile_matches_expected_bytes`; lk-piv and lk-openpgp `form_factor_extension_follows_the_profile` | — |
 
 ## Comparison after the changes
 
@@ -392,6 +494,59 @@ remaining CCID probe then differs in exactly one exchange, the `none` one.
 | `select-odd-p2` | SELECT PIV with P2 `04`, `0C`, `02`, `01`: `6982` on the key, `9000` and the PIV template on the engine | unclear (the Security Domain was selected on the key), not adopted |
 | `get-info`, `get-info-trailing-map`, `get-info-trailing-zero` | `remainingDiscoverableCredentials` 99 on the key, 100 on the engine | state-dependent (one discoverable credential on the key) |
 
-No measured behavioural difference remains open. What is left needs another measurement:
+At that point no measured behavioural difference remained open (the revision of 2026-10-12
+then made some probes differ again by design; see "Comparison after the revision"). What is
+left needs another measurement:
 CLA `0C` with a reader that shows raw CCID messages, and SELECT with P2 other than `00`
 while PIV or Management (not the Security Domain) is selected.
+
+## Comparison after the revision
+
+The engine after the revision by principle (`engine-reference`, the same mirrored state:
+`--engine-setup usb-enabled=0x031A --engine-setup fido-pin=…`, profile
+`yubikey-5c-nano-5.7.4`, probe sets `ccid-basic`, `ccid-errors`, `fido-hid`, `fido-cbor`,
+`fido-timing`, `fido-presence-timeout`) against the merged physical runs: **27 of 116 probes
+differ, 89 are identical** (after the changes: 13 and 103). The 13 probes that differed
+then differ in exactly the same places now, except `cla-variants-sd`, which also shows the
+new SELECT response; the 14 new ones each differ only where this revision decided it. No
+probe became identical. Every difference:
+
+| Probes | What differs | Class |
+| --- | --- | --- |
+| `mgmt-read-config`, `bad-p1p2-mgmt`, `lc-le-mgmt`, `get-info`, `get-info-trailing-map`, `get-info-trailing-zero` | unchanged since "Comparison after the changes": DeviceInfo tags `01`/`03` and the part-number placeholder; `remainingDiscoverableCredentials` 99 against 100 | key state (and the deliberate placeholder) |
+| `cla-variants-mgmt`, `-piv`, `-openpgp`, `-hsmauth`, `select-odd-p2` | unchanged: the CLA `0C` command (`none` on the key) and the harness's extra SELECT after it; SELECT with odd P2 while the Security Domain was selected on the key | unclear, not adopted |
+| `lc-le-piv-get-data` | unchanged: Lc 5 with 3 data bytes | host artefact |
+| `cla-variants-sd` | the CLA `0C` command as before, plus the 29-byte SELECT response in the first exchange and in the harness's extra SELECT | unclear, and intentional: `9F65` (GP 2.3.1 Table 11-82, rule 1) |
+| `select-sd`, `sd-get-00e0`, `sd-get-0066`, `sd-get-9f7f`, `undefined-ins-sd`, `bad-p1p2-sd`, `lc-le-sd`, `get-response-idle-sd` | only the opening SELECT: 29 bytes with `9F65 01 FF` against the key's 25; every GET DATA payload and status after it is identical (the harness sends CLA `00`, so the GlobalPlatform-class GET DATA change does not show) | intentional, SD FCI `9F65` (rule 1) |
+| `piv-verify-status-81` | `6A88` against `6A80` | intentional, PIV VERIFY `81` (SP 800-73-4 §3.2.1, rule 1) |
+| `openpgp-get-006e`, `chain-61xx`, `chain-extended-le` | one byte of `DE`: `81 01` against `81 02`; the chaining itself is identical | intentional, OpenPGP factory attestation key status (§4.4.3.8, rule 1) |
+| `client-pin-uv-retries` | `3E` (`CTAP2_ERR_INVALID_SUBCOMMAND`) against `33` | intentional, getUVRetries (CTAP 2.1 §8.1, rule 1) |
+| `empty-cbor` | `ERR_INVALID_LEN` at once on the requesting channel, the other channel's PING answered before and after CANCEL, INIT as an ordinary resync; the key: no answer, `ERR_CHANNEL_BUSY` on the other channel until INIT on the stuck one | intentional, reference defect not copied (CTAP 2.1 §11.2.4, §11.2.5.2, rule 4) |
+
+Identical only within `compare.py`'s tolerances, and different by design:
+`selection-no-touch` answers `CTAP2_ERR_USER_ACTION_TIMEOUT` 30 004.7 ms after the request,
+after 315 KEEPALIVEs, against the key's 28 451.8 ms and 300 (the tolerances are 10 % and
+15 %; rule 4, the 30 s design value). The other timings stay as measured: KEEPALIVE mean
+interval 94.93 ms (key 94.86), first KEEPALIVE 98.96 ms (key 93.78; the engine's grid
+starts when the request is processed, the host stamps add the wire round trip), the
+message timeout 470.5 ms (key 469.8).
+
+`tools/measure/common.py` named CTAP2 status `3E` `UNAUTHORIZED_PERMISSION`, which is `40`
+in CTAP 2.1 §8.2; it now names `3E` `INVALID_SUBCOMMAND` and `40`
+`UNAUTHORIZED_PERMISSION`. `33` stays unnamed (`?`) so that the recorded physical runs
+remain comparable.
+
+Checks after the revision: `cargo test --workspace` 2378 passed, 0 failed, 1 ignored on
+macOS, 2379 passed, 0 failed, 1 ignored on Linux (Docker, offline); `cargo clippy
+--workspace --all-targets` no warnings on both; `tools/license_check.py` clean;
+`tools/catalog_status.py --check` clean (451 lines: 372 tested, 13 of them partly deferred
+or different, 37 intentional differences, 42 deferred). On the Linux guest's real kernel,
+with the compatibility profile: `uhid.sh`, `gadget.sh` and `vpcd.sh` end with rc=0 (libfido2
+`fido2-token -I` prints "uv retries: undefined" for `3E` as it did for `33`). The first
+`uhid.sh` attempt failed step 4 once: the hidraw node carried all 24 keyboard reports of
+`Hello1World` + Enter byte for byte, but the evdev reader received only the last five key
+events, consistent with an evdev client queue that overflowed while the reader was not
+scheduled (host load 5 to 14 from concurrent builds, under TCG; not provable after the fact,
+since `py/evdev_keys.py` does not record `SYN_DROPPED`). No OTP, uhid or daemon
+code changed in this revision; the re-run passed. The own profile's form factor `00` is
+covered by unit tests only: every host-tool run uses the compatibility profile.

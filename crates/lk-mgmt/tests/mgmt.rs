@@ -40,7 +40,12 @@ const OWN_PAGE0: [u8; 51] = [
     0x01, 0x02, 0x03, 0x3B, // USB supported: all seven applications
     0x03, 0x02, 0x03, 0x3B, // USB enabled
     0x02, 0x04, 0x00, 0xBC, 0x61, 0x4E, // serial 12345678
-    0x04, 0x01, 0x04, // form factor USB-C Nano
+    // Form factor UNKNOWN (yubikit `FORM_FACTOR.UNKNOWN`): the own identity claims no
+    // physical shape, so yubikit and ykman do not name it after a Yubico product. Known
+    // difference (own identity): the reference key reports `04`, USB-C Nano
+    // (docs/MEASUREMENT.md); the compatibility profile keeps that (`YK_PAGE0`). The own
+    // profile reported `04` before.
+    0x04, 0x01, 0x00, // form factor UNKNOWN
     0x05, 0x03, 0x05, 0x07, 0x04, // version 5.7.4
     0x06, 0x02, 0x00, 0x00, // auto-eject timeout
     0x07, 0x01, 0x0F, // challenge-response timeout 15 s (measured factory value)
@@ -2216,13 +2221,15 @@ fn yubikit_parse_tlvs(
     }
 }
 
-/// yubikit's view of a factory 5C Nano 5.7.4 (USB-only, all seven applications) whose
-/// profile has the part number `part_number` (`None` for an empty one).
-fn factory_view(serial: u64, part_number: Option<&str>) -> YubikitInfo {
+/// yubikit's view of a factory 5.7.4 device (USB-only, all seven applications) whose
+/// profile has the form factor `form_factor` (`00` UNKNOWN for the own profile, `04`
+/// USB_C_NANO for the compatibility profile) and the part number `part_number` (`None`
+/// for an empty one).
+fn factory_view(serial: u64, form_factor: u64, part_number: Option<&str>) -> YubikitInfo {
     YubikitInfo {
         is_locked: false,
         serial: Some(serial),
-        form_factor: 0x04, // FORM_FACTOR.USB_C_NANO
+        form_factor,
         is_fips: false,
         is_sky: false,
         version: vec![5, 7, 4],
@@ -2314,14 +2321,20 @@ fn yubikit_parse_tlvs_decodes_every_field() {
     // `_ManagementCtapBackend.read_config`: `ctap.call(0x42, int2bytes(page))`;
     // `_ManagementOtpBackend.read_config`: slot 0x13 with `int2bytes(page)`, CRC over
     // `len || TLVs`).
-    for (profile, serial) in [
-        (DeviceProfile::own(12_345_678), 12_345_678u64),
-        (DeviceProfile::yubikey_5c_nano_5_7_4(31_415_926), 31_415_926),
+    // Form factor: FORM_FACTOR.UNKNOWN (`00`) for the own identity, USB_C_NANO (`04`, as
+    // the reference key reports) for the compatibility profile.
+    for (profile, serial, form_factor) in [
+        (DeviceProfile::own(12_345_678), 12_345_678u64, 0x00),
+        (
+            DeviceProfile::yubikey_5c_nano_5_7_4(31_415_926),
+            31_415_926,
+            0x04,
+        ),
     ] {
         let part_number = Some(profile.part_number.clone()).filter(|p| !p.is_empty());
         let mut host = TestHost::with_profile(profile);
         let mut a = applet(&mut host);
-        let want = factory_view(serial, part_number.as_deref());
+        let want = factory_view(serial, form_factor, part_number.as_deref());
         assert_eq!(yubikit_ccid_info(&mut a, &mut host), want);
 
         // CTAPHID: the session version comes from CTAPHID INIT (5.7.4 here).
@@ -2374,7 +2387,7 @@ fn yubikit_parse_tlvs_decodes_every_field() {
         auto_eject_timeout: 300,
         challenge_response_timeout: 45,
         device_flags: 0xC0,
-        ..factory_view(12_345_678, None)
+        ..factory_view(12_345_678, 0x00, None)
     };
     assert_eq!(yubikit_ccid_info(&mut a, &mut host), want);
 }

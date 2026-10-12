@@ -56,8 +56,6 @@ mod tag {
     pub(super) const SERIAL: u32 = 0x93;
     /// SCP11c replay counter of an allowlist (catalog SecurityDomain_scp11c).
     pub(super) const COUNTER: u32 = 0x92;
-    /// Card data template around the card recognition data (GP 2.3.1 Annex H.2).
-    pub(super) const CARD_DATA: u32 = 0x66;
 }
 
 /// An EC key PUT KEY or GENERATE installs.
@@ -76,33 +74,42 @@ impl Drop for NewEc {
 
 impl SecurityDomain {
     /// GET DATA (GP 2.3.1 §11.3), readable without a session:
-    /// - `0066` card recognition data, `00E0` key information, `9F7F` CPLC. With
-    ///   `wrap_recognition` (a plaintext command in the GlobalPlatform class `80`) the
-    ///   recognition data comes inside its `66` template (GP 2.3.1 Annex H.2), 65 bytes,
-    ///   as a YubiKey 5C Nano 5.7.4 answers `80 CA 00 66` (`docs/MEASUREMENT.md`, probe
-    ///   `cla-variants-sd`); `00 CA 00 66` gets the bare `73` template (63 bytes, as
-    ///   observed). The class was measured for `0066` only, and only in plaintext:
-    ///   through a secure channel (`84` unwrapped to `80`) the bare template stays
-    ///   (model policy);
+    /// - `0066` card recognition data, `00E0` key information, `9F7F` CPLC;
     /// - `BF21` with `A6 { 83 KID KVN }`: the certificates stored for that key,
     ///   concatenated, leaf last (`6A88` if none, `6A80` for other data);
     /// - `FF33` / `FF34`: `42 <SKI> 83 <KID KVN>` for every CA identifier of an OCE CA
     ///   key (KLOC) / of a Security Domain key (KLCC); `6A88` if none.
     ///
     /// Any other tag: `6A88`.
-    pub(crate) fn get_data(&self, cmd: &Command, wrap_recognition: bool) -> Vec<u8> {
-        match (cmd.p1, cmd.p2) {
-            (0x00, 0x66) if wrap_recognition => apdu::response(&tlv::encode(tag::CARD_DATA, &CARD_RECOGNITION), sw::OK),
-            (0x00, 0x66) => apdu::response(&CARD_RECOGNITION, sw::OK),
-            (0x00, 0xE0) => apdu::response(&data::key_information(&self.state), sw::OK),
-            (0x9F, 0x7F) => apdu::response(&self.state.cplc, sw::OK),
+    ///
+    /// Response form by class (GP 2.3.1 §11.3.3.1: with CLA bit b8 = 1 the whole BER-TLV
+    /// data object is returned, with b8 = 0 only its value, for every P1P2 except
+    /// `2F00`): with `gp_class` (CLA `80`, or `84` unwrapped to `80` by a secure
+    /// channel; §11.1.4.1 Table 11-11) every object comes inside the tag P1P2 names, so
+    /// `66 3F 73 3D ...` (65 bytes), `E0 L C0 ...` (§11.3.3.1.1: "the key information is
+    /// returned in the template 'E0'"), `9F7F 2A <CPLC>`, `BF21 L <certificates>` and
+    /// `FF33`/`FF34 L <identifiers>`. The Amendment F tags follow the same base rule;
+    /// Amendment F's own text was not checked. CLA `00` (and `04` through a channel)
+    /// gets the bare value, as observed: `00 CA 00 66` 63 bytes, `00 CA 00 E0` the `C0`
+    /// list, `00 CA 9F 7F` 42 bytes. yubikit's `SecurityDomainSession` always sends CLA
+    /// `00` (`04` under SCP), so its reads are unaffected.
+    ///
+    /// A YubiKey 5C Nano 5.7.4 answers plaintext `80 CA 00 66` with the `66` template as
+    /// well (`docs/MEASUREMENT.md`, probe `cla-variants-sd`). Its other GP-class forms
+    /// (`80` for `00E0`/`9F7F`/`BF21`/`FF33`/`FF34`, and `84` through a channel) are
+    /// unmeasured; this follows the specification.
+    pub(crate) fn get_data(&self, cmd: &Command, gp_class: bool) -> Vec<u8> {
+        let value = match (cmd.p1, cmd.p2) {
+            (0x00, 0x66) => CARD_RECOGNITION.to_vec(),
+            (0x00, 0xE0) => data::key_information(&self.state),
+            (0x9F, 0x7F) => self.state.cplc.to_vec(),
             (0xBF, 0x21) => {
                 let Some((kid, kvn)) = parse_ref_only(&cmd.data) else {
                     return apdu::status(sw::INCORRECT_DATA);
                 };
                 match self.state.cert_store(kid, kvn) {
-                    Some(store) => apdu::response(&store.certs.concat(), sw::OK),
-                    None => apdu::status(sw::REF_NOT_FOUND),
+                    Some(store) => store.certs.concat(),
+                    None => return apdu::status(sw::REF_NOT_FOUND),
                 }
             }
             (0xFF, 0x33 | 0x34) => {
@@ -112,9 +119,19 @@ impl SecurityDomain {
                     tlv::encode_into(&mut out, tag::SKI, &id.ski);
                     tlv::encode_into(&mut out, tag::KEY_REF, &[id.kid, id.kvn]);
                 }
-                if out.is_empty() { apdu::status(sw::REF_NOT_FOUND) } else { apdu::response(&out, sw::OK) }
+                if out.is_empty() {
+                    return apdu::status(sw::REF_NOT_FOUND);
+                }
+                out
             }
-            _ => apdu::status(sw::REF_NOT_FOUND),
+            _ => return apdu::status(sw::REF_NOT_FOUND),
+        };
+        if gp_class {
+            // P1P2 is the tag of the object (`0066` is `66`, `00E0` is `E0`).
+            let object_tag = u32::from(u16::from_be_bytes([cmd.p1, cmd.p2]));
+            apdu::response(&tlv::encode(object_tag, &value), sw::OK)
+        } else {
+            apdu::response(&value, sw::OK)
         }
     }
 

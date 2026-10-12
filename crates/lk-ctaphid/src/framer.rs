@@ -22,16 +22,22 @@
 //!    `INVALID_CMD` was not measured), then a BCNT that the command does not allow
 //!    `ERR_INVALID_LEN` (above [`MAX_MESSAGE_LEN`], 1536, measured on a YubiKey 5C Nano
 //!    5.7.4 with probe `ping-max`; or outside the request layout of the command: an empty
-//!    MSG request, a WINK with data).
+//!    MSG or CBOR request, a WINK with data).
 //!
-//! A `CTAPHID_CBOR` request with BCNT 0 is never answered: the device stays busy with it
-//! on that channel, so other channels get `ERR_CHANNEL_BUSY`, `CTAPHID_CANCEL` on the
-//! channel changes nothing and no message timeout applies; only `CTAPHID_INIT` on that
-//! channel (or a USB reset) frees the device. Measured on a YubiKey 5C Nano 5.7.4
-//! (`docs/MEASUREMENT.md`, probe `empty-cbor`, and "The stuck-channel incident"). The
-//! application sees none of it: no [`Event::Request`], and no [`Event::Cancel`] or
-//! [`Event::Abort`] for it; [`Ctaphid::outstanding`] stays `None`. An empty
-//! `CTAPHID_MSG` was not measured and stays `ERR_INVALID_LEN`.
+//! A `CTAPHID_CBOR` request with BCNT 0 is answered `ERR_INVALID_LEN` at its
+//! initialization packet and holds nothing, like an empty `CTAPHID_MSG`: the request
+//! carries "BCNT 1..(n + 1)", the CTAP command byte first (§11.2.9.1.2), and
+//! `ERR_INVALID_LEN` means "The length field (BCNT) is invalid for the request"
+//! (§11.2.9.1.6). The application never sees it.
+//!
+//! Known difference from the reference device: a YubiKey 5C Nano 5.7.4 never answers an
+//! empty CBOR request and stays busy with it, with other channels `ERR_CHANNEL_BUSY`,
+//! CANCEL ignored and no timeout, until `CTAPHID_INIT` on that channel
+//! (`docs/MEASUREMENT.md`, probe `empty-cbor`, "The stuck-channel incident" and "Revised
+//! by principle"). That is a defect and is not copied: "A request always triggers a
+//! response" (§11.2.4), "potentially stalling applications should however, be handled
+//! properly" (§11.2.5), and the transaction timeout exists "to prevent a stalling
+//! application to cause the device to be completely locked out" (§11.2.5.2).
 //!
 //! Continuation packets are never answered unless they belong to the message being
 //! assembled. A packet out of sequence there is answered `ERR_INVALID_SEQ` and ends
@@ -213,9 +219,7 @@ impl Ctaphid {
             None => Ok(()),
             Some(active) if active.cid() != cid => Err(err::CHANNEL_BUSY),
             Some(_) if is_init => Ok(()),
-            Some(Transaction::Processing { .. } | Transaction::Stalled { .. }) => {
-                Err(err::CHANNEL_BUSY)
-            }
+            Some(Transaction::Processing { .. }) => Err(err::CHANNEL_BUSY),
             Some(Transaction::Assembling(_)) => {
                 self.active = None;
                 Err(err::INVALID_SEQ)
@@ -225,16 +229,17 @@ impl Ctaphid {
 
     /// Step 4 of the module-level check order for a request other than INIT/CANCEL.
     ///
-    /// Request lengths (CTAP 2.1): MSG carries `BCNT 1..(n+1)`, a command byte then data
-    /// (§11.2.9.1.1); WINK carries `BCNT 0` (§11.2.9.2.1). CBOR takes `BCNT 0` too, which
-    /// stalls the device (module documentation). Every request is at most
+    /// Request lengths (CTAP 2.1): MSG and CBOR carry `BCNT 1..(n+1)`, a command byte then
+    /// data (§11.2.9.1.1, §11.2.9.1.2), so an empty one is `ERR_INVALID_LEN` (§11.2.9.1.6;
+    /// the reference device's stall on an empty CBOR request is not copied, see the module
+    /// documentation); WINK carries `BCNT 0` (§11.2.9.2.1). Every request is at most
     /// [`MAX_MESSAGE_LEN`] bytes. `CTAPHID_LOCK` falls through to `ERR_INVALID_CMD`.
     fn check_request(&self, command: u8, bcnt: usize) -> Result<(), u8> {
         let advertises = |flag: u8| self.capabilities & flag != 0;
         let length_ok = match command {
             cmd::PING => true,
             cmd::MSG if !advertises(capability::NMSG) => bcnt > 0,
-            cmd::CBOR if advertises(capability::CBOR) => true,
+            cmd::CBOR if advertises(capability::CBOR) => bcnt > 0,
             cmd::WINK if advertises(capability::WINK) => bcnt == 0,
             cmd::VENDOR_FIRST..=cmd::VENDOR_LAST => true,
             _ => return Err(err::INVALID_CMD),
@@ -328,9 +333,6 @@ impl Ctaphid {
                 out.push(Event::Wink);
                 out.push(Event::Send(packet::single(cid, cmd::WINK, &[])));
             }
-            // The stall of the module documentation: busy, never answered, no request
-            // for the application.
-            cmd::CBOR if payload.is_empty() => self.active = Some(Transaction::Stalled { cid }),
             _ => {
                 self.active = Some(Transaction::Processing { cid, cmd: command });
                 out.push(Event::Request {

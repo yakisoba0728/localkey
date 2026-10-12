@@ -117,10 +117,10 @@ fn verify_header_guards_consume_no_retry() {
     // §3.2.1: "If any key reference value is specified that cannot be verified by the
     // PIV Card Application, then the PIV Card Application shall return ... '6A 88'".
     assert_eq!(card.send("0020000008313233343536FFFF").1, 0x6A88, "global PIN");
-    // The PUK reference answers 6A80: measured for the empty body (docs/MEASUREMENT.md,
-    // probe piv-verify-status-81, which replaced the §3.2.1 6A88 of the model); the same
-    // answer with data is the extrapolation of that rule (tests/measured.rs).
-    assert_eq!(card.send("0020008108313233343536FFFF").1, 0x6A80, "PUK cannot be verified");
+    // The PUK cannot be verified by VERIFY either (§3.2.1, 6A88). Known difference: the
+    // YubiKey 5C Nano 5.7.4 answers 6A80 (docs/MEASUREMENT.md, probe piv-verify-status-81;
+    // tests/measured.rs).
+    assert_eq!(card.send("0020008108313233343536FFFF").1, 0x6A88, "PUK cannot be verified");
     assert_eq!(card.send("0020009E08313233343536FFFF").1, 0x6A88);
     assert_eq!(card.send("0020000108313233343536FFFF").1, 0x6A88);
     // A non-zero Le; Le 00 (yubico-piv-tool on T=1) is accepted (tests/interop.rs).

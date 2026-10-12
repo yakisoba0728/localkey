@@ -99,30 +99,36 @@ fn late_tick_sends_one_keepalive() {
 }
 
 /// lk-fido `TOUCH_TIMEOUT_MS`; `presence_resolved(false)` for selection is
-/// CTAP2_ERR_USER_ACTION_TIMEOUT (CTAP 2.1 §6.9). Measured on a YubiKey 5C Nano 5.7.4
-/// (docs/MEASUREMENT.md, probe selection-no-touch): the answer comes after 300
-/// KEEPALIVEs, 28 451.8 ms after the request; the engine answers at 28 500 ms = 300 x
-/// 95 ms, right after the 300th KEEPALIVE. Before the measurement this test expected
-/// 30 000 ms.
+/// CTAP2_ERR_USER_ACTION_TIMEOUT (CTAP 2.1 §6.9). The timeout is 30 s (CTAP 2.1 §5,
+/// "User action timeout": "Thirty seconds is a reasonable value"), which is not a multiple
+/// of the 95 ms KEEPALIVE interval: the host sees 315 KEEPALIVEs, the last at 29 925 ms,
+/// and then the answer alone at 30 000 ms, with no KEEPALIVE in that Tick. Known
+/// difference: the YubiKey 5C Nano 5.7.4 answers after 300 KEEPALIVEs, 28 451.8 ms after
+/// the request (docs/MEASUREMENT.md, probe selection-no-touch), its 30 s design value on a
+/// clock that runs about 5.4 % fast; the drift is not copied ("Revised by principle").
+/// This test expected 28 500 ms and 300 KEEPALIVEs between the measurement and that
+/// revision.
 #[test]
 fn presence_timeout_answers_the_command() {
-    assert_eq!(lk_fido::TOUCH_TIMEOUT_MS, 28_500);
+    assert_eq!(lk_fido::TOUCH_TIMEOUT_MS, 30_000);
     let mut rig = Rig::new();
     let cid = rig.ctaphid_init();
     let start = rig.now;
     rig.ctaphid_send(cid, CTAPHID_CBOR, &SELECTION);
-    let mut last = Vec::new();
-    let mut sent = 0;
-    while rig.now < start + lk_fido::TOUCH_TIMEOUT_MS {
-        last = rig.advance(KEEPALIVE_INTERVAL_MS);
-        sent += keepalives(&last).len();
-        if !responses(&last).is_empty() {
-            break;
+    let mut sent = Vec::new();
+    let last = loop {
+        rig.now = rig.dev.next_deadline().expect("the command is waiting");
+        let out = rig.input(Input::Tick);
+        if !responses(&out).is_empty() {
+            break out;
         }
-    }
+        assert_eq!(keepalives(&out), vec![2], "at {}", rig.now);
+        sent.push(rig.now);
+    };
     assert_eq!(rig.now, start + lk_fido::TOUCH_TIMEOUT_MS);
-    assert_eq!(sent, 300, "KEEPALIVEs before the answer");
-    assert_eq!(keepalives(&last), vec![2], "the 300th KEEPALIVE comes with the answer");
+    assert_eq!(sent.len(), 315, "KEEPALIVEs before the answer");
+    assert_eq!(sent.last(), Some(&(start + 315 * KEEPALIVE_INTERVAL_MS)));
+    assert_eq!(keepalives(&last), Vec::<u8>::new(), "the answer comes alone");
     assert_eq!(responses(&last), vec![(CTAPHID_CBOR, vec![CTAP2_ERR_USER_ACTION_TIMEOUT])]);
     assert_eq!(indicators(&last), vec![false]);
 }
@@ -348,33 +354,32 @@ fn ctaphid_message_timeout_is_a_device_deadline() {
     assert_eq!(responses(&out), vec![(CTAPHID_ERROR, vec![0x05])]);
 }
 
-/// Measured on a YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probe empty-cbor, and "The
-/// stuck-channel incident"): CTAPHID_CBOR with BCNT 0 is never answered, not even with a
-/// KEEPALIVE; another channel's PING is ERR_CHANNEL_BUSY; CANCEL on the channel is not
-/// answered and the device stays busy; INIT on the channel is answered with the same CID,
-/// after which the other channel works. No presence request is started.
+/// CTAP 2.1 §11.2.9.1.2 ("BCNT 1..(n + 1)", the CTAP command byte first) and §11.2.9.1.6
+/// (ERR_INVALID_LEN, "The length field (BCNT) is invalid for the request"): CTAPHID_CBOR
+/// with BCNT 0 is ERR_INVALID_LEN at once and holds nothing; no presence request starts,
+/// and another channel's PING works right away. Known difference: the YubiKey 5C Nano
+/// 5.7.4 never answers it and stays busy (other channels ERR_CHANNEL_BUSY, CANCEL ignored)
+/// until INIT on the channel (docs/MEASUREMENT.md, probe empty-cbor, "The stuck-channel
+/// incident"). That stall is a defect not copied ("Revised by principle"): "A request
+/// always triggers a response" (§11.2.4) and a stalling application must not lock the
+/// device out (§11.2.5, §11.2.5.2). This test asserted the stall between the measurement
+/// and that revision.
 #[test]
-fn empty_cbor_request_stalls_the_device_until_init_on_its_channel() {
+fn empty_cbor_request_is_invalid_len_and_holds_nothing() {
     let mut rig = Rig::new();
     let a = rig.ctaphid_init();
     let b = rig.ctaphid_init();
     let out = rig.ctaphid_send(a, CTAPHID_CBOR, &[]);
-    assert!(out.is_empty(), "no answer, no KEEPALIVE: {out:02X?}");
-    assert_eq!(rig.dev.next_deadline(), None, "no timer ends the stall");
-    assert!(rig.run_until(rig.now + 2_000).is_empty(), "nothing within 2 s");
-    assert_eq!(rig.ctaphid(b, CTAPHID_PING, b"x"), (CTAPHID_ERROR, vec![0x06]));
-    assert!(rig.ctaphid_send(a, CTAPHID_CANCEL, &[]).is_empty(), "CANCEL is not answered");
-    rig.now += 1_000;
-    assert_eq!(rig.ctaphid(b, CTAPHID_PING, b"x"), (CTAPHID_ERROR, vec![0x06]), "still busy 3 s later");
-    // A touch is an ordinary button press: no FIDO request waits.
+    assert_eq!(responses(&out), vec![(CTAPHID_ERROR, vec![0x03])]);
+    assert_eq!(keepalives(&out), Vec::<u8>::new());
+    assert_eq!(rig.dev.next_deadline(), None, "nothing waits");
     assert!(!rig.dev.presence_pending());
+    assert_eq!(rig.ctaphid(b, CTAPHID_PING, b"x"), (CTAPHID_PING, b"x".to_vec()));
+    assert!(rig.ctaphid_send(a, CTAPHID_CANCEL, &[]).is_empty(), "CANCEL is not answered");
+    assert_eq!(rig.ctaphid(a, CTAPHID_PING, b"y"), (CTAPHID_PING, b"y".to_vec()));
+    // A touch is an ordinary button press: no FIDO request waits.
     let out = rig.tap();
     assert!(out.iter().all(|o| !matches!(o, Output::FidoReport(_))));
-    // INIT on the stalled channel: the same CID comes back and the device is free.
-    let (cmd, payload) = rig.ctaphid(a, CTAPHID_INIT, &[7; 8]);
-    assert_eq!(cmd, CTAPHID_INIT);
-    assert_eq!(&payload[8..12], &a.to_be_bytes());
-    assert_eq!(rig.ctaphid(b, CTAPHID_PING, b"x"), (CTAPHID_PING, b"x".to_vec()));
 }
 
 /// Measured on a YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probe ping-max): the longest

@@ -120,27 +120,26 @@ fn cancel_with_nonzero_bcnt_still_cancels_and_never_starts_a_message() {
 }
 
 #[test]
-fn cancel_of_a_stalled_empty_cbor_request_is_ignored() {
-    // docs/MEASUREMENT.md, probe empty-cbor: CANCEL on the channel of an empty CBOR
-    // request is not answered and the device stays busy; the application never had the
-    // request, so no Cancel event either. CANCEL from another channel is not answered
-    // with CHANNEL_BUSY. (This test exercised CANCEL under a CTAPHID_LOCK before the
-    // measurement showed the device does not implement LOCK, probe lock.)
+fn cancel_after_a_refused_empty_cbor_request_is_ignored() {
+    // CTAP 2.1 §11.2.9.1.2 and §11.2.9.1.6: an empty CBOR request is ERR_INVALID_LEN and
+    // starts nothing, so a CANCEL on its channel finds no outstanding request and is not
+    // answered (§11.2.9.1.5); CANCEL from another channel is not answered either, and a
+    // real CBOR request afterwards is cancelled as usual. Known difference: the YubiKey
+    // 5C Nano 5.7.4 stays busy after the empty request and ignores CANCEL
+    // (docs/MEASUREMENT.md, probe empty-cbor); that stall is a defect not copied
+    // (§11.2.4, §11.2.5.2, "Revised by principle"). This test checked CANCEL during the
+    // stall between the measurement and that revision, and CANCEL under a CTAPHID_LOCK
+    // before the measurement (probe lock).
     let mut dev = device();
     let a = allocate(&mut dev, 0);
     let b = allocate(&mut dev, 0);
-    assert_eq!(dev.report(1, &init_packet(a, CBOR, 0, &[])), vec![]);
+    assert_eq!(
+        dev.report(1, &init_packet(a, CBOR, 0, &[])),
+        error_events(a, ERR_INVALID_LEN)
+    );
     assert_eq!(dev.report(2, &cancel(a)), vec![]);
     assert_eq!(dev.report(2, &cancel(b)), vec![]);
-    assert_eq!(
-        dev.report(3, &init_packet(b, PING, 0, &[])),
-        error_events(b, ERR_CHANNEL_BUSY)
-    );
-    // After INIT resynchronisation a real CBOR request can be cancelled again.
-    assert_eq!(
-        sends(&dev.report(4, &init_packet(a, INIT, 8, &[1; 8]))).len(),
-        1
-    );
+    assert_ping_echo(&mut dev, 3, b, 0);
     start_cbor(&mut dev, 5, a, &[0x01]);
     assert_eq!(dev.report(6, &cancel(a)), vec![Event::Cancel { cid: a }]);
 }

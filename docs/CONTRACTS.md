@@ -15,9 +15,20 @@ addition; nothing that another crate uses has been renamed or removed. One excep
 made in the program phase for zeroization: `lk_codec::apdu::Command` now implements `Drop`
 (see "Program phase changes to the engine").
 
+Goal (restated by the user on 2026-10-12): localkey is its own software security key, and
+the YubiKey 5C Nano 5.7.4 is the reference it is compared against, not a device to clone.
+"Reference, not replica" near the end of this file gives the binding decision order for
+every externally visible behaviour; it overrides earlier wording here that treats the
+reference key as the target.
+
 ## Rules for every crate
 
 - Clean room: write from the specifications listed in `docs/DESIGN.md` §2.
+- Externally visible behaviour follows the decision order of "Reference, not replica
+  (2026-10-12, binding)": the specification first (with the host compatibility exception),
+  the reference key where the specification is open, Yubico's documentation and yubikit
+  for Yubico-proprietary protocols, never a reference defect, and the own identity in the
+  default profile.
   - Do not read or copy the legacy implementation (Git tag `legacy-v0.64.0`, branch
     `legacy/v0.64-tooling`).
   - `reference/BEHAVIOR_CATALOG.md` describes expected behaviour in prose and may be used.
@@ -326,8 +337,8 @@ The frozen crates' sources are the authority; these are the points other crates 
   - Command codes in `Event::Request.cmd` are 7-bit (`0x10` CBOR, `0x03` MSG); `respond`
     accepts either form.
   - Empty CBOR/MSG requests are answered with INVALID_LEN by the framer and never reach lk-fido.
-    Since the measurement an empty CBOR request stalls the device instead (it still never
-    reaches lk-fido; "Measurement changes to the engine").
+    Between the measurement and the revision by principle of 2026-10-12 an empty CBOR request
+    stalled the device instead ("Measurement changes to the engine").
   - CIDs are allocated sequentially from 1.
   - `reset()` emits no events: lk-device must check `outstanding()` first and drop its pending
     operation itself.
@@ -369,7 +380,7 @@ The frozen crates' sources are the authority; these are the points other crates 
   command with the CLA secure-messaging bits cleared. Plaintext continuation commands
   (SEND REMAINING, GET RESPONSE) are delivered as received.
 - **Touch timeouts**: applets return `NeedTouch { timeout_ms }` (OATH 15000, FIDO 30000;
-  FIDO 28500 since the measurement).
+  FIDO was 28500 between the measurement and the revision by principle of 2026-10-12).
   lk-device calls `touch_resolved(false)` / `presence_resolved(false)` on timeout, cancel,
   abort or session end.
 - **lk-fido**
@@ -435,7 +446,7 @@ The frozen crates' sources are the authority; these are the points other crates 
     selection and keep routing to it.
   - Reassemble ISO-chained secure-messaging commands before `SecureChannel::unwrap_command`.
   - Touch timeouts: OATH, PIV, OpenPGP and HSM Auth use 15000 ms; FIDO uses 30000 ms
-    (28500 ms since the measurement).
+    (28500 ms between the measurement and the revision by principle of 2026-10-12).
 - **lk-core additions**:
   - `DeviceProfile` has `attestation_organization`, `attestation_country`, `atr` and
     `openpgp_manufacturer`. As built, lk-fido takes its attestation subject from them and
@@ -578,7 +589,9 @@ additions; existing callers compile unchanged.
     `Management::to_record` returns a plain copy; the bytes lk-codec hands to callers),
     lk-codec's best-effort wipe, and compiler copies of fixed-size values.
   - Every status word, timing and cadence that no public source fixes is a model policy,
-    recorded in the crate's catalog file and unmeasured against a physical 5.7.4.
+    recorded in the crate's catalog file and unmeasured against a physical 5.7.4. (Refined
+    on 2026-10-12, "Reference, not replica": a model policy is a choice where neither a
+    specification nor the reference fixes the behaviour.)
 
 ## Program phase changes to the engine (as built, binding)
 
@@ -618,36 +631,147 @@ known gap required it.
 A read-only command-by-command measurement of a YubiKey 5C Nano 5.7.4 (`docs/MEASUREMENT.md`)
 replaced these model policies. The sections above keep the values they were written with and
 point here where they changed; `docs/MEASUREMENT.md` "Engine changes" lists every change with
-its tests and probe.
+its tests and probe. On 2026-10-12 every change below was reviewed under the decision order
+of "Reference, not replica" (next section): each bullet says whether it was kept and by which
+rule, and lines marked **Superseded (2026-10-12)** no longer describe the engine.
 
 - **lk-core**: `DeviceProfile::part_number: String` (DeviceInfo tag `13`): empty in `own`,
-  a 12-character placeholder in `yubikey_5c_nano_5_7_4`, never a real key's part number.
+  a 12-character placeholder in `yubikey_5c_nano_5_7_4`, never a real key's part number
+  (kept, rules 3 and 5).
 - **lk-ctaphid**:
   - `MAX_MESSAGE_LEN` (1536): a longer request gets `ERR_INVALID_LEN` at its initialization
     packet and its remaining packets are ignored; `MAX_PAYLOAD` (7609) stays the response
-    limit.
-  - `TRANSACTION_TIMEOUT_MS` is 470.
+    limit (kept, rule 2).
+  - `TRANSACTION_TIMEOUT_MS` is 470 (kept, rule 2).
   - `CTAPHID_LOCK` is answered `ERR_INVALID_CMD` and reserves nothing; `tick` no longer
     expires locks. `MAX_LOCK_SECONDS`, `cmd::LOCK` and `err::LOCK_REQUIRED` stay for source
-    compatibility.
-  - A `CTAPHID_CBOR` request with BCNT 0 is never answered: the device stays busy until
-    INIT on that channel or `reset()`. No event reaches the application and `outstanding()`
-    stays `None`. An empty MSG request is still `ERR_INVALID_LEN`.
+    compatibility (kept, rule 2).
+  - **Superseded (2026-10-12):** a `CTAPHID_CBOR` request with BCNT 0 was never answered
+    here: the device stayed busy until INIT on that channel or `reset()`. Revised by rule 4
+    (the stall is a reference defect, CTAP 2.1 §11.2.4 and §11.2.5.2): it is
+    `ERR_INVALID_LEN` at the initialization packet again, like an empty MSG request
+    (§11.2.9.1.2, §11.2.9.1.6), and holds nothing. No event reaches the application either
+    way. The internal `Transaction::Stalled` is gone.
 - **lk-device**: `KEEPALIVE_INTERVAL_MS` is 95, and the first KEEPALIVE is due one interval
-  after the request (none at once). A SELECT whose DF name starts with no enabled
-  applet's AID selects the first enabled applet, in `AppId::ALL` order, whose AID starts with the DF
-  name (a partial DF name).
-- **lk-fido**: `TOUCH_TIMEOUT_MS` is 28 500 (300 KEEPALIVE intervals). getPINRetries omits
-  `powerCycleState` unless the PIN is soft-blocked; getUVRetries answers
-  `CTAP2_ERR_PIN_AUTH_INVALID`.
+  after the request (none at once) (kept, rule 2). A SELECT whose DF name starts with no
+  enabled applet's AID selects the first enabled applet, in `AppId::ALL` order, whose AID
+  starts with the DF name (a partial DF name; kept, rule 1: ISO/IEC 7816-4 §6.11 allows a
+  right-truncated DF name and the ATR announces it). An empty DF name is the separate case
+  of "Reference, not replica".
+- **lk-fido**:
+  - **Superseded (2026-10-12):** `TOUCH_TIMEOUT_MS` was 28 500 (300 KEEPALIVE intervals).
+    It is 30 000 again by rule 4 (CTAP 2.1 §5 user action timeout; the key's 28.45 s is that
+    value on a fast clock).
+  - getPINRetries omits `powerCycleState` unless the PIN is soft-blocked (kept, rule 2:
+    the field is optional in CTAP 2.1 §6.5.5).
+  - **Superseded (2026-10-12):** getUVRetries answered `CTAP2_ERR_PIN_AUTH_INVALID` as on
+    the key. It answers `CTAP2_ERR_INVALID_SUBCOMMAND` again by rule 1 (CTAP 2.1 §8.1).
 - **lk-mgmt**: the SELECT text is `Virtual mgr - FW version <major>.<minor>.<patch>`;
   DeviceInfo is two fixed pages (new tag constants `FPS_VERSION` `0x20`, `STM_VERSION`
   `0x21`; `PAGE_LIMIT` stays as an upper bound); the factory challenge-response timeout
-  byte is 15.
+  byte is 15 (kept, rule 3; the SELECT text and the DeviceInfo layout are message formats
+  yubikit parses, rule 5).
 - **Card applets**: CLA `80` is served like `00` in Management, HSM Auth, PIV and OpenPGP;
   other classes `>= 0x80` keep `6E00`. GET RESPONSE with nothing pending answers `6D00`
   (Management, HSM Auth, OpenPGP), `6A80` (PIV) or `6982` (Security Domain) instead of
-  `6985`.
+  `6985` (kept, rule 2: ISO/IEC 7816-4 leaves both open).
+- **Revised by principle, 2026-10-12**: the card-side changes of that day, and the three
+  FIDO revisions above, are listed in the table of "Reference, not replica" below.
+
+## Reference, not replica (2026-10-12, binding)
+
+localkey is the user's own software security key. The YubiKey 5C Nano 5.7.4 is the
+**reference**: a well-made real key to compare against (`docs/MEASUREMENT.md`), not a device
+to clone. This section is binding for every engine and program crate. It overrides older
+wording in this file, in `docs/DESIGN.md` and in the catalog files that treats the reference
+key as the target or ranks its measurement first (`docs/DESIGN.md` §2 and §12 decision 8
+record the decision in Korean).
+
+Decision order for every externally visible behaviour:
+
+1. **Specification.** Where a public specification defines the behaviour (CTAP 2.1/2.2,
+   CTAPHID, U2F raw messages, ISO/IEC 7816-4, NIST SP 800-73-4/-78, OpenPGP card 3.4,
+   GlobalPlatform 2.3 with Amendments D and F, USB CCID 1.1, USB HID), follow the
+   specification, even where the reference differs, and record the reference's behaviour
+   as a known difference.
+   **Compatibility exception:** where a widely used host stack (libfido2, python-fido2,
+   Chromium/Firefox WebAuthn, Windows webauthn, yubikit/ykman, OpenSC, GnuPG scdaemon,
+   yubico-piv-tool, pcsc-lite/libccid) demonstrably depends on the reference's non-spec
+   behaviour, follow the reference and name the host and the reason.
+2. **Reference where the specification is open.** Where the specification leaves the
+   behaviour open (a status word among the allowed ones, a timing within its limits, an
+   optional feature, a maximum size the device chooses), follow the reference key, as
+   measured in `docs/MEASUREMENT.md` or documented by Yubico, because host software is
+   tuned to it.
+3. **Yubico-proprietary protocols** (Management, OTP HID frames, YKOATH, YubiHSM Auth, the
+   Yubico PIV and OpenPGP extensions): Yubico's public documentation and yubikit's
+   behaviour are the specification; the reference key is the best evidence of them.
+4. **No defects.** Never copy the reference's defects: hangs or stalls, missing answers,
+   unexplained quirks that a specification-conforming host would treat as errors, and
+   clock-drift artefacts in timings. For a timing, use the design value the reference
+   evidently intends: the KEEPALIVE measured at 95 ms stays 95 ms, because CTAP asks for
+   "at least every 100ms", but a timeout that measures 28.45 s because a 30 s timer runs on
+   a fast oscillator is 30 s.
+5. **Own identity.** The default profile, `DeviceProfile::own`, carries no Yubico names,
+   strings, AAGUID, part numbers or similar identifiers. The compatibility profile,
+   `DeviceProfile::yubikey_5c_nano_5_7_4`, stays only for testing: with host tools that
+   accept nothing else (ykman, libccid's reader list) and for the comparisons with the
+   reference (`reference/` golden tests, `tools/measure/`). Yubico-protocol message
+   formats stay where host tools parse them (the Management SELECT text, the DeviceInfo
+   layout, the attestation extension OIDs).
+
+Terms, as used in `docs/STATUS.md`, `docs/MEASUREMENT.md` and the catalog files:
+
+- **model policy**: the engine's own choice where neither a specification nor the
+  reference fixes the behaviour: the specification leaves it open and the reference was not
+  measured, or its answer could not be observed. A later measurement decides it by rule 2
+  (or rule 4, if what it shows is a defect).
+- **known difference**: a behaviour of the reference that the engine deliberately does not
+  follow, by rule 1, 4 or 5. The catalog line says `intentional difference` with the reason
+  ("spec over reference", "reference defect not copied", "own identity"), and a probe that
+  covers it differs by design. A rule-1 choice cites the section; a compatibility
+  exception names the host.
+
+Behaviours changed on 2026-10-12 (`docs/MEASUREMENT.md` "Revised by principle" lists the
+tests and probes):
+
+| Crate | Behaviour | Before | Now | Rule |
+| --- | --- | --- | --- | --- |
+| lk-ctaphid | `CTAPHID_CBOR` with BCNT 0 | never answered: the device stays busy (other channels `ERR_CHANNEL_BUSY`, CANCEL ignored, no timeout) until INIT on that channel or a USB reset; internal `Transaction::Stalled` (since 2811c86, as on the key) | `ERR_INVALID_LEN` at the initialization packet, nothing held; `Transaction::Stalled` removed | 4: "A request always triggers a response" (CTAP 2.1 §11.2.4), §11.2.5.2; the request is "BCNT 1..(n + 1)" (§11.2.9.1.2) |
+| lk-fido | `TOUCH_TIMEOUT_MS`, every waiting CTAP2 command | 28 500 (300 × 95 ms; since 2811c86) | 30 000: 315 KEEPALIVEs, the last at 29 925 ms, then the answer alone | 4: clock drift (28 451.8 / 30 000 = 0.9484, the KEEPALIVE ratio); CTAP 2.1 §5 "Thirty seconds is a reasonable value" |
+| lk-fido | clientPIN getUVRetries (`07`) | `CTAP2_ERR_PIN_AUTH_INVALID` (`33`; since 2811c86, as on the key) | `CTAP2_ERR_INVALID_SUBCOMMAND` (`3E`), like `06`; the engine has no built-in UV | 1: CTAP 2.1 §8.1, §6.5.5.3; no listed host depends on `33` |
+| lk-piv | VERIFY with P2 `81` | `6A80` (since 2811c86, as on the key) | `6A88`, with or without data, Le or P1 `FF`; no retry spent | 1: SP 800-73-4 Part 2 §3.2.1 |
+| lk-openpgp | `FACTORY_ISSUER_STATUS`, key information `DE` for ref `81` | `02`, imported (since 2811c86, as on the key) | `01`, generated on the device; stored `02` values are not migrated | 1: OpenPGP card 3.4.1 §4.4.3.8 |
+| lk-sd | SELECT response (FCI) | 25 bytes without `9F65` (as on the key) | 29 bytes, `9F65 01 FF` inside `A5`, both profiles | 1: GP 2.3.1 §11.9.3.1 Table 11-82; `FF` is the 255-byte limit of §11.1.5 |
+| lk-sd | GlobalPlatform-class GET DATA (`80`, and `84` unwrapped from SCP03/SCP11) | whole object only for plaintext `80 CA 00 66`; bare values otherwise | the whole BER-TLV data object for `66`, `E0`, `9F7F`, `BF21`, `FF33`/`FF34`; CLA `00` and `04` unchanged | 1: GP 2.3.1 §11.3.3.1 (unmeasured on the key beyond plaintext `80 CA 00 66`) |
+| lk-sd | key information of an OCE CA public key | `B0 41` | `B0 40` | 1: GP 2.3.1 §11.3.3.1.1 (unmeasured) |
+| lk-device, lk-sd | SELECT whose (unwrapped) class codes a logical channel other than 0 | changed the basic channel's selection and ended a secure channel | `6881`, selection and secure channel unchanged; CLA `FF` answers `6E00`; lk-sd closes its channel only on a basic-channel SELECT | 1: ISO/IEC 7816-4:1995 §5.5, Table 16; the ATR says "no logical channel" (unmeasured) |
+| lk-device | SELECT by DF name with an empty name | `6A82` | selects the Security Domain | 1: GP 2.3.1 §11.9.2.3 (unmeasured) |
+| lk-core | `DeviceProfile::own` form factor | `04`, USB-C Nano | `00` (new `form_factor::UNKNOWN`, additive); `yubikey_5c_nano_5_7_4` sets `04` explicitly | 5 |
+
+Kept after the same review (no change):
+
+- rule 2: the KEEPALIVE cadence (95 ms, the first one an interval after the request); the
+  470 ms message timeout (one sample; a repeated series that shows the 0.9486 clock ratio
+  would make 500 ms the design value under rule 4); the 1536-byte request limit;
+  `CTAPHID_LOCK` not implemented; getPINRetries without `powerCycleState`; CLA `80` served
+  like `00`; the statuses of an idle GET RESPONSE; the Security Domain's `6982` for an
+  unknown instruction; PIV GET DATA `6A82` for a wrong P1-P2 and a cut-short tag list;
+  OpenPGP GET DATA under CLA `10`.
+- rule 1: SELECT by a partial DF name; the CTAPHID framing errors, CANCEL rules and
+  timeout status mapping (already as specified).
+- rule 3: the Management SELECT text, DeviceInfo pages, READ CONFIG P1/P2 and the factory
+  challenge-response timeout (15 s, Yubico's documented default); PIV GET METADATA ignoring
+  P1. OTP and OATH, which are disabled on the measured key, were reviewed against YKOATH,
+  ykdef.h, yubikit and Yubico's OTP documentation; nothing changed.
+- compatibility exception (known deviations from SP 800-73-4 Part 2 §2.4.3): a PIV PIN may
+  hold any byte other than `FF`, because ykman documents and sends alphanumeric PINs; a new
+  PUK must be 6 to 8 non-`FF` bytes padded with `FF`, so `FF`×8 is never a PUK, because
+  yubikit's `PivSession.reset()` blocks the PUK by sending it and needs `63CX`.
+- rule 5: the own profile keeps firmware version 5.7.4, a vendor-defined number that
+  yubikit uses to gate PIV, OpenPGP, OATH and Management features, not a Yubico
+  identifier. Its AAGUID, USB strings, ATR historical bytes, OpenPGP manufacturer (`FF00`)
+  and attestation subjects were already its own.
 
 ## Contract change requests
 

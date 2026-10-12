@@ -92,8 +92,13 @@ impl ProductIds {
     }
 }
 
-/// Form-factor codes reported by the Management application.
+/// Form-factor codes reported by the Management application (DeviceInfo tag `04`;
+/// yubikit `FORM_FACTOR`).
 pub mod form_factor {
+    /// `FORM_FACTOR.UNKNOWN`: no physical shape. The own identity uses it: a software
+    /// key has no form factor, and a USB shape code would make yubikit and ykman name
+    /// the device after a Yubico product.
+    pub const UNKNOWN: u8 = 0x00;
     pub const USB_A_KEYCHAIN: u8 = 0x01;
     pub const USB_A_NANO: u8 = 0x02;
     pub const USB_C_KEYCHAIN: u8 = 0x03;
@@ -143,7 +148,8 @@ impl DeviceProfile {
         Self {
             firmware: Version::new(5, 7, 4),
             serial,
-            form_factor: form_factor::USB_C_NANO,
+            // No physical form factor (own identity, not the reference's USB-C Nano).
+            form_factor: form_factor::UNKNOWN,
             usb_vendor_id: 0x1209,
             usb_product_ids: ProductIds {
                 otp: 0x0001,
@@ -181,6 +187,7 @@ impl DeviceProfile {
     /// Attestation signatures remain this engine's own; no manufacturer key is reproduced.
     pub fn yubikey_5c_nano_5_7_4(serial: u32) -> Self {
         Self {
+            form_factor: form_factor::USB_C_NANO,
             usb_vendor_id: 0x1050,
             usb_product_ids: ProductIds {
                 otp: 0x0401,
@@ -232,6 +239,16 @@ mod tests {
     fn atrs_have_valid_check_bytes() {
         assert!(tck_ok(&DeviceProfile::own(1).atr));
         assert!(tck_ok(&DeviceProfile::yubikey_5c_nano_5_7_4(1).atr));
+    }
+
+    /// DeviceInfo tag `04` (yubikit `FORM_FACTOR`): the own identity claims no physical
+    /// shape (`UNKNOWN`, `00`), so host tools do not name it after a Yubico product; the
+    /// compatibility profile keeps the reference's USB-C Nano (`04`).
+    #[test]
+    fn form_factor_per_profile() {
+        assert_eq!(DeviceProfile::own(1).form_factor, super::form_factor::UNKNOWN);
+        assert_eq!(super::form_factor::UNKNOWN, 0x00);
+        assert_eq!(DeviceProfile::yubikey_5c_nano_5_7_4(1).form_factor, super::form_factor::USB_C_NANO);
     }
 
     /// The compatibility ATR is the published YubiKey 5 ATR.

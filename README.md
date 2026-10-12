@@ -1,7 +1,11 @@
 # localkey
 
-보안키(YubiKey 5C Nano, 펌웨어 5.7.4)의 외부에서 관찰되는 동작을 재현하는 소프트웨어 **엔진**입니다.
-Rust로 처음부터 새로 작성했습니다. 엔진 단계는 끝났습니다. **프로그램** 단계에서는 데몬 `localkeyd`와
+사용자 자신의 소프트웨어 보안키입니다. Rust로 처음부터 새로 작성했습니다. YubiKey 5C Nano(펌웨어 5.7.4)를
+**기준 키**로 삼아 비교합니다. 기준 키는 복제 대상이 아니라 잘 만든 실물 키로서의 비교 기준입니다. 기본
+정체성(pid.codes 시험용 USB VID/PID, 제품 문자열, AAGUID, 증명서)은 localkey 자신의 것입니다. YubiKey 호환
+프로필은 Yubico 장치만 받는 호스트 도구로 시험할 때를 위해 있습니다.
+
+핵심은 **엔진**이고, 엔진 단계는 끝났습니다. **프로그램** 단계에서는 데몬 `localkeyd`와
 전송 네 가지를 만들었습니다: 비공개 유닉스 소켓, Linux UHID, Linux USB 가젯, vsmartcard `vpcd`를 통한 PC/SC.
 `uhid,vpcd` 조합은 USB 장치 컨트롤러 없이 장치 전체를 노출합니다. Linux 전송과 vpcd는 네트워크가 없는
 QEMU 게스트에서 실제 호스트 소프트웨어로 검증했습니다.
@@ -12,16 +16,29 @@ QEMU 게스트에서 실제 호스트 소프트웨어로 검증했습니다.
   Management. 세 인터페이스(FIDO HID, OTP HID, CCID)를 하나의 `lk_device::Device`가 묶습니다.
 - 다른 프로젝트의 코드는 쓰지 않습니다. 예외는 암호 원시 기능뿐이고, `lk-crypto` 한 곳에서만 씁니다.
   목록과 라이선스는 `THIRD_PARTY.md`에 있습니다. 프로그램 크레이트도 표준 라이브러리만 씁니다.
-- 제조사 증명 신뢰, 보안 칩의 키 보호, 물리 터치 센서는 소프트웨어로 재현할 수 없습니다.
+- 제조사 증명 신뢰, 보안 칩의 키 보호, 물리 터치 센서는 소프트웨어로 제공할 수 없습니다.
 
-**실물과 같다고 주장하지 않습니다.** 동작의 근거는 공개 규격, 공개 테스트 벡터, 그리고 실물에서 공개
-정보만 읽은 바이트(`reference/yubikey-5c-nano-5.7.4/`)입니다. 실물과 명령 단위로 비교한 적은 없습니다.
-공개 자료가 정하지 않은 상태 워드와 타이밍은 모두 **모델 정책**이고, 크레이트별 카탈로그 파일에 근거와
-함께 기록했습니다.
+**기준 키와 같다고 주장하지 않고, 같아지는 것이 목표도 아닙니다.** 외부에서 보이는 동작은 다음 순서로
+정합니다(`docs/DESIGN.md` §2, §12 결정 8).
+
+1. 공개 규격이 정한 동작은 기준 키와 달라도 규격을 따릅니다. 다만 널리 쓰는 호스트 도구가 기준 키의
+   비규격 동작에 실제로 의존하면 기준 키를 따르고, 어느 도구가 왜 그런지 적습니다.
+2. 규격이 열어 둔 동작(상태 워드 선택, 한도 안의 타이밍, 장치가 정하는 최대 크기)은 기준 키를 따릅니다.
+3. Yubico 독자 프로토콜(Management, OTP, YKOATH, YubiHSM Auth, PIV/OpenPGP 확장)은 Yubico 공개 문서와
+   yubikit의 동작을 규격으로 삼습니다.
+4. 기준 키의 결함(멈춤, 응답 누락, 타이밍의 클록 오차)은 따르지 않습니다.
+5. 기본 정체성에는 Yubico 식별자를 넣지 않습니다.
+
+근거 자료는 공개 규격, 공개 테스트 벡터, 기준 키에서 공개 정보만 읽은 바이트
+(`reference/yubikey-5c-nano-5.7.4/`), 그리고 2026-10-11에 기준 키와 엔진에 같은 읽기 전용 요청을 보내
+명령 단위로 비교한 결과(`docs/MEASUREMENT.md`)입니다. 규격도 기준 키도 정하지 않은 상태 워드와 타이밍은
+**모델 정책**입니다. 모델 정책과 기준 키와 일부러 다르게 한 동작(알려진 차이)은 크레이트별 카탈로그 파일에
+근거와 함께 기록했습니다.
 
 ## 현재 상태
 
 - 단계별 결과, 테스트 수, 남은 차이와 미룬 항목: `docs/STATUS.md`
+- 기준 키와의 비교, 그에 따른 엔진 변경, 알려진 차이: `docs/MEASUREMENT.md`
 - 프로그램 계약과 as-built 기록: `docs/PROGRAM.md`
 - legacy 동작 카탈로그 대조표(tested / intentional difference / deferred): `docs/CATALOG_STATUS.md`
 
@@ -53,8 +70,9 @@ QEMU 게스트에서 실제 호스트 소프트웨어로 검증했습니다.
 | `crates/localkeyd` | (프로그램) 데몬 바이너리: `keygen`, `run`, `ctl` |
 | `tools/service/` | systemd 유닛과 udev 규칙 예시(설치하지 않음) |
 | `tools/linux-guest/` | 네트워크 없는 QEMU Linux 게스트를 만들고 실제 호스트 도구로 전송을 시험하는 스크립트 |
-| `docs/` | 설계(`DESIGN.md`), 공개 API 계약(`CONTRACTS.md`), 프로그램 계약(`PROGRAM.md`), 상태(`STATUS.md`), 카탈로그 대조(`CATALOG_STATUS.md`, `catalog/`) |
-| `reference/` | 실물 키에서 읽은 공개 바이트, legacy 동작 카탈로그, 프로필 값 |
+| `docs/` | 설계(`DESIGN.md`), 공개 API 계약(`CONTRACTS.md`), 프로그램 계약(`PROGRAM.md`), 상태(`STATUS.md`), 기준 키 비교(`MEASUREMENT.md`), 카탈로그 대조(`CATALOG_STATUS.md`, `catalog/`) |
+| `reference/` | 기준 키에서 읽은 공개 바이트, legacy 동작 카탈로그, 프로필 값 |
+| `tools/measure/` | 기준 키와 엔진에 같은 읽기 전용 요청을 보내 비교하는 도구(`docs/MEASUREMENT.md`) |
 | `tools/license_check.py` | 의존성 라이선스와 "외부 의존은 `lk-crypto`에만" 규칙 검사 |
 | `tools/catalog_status.py` | 카탈로그 대조표 집계와 검사 |
 | `THIRD_PARTY.md` | 제3자 크레이트 목록 (자동 생성) |

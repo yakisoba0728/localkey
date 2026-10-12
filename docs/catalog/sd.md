@@ -12,9 +12,14 @@ One line per bullet of the `## SCP03`, `## SCP11`, `## SecurityDomain` and every
 Counting convention: each bullet has exactly one label, the first word after the colon.
 
 - `tested`: the named tests pass and exercise everything in the bullet that the
-  Security Domain crate can show. Notes in parentheses record model-policy choices.
+  Security Domain crate can show. Notes in parentheses record model-policy choices:
+  choices where neither GlobalPlatform (Card Specification 2.3.1, Amendments D and F) nor
+  the reference key fixes the behaviour.
 - `intentional difference`: the engine deliberately behaves or verifies differently
-  from the bullet. The reason comes first, then the tests that cover what does apply.
+  from the bullet, or from the reference key. The reason comes first, then the tests
+  that cover what does apply. Where GlobalPlatform defines the behaviour and the
+  reference key differs, the engine follows GlobalPlatform ("spec over reference"; the
+  decision order is in `docs/CONTRACTS.md` "Reference, not replica").
 - `deferred`: something the bullet needs is missing. The usual causes:
   - socket and direct-IFD SDK runs belong to the program phase (`docs/DESIGN.md` §13);
   - PIV/OATH authorization state belongs to `lk-device`/`lk-piv`;
@@ -84,7 +89,7 @@ Model decisions that apply throughout (sources in the crate docs):
   live in the one `SecurityDomain`, so "across clients" is the same object. Multiplexing
   several host connections onto it is `lk-device`/program-phase work.
 
-Totals: 100 tested, 9 intentional differences, 11 deferred (120 bullets).
+Totals: 98 tested, 11 intentional differences, 11 deferred (120 bullets).
 
 ## SCP03
 
@@ -107,7 +112,7 @@ Totals: 100 tested, 9 intentional differences, 11 deferred (120 bullets).
 
 ## SecurityDomain
 
-- key information and GP recognition data: tested: `key_information_matches_reference_schema`, `card_recognition_data_matches_reference`, `select_response_matches_reference`, `ec_key_management` (CA keys listed as `C0 06 KID KVN B0 41 F0 00`)
+- key information and GP recognition data: tested: `key_information_matches_reference_schema`, `card_recognition_data_matches_reference`, `select_response_follows_gp_table_11_82`, `gp_class_get_data_returns_whole_data_objects`, `ec_key_management` (CA keys listed as `C0 06 KID KVN B0 40 F0 00`: GP 2.3.1 §11.3.3.1.1, the `B0` component length excludes the `04` coding identifier, `40` for ECC 256; it was `41`, and the reference observation has no CA key; CLA `00` returns the bare `C0` entries, the GlobalPlatform class `80`/`84` the `E0` template, GP 2.3.1 §11.3.3.1)
 - SCP03 key-set provisioning / KCV / default replacement: tested: `put_key_installs_a_set_and_replaces_the_default`, `put_key_accepts_length_prefixed_key_data_and_absent_kcv`, `put_key_refusals`, `key_changes_drop_a_half_open_handshake`, `scp03::tests::key_check_value_of_default_key`
 - P-256 SCP11 key generation and import: tested: `ec_key_management`, `scp11a_with_full_omitted_root_and_direct_chains`, `scp11_tries_last_attempt_exhaustion_and_wildcard`, `scp11a_and_scp11c_match_independent_known_answers`
 - certificate bundles / CA SKI / allowlist: tested: `ec_key_management` (STORE DATA / GET DATA `BF21`, `FF33`, `FF34`), `allowlist_rules`, `oce_cache_invalidation`, `scp11b_with_the_factory_certificate`
@@ -131,15 +136,15 @@ Totals: 100 tested, 9 intentional differences, 11 deferred (120 bullets).
 
 ## SecurityDomain_metadata
 
-- observation of fixed public SELECT and GET DATA 0066/E0/9F7F: tested: `select_response_matches_reference`, `card_recognition_data_matches_reference`, `key_information_matches_reference_schema`, `cplc_layout_and_stability`, `proprietary_class_card_data_has_the_66_template` (`80 CA 00 66` in plaintext answers the recognition data inside its `66` template, 65 bytes: measured on a YubiKey 5C Nano 5.7.4, docs/MEASUREMENT.md, probe `cla-variants-sd`)
-- exact SELECT 25 bytes and recognition 63 bytes; GP 2.3.1, SCP03 option 60, SCP11 option 9b06: tested: `select_response_matches_reference`, `card_recognition_data_matches_reference`, `init_update_response_matches_independent_known_answer` (INITIALIZE UPDATE reports `03 60`)
+- observation of fixed public SELECT and GET DATA 0066/E0/9F7F: intentional difference: specification over reference for the SELECT response: GP Card Specification v2.3.1 §11.9.3.1 Table 11-82 makes `9F65` (maximum length of data field in command message) mandatory in the FCI, so the engine answers the observed template plus `9F65 01 FF` (29 bytes; `FF` is the GP 2.3.1 §11.1.5 limit of 255 bytes, this device's choice), where the reference sends 25 bytes without it (`select_response_follows_gp_table_11_82`, which keeps the observed bytes as the known difference); GET DATA `00 CA 0066/00E0/9F7F` returns the observed values (`card_recognition_data_matches_reference`, `key_information_matches_reference_schema`, `cplc_layout_and_stability`), `80 CA 00 66` in plaintext the `66` template, 65 bytes, measured on a YubiKey 5C Nano 5.7.4 (docs/MEASUREMENT.md, probe `cla-variants-sd`; `proprietary_class_card_data_has_the_66_template`), and every GlobalPlatform-class GET DATA the whole object (GP 2.3.1 §11.3.3.1; unmeasured beyond plaintext `0066`: `gp_class_get_data_returns_whole_data_objects`)
+- exact SELECT 25 bytes and recognition 63 bytes; GP 2.3.1, SCP03 option 60, SCP11 option 9b06: intentional difference: specification over reference: the SELECT response is 29 bytes, the reference's 25 plus the `9F65 01 FF` that GP 2.3.1 Table 11-82 makes mandatory and the reference omits (`select_response_follows_gp_table_11_82`); the recognition data are the observed 63 bytes for CLA `00` (65 with the `66` template for the GlobalPlatform class), with GP 2.3.1, SCP03 option `60` and SCP11 option `9B06`: `card_recognition_data_matches_reference`, `init_update_response_matches_independent_known_answer` (INITIALIZE UPDATE reports `03 60`)
 - reference option advertises SCP11a/b/c, transient OCE, chains, S8, X509; no BF20: tested: `card_recognition_data_matches_reference`, `scp11a_and_scp11c_match_independent_known_answers`, `scp11b_matches_independent_known_answers`, `scp11a_with_full_omitted_root_and_direct_chains`, `oce_cache_invalidation` (the OCE is transient: SELECT and restart drop it)
 - unsupported BF20 X509 extension denied with 6A81 before chain/authentication: deferred: the encoding of the GP `BF20` element is not in the available sources, so it is not recognised; a certificate carrying an unrecognised critical extension is refused with `6982` (`certificate_chain_checks`)
 - 42-byte own CPLC with marker 0000 and random identifier: tested: `cplc_layout_and_stability`, `state::tests::cplc_layout` (IC serial and batch identifier random, other fields zero, same in both profiles)
 - CPLC stable through selection, SCP03/SCP11b reads, ordinary deletion and restart; absent metadata added: tested: `cplc_layout_and_stability`, `scp11b_with_the_factory_certificate` (CPLC read through SCP11b), `restart_and_record_migration`, `records_before_scp11_support_gain_a_certificate`
 - explicit last-management-key deletion restores fresh identity and rotates CPLC; peer keys/HOTP retained: tested: `deleting_the_last_key_set_needs_p2_1_and_resets`, `reset_touches_only_the_security_domain_record`, `reset_and_failed_commits_across_sessions` (needs P2 `01`, else `6985`)
 - old response remains MAC-verified while reset and encrypted SELECT end later commands: tested: `explicit_reset_protects_the_last_response_then_closes`, `encrypted_select_protects_its_response_then_closes`, `blocking_reset_like_yubikit`
-- saved byte/schema comparison and lifecycle over socket and direct IFD: deferred: socket/IFD runs are program phase (engine-level comparison: `select_response_matches_reference`, `key_information_matches_reference_schema`)
+- saved byte/schema comparison and lifecycle over socket and direct IFD: deferred: socket/IFD runs are program phase (engine-level comparison: `select_response_follows_gp_table_11_82`, `key_information_matches_reference_schema`)
 
 ## SecurityDomain_versions
 
@@ -192,7 +197,7 @@ Totals: 100 tested, 9 intentional differences, 11 deferred (120 bullets).
 - failed shared reset restores everything together; channels and cached authorization stay valid: tested: `reset_and_failed_commits_across_sessions`, `persistence_failures_keep_the_previous_state`
 - missing generation metadata added on load without recreating keys/certificates/retries/CPLC: tested: `records_before_scp11_support_gain_a_certificate`, `restart_and_record_migration` (the missing metadata is the SCP11 revision object and its own certificate, or the CPLC)
 - unchanged SDK verifies receipts/KDF/encrypted responses over private sockets and separate IFD handles: deferred: program phase (engine level: `protected_handoff_in_every_combination`)
-- GP public-review lifecycle; transient OCE/logical-channel policy and transactions pending: deferred: logical channels are refused (`6881`) and multi-connection transport is lk-device/program phase
+- GP public-review lifecycle; transient OCE/logical-channel policy and transactions pending: deferred: logical channels are refused (`6881`; lk-device refuses a SELECT for another logical channel before anything is selected, ISO/IEC 7816-4:1995 §5.5, and such an encrypted SELECT does not end the session: `encrypted_select_on_another_logical_channel_keeps_the_session`) and multi-connection transport is lk-device/program phase
 
 ## SecurityDomain_handoff
 
@@ -250,7 +255,11 @@ Totals: 100 tested, 9 intentional differences, 11 deferred (120 bullets).
 Differential measurement of 2026-10-11 (docs/MEASUREMENT.md): the same read-only probes
 (`tools/measure/probes.py`) sent to the physical key and to the engine, with the Security
 Domain selected and no secure channel (the read-only guard refuses every handshake). Each
-answer below was a model policy and now follows the key. A numbered list, so that
+answer below was a model policy. Items 1 and 2 follow the key because GlobalPlatform
+leaves the answer open (rule 2 of `docs/CONTRACTS.md` "Reference, not replica"); item 3
+matches the key and is what GP 2.3.1 §11.3.3.1 requires (rule 1), which also extends it.
+The SELECT response is a known difference (`9F65`, spec over reference; see the
+SecurityDomain_metadata lines above). A numbered list, so that
 `tools/catalog_status.py` does not count these as catalog lines:
 
 1. An instruction the Security Domain does not know answers `6982` outside a secure
@@ -271,12 +280,27 @@ answer below was a model policy and now follows the key. A numbered list, so tha
   65 bytes `66 3F 73 3D ...` (GP 2.3.1 Annex H.2), while `00 CA 00 66` keeps the bare
   63-byte `73` template of the reference observation: measured on a YubiKey 5C Nano 5.7.4
   (docs/MEASUREMENT.md, probe `cla-variants-sd`); both classes got the bare template
-  before. Measured for `0066` only and only in plaintext: GET DATA `00E0`/`9F7F` with CLA
-  `80`, and `0066` through a secure channel (`84`, unwrapped to `80`), keep the bare form
-  (model policy; this also keeps the independent SCP03/SCP11 known-answer vectors, which
-  wrap `80 CA 00 66`). Tests: `proprietary_class_card_data_has_the_66_template`, lk-device
+  before. The specification then extends this to every object and to the secure channel:
+  GP 2.3.1 §11.3.3.1 (CLA b8 = 1 returns the whole BER-TLV data object, b8 = 0 its
+  value, for every P1P2 except `2F00`) and §11.1.4.1 Table 11-11 (`80` and `84` are
+  GlobalPlatform classes), so `80` in plaintext and `84` through SCP03/SCP11 (unwrapped
+  to `80`) return `66`, `E0` (§11.3.3.1.1: "the key information is returned in the
+  template 'E0'"), `9F7F`, `BF21` and `FF33`/`FF34` around their values; CLA `00` (and
+  `04` through a channel, as yubikit's `SecurityDomainSession` sends) keeps the bare
+  values. The Amendment F tags follow the base rule; Amendment F's own text was not
+  checked. Known difference: the reference key's GP-class forms other than plaintext
+  `80 CA 00 66` are unmeasured (docs/MEASUREMENT.md "What could not be measured"); before,
+  they answered bare (model policy). The independent SCP03/SCP11 known-answer vectors,
+  which wrap `84 CA 00 66`, were recomputed with Python `cryptography` for the 65-byte
+  object after the same script reproduced the earlier 63-byte vectors. Tests:
+  `proprietary_class_card_data_has_the_66_template`,
+  `gp_class_get_data_returns_whole_data_objects`, `cplc_layout_and_stability`,
+  `wrapped_exchange_matches_independent_known_answers`,
+  `scp11b_matches_independent_known_answers`, `scp11b_with_the_factory_certificate`,
+  `ec_key_management`, lk-device
   `scenario_ccid::select_routes_between_all_seven_applications`,
-  `ccid::security_domain_and_hsm_auth_statuses_as_measured`.
+  `ccid::security_domain_and_hsm_auth_statuses_as_measured`,
+  `secure_channel::security_domain_commands_under_its_own_channel`.
 
 CLA `0C` came back without a status word on the physical side (`none`, docs/MEASUREMENT.md
 "Host artifacts") and keeps `6982`.

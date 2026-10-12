@@ -108,10 +108,13 @@ fn get_key_agreement_returns_a_cose_key_per_power_cycle() {
 #[test]
 fn parameter_types_and_subcommands() {
     // CTAP 2.1 §6.5.4 parameter types → CTAP2_ERR_CBOR_UNEXPECTED_TYPE; missing
-    // subCommand → MISSING_PARAMETER; getPinUvAuthTokenUsingUvWithPermissions (0x06) needs
-    // built-in UV, absent from GetInfo; unknown subcommands. getUVRetries (0x07) is
-    // CTAP2_ERR_PIN_AUTH_INVALID on the measured key (docs/MEASUREMENT.md, probe
-    // client-pin-uv-retries); it was in the INVALID_SUBCOMMAND list before the measurement.
+    // subCommand → MISSING_PARAMETER; getPinUvAuthTokenUsingUvWithPermissions (0x06) and
+    // getUVRetries (0x07) need built-in UV, absent from GetInfo, and unknown subcommands:
+    // CTAP2_ERR_INVALID_SUBCOMMAND (§8.1, "does not implement an invoked subcommand").
+    // Known difference: the YubiKey 5C Nano 5.7.4 answers getUVRetries
+    // CTAP2_ERR_PIN_AUTH_INVALID (0x33) (docs/MEASUREMENT.md, probe client-pin-uv-retries,
+    // and "Revised by principle"); the specification wins. This test expected 0x33 for
+    // getUVRetries between the measurement and that revision.
     let (mut auth, mut host) = device();
     let send = |auth: &mut Authenticator, host: &mut TestHost, m: Value| {
         send_untouched(auth, host, &encode_request(0x06, &m))
@@ -144,7 +147,7 @@ fn parameter_types_and_subcommands() {
         send(&mut auth, &mut host, m),
         vec![status::CBOR_UNEXPECTED_TYPE]
     );
-    for subcommand in [0x06u64, 0x08, 0x0A, 0xFF] {
+    for subcommand in [0x06u64, sub::GET_UV_RETRIES, 0x08, 0x0A, 0xFF] {
         assert_eq!(
             send_untouched(
                 &mut auth,
@@ -155,15 +158,6 @@ fn parameter_types_and_subcommands() {
             "{subcommand:#x}"
         );
     }
-    assert_eq!(
-        send_untouched(
-            &mut auth,
-            &mut host,
-            &client_pin(Some(2), sub::GET_UV_RETRIES).request()
-        ),
-        vec![status::PIN_AUTH_INVALID],
-        "getUVRetries"
-    );
     assert_eq!(
         send_untouched(&mut auth, &mut host, &[0x06]),
         vec![status::INVALID_CBOR]

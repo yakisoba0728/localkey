@@ -109,9 +109,18 @@ fn provision(sd: &mut SecurityDomain, host: &mut TestHost, pki: &Pki) -> Vec<u8>
 
 /// SCP11b with fixed scalars: SD key `01..20`, card ephemeral `21..40` (scripted host
 /// entropy), OCE ephemeral `41..60`. Request, response, session keys, and the first
-/// protected GET DATA `0066` (yubikit style: encrypted empty field, Le `00`) and its
-/// R-ENC/R-MAC response match Python/OpenSSL byte for byte; the receipt is the first
-/// MAC chaining value.
+/// protected GET DATA `0066` (encrypted empty field, Le `00`) and its R-ENC/R-MAC
+/// response match Python/OpenSSL byte for byte; the receipt is the first MAC chaining
+/// value.
+///
+/// The GET DATA is sent with CLA `84`, a GlobalPlatform class (GP 2.3.1 §11.1.4.1 Table
+/// 11-11), so the response is the whole `66` object, 65 bytes `66 3F 73 3D ...` (GP
+/// 2.3.1 §11.3.3.1, b8 = 1). The wrapped response was recomputed independently with
+/// Python `cryptography` (AES-CBC with the response ICV `AES(S-ENC, 80 || 0..0 ||
+/// counter 1)`, R-MAC = CMAC(S-RMAC, C-MAC || data || 9000), Amd D §6.2.6-§6.2.7) after
+/// the same script reproduced the earlier 63-byte vector from the session keys and the
+/// receipt; it was the bare 63-byte template before. yubikit sends `04 CA 00 66`, which
+/// still gets the bare template (`gp_class_get_data_returns_whole_data_objects`).
 #[test]
 fn scp11b_matches_independent_known_answers() {
     let (mut sd, mut host) = fresh();
@@ -139,10 +148,11 @@ fn scp11b_matches_independent_known_answers() {
     let command = est.session.wrap(0x80, 0xCA, 0x00, 0x66, &[], Some(0), false);
     assert_eq!(command, hex("84CA00661876A05DBF13517041E3F03E90AC2F40EF85B4570107A74FEB00"));
     let wrapped = device_transmit(&mut sd, &mut channel, &mut host, &command);
-    assert_eq!(wrapped, hex("20B1B97C9771DCE25C8D6C6E546BA4F0064C27D4413058AC2333FC961F4250C2B25735D8180EC28F90FD203D1400AEC14400B53E955E1D423560CA98C2CE59F710AB4EED32D5CEFC9000"));
+    assert_eq!(wrapped, hex("4A81A896D50544186BD41522986EFF1681162BAB5BC7B700A74F2CFD2A1078D2E66E1FD348889F85B40FB39567105FBEB03D898199A07E03279425FF2369DBF019BD2AD1D9B94F8EC71B3120AF1716550C164A9DBF7E53409000"));
     let (data, sw) = est.session.unwrap(&wrapped).unwrap();
     assert_eq!(sw, 0x9000);
-    assert_eq!(data.len(), 63);
+    assert_eq!(data.len(), 65);
+    assert_eq!(&data[..4], &[0x66, 0x3F, 0x73, 0x3D]);
 }
 
 /// SCP11a and SCP11c with fixed scalars: SD key `61..80`, OCE static (leaf certificate)
@@ -207,9 +217,14 @@ fn scp11b_with_the_factory_certificate() {
 
     let cplc = get(&mut sd, &mut host, 0x9F, 0x7F, &[]).0;
     let (mut est, mut ch) = authenticate(&mut sd, &mut host, Variant::B, 0x00, 0x41, &pk_sd, None);
+    // `84 CA`: the whole objects (GP 2.3.1 §11.3.3.1; 63 bytes and the bare CPLC before).
     let (data, sw) = send(&mut sd, &mut ch, &mut host, &mut est.session, 0x80, 0xCA, 0x00, 0x66, &[]);
+    assert_eq!((data.len(), sw), (65, 0x9000));
+    assert_eq!(send(&mut sd, &mut ch, &mut host, &mut est.session, 0x80, 0xCA, 0x9F, 0x7F, &[]), (tlv(&[0x9F, 0x7F], &cplc), 0x9000), "CPLC stable through SCP11b reads");
+    // `04 CA`, as yubikit sends: the bare values.
+    let (data, sw) = send(&mut sd, &mut ch, &mut host, &mut est.session, 0x00, 0xCA, 0x00, 0x66, &[]);
     assert_eq!((data.len(), sw), (63, 0x9000));
-    assert_eq!(send(&mut sd, &mut ch, &mut host, &mut est.session, 0x80, 0xCA, 0x9F, 0x7F, &[]), (cplc, 0x9000), "CPLC stable through SCP11b reads");
+    assert_eq!(send(&mut sd, &mut ch, &mut host, &mut est.session, 0x00, 0xCA, 0x9F, 0x7F, &[]), (cplc.clone(), 0x9000));
     for (ins, p1, p2, data) in [
         (0xD8, 0x00, 0x81, StaticKeys::DEFAULT.enc.to_vec()),
         (0xE4, 0x00, 0x00, hex("D00113")),
@@ -833,7 +848,10 @@ fn ec_key_management() {
     let info = key_info(&mut sd, &mut host);
     assert_eq!(info.len(), 3 * 6 + 16 * 8);
     assert!(info.windows(8).any(|w| w == hex("C006117FB120F000")));
-    assert!(info.windows(8).any(|w| w == hex("C0062101B041F000")));
+    // GP 2.3.1 §11.3.3.1.1: the `B0` component length excludes the `04` coding
+    // identifier, `40` for ECC 256 (it was `41`; the reference observation has no CA key).
+    assert!(info.windows(8).any(|w| w == hex("C0062101B040F000")));
+    assert!(!info.windows(8).any(|w| w == hex("C0062101B041F000")));
     // Delete the CA keys again.
     for kvn in 1..=14u8 {
         assert_eq!(send(&mut sd, &mut ch, &mut host, &mut s, 0x80, 0xE4, 0x00, 0x00, &[0xD0, 0x01, 0x20 + (kvn % 16), 0xD2, 0x01, kvn]).1, 0x9000);
@@ -854,6 +872,15 @@ fn ec_key_management() {
     assert_eq!(store(&mut sd, &mut ch, &mut host, &mut s, &ca_issuer_data(0x13, 0x01, &[0x5A; 20])), 0x9000);
     assert_eq!(get(&mut sd, &mut host, 0xFF, 0x33, &[]), ([tlv(&[0x42], &pki.root_ski), hex("83021003")].concat(), 0x9000));
     assert_eq!(get(&mut sd, &mut host, 0xFF, 0x34, &[]), ([tlv(&[0x42], &[0x5A; 20]), hex("83021301")].concat(), 0x9000));
+    // The GlobalPlatform class returns the whole objects (GP 2.3.1 §11.3.3.1, b8 = 1):
+    // `BF21`, `FF33` and `FF34` around the same values, through the channel (`84`) and in
+    // plaintext (`80`). Unmeasured on the reference key; they were bare before.
+    let (whole, sw) = send_ext(&mut sd, &mut ch, &mut host, &mut s, 0x80, 0xCA, 0xBF, 0x21, &hex("A60483021003"));
+    assert_eq!((whole, sw), (tlv(&[0xBF, 0x21], &chain.concat()), 0x9000));
+    let kloc = [tlv(&[0x42], &pki.root_ski), hex("83021003")].concat();
+    let klcc = [tlv(&[0x42], &[0x5A; 20]), hex("83021301")].concat();
+    assert_eq!(send(&mut sd, &mut ch, &mut host, &mut s, 0x80, 0xCA, 0xFF, 0x33, &[]), (tlv(&[0xFF, 0x33], &kloc), 0x9000));
+    assert_eq!(plain(&mut sd, &mut host, &hex("80CAFF3400")), [tlv(&[0xFF, 0x34], &klcc), hex("9000")].concat());
     let wrong_kind = tlv(&[0xA6], &[tlv(&[0x80], &[0x01]), tlv(&[0x42], &[1]), tlv(&[0x83], &[0x10, 0x03])].concat());
     assert_eq!(store(&mut sd, &mut ch, &mut host, &mut s, &wrong_kind), 0x6A80);
     assert_eq!(store(&mut sd, &mut ch, &mut host, &mut s, &ca_issuer_data(0x10, 0x07, &[1])), 0x6A88);
@@ -1248,7 +1275,8 @@ fn scp11a_session_survives_allowlist_updates() {
     assert_eq!(store(&mut sd, &mut ch, &mut host, s, &allowlist_data(0x10, 0x03, &[&pki.leaf_serial], None)), 0x9000);
     assert!(!sd.has_verified_oce());
     assert!(ch.is_open());
-    assert_eq!(ok(&mut sd, &mut ch, &mut host, s, 0x80, 0xCA, 0x9F, 0x7F, &[]), cplc);
+    assert_eq!(ok(&mut sd, &mut ch, &mut host, s, 0x00, 0xCA, 0x9F, 0x7F, &[]), cplc);
+    assert_eq!(ok(&mut sd, &mut ch, &mut host, s, 0x80, 0xCA, 0x9F, 0x7F, &[]), tlv(&[0x9F, 0x7F], &cplc));
     assert_eq!(ok(&mut sd, &mut ch, &mut host, s, 0x80, 0xF1, 0x00, 0x13, &hex("02F00100")).len(), 67);
 }
 
@@ -1404,7 +1432,8 @@ fn yubikit_request_shapes_on_extended_and_short_sessions() {
         let pki = pki(0);
 
         let select = encode_apdu(0x00, 0xA4, 0x04, 0x00, lk_sd::AID, None, false);
-        assert_eq!(sd.select(&select, &mut host), [&hex("6f178408a000000151000000a50b730906072a864886fc6b01")[..], &[0x90, 0x00]].concat());
+        // GP 2.3.1 Table 11-82 FCI with `9F65` (the reference's 25 bytes lack it).
+        assert_eq!(sd.select(&select, &mut host), [&hex("6f1b8408a000000151000000a50f730906072a864886fc6b019f6501ff")[..], &[0x90, 0x00]].concat());
         assert_eq!(yubikit_plain(&mut sd, &mut host, 0x00, 0xCA, 0x00, 0xE0, &[], extended).0, hex(FACTORY_KEY_INFO), "{session}");
         assert_eq!(yubikit_plain(&mut sd, &mut host, 0x00, 0xCA, 0x00, 0x66, &[], extended).0.len(), 63, "{session}");
         assert_eq!(yubikit_plain(&mut sd, &mut host, 0x00, 0xCA, 0xFF, 0x33, &[], extended).1, 0x6A88, "{session}: no CA identifiers yet");

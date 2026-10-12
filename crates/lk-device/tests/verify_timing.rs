@@ -135,10 +135,14 @@ fn late_host(rig: &mut Rig, mut late: impl FnMut() -> Millis, stop: impl Fn(&[Ou
 /// module documentation), so the k-th KEEPALIVE goes out at `start + k * 95 + 7` and no
 /// gap exceeds 95 ms. Rescheduling from the processing time would put the k-th at
 /// `start + k * 102` and stretch every gap to 102 ms. The wait ends with the timeout
-/// answer at 28.5 s (lk-fido `TOUCH_TIMEOUT_MS`, measured 28 451.8 ms in probe
-/// selection-no-touch) right after the 300th KEEPALIVE, due at the same instant, exactly
-/// as on the key. Before the measurement this test expected an immediate KEEPALIVE,
-/// a 100 ms grid and 301 KEEPALIVEs up to a 30 s timeout.
+/// answer at 30 s (lk-fido `TOUCH_TIMEOUT_MS`, CTAP 2.1 §5 "User action timeout"), in a
+/// Tick of its own 75 ms after the 315th KEEPALIVE: the 316th would be due at 30 020 ms.
+/// Known difference: the key answers 28 451.8 ms after the request, right after its 300th
+/// KEEPALIVE (docs/MEASUREMENT.md, probe selection-no-touch), its 30 s design value on a
+/// clock that runs about 5.4 % fast, not copied ("Revised by principle"). This test
+/// expected 300 KEEPALIVEs and a 28.5 s timeout between the measurement and that
+/// revision, and an immediate KEEPALIVE, a 100 ms grid and 301 KEEPALIVEs up to a 30 s
+/// timeout before the measurement.
 #[test]
 fn keepalive_cadence_stays_on_the_grid_with_a_late_host() {
     const LATE: Millis = 7;
@@ -148,8 +152,9 @@ fn keepalive_cadence_stays_on_the_grid_with_a_late_host() {
     let start = rig.now;
     assert_eq!(keepalives(&rig.ctaphid_send(cid, CTAPHID_CBOR, &SELECTION)), Vec::<u8>::new(), "none at once");
     let batches = late_host(&mut rig, || LATE, |out| !responses(out).is_empty());
+    let (last_at, last) = batches.last().unwrap();
     let mut sent = Vec::new();
-    for (at, out) in &batches {
+    for (at, out) in &batches[..batches.len() - 1] {
         assert!((at - LATE - start).is_multiple_of(KEEPALIVE_INTERVAL_MS), "Tick at {at} was not for a grid point");
         sent.extend(keepalives(out).iter().map(|_| *at));
     }
@@ -158,23 +163,32 @@ fn keepalive_cadence_stays_on_the_grid_with_a_late_host() {
         assert_eq!(at, start + k * KEEPALIVE_INTERVAL_MS + LATE, "KEEPALIVE {k}");
     }
     assert!(sent.windows(2).all(|pair| pair[1] - pair[0] <= KEEPALIVE_INTERVAL_MS));
-    assert_eq!(sent.len(), 300, "one per 95 ms up to the timeout instant, as measured");
-    assert_eq!(FIDO_TIMEOUT_MS, 300 * KEEPALIVE_INTERVAL_MS);
-    let (at, last) = batches.last().unwrap();
-    assert_eq!(*at, start + FIDO_TIMEOUT_MS + LATE);
-    assert_eq!(labels(last), ["ka", "fido:10", "off"]);
+    assert_eq!(sent.len(), 315, "one per 95 ms up to the last grid point before the timeout");
+    assert_eq!(FIDO_TIMEOUT_MS, 30_000);
+    assert!(!FIDO_TIMEOUT_MS.is_multiple_of(KEEPALIVE_INTERVAL_MS), "no KEEPALIVE is due at the timeout");
+    assert_eq!(*last_at, start + FIDO_TIMEOUT_MS + LATE);
+    assert!(last_at - sent[314] <= KEEPALIVE_INTERVAL_MS, "no gap above 95 ms before the answer either");
+    assert_eq!(labels(last), ["fido:10", "off"]);
     assert_eq!(responses(last), vec![(CTAPHID_CBOR, vec![CTAP2_ERR_USER_ACTION_TIMEOUT])]);
 }
 
-/// docs/MEASUREMENT.md, probe selection-no-touch, end to end: selection without a touch
-/// gets 300 KEEPALIVE(UPNEEDED) reports and then CTAP2_ERR_USER_ACTION_TIMEOUT; on the key
-/// the first came 85.9 ms after the request, the interval was 94.86 ms and the answer came
-/// 28 451.8 ms after the request, 2 ms after the 300th KEEPALIVE. The engine: the k-th
-/// KEEPALIVE at `start + k * 95` ms, the answer at 28 500 ms in the same Tick as the
-/// 300th (the timer order of `presence.rs` puts the KEEPALIVE first). A host that wakes
-/// late for that last deadline (190 ms here) still sees 300, not more.
+/// The sequence of docs/MEASUREMENT.md, probe selection-no-touch, end to end with the 30 s
+/// user action timeout (CTAP 2.1 §5: "Thirty seconds is a reasonable value"): selection
+/// without a touch gets KEEPALIVE(UPNEEDED) reports at `start + k * 95` ms, k = 1..=315
+/// (the first one interval after the request, as on the key), and then
+/// CTAP2_ERR_USER_ACTION_TIMEOUT at 30 000 ms in a Tick of its own: the 316th KEEPALIVE
+/// would be due at 30 020 ms. A host that wakes late for the timeout (190 ms here, past
+/// that 316th grid point) still sees 315, not more: timers fire in time order
+/// (`presence.rs`), so the timeout ends the wait before the overdue KEEPALIVE. Known
+/// difference: on the key the first came 85.9 ms after the request, the interval was
+/// 94.86 ms and the answer came 28 451.8 ms after the request, 2 ms after the 300th
+/// KEEPALIVE, the 30 s design value on a clock that runs about 5.4 % fast; the drift is
+/// not copied ("Revised by principle"). This test was
+/// `measured_probe_selection_without_touch_sends_300_keepalives_then_times_out` and
+/// expected 300 KEEPALIVEs and the answer at 28 500 ms between the measurement and that
+/// revision.
 #[test]
-fn measured_probe_selection_without_touch_sends_300_keepalives_then_times_out() {
+fn selection_without_touch_sends_315_keepalives_then_times_out_at_30_s() {
     for late_last in [0, 190] {
         let mut rig = Rig::new();
         let cid = rig.ctaphid_init();
@@ -191,22 +205,24 @@ fn measured_probe_selection_without_touch_sends_300_keepalives_then_times_out() 
                 break out;
             }
         };
-        assert_eq!(sent.len(), 300, "late by {late_last} ms");
+        assert_eq!(sent.len(), 315, "late by {late_last} ms");
         assert!(sent.iter().all(|&(_, status)| status == 2), "STATUS_UPNEEDED");
         assert_eq!(sent[0].0, start + 95, "the first one interval after the request");
-        assert_eq!(sent[298].0, start + 299 * 95);
-        assert_eq!(rig.now, start + 28_500 + late_last);
-        assert_eq!(labels(&last), ["ka", "fido:10", "off"]);
+        assert_eq!(sent[314].0, start + 315 * 95);
+        assert_eq!(rig.now, start + 30_000 + late_last);
+        assert_eq!(labels(&last), ["fido:10", "off"]);
         assert_eq!(responses(&last), vec![(CTAPHID_CBOR, vec![CTAP2_ERR_USER_ACTION_TIMEOUT])]);
         assert_eq!(rig.dev.next_deadline(), None);
     }
 }
 
 /// The same cadence with a seeded jitter of 0–60 ms on every Tick: each KEEPALIVE stays
-/// within the jitter of its grid point (no drift accumulates), and the 28.5 s wait
-/// carries 300 of them (CTAP 2.1 §11.2.9.1.7; measured: docs/MEASUREMENT.md, probe
-/// selection-no-touch; it was 300 after an immediate one in a 30 s wait before the
-/// measurement).
+/// within the jitter of its grid point (no drift accumulates), and the 30 s wait carries
+/// 315 of them (CTAP 2.1 §11.2.9.1.7 and §5 "User action timeout"; the interval and the
+/// first one an interval after the request as measured: docs/MEASUREMENT.md, probe
+/// selection-no-touch). It was 300 in the 28.5 s wait between the measurement and the
+/// revision by principle, and 300 after an immediate one in a 30 s wait before the
+/// measurement.
 #[test]
 fn keepalive_cadence_survives_jitter() {
     let mut rig = Rig::new();
@@ -216,7 +232,7 @@ fn keepalive_cadence_survives_jitter() {
     let mut entropy = SeededEntropy::new(41);
     let batches = late_host(&mut rig, || Millis::from(entropy.bytes(1)[0]) % 61, |out| !responses(out).is_empty());
     let sent: Vec<Millis> = batches.iter().flat_map(|(at, out)| keepalives(out).into_iter().map(move |_| *at)).collect();
-    assert_eq!(sent.len(), 300);
+    assert_eq!(sent.len(), 315);
     for (k, &at) in sent.iter().enumerate() {
         let grid = start + (k as Millis + 1) * KEEPALIVE_INTERVAL_MS;
         assert!((grid..=grid + 60).contains(&at), "KEEPALIVE {} at {at}, grid point {grid}", k + 1);
@@ -227,7 +243,8 @@ fn keepalive_cadence_survives_jitter() {
 /// the grid `start + k * 500 ms` (`WTX_INTERVAL_MS`, model policy) however late the
 /// host's timer fires (13 ms here), 30 of them up to the 15 s OATH timeout (lk-oath
 /// `TOUCH_TIMEOUT_MS`), where the one due at the same instant precedes the `6982`
-/// answer (the timer order of `presence.rs`).
+/// answer (the timer order of `presence.rs`). Since the FIDO timeout is 30 s, which the
+/// 95 ms KEEPALIVE grid never hits, this card path is the one that checks that order.
 #[test]
 fn time_extensions_stay_on_the_grid_with_a_late_host() {
     const LATE: Millis = 13;
@@ -252,8 +269,11 @@ fn time_extensions_stay_on_the_grid_with_a_late_host() {
 /// touch that arrives exactly at the FIDO presence timeout comes after the timeout: the
 /// command answers CTAP2_ERR_USER_ACTION_TIMEOUT (CTAP 2.1 §6.9), and the touch, with
 /// nothing pending, is a button press that types slot 1 at contact (catalog OTP
-/// "single-slot 1 FAST_TRIG reports at modeled contact"). The KEEPALIVE due at the same
-/// instant goes out first. Order: KEEPALIVE, answer, keyboard, indicator.
+/// "single-slot 1 FAST_TRIG reports at modeled contact"). No KEEPALIVE is due at that
+/// instant: the last one went out at 29 925 ms and the next grid point, 30 020 ms, comes
+/// after the 30 s timeout (the order rule for a periodic message due at the timeout
+/// instant is checked on the card path below). Order: answer, keyboard, indicator. It was
+/// KEEPALIVE first while the timeout was 28 500 ms = 300 × 95 ms.
 #[test]
 fn touch_exactly_at_the_fido_timeout_is_a_button_press() {
     let mut rig = Rig::new();
@@ -264,7 +284,7 @@ fn touch_exactly_at_the_fido_timeout_is_a_button_press() {
     wait_until(&mut rig, start + FIDO_TIMEOUT_MS - 1);
     rig.now = start + FIDO_TIMEOUT_MS;
     let out = rig.touch_down();
-    assert_eq!(labels(&out), ["ka", "fido:10", "kbd", "off"]);
+    assert_eq!(labels(&out), ["fido:10", "kbd", "off"]);
     assert_eq!(responses(&out), vec![(CTAPHID_CBOR, vec![CTAP2_ERR_USER_ACTION_TIMEOUT])]);
     assert_eq!(typed(&out).len(), 33);
     rig.now += 100;
@@ -463,7 +483,7 @@ fn touch_at_the_earliest_requests_timeout_goes_to_the_next_one() {
 /// two timeout answers in deadline order, whichever interface the earlier one is on.
 #[test]
 fn overdue_deadlines_are_processed_in_time_order() {
-    // The card command times out first (15 s after it started, the CTAP2 one at 28.5 s).
+    // The card command times out first (15 s after it started, the CTAP2 one at 30 s).
     let mut rig = Rig::new();
     oath_touch_credential(&mut rig);
     let cid = rig.ctaphid_init();

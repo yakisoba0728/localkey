@@ -16,12 +16,13 @@
 //! 2. Against a small host-side model of the rules this crate documents: CTAP 2.1
 //!    §11.2.4 to §11.2.9, the `reference/BEHAVIOR_CATALOG.md` CTAPHID decisions, the
 //!    behaviour measured on a YubiKey 5C Nano 5.7.4 (`docs/MEASUREMENT.md`: requests of
-//!    at most 1536 bytes, probe `ping-max`; LOCK is ERR_INVALID_CMD, probe `lock`; an
-//!    empty CBOR request stalls the device until INIT on its channel, probe `empty-cbor`;
+//!    at most 1536 bytes, probe `ping-max`; LOCK is ERR_INVALID_CMD, probe `lock`;
 //!    470 ms message timeout, probe `message-timeout`), and the check order and model
 //!    policies stated in `src/framer.rs` (channel, busy, command, length; the timeout
-//!    restarted per packet). The model predicts the exact events of every call,
-//!    `outstanding()` and `next_deadline()`.
+//!    restarted per packet). An empty CBOR request is ERR_INVALID_LEN (§11.2.9.1.2); the
+//!    reference device's stall on it (probe `empty-cbor`) is a defect not copied. The
+//!    model predicts the exact events of every call, `outstanding()` and
+//!    `next_deadline()`.
 //!
 //! The generator is SplitMix64 (Steele, Lea and Flood, "Fast Splittable Pseudorandom
 //! Number Generators", OOPSLA 2014), so every run replays the same traffic; a failure
@@ -181,9 +182,6 @@ enum Expect {
     Error(u8),
     Started,
     Request(Vec<u8>),
-    /// An empty CBOR request: nothing at all, and the device stays busy until INIT on
-    /// the channel (docs/MEASUREMENT.md, probe empty-cbor).
-    Stall,
     Ping(Vec<u8>),
     Init { fresh: bool, abort: bool },
     Wink,
@@ -200,9 +198,9 @@ struct Coverage {
     allocations: usize,
     /// LOCK answered ERR_INVALID_CMD (docs/MEASUREMENT.md, probe lock).
     locks_refused: usize,
-    /// Empty CBOR requests that stalled the device, and INITs that ended a stall.
-    stalls: usize,
-    stall_resyncs: usize,
+    /// Empty CBOR requests refused with ERR_INVALID_LEN (CTAP 2.1 §11.2.9.1.2; the
+    /// reference device's stall is not copied, docs/MEASUREMENT.md probe empty-cbor).
+    empty_cbor_refused: usize,
     /// Initialization packets refused for a BCNT between 1537 and 7609.
     over_limit: usize,
     responses: usize,
@@ -237,8 +235,6 @@ struct Harness {
     ever: HashSet<u32>,
     partial: Option<Partial>,
     outstanding: Option<(u32, u8)>,
-    /// The channel of an empty CBOR request holding the device.
-    stalled: Option<u32>,
     coverage: Coverage,
 }
 
@@ -255,7 +251,6 @@ impl Harness {
             ever: HashSet::new(),
             partial: None,
             outstanding: None,
-            stalled: None,
             coverage: Coverage::default(),
         }
     }
@@ -270,12 +265,9 @@ impl Harness {
 
     fn check_model_state(&self) {
         let ctx = self.ctx();
-        let transactions = usize::from(self.partial.is_some())
-            + usize::from(self.outstanding.is_some())
-            + usize::from(self.stalled.is_some());
         assert!(
-            transactions <= 1,
-            "{ctx}: model has {transactions} transactions"
+            self.partial.is_none() || self.outstanding.is_none(),
+            "{ctx}: model has two transactions"
         );
         assert_eq!(
             self.dev.outstanding(),
@@ -296,7 +288,7 @@ impl Harness {
     }
 
     /// Applies due deadlines to the model and returns the events they must produce
-    /// (CTAP 2.1 §11.2.5.2 timeout; a stall has no deadline).
+    /// (CTAP 2.1 §11.2.5.2 timeout).
     fn model_tick(&mut self) -> Vec<Event> {
         match self.partial.take() {
             Some(partial) if self.now >= partial.deadline => {
@@ -315,7 +307,7 @@ impl Harness {
     fn pick_cid(&mut self) -> u32 {
         let roll = self.rng.below(100);
         let partial_cid = self.partial.as_ref().map(|p| p.cid);
-        let outstanding_cid = self.outstanding.map(|(cid, _)| cid).or(self.stalled);
+        let outstanding_cid = self.outstanding.map(|(cid, _)| cid);
         match roll {
             0..=14 => BROADCAST,
             15..=19 => 0,
@@ -391,10 +383,10 @@ impl Harness {
         if !valid {
             return Expect::Error(ERR_INVALID_CHANNEL);
         }
-        let active = match (&self.partial, self.outstanding, self.stalled) {
-            (Some(partial), _, _) => Some((partial.cid, true)),
-            (None, Some((owner, _)), _) | (None, None, Some(owner)) => Some((owner, false)),
-            (None, None, None) => None,
+        let active = match (&self.partial, self.outstanding) {
+            (Some(partial), _) => Some((partial.cid, true)),
+            (None, Some((owner, _))) => Some((owner, false)),
+            (None, None) => None,
         };
         if let Some((owner, assembling)) = active {
             if owner != cid {
@@ -419,11 +411,14 @@ impl Harness {
             };
         }
         // LOCK is not among the accepted commands: ERR_INVALID_CMD (docs/MEASUREMENT.md,
-        // probe lock). CBOR takes BCNT 0, which stalls (probe empty-cbor).
+        // probe lock). MSG and CBOR carry at least the command byte (CTAP 2.1
+        // §11.2.9.1.1, §11.2.9.1.2), so an empty one is ERR_INVALID_LEN (§11.2.9.1.6); the
+        // reference device's stall on an empty CBOR request (probe empty-cbor) is a defect
+        // not copied.
         let length_ok = match cmd {
             PING => true,
             MSG if self.caps & 0x08 == 0 => bcnt >= 1,
-            CBOR if self.caps & 0x04 != 0 => true,
+            CBOR if self.caps & 0x04 != 0 => bcnt >= 1,
             WINK if self.caps & 0x01 != 0 => bcnt == 0,
             0x40..=0x7F => true,
             _ => return Expect::Error(ERR_INVALID_CMD),
@@ -439,7 +434,6 @@ impl Harness {
         match cmd {
             PING => Expect::Ping(payload),
             WINK => Expect::Wink,
-            CBOR if payload.is_empty() => Expect::Stall,
             _ => Expect::Request(payload),
         }
     }
@@ -540,6 +534,9 @@ impl Harness {
                 if code == ERR_INVALID_CMD && cmd == LOCK {
                     self.coverage.locks_refused += 1;
                 }
+                if code == ERR_INVALID_LEN && cmd == CBOR && bcnt == 0 {
+                    self.coverage.empty_cbor_refused += 1;
+                }
                 if code == ERR_INVALID_LEN && (MAX_REQUEST + 1..=MAX_MESSAGE).contains(&bcnt) {
                     self.coverage.over_limit += 1;
                 }
@@ -547,14 +544,6 @@ impl Harness {
                     events,
                     error_events(cid, code),
                     "{ctx}: command {cmd:#x} BCNT {bcnt} on {cid:#x}"
-                );
-            }
-            Expect::Stall => {
-                self.coverage.stalls += 1;
-                self.stalled = Some(cid);
-                assert!(
-                    events.is_empty(),
-                    "{ctx}: empty CBOR on {cid:#x}: {events:?}"
                 );
             }
             Expect::Started => {
@@ -642,11 +631,6 @@ impl Harness {
             assert_eq!(channel, cid, "{ctx}: resynchronised CID");
             if self.partial.as_ref().is_some_and(|p| p.cid == cid) {
                 self.partial = None;
-            }
-            // INIT on the stalled channel frees the device, without an Abort.
-            if self.stalled == Some(cid) {
-                self.stalled = None;
-                self.coverage.stall_resyncs += 1;
             }
         }
     }
@@ -747,7 +731,6 @@ impl Harness {
         self.channels.clear();
         self.partial = None;
         self.outstanding = None;
-        self.stalled = None;
         self.coverage.resets += 1;
         self.check_model_state();
     }
@@ -756,12 +739,7 @@ impl Harness {
     /// Foreign packets never use the message's own CID, so long messages (up to the
     /// 1536-byte maximum) still complete while other channels are answered busy. One
     /// message in ten may be longer: refused at its first packet, the rest orphans.
-    /// Like a host, it first resynchronises a stalled channel with INIT.
     fn act_message(&mut self) {
-        if let Some(stalled) = self.stalled.filter(|_| self.rng.percent(90)) {
-            self.step += 1;
-            self.send(init_packet(stalled, INIT, 8, &[0x5E; 8]));
-        }
         if let Some((owner, cmd)) = self.outstanding.filter(|_| self.rng.percent(90)) {
             assert_eq!(
                 self.dev.respond(owner, cmd, &[0x00]).len(),
@@ -864,8 +842,7 @@ fn assert_covered(coverage: &Coverage) {
     assert!(coverage.cancels > 0, "{coverage:?}");
     assert!(coverage.allocations > 5, "{coverage:?}");
     assert!(coverage.locks_refused > 0, "{coverage:?}");
-    assert!(coverage.stalls > 0, "{coverage:?}");
-    assert!(coverage.stall_resyncs > 0, "{coverage:?}");
+    assert!(coverage.empty_cbor_refused > 0, "{coverage:?}");
     assert_eq!(
         coverage.count(ERR_LOCK_REQUIRED),
         0,

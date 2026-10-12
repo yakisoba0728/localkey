@@ -185,12 +185,13 @@ fn attestation_certificate_contents() {
     // A random positive 16-byte serial (Yubico: "a random 16 byte integer").
     assert_eq!(cert.serial.len(), 16);
     assert_eq!(cert.serial[0] & 0x80, 0);
-    // Public-profile extensions with this device's values, none critical.
+    // Public-profile extensions with this device's values, none critical. The form factor
+    // is the own profile's byte, whatever it is (`form_factor_extension_follows_the_profile`).
     let expected: [(&[u64], Vec<u8>); 4] = [
         (OID_FIRMWARE, hex("050704")),
         (OID_SERIAL, der::integer(&12_345_678u32.to_be_bytes())),
         (OID_POLICY, vec![PIN_ONCE, TOUCH_CACHED]),
-        (OID_FORM_FACTOR, vec![0x04]),
+        (OID_FORM_FACTOR, vec![DeviceProfile::own(12_345_678).form_factor]),
     ];
     assert_eq!(cert.extensions.len(), 4);
     for (oid, value) in expected {
@@ -226,8 +227,26 @@ fn compatibility_profile_uses_the_public_subject_format() {
     let cert = attest_ok(&mut card, 0x9C);
     assert_eq!(cert.subject, cn("YubiKey PIV Attestation 9c"));
     assert_eq!(cert.extension(OID_SERIAL).unwrap().2, der::integer(&31_415_926u32.to_be_bytes()));
+    // The compatibility profile claims the reference's shape: USB-C Nano (04).
+    assert_eq!(cert.extension(OID_FORM_FACTOR).unwrap().2, vec![0x04]);
     // The issuer stays this engine's own (no manufacturer identity, DESIGN.md §9).
     assert_eq!(cert.issuer, cn("localkey software authenticator PIV Attestation"));
+}
+
+/// Extension 1.3.6.1.4.1.41482.3.9 carries the profile's form factor byte as it is,
+/// including `00` (yubikit `FORM_FACTOR.UNKNOWN`), the truthful value for a software key
+/// without a physical shape (own identity: no Yubico product shape is claimed).
+#[test]
+fn form_factor_extension_follows_the_profile() {
+    for form_factor in [0x00, 0x04] {
+        let profile = DeviceProfile { form_factor, ..DeviceProfile::own(12_345_678) };
+        let mut card = Card::with_host(TestHost::with_profile(profile));
+        card.auth_default();
+        card.generate(0x9A, P256, None, None);
+        let cert = attest_ok(&mut card, 0x9A);
+        let expected = (OID_FORM_FACTOR.to_vec(), false, vec![form_factor]);
+        assert_eq!(cert.extension(OID_FORM_FACTOR), Some(&expected), "{form_factor:02X}");
+    }
 }
 
 #[test]

@@ -16,10 +16,8 @@
 //! - Packed self-issued attestation (WebAuthn L2 §8.2).
 //!
 //! Not supported, as GetInfo states: built-in user verification (no `uv` option, so no
-//! getPinUvAuthTokenUsingUvWithPermissions or getUVRetries; the latter is answered
-//! `CTAP2_ERR_PIN_AUTH_INVALID` like on the measured key, `docs/MEASUREMENT.md` probe
-//! `client-pin-uv-retries`), bio enrollment, enterprise attestation (no `ep`) and vendor
-//! prototype config commands.
+//! getPinUvAuthTokenUsingUvWithPermissions or getUVRetries), bio enrollment, enterprise
+//! attestation (no `ep`) and vendor prototype config commands.
 //!
 //! # Contract
 //!
@@ -60,18 +58,22 @@ use crate::credential::CredSecret;
 use crate::request::{CtapResult, pin_protocol_supported};
 use crate::state::State;
 
-/// How long a command waits for a touch before the device resolves it as not granted.
-/// CTAP 2.1 leaves the value to the authenticator.
+/// How long a command waits for a touch before the device resolves it as not granted:
+/// the CTAP 2.1 user action timeout (§5 Terminology, "User action timeout": "The duration
+/// of this timeout is chosen by the authenticator but MUST be at least 10 seconds. Thirty
+/// seconds is a reasonable value."). Every waiting command uses it. With the 95 ms
+/// KEEPALIVE grid of `lk-device` (`KEEPALIVE_INTERVAL_MS`) a host sees 315 KEEPALIVEs, the
+/// last at 29 925 ms, and then the answer at 30 000 ms.
 ///
-/// Measured on a YubiKey 5C Nano 5.7.4 (`docs/MEASUREMENT.md`, probe `selection-no-touch`):
-/// authenticatorSelection without a touch is answered `CTAP2_ERR_USER_ACTION_TIMEOUT`
-/// 28 451.8 ms after the request, 2 ms after the 300th KEEPALIVE. The engine uses
-/// 28 500 ms, exactly 300 KEEPALIVE intervals of 95 ms (`lk-device`
-/// `KEEPALIVE_INTERVAL_MS`), so the device sends 300 KEEPALIVEs and then the answer (the
-/// KEEPALIVE due at the timeout instant goes first). The key's clock runs about 5.4 %
-/// fast; this is the nominal 30 s as a host observes it. It was the model policy 30 s
-/// before the measurement. Only selection was measured; every waiting command uses it.
-pub const TOUCH_TIMEOUT_MS: Millis = 28_500;
+/// Known difference from the reference device (`docs/MEASUREMENT.md`, probe
+/// `selection-no-touch`, and "Revised by principle"): a YubiKey 5C Nano 5.7.4 answers
+/// authenticatorSelection without a touch 28 451.8 ms after the request, after 300
+/// KEEPALIVEs. Its clock runs about 5.4 % fast (28 451.8 / 30 000 = 0.9484, the same ratio
+/// as its KEEPALIVE interval), so that is the 30 s design value as a fast oscillator shows
+/// it; the engine uses the design value and does not copy the clock drift. The engine
+/// waited 28 500 ms (300 × 95 ms) between the measurement and that revision, and 30 000 ms
+/// before the measurement.
+pub const TOUCH_TIMEOUT_MS: Millis = 30_000;
 
 /// `authenticatorReset` is accepted only this long after power-up (CTAP 2.1 §6.6: "request
 /// MUST have come to the authenticator within 10 seconds of powering up").

@@ -8,11 +8,16 @@ Test names refer to `crates/lk-oath`: `tests/protocol.rs`, `tests/vectors.rs`,
 Counting convention: each bullet has exactly one label, the first word after the colon.
 
 - `tested`: the named tests pass and exercise everything in the bullet that a single
-  `CardApplet` can show. Notes in parentheses record model-policy choices made where
-  the catalog and YKOATH leave a status or detail open. They do not change the label.
+  `CardApplet` can show. Notes in parentheses record model-policy choices: YKOATH is a
+  Yubico-proprietary protocol, so YKOATH, Yubico's documentation and yubikit are its
+  specification and the reference key its best evidence (`docs/CONTRACTS.md` "Reference,
+  not replica", rule 3); OATH is disabled on the measured reference key
+  (`docs/MEASUREMENT.md`), so a model policy here is a choice where none of these fixes
+  the status or detail. They do not change the label.
 - `intentional difference`: the engine deliberately behaves or verifies differently
   from what the bullet (or the public YKOATH wording it rests on) says. The reason
-  comes first, then the tests that cover what does apply.
+  comes first, then the tests that cover what does apply. It never copies a reference
+  defect (rule 4).
 - `deferred`: something the bullet needs is missing.
 
 Secrets (`docs/DESIGN.md` §8): credential keys, the access key, the serialized record
