@@ -138,8 +138,12 @@ class Gui:
             if expected and focused == expected:
                 return
             self.click(33, 66)
-            time.sleep(1)
-            focused = self.run('xdotool', 'getwindowfocus', 'getwindowname', check=False).stdout.strip()
+            deadline = time.monotonic() + 10
+            while time.monotonic() < deadline:
+                focused = self.run('xdotool', 'getwindowfocus', 'getwindowname', check=False).stdout.strip()
+                if expected and focused == expected:
+                    return
+                time.sleep(.1)
             assert expected and focused == expected, (expected, focused)
             return
         assert identifier in ('chromium', 'firefox'), identifier

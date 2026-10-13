@@ -132,6 +132,8 @@ native accessibility names and clicks their current positions with
 waits for the focused native Firefox PIN field, and selects Firefox's visible
 permission/account buttons through Collection queries. Hidden GNOME branches are
 skipped so window selection stays within the authenticator's presence timeout.
+Touch activation waits for its actual Xwayland keyboard focus, rather than
+assuming the compositor has completed activation after one second.
 These checks use the English GNOME 50 light theme at 1280×800; recalibrate after
 layout/theme changes. Browser active-state flags can remain cached behind another Wayland window,
 and QEMU's virtual-clock key-release timers can

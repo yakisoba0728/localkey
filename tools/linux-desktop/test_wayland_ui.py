@@ -13,6 +13,19 @@ from wayland_ui import Gui
 
 
 class QmpTests(unittest.TestCase):
+    def test_touch_focus_waits_for_the_actual_xwayland_window(self):
+        gui = Gui.__new__(Gui)
+        gui.click = mock.Mock()
+        gui.run = mock.Mock(side_effect=[mock.Mock(stdout=name) for name in
+                                         ['localkey · Touch', '', '', 'localkey · Touch']])
+        with mock.patch('wayland_ui.time.sleep'), mock.patch('wayland_ui.time.monotonic', return_value=0):
+            gui.focus('123')
+        gui.click.assert_called_once_with(33, 66)
+        gui.run = mock.Mock(return_value=mock.Mock(stdout=''))
+        with mock.patch('wayland_ui.time.sleep'), mock.patch('wayland_ui.time.monotonic', side_effect=[0, 11]):
+            with self.assertRaises(AssertionError):
+                gui.focus('123')
+
     def test_pin_readiness_requires_a_focused_native_password_field(self):
         gui = Gui.__new__(Gui)
         gui.application = mock.Mock(return_value=object())

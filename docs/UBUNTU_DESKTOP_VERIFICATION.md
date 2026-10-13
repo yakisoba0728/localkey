@@ -68,7 +68,8 @@ native PIN field before typing. Both Linux CI jobs passed for that revision.
 
 Selected [candidate aarch64 evidence](../reference/ubuntu-desktop-2026-10-14/candidate-aarch64/)
 includes the final result, versions, connected plugs, sanitized HID access,
-bundle provenance/checksums and native PIN/account-selection/reboot screenshots.
+bundle provenance/checksums, the native Chromium PIN prompt, both account pickers
+and verified post-reboot login screenshots.
 x86_64 must complete its own recovery and both boots before being reported as
 passed. Aborted runs, timeouts and an intermediate reboot are not a final pass.
 
