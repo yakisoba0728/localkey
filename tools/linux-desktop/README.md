@@ -1,7 +1,7 @@
 # Real Linux desktop verification
 
-This boots a disposable systemd/LightDM/Xfce desktop with actual Chromium and
-Firefox, native HID clients and the packaged daemon. Selenium operates ordinary
+This boots a disposable Debian systemd/LightDM/Xfce or Ubuntu GDM/GNOME/Wayland
+desktop with actual Chromium and Firefox, native HID clients and the packaged daemon. Selenium operates ordinary
 pages; it does not install virtual authenticators or supply WebAuthn responses.
 The local relying party verifies challenge, origin, RP ID, signatures, attestation,
 the own AAGUID, UP/UV flags, selected account user handles and increasing signature
@@ -11,8 +11,9 @@ state hashes before logging in again through both browsers.
 
 The VM has no NIC or host-device passthrough. Its container has `--network none`,
 no privileged mode and no host `/dev` or `/sys` mounts. Two CPUs, 6 GiB container
-memory, 3 GiB guest memory and a 30-minute timeout bound each run. Run one VM at
-a time. Image construction uses the network for Debian packages. Package versions
+memory, 3 GiB guest memory and a 30-minute timeout bound each Debian run. Ubuntu
+uses 4 GiB guest memory and a 60-minute timeout. Run one VM at
+a time. Image construction uses the network for distro packages and signed Snap downloads. Package versions
 are recorded with every run; apt inputs are not pinned to a snapshot.
 
 Fixture accounts are `lkdesktop` / `localkey-test-only` and root /
@@ -42,6 +43,31 @@ aarch64 reuses the Ubuntu kernel/module pair from the transport guest. x86_64 us
 Debian's `linux-image-amd64` and its initramfs. Both have Debian 13 userland; this
 does not validate a stock Ubuntu desktop or physical hardware.
 
+For Ubuntu 26.04, build the default Ubuntu GNOME session with its own kernel and
+official stable Firefox/Chromium Snaps, including their signed base/content
+providers. Snap packages are installed offline inside the guest; AppArmor and
+Snap confinement stay enabled. The image is assembled from official packages,
+not installed with the interactive ISO installer.
+
+```sh
+docker build --build-context kernel-tools=tools/linux-guest \
+  -f tools/linux-desktop/Dockerfile.ubuntu \
+  -t localkey-ubuntu-desktop-arm:1 tools/linux-desktop
+docker build --build-context kernel-tools=tools/linux-guest \
+  --build-arg DESKTOP_PLATFORM=linux/amd64 --build-arg DESKTOP_ARCH=x86_64 \
+  -f tools/linux-desktop/Dockerfile.ubuntu \
+  -t localkey-ubuntu-desktop-x86:1 tools/linux-desktop
+```
+
+Set `LK_DESKTOP_DISTRO=ubuntu` before the build/run commands below; no separate
+geckodriver archive is needed. Firefox uses the Snap's own geckodriver and binary
+paths, as required by [Mozilla's guide](https://firefox-source-docs.mozilla.org/testing/geckodriver/Usage.html).
+Wayland input and screenshots use QEMU's native virtual keyboard/mouse/display
+via a private guest virtio QMP port. A read-only 9p mount shares only generated
+display images; no host source, device, Docker socket or home directory is exposed.
+This management port is a disposable test-fixture facility, never a release
+component. The RP and authenticator still communicate through the actual guest HID stack.
+
 Download geckodriver v0.37.1 from its official release:
 <https://github.com/mozilla/geckodriver/releases/tag/v0.37.1>.
 The archives used on 2026-10-12 had SHA-256:
@@ -55,6 +81,7 @@ Select one architecture and a new private directory outside the repository:
 
 ```sh
 export LK_DESKTOP_ARCH=aarch64     # or x86_64
+export LK_DESKTOP_DISTRO=debian    # or ubuntu
 export LK_DESKTOP_DIR=/tmp/localkey-desktop-test
 export LK_GECKODRIVER_TAR=/tmp/geckodriver-v0.37.1-linux-aarch64.tar.gz
 # Optional: use a fresh bundle outside work/releases without replacing older evidence.
@@ -76,7 +103,8 @@ docker run --rm --network none -v "$LK_DESKTOP_DIR":/out localkey-desktop-build:
   debugfs -R 'rdump /localkey/results /out/export' /out/root.img
 ```
 
-Do not modify or extract the disk while QEMU is running. To retry with changed
+For Ubuntu extraction, select `localkey-ubuntu-desktop-arm:1` or
+`localkey-ubuntu-desktop-x86:1`. Do not modify or extract the disk while QEMU is running. To retry with changed
 fixtures, build a new disk. The Firefox direct-attestation and account-selection buttons are
 calibrated for these English 1280×800 screenshots, with screenshot-based prompt
 readiness checks; recalibrate after browser UI

@@ -5,4 +5,5 @@ Comment=Observe and touch your localkey software security key
 Exec=/usr/local/bin/localkey-touch
 Icon=security-high
 Terminal=false
+StartupWMClass=LocalkeyTouch
 Categories=System;Security;

@@ -99,6 +99,6 @@ class TouchWindow:
 if __name__ == "__main__":
     if os.geteuid() == 0:
         raise SystemExit("Run localkey-touch as your desktop user, without sudo.")
-    window = tk.Tk()
+    window = tk.Tk(className="LocalkeyTouch")
     TouchWindow(window)
     window.mainloop()

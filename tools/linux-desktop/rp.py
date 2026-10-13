@@ -10,7 +10,8 @@ from fido2.attestation import Attestation
 from fido2.server import Fido2Server
 from fido2.webauthn import AttestedCredentialData, PublicKeyCredentialRpEntity, PublicKeyCredentialUserEntity
 
-features.webauthn_json_mapping.enabled = True
+if hasattr(features, "webauthn_json_mapping"):
+    features.webauthn_json_mapping.enabled = True
 ORIGIN = "http://localhost:8000"
 OWN_AAGUID = bytes.fromhex("6c6b65792d4c4b018f3a546e67696e65")
 STATE = Path("/home/lkdesktop/localkey-rp-state.json")

@@ -1,0 +1,45 @@
+ARG DESKTOP_PLATFORM=linux/arm64
+FROM --platform=${DESKTOP_PLATFORM} ubuntu:26.04 AS desktop
+ARG DESKTOP_ARCH=aarch64
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ubuntu-desktop-minimal ubuntu-wallpapers yaru-theme-gtk yaru-theme-icon \
+    yaru-theme-gnome-shell fonts-ubuntu fonts-liberation xdg-desktop-portal-gnome \
+    gnome-keyring libpam-gnome-keyring network-manager policykit-desktop-privileges \
+    systemd-sysv sudo pkexec udev kmod apparmor snapd squashfs-tools \
+    linux-image-generic initramfs-tools \
+    python3-selenium python3-fido2 python3-tk python3-pil python3-pyatspi python3-yaml \
+    fido2-tools xdotool xauth curl ca-certificates procps iproute2 kbd openssh-server \
+    && rm -rf /var/lib/apt/lists/*
+RUN userdel -r ubuntu && useradd -m -u 1000 -s /bin/bash -G sudo lkdesktop \
+    && echo 'lkdesktop:localkey-test-only' | chpasswd \
+    && echo 'root:localkey-root-test-only' | chpasswd \
+    && mkdir -p /home/lkdesktop/.config/autostart /home/lkdesktop/.ssh /localkey/results \
+       /localkey/screens /etc/ssh/sshd_config.d /etc/udev/rules.d \
+    && chmod 0700 /home/lkdesktop/.ssh \
+    && printf '[daemon]\nAutomaticLoginEnable=True\nAutomaticLogin=lkdesktop\n' > /etc/gdm3/custom.conf \
+    && printf 'ListenAddress 127.0.0.1\nPasswordAuthentication no\nPermitRootLogin no\nUsePAM yes\n' > /etc/ssh/sshd_config.d/localkey-test.conf \
+    && printf 'SUBSYSTEM=="virtio-ports", ATTR{name}=="localkey.test-qmp", OWNER="lkdesktop", MODE="0600"\n' > /etc/udev/rules.d/99-localkey-test-qmp.rules \
+    && systemctl disable ssh.service ssh.socket \
+    && systemctl set-default graphical.target \
+    && rm -f /etc/machine-id /var/lib/dbus/machine-id && touch /etc/machine-id
+COPY ubuntu-session.desktop /home/lkdesktop/.config/autostart/localkey-test.desktop
+COPY ubuntu-session.sh /localkey/session.sh
+COPY ubuntu-setup.sh /localkey/setup.sh
+COPY download-snaps.py /localkey/download-snaps.py
+RUN python3 /localkey/download-snaps.py \
+    && chown -R 1000:1000 /home/lkdesktop /localkey/results \
+    && chmod 0755 /localkey/session.sh /localkey/setup.sh
+
+FROM debian:trixie-slim
+ARG DESKTOP_ARCH=aarch64
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    e2fsprogs qemu-system-arm qemu-system-x86 python3 zstd kmod \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=desktop / /rootfs/
+COPY --from=kernel-tools /extract-image.py /extract-image.py
+RUN mkdir /kernel && cp /rootfs/boot/initrd.img-* /kernel/initrd \
+    && if [ "$DESKTOP_ARCH" = aarch64 ]; then \
+       python3 /extract-image.py /rootfs/boot/vmlinuz-* /kernel/Image; \
+    else cp /rootfs/boot/vmlinuz-* /kernel/Image; fi \
+    && rm -f /rootfs/.dockerenv /rootfs/etc/resolv.conf

@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=localkey Ubuntu desktop verification
+Exec=/localkey/session.sh
+Terminal=false
+OnlyShowIn=GNOME;

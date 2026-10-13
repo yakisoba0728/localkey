@@ -115,6 +115,26 @@ def session_denials():
     sudo("systemctl", "stop", "ssh.service")
 
 
+def record_versions():
+    versions = run("dpkg-query", "-W", "systemd", "lightdm", "chromium", "firefox-esr", "python3-fido2").stdout
+    (RESULTS / "versions.txt").write_text(versions + run("uname", "-a").stdout)
+
+
+def create_drivers():
+    drivers = {}
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.binary_location = "/usr/bin/chromium"
+    chrome_options.add_argument("--no-first-run")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--user-data-dir=/tmp/localkey-chromium-profile")
+    drivers["chromium"] = webdriver.Chrome(service=ChromeService("/usr/bin/chromedriver", log_output=str(RESULTS / "chrome.log")), options=chrome_options)
+    firefox_options = webdriver.FirefoxOptions()
+    firefox_options.binary_location = "/usr/bin/firefox-esr"
+    drivers["firefox"] = webdriver.Firefox(service=FirefoxService("/usr/local/bin/geckodriver", log_output=str(RESULTS / "gecko.log")),
+                                            options=firefox_options)
+    return drivers
+
+
 def main():
     global CHECKS
     assert os.geteuid() != 0
@@ -136,8 +156,7 @@ def main():
     sudo("sh", "-c", "printf '127.0.0.1 localhost\\n127.0.1.1 localkey-desktop\\n::1 localhost\\n' > /etc/hosts")
     sudo("ip", "link", "set", "dev", "lo", "up")
     sudo("date", "-u", "-s", "2026-10-12 08:00:00")
-    versions = run("dpkg-query", "-W", "systemd", "lightdm", "chromium", "firefox-esr", "python3-fido2").stdout
-    (RESULTS / "versions.txt").write_text(versions + run("uname", "-a").stdout)
+    record_versions()
     if not rebooted:
         run("python3", "/localkey/test_rp.py")
         run("tar", "-xzf", "/localkey/bundle.tar.gz", "-C", "/tmp")
@@ -180,17 +199,7 @@ def main():
     assert "Not authorized" in (RESULTS / "polkit-denied.log").read_text()
     record("polkit denies a process outside a local desktop session")
 
-    drivers = {}
-    chrome_options = webdriver.ChromeOptions()
-    chrome_options.binary_location = "/usr/bin/chromium"
-    chrome_options.add_argument("--no-first-run")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--user-data-dir=/tmp/localkey-chromium-profile")
-    drivers["chromium"] = webdriver.Chrome(service=ChromeService("/usr/bin/chromedriver", log_output=str(RESULTS / "chrome.log")), options=chrome_options)
-    firefox_options = webdriver.FirefoxOptions()
-    firefox_options.binary_location = "/usr/bin/firefox-esr"
-    drivers["firefox"] = webdriver.Firefox(service=FirefoxService("/usr/local/bin/geckodriver", log_output=str(RESULTS / "gecko.log")),
-                                            options=firefox_options)
+    drivers = create_drivers()
     for browser, driver in drivers.items():
         driver.set_page_load_timeout(60)
         driver.get("http://localhost:8000")
@@ -369,7 +378,7 @@ def operation(driver, name, action, touch_window, pin=False, discoverable=False)
     record(f"{name} {action} verified by relying party", **result)
 
 
-if __name__ == "__main__":
+def execute():
     success = False
     reboot = False
     try:
@@ -387,3 +396,7 @@ if __name__ == "__main__":
         serial = "ttyS0" if platform.machine() == "x86_64" else "ttyAMA0"
         sudo("sh", "-c", f"echo '{marker}' > /dev/{serial}", check=False)
         sudo("systemctl", "reboot" if success and reboot else "poweroff", check=False)
+
+
+if __name__ == "__main__":
+    execute()
