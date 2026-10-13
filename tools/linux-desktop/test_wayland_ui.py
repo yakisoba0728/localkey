@@ -57,7 +57,7 @@ class QmpTests(unittest.TestCase):
         preview = label.parent.parent
         preview.getRole.return_value = pyatspi.ROLE_PUSH_BUTTON
         preview.queryComponent.return_value.getExtents.return_value = (542, 431, 481, 305)
-        shell.__iter__.side_effect = lambda: iter([label])
+        shell.__iter__.side_effect = lambda: iter([shell, label])
         gui = Gui.__new__(Gui)
         gui.key = mock.Mock()
         gui.click = mock.Mock()

@@ -4,6 +4,7 @@ import re
 import select
 import shutil
 import time
+from collections import deque
 from pathlib import Path
 
 from PIL import Image
@@ -95,11 +96,16 @@ class Gui:
             try:
                 if app.name == 'gnome-shell' if pattern == 'Authentication' else expression.search(app.name or ''):
                     pending.append(app)
+                    break
             except Exception:
                 continue
         count = 0
+        seen = set()
         while pending and count < 10000:
             node = pending.pop()
+            if node in seen:
+                continue
+            seen.add(node)
             count += 1
             try:
                 if expression.search(node.name or ''):
@@ -133,8 +139,10 @@ class Gui:
         time.sleep(.5)
         refreshed = False
         deadline = time.monotonic() + 90
+        captions = []
+        count = 0
         while time.monotonic() < deadline:
-            pending = []
+            pending = deque()
             for app in self.desktop():
                 try:
                     if app.name == 'gnome-shell':
@@ -142,27 +150,35 @@ class Gui:
                             app.clear_cache()
                             refreshed = True
                         pending.append(app)
+                        break
                 except Exception:
                     continue
             count = 0
             coordinates = None
+            seen = set()
             while pending and count < 2000:
-                node = pending.pop()
+                node = pending.popleft()
+                if node in seen:
+                    continue
+                seen.add(node)
                 count += 1
                 try:
-                    if (node.getRole() == pyatspi.ROLE_LABEL and
-                            'localkey browser verification' in (node.name or '') and
-                            re.search(identifier, node.name, re.I)):
+                    title = node.name or ''
+                    if 'localkey browser verification' in title and re.search(identifier, title, re.I):
+                        ancestors = []
                         preview = node.parent
-                        for _ in range(4):
+                        for _ in range(8):
                             if preview is None:
                                 break
+                            ancestors.append({'role': preview.getRoleName(), 'name': preview.name})
                             if preview.getRole() == pyatspi.ROLE_PUSH_BUTTON:
                                 x, y, width, height = preview.queryComponent().getExtents(pyatspi.DESKTOP_COORDS)
+                                ancestors[-1]['rectangle'] = [x, y, width, height]
                                 if width > 100 and height > 100:
                                     coordinates = (x + width // 2, y + height // 2)
                                     break
                             preview = preview.parent
+                        captions.append({'title': title, 'ancestors': ancestors})
                         if coordinates:
                             break
                     pending.extend(node)
@@ -173,6 +189,7 @@ class Gui:
                 time.sleep(.5)
                 return
             time.sleep(.25)
+        (self.results / 'overview-diagnostic.json').write_text(json.dumps({'browser': identifier, 'visited': count, 'captions': captions}, indent=2))
         raise RuntimeError(f'native overview preview not found: {identifier}')
 
     def xdotool(self, arguments):
@@ -195,11 +212,16 @@ class Gui:
             try:
                 if (app.name or '').lower() == application:
                     pending.append(app)
+                    break
             except Exception:
                 continue
         count = 0
+        seen = set()
         while pending and count < 5000:
             node = pending.pop()
+            if node in seen:
+                continue
+            seen.add(node)
             count += 1
             try:
                 if (node.getRole() == pyatspi.ROLE_PUSH_BUTTON and expression.search(node.name or '') and
