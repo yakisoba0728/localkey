@@ -20,8 +20,10 @@ class QmpTests(unittest.TestCase):
         dialog = mock.MagicMock()
         dialog.name = 'Authentication Required'
         shell.__iter__.return_value = iter([dialog])
+        closed = mock.MagicMock()
+        type(closed).name = mock.PropertyMock(side_effect=RuntimeError('application no longer exists'))
         gui = Gui.__new__(Gui)
-        with mock.patch('wayland_ui.pyatspi.Registry.getDesktop', return_value=[browser, shell]):
+        with mock.patch('wayland_ui.pyatspi.Registry.getDesktop', return_value=[browser, closed, shell]):
             self.assertEqual(gui.window('Authentication'), 'auth')
         browser.__iter__.assert_not_called()
 

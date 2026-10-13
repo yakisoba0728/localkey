@@ -83,8 +83,13 @@ class Gui:
             return result.stdout.splitlines()[-1] if result.returncode == 0 and result.stdout.strip() else None
         expression = re.compile(pattern, re.I)
         applications = list(pyatspi.Registry.getDesktop(0))
-        pending = [app for app in applications if (app.name == 'gnome-shell' if pattern == 'Authentication'
-                                                  else expression.search(app.name or ''))]
+        pending = []
+        for app in applications:
+            try:
+                if app.name == 'gnome-shell' if pattern == 'Authentication' else expression.search(app.name or ''):
+                    pending.append(app)
+            except Exception:
+                continue
         if active:
             for app in pending:
                 for child in app:
