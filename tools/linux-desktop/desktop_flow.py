@@ -17,6 +17,7 @@ RESULTS = Path("/localkey/results")
 PASSWORD = "localkey-test-only"
 PIN = "12345678"
 CHECKS = []
+REBOOT = RESULTS / "reboot.json"
 
 
 def run(*args, check=True, input=None, timeout=120):
@@ -68,27 +69,70 @@ def record(name, **details):
     (RESULTS / "checks.json").write_text(json.dumps(CHECKS, indent=2) + "\n")
 
 
+def session_denials():
+    session_id = os.environ["XDG_SESSION_ID"]
+    vt = run("loginctl", "show-session", session_id, "-p", "VTNr", "--value").stdout.strip()
+    assert int(vt) > 0
+    try:
+        sudo("chvt", "2" if vt != "2" else "3")
+        wait(lambda: run("loginctl", "show-session", session_id, "-p", "Active", "--value").stdout.strip() == "no",
+             "desktop session did not become inactive")
+        refused = run("pkexec", "--disable-internal-agent", "/usr/local/libexec/localkey-control", "status", check=False)
+        assert refused.returncode != 0 and "Not authorized" in refused.stderr, refused
+        state = run("loginctl", "show-session", session_id, "-p", "Active", "-p", "Remote", "-p", "Seat").stdout
+        record("polkit denies the actual inactive local desktop session", session=state, exit=refused.returncode)
+    finally:
+        sudo("chvt", vt)
+    wait(lambda: run("loginctl", "show-session", session_id, "-p", "Active", "--value").stdout.strip() == "yes",
+         "desktop session did not reactivate")
+    # SSH is loopback-only inside the NIC-free VM, with real sshd/PAM/logind.
+    sudo("systemctl", "start", "ssh.service")
+    run("ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-f", "/home/lkdesktop/.ssh/id_ed25519")
+    Path("/home/lkdesktop/.ssh/authorized_keys").write_bytes(Path("/home/lkdesktop/.ssh/id_ed25519.pub").read_bytes())
+    Path("/home/lkdesktop/.ssh/authorized_keys").chmod(0o600)
+    remote = run("ssh", "-o", "StrictHostKeyChecking=no", "lkdesktop@127.0.0.1",
+                 'loginctl show-session "$XDG_SESSION_ID" -p Active -p Remote -p Seat; '
+                 'pkexec --disable-internal-agent /usr/local/libexec/localkey-control status', check=False)
+    assert "Remote=yes" in remote.stdout and remote.returncode != 0 and "Not authorized" in remote.stderr, remote
+    record("polkit denies a real SSH remote session", session=remote.stdout.strip(), exit=remote.returncode)
+    sudo("systemctl", "stop", "ssh.service")
+
+
 def main():
+    global CHECKS
     assert os.geteuid() != 0
     assert Path("/proc/1/comm").read_text().strip() == "systemd"
     session = run("loginctl", "show-session", os.environ["XDG_SESSION_ID"],
                   "-p", "Active", "-p", "Remote", "-p", "Type", "-p", "Seat").stdout
     print(session, flush=True)
     assert "Active=yes" in session and "Remote=no" in session and "Seat=seat0" in session
+    rebooted = REBOOT.exists()
+    if rebooted:
+        CHECKS = json.loads((RESULTS / "checks.json").read_text())
+        before = json.loads(REBOOT.read_text())
+        assert before["boot_id"] != Path("/proc/sys/kernel/random/boot_id").read_text().strip()
+        assert before["key_hash"] == sudo("sha256sum", "/etc/localkey/storage.key").stdout.split()[0]
+        assert before["records"] == sudo("sh", "-c", "sha256sum /var/lib/localkey/*.rec").stdout
+        assert before["rp_hash"] == run("sha256sum", "/home/lkdesktop/localkey-rp-state.json").stdout.split()[0]
+        record("full reboot preserves key, sealed records and the same relying-party credentials/counters",
+               previous_boot=before["boot_id"], boot=Path("/proc/sys/kernel/random/boot_id").read_text().strip())
     sudo("sh", "-c", "printf '127.0.0.1 localhost\\n127.0.1.1 localkey-desktop\\n::1 localhost\\n' > /etc/hosts")
     sudo("ip", "link", "set", "dev", "lo", "up")
     sudo("date", "-u", "-s", "2026-10-12 08:00:00")
     versions = run("dpkg-query", "-W", "systemd", "lightdm", "chromium", "firefox-esr", "python3-fido2").stdout
     (RESULTS / "versions.txt").write_text(versions + run("uname", "-a").stdout)
-    run("tar", "-xzf", "/localkey/bundle.tar.gz", "-C", "/tmp")
-    bundle = next(Path("/tmp").glob("localkey-*-musl"))
-    sudo(str(bundle / "install.sh"), "install", "--development")
+    if not rebooted:
+        run("python3", "/localkey/test_rp.py")
+        run("tar", "-xzf", "/localkey/bundle.tar.gz", "-C", "/tmp")
+        bundle = next(Path("/tmp").glob("localkey-*-musl"))
+        sudo(str(bundle / "install.sh"), "install", "--development")
     wait(lambda: sudo("localkeyd", "ctl", "--control", "/var/lib/localkey/control.sock", "status", check=False).returncode == 0,
          "installed service never became ready")
     assert sudo("systemctl", "is-active", "localkeyd.service").stdout.strip() == "active"
     tokens = run("fido2-token", "-L").stdout
     assert "localkey" in tokens
-    record("real systemd install and user HID access", session=session, tokens=tokens)
+    record("automatic service startup and user HID access" if rebooted else "real systemd install and user HID access",
+           session=session, tokens=tokens)
 
     rp = subprocess.Popen(["python3", "/localkey/rp.py"], stdout=open(RESULTS / "rp.log", "w"), stderr=subprocess.STDOUT)
     touch = subprocess.Popen(["localkey-touch"], stdout=open(RESULTS / "touch.log", "w"), stderr=subprocess.STDOUT)
@@ -103,6 +147,8 @@ def main():
     time.sleep(2)
     screenshot("touch-connected")
     record("desktop polkit administrator authentication")
+    if not rebooted:
+        session_denials()
     assert run("/usr/local/libexec/localkey-control", "status", check=False).returncode != 0
     assert run("cat", "/etc/localkey/storage.key", check=False).returncode != 0
     assert run("ls", "/var/lib/localkey", check=False).returncode != 0
@@ -135,7 +181,14 @@ def main():
         driver.get("http://localhost:8000")
         field = driver.find_element(By.ID, "user")
         field.clear()
-        field.send_keys(browser)
+        field.send_keys(browser + "-pin" if rebooted else browser)
+        if rebooted:
+            driver.find_element(By.ID, "required").click()
+            operation(driver, browser + "-after-reboot", "login", touch_window, pin=True)
+            driver.find_element(By.ID, "discoverable").click()
+            operation(driver, browser + "-account-after-reboot", "login", touch_window, pin=True, discoverable=True)
+            driver.quit()
+            continue
         operation(driver, browser, "register", touch_window)
         operation(driver, browser, "login", touch_window)
         # Native Chromium prompts block later WebDriver commands until dismissed.
@@ -165,6 +218,12 @@ def main():
         assert not expired["ok"] and expired["name"] == "NotAllowedError", expired
         record(f"{browser} presence timeout and late touch refusal", seconds=round(elapsed, 2))
 
+    if rebooted:
+        touch.terminate()
+        rp.terminate()
+        record("desktop flow complete including full reboot")
+        return False
+
     # Set a fixture PIN through the native HID client, then use browser PIN dialogs.
     run("python3", "-c", "from fido2.hid import CtapHidDevice; from fido2.ctap2 import Ctap2; "
         "from fido2.ctap2.pin import ClientPin; d=next(CtapHidDevice.list_devices()); c=Ctap2(d); "
@@ -176,6 +235,11 @@ def main():
         driver.find_element(By.ID, "required").click()
         operation(driver, browser + "-pin", "register", touch_window, pin=True)
         operation(driver, browser + "-pin", "login", touch_window, pin=True)
+
+    for browser, driver in drivers.items():
+        driver.find_element(By.ID, "discoverable").click()
+        operation(driver, browser + "-account", "login", touch_window, pin=True, discoverable=True)
+        driver.find_element(By.ID, "discoverable").click()
 
     sudo("systemctl", "stop", "localkeyd.service")
     sudo("cp", "-a", "/etc/localkey", "/root/localkey-key-backup")
@@ -234,10 +298,17 @@ def main():
     record("recent matched backup restore and both browser logins")
     touch.terminate()
     rp.terminate()
-    record("desktop flow complete")
+    rp.wait(timeout=10)
+    sudo("systemctl", "stop", "localkeyd.service")
+    REBOOT.write_text(json.dumps({"boot_id": Path("/proc/sys/kernel/random/boot_id").read_text().strip(),
+                                 "key_hash": sudo("sha256sum", "/etc/localkey/storage.key").stdout.split()[0],
+                                 "records": sudo("sh", "-c", "sha256sum /var/lib/localkey/*.rec").stdout,
+                                 "rp_hash": run("sha256sum", "/home/lkdesktop/localkey-rp-state.json").stdout.split()[0]}))
+    record("full reboot requested after acknowledged browser logins")
+    return True
 
 
-def operation(driver, name, action, touch_window, pin=False):
+def operation(driver, name, action, touch_window, pin=False, discoverable=False):
     browser_class = "firefox" if driver.capabilities["browserName"] == "firefox" else "chromium"
     identifier = wait(lambda: window(browser_class, "--class"), "browser window not found")
     run("xdotool", "windowactivate", "--sync", identifier)
@@ -258,19 +329,26 @@ def operation(driver, name, action, touch_window, pin=False):
     if browser_class == "firefox" and action == "register":
         # shortcut: fixed English Firefox doorhanger coordinates; recalibrate after browser UI changes.
         run("xdotool", "mousemove", "647", "264", "click", "1")
+    if discoverable:
+        time.sleep(2)
+        screenshot(f"{name}-account-picker")
+        run("xdotool", "key", "Return")
     wait(lambda: driver.find_element(By.ID, "result").text != "Waiting", f"{name} {action}: browser did not finish")
     result = json.loads(driver.find_element(By.ID, "result").text)
     assert result.get("ok"), result
     if pin:
         assert result["flags"] & 4, "browser result must have user verification"
+    if discoverable:
+        assert result["discoverable"] and result["user_handle"] in {"chromium-pin", "firefox-pin"}, result
     screenshot(f"{name}-{action}-verified")
     record(f"{name} {action} verified by relying party", **result)
 
 
 if __name__ == "__main__":
     success = False
+    reboot = False
     try:
-        main()
+        reboot = main()
         success = True
     except Exception:
         screenshot("failure")
@@ -278,8 +356,9 @@ if __name__ == "__main__":
     finally:
         (RESULTS / "result.json").write_text(json.dumps({"passed": success, "checks": CHECKS}, indent=2) + "\n")
         journal = sudo("journalctl", "-b", "-u", "localkeyd.service", "--no-pager", check=False)
-        (RESULTS / "journal.log").write_text(journal.stdout + journal.stderr)
-        marker = "===== LK-DESKTOP-END rc=0 =====" if success else "===== LK-DESKTOP-END rc=1 ====="
+        (RESULTS / ("journal-before-reboot.log" if reboot else "journal.log")).write_text(journal.stdout + journal.stderr)
+        marker = "===== LK-DESKTOP-REBOOT =====" if success and reboot else (
+                 "===== LK-DESKTOP-END rc=0 =====" if success else "===== LK-DESKTOP-END rc=1 =====")
         serial = "ttyS0" if platform.machine() == "x86_64" else "ttyAMA0"
         sudo("sh", "-c", f"echo '{marker}' > /dev/{serial}", check=False)
-        sudo("systemctl", "poweroff", check=False)
+        sudo("systemctl", "reboot" if success and reboot else "poweroff", check=False)

@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xserver-xorg-core xserver-xorg-video-dummy xauth x11-utils xdotool scrot \
     fonts-dejavu fonts-liberation \
     chromium chromium-driver firefox-esr python3-selenium python3-fido2 python3-tk \
-    fido2-tools python3-pil curl ca-certificates procps iproute2 \
+    fido2-tools python3-pil curl ca-certificates procps iproute2 kbd openssh-server \
     && if [ "$DESKTOP_ARCH" = x86_64 ]; then apt-get install -y --no-install-recommends linux-image-amd64 initramfs-tools; fi \
     && rm -rf /var/lib/apt/lists/*
 RUN useradd -m -s /bin/bash -G sudo lkdesktop \
@@ -21,6 +21,11 @@ RUN useradd -m -s /bin/bash -G sudo lkdesktop \
     && systemctl set-default graphical.target \
     && rm -f /etc/machine-id /var/lib/dbus/machine-id \
     && touch /etc/machine-id
+RUN mkdir -p /home/lkdesktop/.ssh /etc/ssh/sshd_config.d \
+    && chmod 0700 /home/lkdesktop/.ssh \
+    && chown lkdesktop:lkdesktop /home/lkdesktop/.ssh \
+    && printf 'ListenAddress 127.0.0.1\nPasswordAuthentication no\nPermitRootLogin no\nUsePAM yes\n' > /etc/ssh/sshd_config.d/localkey-test.conf \
+    && systemctl disable ssh.service ssh.socket
 COPY xorg.conf /etc/X11/xorg-localkey.conf
 COPY session.desktop /home/lkdesktop/.config/autostart/localkey-test.desktop
 COPY session.sh /localkey/session.sh

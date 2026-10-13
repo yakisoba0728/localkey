@@ -9,15 +9,16 @@ repo=$(cd "$(dirname "$0")/../.." && pwd -P)
 desktop_dir=$(python3 -c 'from pathlib import Path; import sys; print(Path(sys.argv[1]).resolve())' "$LK_DESKTOP_DIR")
 case "$desktop_dir" in "$repo"|"$repo/"*|/) echo "use an output directory outside the repository, not /" >&2; exit 2 ;; esac
 [ ! -e "$desktop_dir/root.img" ] || { echo "root.img already exists; keep its verification state" >&2; exit 2; }
-[ -f "$repo/work/releases/localkey-0.1.0-dev-$LK_DESKTOP_ARCH-unknown-linux-musl.tar.gz" ] || { echo "generate the matching private-test bundle first" >&2; exit 2; }
+bundle=${LK_DESKTOP_BUNDLE:-$repo/work/releases/localkey-0.1.0-dev-$LK_DESKTOP_ARCH-unknown-linux-musl.tar.gz}
+[ -f "$bundle" ] || { echo "generate the matching test bundle first" >&2; exit 2; }
 mkdir -p "$desktop_dir"
 chmod 0700 "$desktop_dir"
 docker run --rm --network none --cpus 2 --memory 6g \
     -v "$repo/tools/linux-desktop":/tests:ro \
-    -v "$repo/work/releases/localkey-0.1.0-dev-$LK_DESKTOP_ARCH-unknown-linux-musl.tar.gz":/bundle.tar.gz:ro \
+    -v "$bundle":/bundle.tar.gz:ro \
     -v "$LK_GECKODRIVER_TAR":/geckodriver.tar.gz:ro \
     -v "$desktop_dir":/out "$desktop_image" bash -euc '
-        cp /tests/*.py /tests/rp.html /rootfs/localkey/
+        cp /tests/*.py /tests/rp.html /tests/session.sh /rootfs/localkey/
         cp /bundle.tar.gz /rootfs/localkey/bundle.tar.gz
         tar -xzf /geckodriver.tar.gz -C /rootfs/usr/local/bin
         rm -f /rootfs/.dockerenv /rootfs/etc/resolv.conf
