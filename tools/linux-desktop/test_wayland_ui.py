@@ -5,12 +5,26 @@ import socket
 import tempfile
 import threading
 import unittest
+from unittest import mock
 
 from PIL import Image
 from wayland_ui import Gui
 
 
 class QmpTests(unittest.TestCase):
+    def test_authentication_search_uses_shell_not_browser_page_content(self):
+        browser = mock.MagicMock()
+        browser.name = 'Chromium'
+        shell = mock.MagicMock()
+        shell.name = 'gnome-shell'
+        dialog = mock.MagicMock()
+        dialog.name = 'Authentication Required'
+        shell.__iter__.return_value = iter([dialog])
+        gui = Gui.__new__(Gui)
+        with mock.patch('wayland_ui.pyatspi.Registry.getDesktop', return_value=[browser, shell]):
+            self.assertEqual(gui.window('Authentication'), 'auth')
+        browser.__iter__.assert_not_called()
+
     def test_focus_releases_alt_when_virtual_keyboard_input_fails(self):
         gui = Gui.__new__(Gui)
         gui.window = lambda *args, **options: None

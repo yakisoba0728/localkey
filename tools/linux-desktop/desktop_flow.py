@@ -62,13 +62,18 @@ def connect_window(identifier):
     state = wait(lambda: window("Authentication") or watcher_ready(), "touch connection did not start")
     authenticated = isinstance(state, str)
     if authenticated:
-        screenshot("polkit-authentication")
-        run("xdotool", "windowactivate", "--sync", state)
-        run("xdotool", "type", "--clearmodifiers", PASSWORD)
-        run("xdotool", "key", "Return")
+        authenticate(state)
         wait(watcher_ready, "authenticated touch watcher did not start")
         record("native polkit authentication completed")
     return authenticated
+
+
+def authenticate(identifier):
+    screenshot("polkit-authentication")
+    run("xdotool", "windowactivate", "--sync", identifier)
+    run("xdotool", "type", "--clearmodifiers", PASSWORD)
+    run("xdotool", "key", "Return")
+    wait(lambda: not window("Authentication"), "administrator authentication did not finish")
 
 
 def presence():
@@ -347,6 +352,10 @@ def operation(driver, name, action, touch_window, pin=False, discoverable=False)
     screenshot(f"{name}-{action}-waiting")
     run("xdotool", "windowactivate", "--sync", touch_window)
     run("xdotool", "key", "Tab", "space")
+    state = wait(lambda: window("Authentication") or not presence(), "touch did not finish or request authentication")
+    if isinstance(state, str):
+        authenticate(state)
+        wait(lambda: not presence(), "authenticated touch did not finish")
     time.sleep(1)
     run("xdotool", "windowactivate", "--sync", identifier)
     screenshot(f"{name}-{action}-after-touch")
@@ -370,6 +379,8 @@ def operation(driver, name, action, touch_window, pin=False, discoverable=False)
     wait(lambda: driver.find_element(By.ID, "result").text != "Waiting", f"{name} {action}: browser did not finish")
     result = json.loads(driver.find_element(By.ID, "result").text)
     assert result.get("ok"), result
+    if isinstance(state, str):
+        record("native polkit authentication completed for a verified touch")
     if pin:
         assert result["flags"] & 4, "browser result must have user verification"
     if discoverable:

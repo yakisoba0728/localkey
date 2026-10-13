@@ -82,7 +82,18 @@ class Gui:
             result = self.run('xdotool', 'search', '--onlyvisible', '--name', pattern, check=False)
             return result.stdout.splitlines()[-1] if result.returncode == 0 and result.stdout.strip() else None
         expression = re.compile(pattern, re.I)
-        pending = list(pyatspi.Registry.getDesktop(0))
+        applications = list(pyatspi.Registry.getDesktop(0))
+        pending = [app for app in applications if (app.name == 'gnome-shell' if pattern == 'Authentication'
+                                                  else expression.search(app.name or ''))]
+        if active:
+            for app in pending:
+                for child in app:
+                    try:
+                        if child.getRole() in (pyatspi.ROLE_FRAME, pyatspi.ROLE_DIALOG) and child.getState().contains(pyatspi.STATE_ACTIVE):
+                            return pattern
+                    except Exception:
+                        continue
+            return None
         count = 0
         while pending and count < 10000:
             node = pending.pop()
