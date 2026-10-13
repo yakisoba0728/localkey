@@ -12,7 +12,9 @@ QEMU 게스트에서 실제 호스트 소프트웨어로 검증했습니다.
 Linux 데스크톱 배포 준비: `tools/linux/README.md`. 사용자 권한 터치 창, 관리자 인증 도우미,
 키·상태를 보존하는 설치/제거 도구와 체크섬·라이선스가 포함된 묶음 생성기를 제공합니다.
 Debian 13 데스크톱 VM의 aarch64·x86_64에서 실제 systemd 설치·업그레이드·복구와
-Chromium·Firefox 등록·로그인·PIN·상주 키·취소·시간 초과 검증을 통과했습니다.
+Chromium·Firefox 등록·로그인·PIN·상주 키·계정 선택·취소·시간 초과와
+동일 RP 기록을 유지한 전체 재부팅 후 로그인까지 통과했습니다(아키텍처별 43개 검증).
+실제 비활성 로컬 세션·SSH 세션의 polkit 거부와 인증 만료 후 재인증도 확인했습니다.
 환경과 증거는 [Linux 데스크톱 검증 기록](docs/LINUX_DESKTOP_VERIFICATION.md)에 있습니다.
 현재 `1209:0001`은 내부 시험용 PID이며, 자체 PID 배정과 서명된 릴리스 전에는 공개 바이너리로 배포하지
 않습니다. [자체 PID 신청](https://github.com/pidcodes/pidcodes.github.com/pull/1310)은 제출했고 배정을 기다립니다.

@@ -271,9 +271,15 @@ source/binary distribution and Apache-2.0. The workspace now inherits that licen
 - `.github/workflows/linux-preview.yml` checks engines, licenses, catalog, UI and
   private-test build/staging on Ubuntu 24.04 x86_64/aarch64 runners. Current runs:
   <https://github.com/yakisoba0728/localkey/actions/workflows/linux-preview.yml>.
-  Physical desktops, live inactive/SSH policy checks, browser discoverable-account
-  selection and full reboot with saved RP credentials remain smoke checks; an
-  assigned PID and a reviewed signed release remain publication gates.
+  On 2026-10-13, fresh VMs passed **43 checks each (86 total)**, including actual
+  inactive-local/SSH denial after administrator authentication, Chromium/Firefox
+  discoverable-account selection, retained-grant expiry and native reauthentication,
+  and a full reboot preserving the same RP public credentials/counters. Both
+  allow-list and discoverable logins passed after reboot with increasing counters.
+  The fixture now waits for user HID access and native Firefox prompts, and saves
+  RP public state atomically; a self-test rejects repeated/zero counter rollback.
+  Physical and stock Ubuntu desktops remain outside this preview's coverage;
+  an assigned PID and a reviewed signed release remain publication gates.
 - Both static musl preview bundles were generated locally. x86_64 cross-build
   succeeded and its keygen/wire-status/conditional-touch/shutdown CLI lifecycle
   passed under emulation; aarch64 HID execution is covered by the guest above.

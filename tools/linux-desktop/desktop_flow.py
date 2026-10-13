@@ -146,8 +146,10 @@ def main():
     wait(lambda: sudo("localkeyd", "ctl", "--control", "/var/lib/localkey/control.sock", "status", check=False).returncode == 0,
          "installed service never became ready")
     assert sudo("systemctl", "is-active", "localkeyd.service").stdout.strip() == "active"
-    tokens = run("fido2-token", "-L").stdout
-    assert "localkey" in tokens
+    def user_tokens():
+        tokens = run("fido2-token", "-L").stdout
+        return tokens if "localkey" in tokens else None
+    tokens = wait(user_tokens, "own HID device did not become accessible to the desktop user")
     record("automatic service startup and user HID access" if rebooted else "real systemd install and user HID access",
            session=session, tokens=tokens)
 
@@ -377,7 +379,7 @@ if __name__ == "__main__":
         screenshot("failure")
         traceback.print_exc()
     finally:
-        (RESULTS / "result.json").write_text(json.dumps({"passed": success, "checks": CHECKS}, indent=2) + "\n")
+        (RESULTS / "result.json").write_text(json.dumps({"passed": success and not reboot, "checks": CHECKS}, indent=2) + "\n")
         journal = sudo("journalctl", "-b", "-u", "localkeyd.service", "--no-pager", check=False)
         (RESULTS / ("journal-before-reboot.log" if reboot else "journal.log")).write_text(journal.stdout + journal.stderr)
         marker = "===== LK-DESKTOP-REBOOT =====" if success and reboot else (

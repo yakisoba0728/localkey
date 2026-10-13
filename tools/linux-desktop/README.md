@@ -23,6 +23,7 @@ public verification report, never the disk, storage key or sealed records.
 The SSH check uses a fixture key and a loopback-only sshd with real PAM/logind;
 the inactive check switches the actual local session to another virtual terminal.
 Both run after desktop administrator authentication, including its retained grant.
+Reconnects handle a new native administrator prompt when that grant expires.
 
 ## Build and run
 
@@ -76,7 +77,8 @@ docker run --rm --network none -v "$LK_DESKTOP_DIR":/out localkey-desktop-build:
 ```
 
 Do not modify or extract the disk while QEMU is running. To retry with changed
-fixtures, build a new disk. The Firefox direct-attestation permission button is
-calibrated for these English 1280×800 screenshots; recalibrate after browser UI
+fixtures, build a new disk. The Firefox direct-attestation and account-selection buttons are
+calibrated for these English 1280×800 screenshots, with screenshot-based prompt
+readiness checks; recalibrate after browser UI
 changes. Chromium keeps a retry/cancel dialog after the device's 30-second presence
 timeout; the test dismisses it before checking the page's rejection.

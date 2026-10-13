@@ -1,0 +1,293 @@
+{
+  "passed": true,
+  "checks": [
+    {
+      "check": "real systemd install and user HID access",
+      "passed": true,
+      "session": "Seat=seat0\nRemote=no\nType=x11\nActive=yes\n",
+      "tokens": "/dev/hidraw0: vendor=0x1209, product=0x0001 ( localkey OTP+FIDO+CCID)\n"
+    },
+    {
+      "check": "native polkit authentication completed",
+      "passed": true
+    },
+    {
+      "check": "desktop polkit administrator authentication",
+      "passed": true
+    },
+    {
+      "check": "polkit denies the actual inactive local desktop session",
+      "passed": true,
+      "session": "Seat=seat0\nRemote=no\nActive=no\n",
+      "exit": 127
+    },
+    {
+      "check": "polkit denies a real SSH remote session",
+      "passed": true,
+      "session": "Seat=\nRemote=yes\nActive=yes",
+      "exit": 127
+    },
+    {
+      "check": "unprivileged key/state/helper access and idle touch refused",
+      "passed": true
+    },
+    {
+      "check": "polkit denies a process outside a local desktop session",
+      "passed": true
+    },
+    {
+      "check": "chromium register verified by relying party",
+      "passed": true,
+      "ok": true,
+      "operation": "register",
+      "user": "chromium",
+      "flags": 65,
+      "aaguid": "6c6b6579-2d4c-4b01-8f3a-546e67696e65",
+      "counter": 0
+    },
+    {
+      "check": "chromium login verified by relying party",
+      "passed": true,
+      "ok": true,
+      "operation": "login",
+      "user": "chromium",
+      "flags": 1,
+      "counter": 1
+    },
+    {
+      "check": "chromium cancellation retires presence and late touch is refused",
+      "passed": true,
+      "error": "AbortError"
+    },
+    {
+      "check": "chromium presence timeout and late touch refusal",
+      "passed": true,
+      "seconds": 29.81
+    },
+    {
+      "check": "firefox register verified by relying party",
+      "passed": true,
+      "ok": true,
+      "operation": "register",
+      "user": "firefox",
+      "flags": 65,
+      "aaguid": "6c6b6579-2d4c-4b01-8f3a-546e67696e65",
+      "counter": 1
+    },
+    {
+      "check": "firefox login verified by relying party",
+      "passed": true,
+      "ok": true,
+      "operation": "login",
+      "user": "firefox",
+      "flags": 1,
+      "counter": 3
+    },
+    {
+      "check": "firefox cancellation retires presence and late touch is refused",
+      "passed": true,
+      "error": "NotAllowedError"
+    },
+    {
+      "check": "firefox presence timeout and late touch refusal",
+      "passed": true,
+      "seconds": 29.96
+    },
+    {
+      "check": "chromium-pin register verified by relying party",
+      "passed": true,
+      "ok": true,
+      "operation": "register",
+      "user": "chromium-pin",
+      "flags": 197,
+      "aaguid": "6c6b6579-2d4c-4b01-8f3a-546e67696e65",
+      "counter": 5
+    },
+    {
+      "check": "chromium-pin login verified by relying party",
+      "passed": true,
+      "ok": true,
+      "operation": "login",
+      "user": "chromium-pin",
+      "flags": 5,
+      "counter": 6
+    },
+    {
+      "check": "firefox-pin register verified by relying party",
+      "passed": true,
+      "ok": true,
+      "operation": "register",
+      "user": "firefox-pin",
+      "flags": 69,
+      "aaguid": "6c6b6579-2d4c-4b01-8f3a-546e67696e65",
+      "counter": 6
+    },
+    {
+      "check": "firefox-pin login verified by relying party",
+      "passed": true,
+      "ok": true,
+      "operation": "login",
+      "user": "firefox-pin",
+      "flags": 5,
+      "counter": 8
+    },
+    {
+      "check": "chromium-account login verified by relying party",
+      "passed": true,
+      "ok": true,
+      "operation": "login",
+      "user": "firefox-pin",
+      "flags": 5,
+      "counter": 9,
+      "discoverable": true,
+      "user_handle": "firefox-pin"
+    },
+    {
+      "check": "firefox-account login verified by relying party",
+      "passed": true,
+      "ok": true,
+      "operation": "login",
+      "user": "firefox-pin",
+      "flags": 5,
+      "counter": 11,
+      "discoverable": true,
+      "user_handle": "firefox-pin"
+    },
+    {
+      "check": "upgrade preserves storage key",
+      "passed": true
+    },
+    {
+      "check": "chromium-after-upgrade login verified by relying party",
+      "passed": true,
+      "ok": true,
+      "operation": "login",
+      "user": "chromium-pin",
+      "flags": 5,
+      "counter": 13
+    },
+    {
+      "check": "firefox-after-upgrade login verified by relying party",
+      "passed": true,
+      "ok": true,
+      "operation": "login",
+      "user": "firefox-pin",
+      "flags": 5,
+      "counter": 15
+    },
+    {
+      "check": "uninstall keeps original key and records",
+      "passed": true
+    },
+    {
+      "check": "missing storage key refuses reinstall without generating a replacement",
+      "passed": true
+    },
+    {
+      "check": "wrong storage key refuses startup with sealed records unchanged",
+      "passed": true
+    },
+    {
+      "check": "native polkit authentication completed",
+      "passed": true
+    },
+    {
+      "check": "chromium-after-restore login verified by relying party",
+      "passed": true,
+      "ok": true,
+      "operation": "login",
+      "user": "chromium-pin",
+      "flags": 5,
+      "counter": 16
+    },
+    {
+      "check": "firefox-after-restore login verified by relying party",
+      "passed": true,
+      "ok": true,
+      "operation": "login",
+      "user": "firefox-pin",
+      "flags": 5,
+      "counter": 18
+    },
+    {
+      "check": "recent matched backup restore and both browser logins",
+      "passed": true
+    },
+    {
+      "check": "full reboot requested after acknowledged browser logins",
+      "passed": true
+    },
+    {
+      "check": "full reboot preserves key, sealed records and the same relying-party credentials/counters",
+      "passed": true,
+      "previous_boot": "2ffb286b-8353-4f4a-b57a-4118112aa8b9",
+      "boot": "f259ba00-a66f-4104-8076-40eb46082f99"
+    },
+    {
+      "check": "automatic service startup and user HID access",
+      "passed": true,
+      "session": "Seat=seat0\nRemote=no\nType=x11\nActive=yes\n",
+      "tokens": "/dev/hidraw1: vendor=0x1209, product=0x0001 ( localkey OTP+FIDO+CCID)\n"
+    },
+    {
+      "check": "native polkit authentication completed",
+      "passed": true
+    },
+    {
+      "check": "desktop polkit administrator authentication",
+      "passed": true
+    },
+    {
+      "check": "unprivileged key/state/helper access and idle touch refused",
+      "passed": true
+    },
+    {
+      "check": "polkit denies a process outside a local desktop session",
+      "passed": true
+    },
+    {
+      "check": "chromium-after-reboot login verified by relying party",
+      "passed": true,
+      "ok": true,
+      "operation": "login",
+      "user": "chromium-pin",
+      "flags": 5,
+      "counter": 19
+    },
+    {
+      "check": "chromium-account-after-reboot login verified by relying party",
+      "passed": true,
+      "ok": true,
+      "operation": "login",
+      "user": "firefox-pin",
+      "flags": 5,
+      "counter": 20,
+      "discoverable": true,
+      "user_handle": "firefox-pin"
+    },
+    {
+      "check": "firefox-after-reboot login verified by relying party",
+      "passed": true,
+      "ok": true,
+      "operation": "login",
+      "user": "firefox-pin",
+      "flags": 5,
+      "counter": 23
+    },
+    {
+      "check": "firefox-account-after-reboot login verified by relying party",
+      "passed": true,
+      "ok": true,
+      "operation": "login",
+      "user": "firefox-pin",
+      "flags": 5,
+      "counter": 24,
+      "discoverable": true,
+      "user_handle": "firefox-pin"
+    },
+    {
+      "check": "desktop flow complete including full reboot",
+      "passed": true
+    }
+  ]
+}

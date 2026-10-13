@@ -64,8 +64,11 @@ The UI's button and helper's short tap are for pending presence requests. Idle O
 operation; put focus in the intended app before sending a tap. Tools that
 require Yubico USB IDs will not discover the own-profile OTP device. Standard
 FIDO clients can use the own HID identity. Real Chromium/Firefox registration,
-login, PIN/resident keys, cancellation, timeout, upgrade and recent matched backup
-restore passed in Debian 13 desktop VMs on aarch64 and x86_64. See
+login, PIN/resident keys, discoverable account selection, cancellation, timeout,
+upgrade, recent matched backup restore and full reboot with the same RP records
+passed in Debian 13 desktop VMs on aarch64 and x86_64 (43 checks each). Actual
+inactive-local/SSH polkit denial and native reauthentication after retained-grant
+expiry also passed. See
 `docs/LINUX_DESKTOP_VERIFICATION.md` in the source repository for versions and
 selected evidence. Physical desktops and other distro/version combinations are
 not covered by those results.
@@ -148,13 +151,14 @@ starting a daemon. `uninstall --destdir` removes only those staged program files
    an external decision; never invent an unassigned production PID.
 2. Clean install, stop/start, upgrade, uninstall and recent matched backup/restore
    passed on real systemd desktop VMs on both architectures, along with polkit
-   administrator authentication and denial outside a desktop session. Inactive
-   and remote denial defaults and watch EOF are checked by tests; live inactive
-   and SSH sessions and physical desktop smoke checks remain before a release.
+   administrator authentication, denial outside a desktop session and actual
+   inactive-local/SSH session denial after authentication. Physical desktops and
+   stock Ubuntu are outside this preview's tested scope.
 3. Chromium and Firefox: real WebAuthn registration and login using the own
    profile, resident keys/PIN, cancellation, presence timeout and restart
-   persistence: passed in the recorded VMs. The discoverable account-selection
-   UI and a reboot with the same RP records remain smoke checks. The generic touch
+   persistence: passed in the recorded VMs, including actual discoverable account
+   selection and a full reboot with unchanged RP public credentials/counters.
+   The generic touch
    UI cannot tell the app/origin; retain that limitation in the release notes.
 4. Signed/checksummed release artifacts from a clean tag and trusted CI. Start
    with this preview scope; add PC/SC setup and management screens only after the

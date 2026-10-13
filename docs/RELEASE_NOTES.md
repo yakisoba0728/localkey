@@ -23,3 +23,7 @@ touch sensor or manufacturer-trusted attestation. The touch window cannot show
 the relying party or origin; check the request in the calling app before touching.
 The recorded tests cover Debian 13 desktop VMs with real Chromium and Firefox on
 both architectures; report additional physical desktop coverage only after testing.
+The 2026-10-13 private-test verification passed 43 checks per architecture,
+including real inactive-local/SSH polkit denial, retained-grant reauthentication,
+native browser account selection and full reboot with saved RP records. Repeat
+these with the assigned identity before replacing this unreleased template.

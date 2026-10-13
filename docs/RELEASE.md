@@ -1,10 +1,9 @@
 # Linux release procedure
 
-The Linux x86_64 and aarch64 checks for commit
-`1a2de8ddf7a8a2734dcee5d86cf7403766351604` passed on 2026-10-13:
-[CI run](https://github.com/yakisoba0728/localkey/actions/runs/38323529249).
-Each native job passed 2,390 Rust tests, Clippy, license/catalog checks, measurement
-tests, desktop/installer tests and static-musl bundle staging.
+The [Linux preview workflow](https://github.com/yakisoba0728/localkey/actions/workflows/linux-preview.yml)
+checks x86_64 and aarch64 natively on Ubuntu 24.04. Each job runs engine tests,
+Clippy, license/catalog checks, measurement tests, desktop/installer tests and
+static-musl bundle staging. Verify both jobs for the exact final source commit.
 
 The own PID request is [pid.codes #1310](https://github.com/pidcodes/pidcodes.github.com/pull/1310).
 It requests `1209:4c4b`; submission is not allocation. The application still uses
@@ -20,10 +19,11 @@ Source remains public under Apache-2.0.
    checks using that assigned identity. Update the evidence and checksums in
    `docs/LINUX_DESKTOP_VERIFICATION.md`; the old private-test results do not verify
    the new identity.
-3. Complete the remaining desktop smoke checks: live inactive/SSH polkit denial,
-   browser discoverable-account selection and reboot with the same saved RP
-   credentials. Physical desktop/distro coverage remains limited; state the tested
-   platforms accurately in the release notes.
+3. The remaining desktop flows passed on 2026-10-13: live inactive/SSH polkit denial,
+   browser discoverable-account selection, expired-grant reauthentication and a full
+   reboot with the same saved RP credentials/counters (43 checks per architecture).
+   Repeat these with the assigned identity. Physical desktop/distro coverage remains
+   limited; state the tested platforms accurately in the release notes.
 4. Update `docs/RELEASE_NOTES.md` with the allocation, verified evidence and known
    limits. Run Linux preview CI on the final commit and wait for both jobs to pass.
    Review the final diff and commit it on `main`.
