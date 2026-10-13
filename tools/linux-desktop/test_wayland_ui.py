@@ -13,6 +13,15 @@ from wayland_ui import Gui
 
 
 class QmpTests(unittest.TestCase):
+    def test_desktop_dispatches_pending_accessibility_updates(self):
+        context = mock.MagicMock()
+        context.pending.side_effect = [True, True, False]
+        gui = Gui.__new__(Gui)
+        with mock.patch('wayland_ui.GLib.MainContext.default', return_value=context), \
+                mock.patch('wayland_ui.pyatspi.Registry.getDesktop', return_value='desktop'):
+            self.assertEqual(gui.desktop(), 'desktop')
+        self.assertEqual(context.iteration.call_args_list, [mock.call(False), mock.call(False)])
+
     def test_authentication_search_uses_shell_not_browser_page_content(self):
         browser = mock.MagicMock()
         browser.name = 'Chromium'

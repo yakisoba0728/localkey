@@ -8,14 +8,13 @@ from pathlib import Path
 
 from PIL import Image
 import pyatspi
+from gi.repository import GLib
 
 
 class Gui:
     def __init__(self, run, results):
         self.run = run
         self.results = results
-        # This synchronous fixture does not run AT-SPI's cache-invalidation event loop.
-        pyatspi.Registry.getDesktop(0).set_cache_mask(0)
         self.port = open('/dev/virtio-ports/localkey.test-qmp', 'r+b', buffering=0)
         self.buffer = b''
         self.sequence = 0
@@ -90,7 +89,7 @@ class Gui:
             result = self.run('xdotool', 'search', '--onlyvisible', '--name', pattern, check=False)
             return result.stdout.splitlines()[-1] if result.returncode == 0 and result.stdout.strip() else None
         expression = re.compile(pattern, re.I)
-        applications = list(pyatspi.Registry.getDesktop(0))
+        applications = list(self.desktop())
         pending = []
         for app in applications:
             try:
@@ -110,6 +109,15 @@ class Gui:
                 continue
         return None
 
+    def desktop(self):
+        # Dispatch AT-SPI's queued cache updates without a blocking main loop.
+        context = GLib.MainContext.default()
+        for _ in range(1000):
+            if not context.pending():
+                break
+            context.iteration(False)
+        return pyatspi.Registry.getDesktop(0)
+
     def focus(self, identifier):
         if identifier == 'auth':
             return  # GNOME's native polkit modal already owns keyboard focus.
@@ -122,12 +130,17 @@ class Gui:
             return
         # Browser STATE_ACTIVE can remain set behind another Wayland window.
         self.key('Super_L')
-        deadline = time.monotonic() + 20
+        time.sleep(.5)
+        refreshed = False
+        deadline = time.monotonic() + 90
         while time.monotonic() < deadline:
             pending = []
-            for app in pyatspi.Registry.getDesktop(0):
+            for app in self.desktop():
                 try:
                     if app.name == 'gnome-shell':
+                        if not refreshed:
+                            app.clear_cache()
+                            refreshed = True
                         pending.append(app)
                 except Exception:
                     continue
@@ -178,7 +191,7 @@ class Gui:
     def button(self, application, pattern):
         expression = re.compile(pattern, re.I)
         pending = []
-        for app in pyatspi.Registry.getDesktop(0):
+        for app in self.desktop():
             try:
                 if (app.name or '').lower() == application:
                     pending.append(app)
