@@ -1,0 +1,2 @@
+DESCRIPTOR_READ_OK
+/bin/bash: line 3: /dev/hidraw2: Operation not permitted

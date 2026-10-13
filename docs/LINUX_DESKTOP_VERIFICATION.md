@@ -78,6 +78,11 @@ Active=no. Other sites' origin and attestation policies may differ.
 The touch window has no requesting-app identity. This software key has no
 hardware isolation, physical sensor or manufacturer-trusted attestation.
 
+Ubuntu GNOME/Wayland and official Snap browser checks are tracked separately in
+[Ubuntu desktop verification](UBUNTU_DESKTOP_VERIFICATION.md). Stable Snapd
+2.77.1 blocks the own UHID device; candidate 2.78 coverage does not establish
+default stable Ubuntu support.
+
 Public source uses Apache-2.0. Public binaries remain blocked on an assigned own
 PID and a reviewed, signed release from clean source. `1209:0001` is private-test
 only; the request was submitted on 2026-10-13 as

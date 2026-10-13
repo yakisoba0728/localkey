@@ -1,0 +1,10 @@
+DEVPATH=/devices/virtual/misc/uhid/0003:1209:0001.0004/hidraw/hidraw2
+DEVNAME=/dev/hidraw2
+MAJOR=234
+MINOR=2
+SUBSYSTEM=hidraw
+USEC_INITIALIZED=68423870
+ID_FIDO_TOKEN=1
+ID_SECURITY_TOKEN=1
+TAGS=:systemd:security-device:uaccess:seat:
+CURRENT_TAGS=:systemd:security-device:uaccess:seat:

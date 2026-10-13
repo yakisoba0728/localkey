@@ -1,0 +1,51 @@
+{
+  "passed": false,
+  "checks": [
+    {
+      "check": "real systemd install and user HID access",
+      "passed": true,
+      "session": "Seat=seat0\nRemote=no\nType=wayland\nActive=yes\n",
+      "tokens": "/dev/hidraw2: vendor=0x1209, product=0x0001 ( localkey OTP+FIDO+CCID)\n"
+    },
+    {
+      "check": "native polkit authentication completed",
+      "passed": true
+    },
+    {
+      "check": "desktop polkit administrator authentication",
+      "passed": true
+    },
+    {
+      "check": "polkit denies the actual inactive local desktop session",
+      "passed": true,
+      "session": "Seat=seat0\nRemote=no\nActive=no\n",
+      "exit": 127
+    },
+    {
+      "check": "polkit denies a real SSH remote session",
+      "passed": true,
+      "session": "Seat=\nRemote=yes\nActive=yes",
+      "exit": 127
+    },
+    {
+      "check": "unprivileged key/state/helper access and idle touch refused",
+      "passed": true
+    },
+    {
+      "check": "polkit denies a process outside a local desktop session",
+      "passed": true
+    },
+    {
+      "check": "both Snap browsers enforce AppArmor and use native Wayland",
+      "passed": true,
+      "profiles": {
+        "chromium": "snap.chromium.chromedriver (enforce)",
+        "firefox": "snap.firefox.geckodriver (enforce)"
+      },
+      "versions": {
+        "chromium": "155.0.8059.39",
+        "firefox": "157.0.1"
+      }
+    }
+  ]
+}
