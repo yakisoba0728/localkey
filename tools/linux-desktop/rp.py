@@ -84,7 +84,7 @@ class Party:
                 raise ValueError("user handle does not match the selected account")
             self.server.authenticate_complete(pending["state"], [self.credentials[user]], response)
             auth = response.response.authenticator_data
-            if auth.counter and auth.counter <= self.counters[user]:
+            if auth.counter <= self.counters[user]:
                 raise ValueError("signature counter did not increase; possible stale backup or cloned key")
             self.counters[user] = auth.counter
             result = {"operation": "login", "user": user, "flags": int(auth.flags), "counter": auth.counter}

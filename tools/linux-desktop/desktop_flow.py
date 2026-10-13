@@ -8,6 +8,7 @@ import subprocess
 import time
 import traceback
 
+from PIL import Image
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service as ChromeService
@@ -67,6 +68,9 @@ def record(name, **details):
     CHECKS.append(entry)
     print(json.dumps(entry), flush=True)
     (RESULTS / "checks.json").write_text(json.dumps(CHECKS, indent=2) + "\n")
+    serial = "ttyS0" if platform.machine() == "x86_64" else "ttyAMA0"
+    sudo("python3", "-c", "import sys; open(sys.argv[1], 'w').write(sys.argv[2] + '\\n')",
+         f"/dev/{serial}", json.dumps(entry))
 
 
 def session_denials():
@@ -326,10 +330,20 @@ def operation(driver, name, action, touch_window, pin=False, discoverable=False)
     time.sleep(1)
     run("xdotool", "windowactivate", "--sync", identifier)
     screenshot(f"{name}-{action}-after-touch")
-    if browser_class == "firefox" and action == "register":
+    if browser_class == "firefox" and (action == "register" or discoverable):
         # shortcut: fixed English Firefox doorhanger coordinates; recalibrate after browser UI changes.
-        run("xdotool", "mousemove", "647", "264", "click", "1")
-    if discoverable:
+        prompt = f"{name}-attestation" if action == "register" else f"{name}-account-picker"
+        def prompt_visible():
+            screenshot(prompt)
+            red, green, blue = Image.open(RESULTS / f"{prompt}.png").convert("RGB").getpixel(
+                (625, 254 if action == "register" else 175))
+            return red < 100 and 80 < green < 180 and blue > 180
+        wait(prompt_visible, "Firefox native permission/account picker did not appear")
+        if action == "register":
+            run("xdotool", "mousemove", "647", "264", "click", "1")
+        else:
+            run("xdotool", "mousemove", "495", "183", "click", "1")
+    elif discoverable:
         time.sleep(2)
         screenshot(f"{name}-account-picker")
         run("xdotool", "key", "Return")

@@ -29,12 +29,13 @@ class PartyTests(TestCase):
             self.assertFalse(path.with_suffix(".tmp").exists())
             response = mock.Mock()
             response.response.user_handle = b"account"
-            response.response.authenticator_data.counter = 17
-            restarted.pending["account"] = {"state": {}, "discoverable": False}
-            with mock.patch("fido2.webauthn.AuthenticationResponse.from_dict", return_value=response), \
-                 mock.patch.object(restarted.server, "authenticate_complete"):
-                with self.assertRaisesRegex(ValueError, "counter did not increase"):
-                    restarted.handle("/login/complete", {"user": "account", "credential": {}})
+            for counter in (0, 17):
+                response.response.authenticator_data.counter = counter
+                restarted.pending["account"] = {"state": {}, "discoverable": False}
+                with mock.patch("fido2.webauthn.AuthenticationResponse.from_dict", return_value=response), \
+                     mock.patch.object(restarted.server, "authenticate_complete"):
+                    with self.assertRaisesRegex(ValueError, "counter did not increase"):
+                        restarted.handle("/login/complete", {"user": "account", "credential": {}})
             self.assertEqual(Party(path).counters, {"account": 17})
             response.response.authenticator_data.counter = 18
             response.response.authenticator_data.flags = 5

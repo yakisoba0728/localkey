@@ -4,7 +4,10 @@ This boots a disposable systemd/LightDM/Xfce desktop with actual Chromium and
 Firefox, native HID clients and the packaged daemon. Selenium operates ordinary
 pages; it does not install virtual authenticators or supply WebAuthn responses.
 The local relying party verifies challenge, origin, RP ID, signatures, attestation,
-the own AAGUID, UP/UV flags and increasing signature counters.
+the own AAGUID, UP/UV flags, selected account user handles and increasing signature
+counters. Completed registrations and counters survive a full guest reboot; pending
+challenges do not. The second boot compares the previous key, sealed-record and RP
+state hashes before logging in again through both browsers.
 
 The VM has no NIC or host-device passthrough. Its container has `--network none`,
 no privileged mode and no host `/dev` or `/sys` mounts. Two CPUs, 6 GiB container
@@ -17,6 +20,9 @@ Fixture accounts are `lkdesktop` / `localkey-test-only` and root /
 test credentials. Never connect or redistribute the VM disk, or use its keys in
 real accounts. Only selected result JSON, versions and screenshots belong in a
 public verification report, never the disk, storage key or sealed records.
+The SSH check uses a fixture key and a loopback-only sshd with real PAM/logind;
+the inactive check switches the actual local session to another virtual terminal.
+Both run after desktop administrator authentication, including its retained grant.
 
 ## Build and run
 
@@ -50,13 +56,17 @@ Select one architecture and a new private directory outside the repository:
 export LK_DESKTOP_ARCH=aarch64     # or x86_64
 export LK_DESKTOP_DIR=/tmp/localkey-desktop-test
 export LK_GECKODRIVER_TAR=/tmp/geckodriver-v0.37.1-linux-aarch64.tar.gz
+# Optional: use a fresh bundle outside work/releases without replacing older evidence.
+export LK_DESKTOP_BUNDLE=/tmp/localkey-bundles/localkey-0.1.0-dev-aarch64-unknown-linux-musl.tar.gz
 tools/linux-desktop/build-disk.sh  # refuses an existing root.img
 tools/linux-desktop/run.sh
 ```
 
 The run succeeds only if the guest emits `LK-DESKTOP-END rc=0`. The guest always
 records `result.json`, individual checks, logs, versions and screenshots under
-`/localkey/results` and powers off. After poweroff, extract without mounting the
+`/localkey/results`, reboots once after the first phase, and powers off after the
+second phase (or any failure). The final success marker covers both boots;
+the intermediate reboot marker is not success. After poweroff, extract without mounting the
 disk (use the matching desktop image):
 
 ```sh
