@@ -140,21 +140,10 @@ class Gui:
             focused = self.run('xdotool', 'getwindowfocus', 'getwindowname', check=False).stdout.strip()
             assert expected and focused == expected, (expected, focused)
             return
-        app = self.application(identifier)
-        assert app is not None, f'no native browser application: {identifier}'
-        for _ in range(12):
-            for frame in app:
-                try:
-                    frame.clear_cache()
-                    if (frame.getRole() in (pyatspi.ROLE_FRAME, pyatspi.ROLE_DIALOG) and
-                            frame.getState().contains(pyatspi.STATE_ACTIVE)):
-                        return
-                except Exception:
-                    continue
-            # Cycle real windows; avoid a Shell overview query during a browser modal.
-            self.key('Alt+Escape')
-            time.sleep(.5)
-        raise RuntimeError(f'native browser did not become active: {identifier}')
+        assert identifier in ('chromium', 'firefox'), identifier
+        # Match the installed Snap desktop IDs when WebDriver launches native Wayland windows.
+        self.key('Super_L+' + ('2' if identifier == 'chromium' else '3'))
+        time.sleep(1)
 
     def xdotool(self, arguments):
         command = arguments[0]

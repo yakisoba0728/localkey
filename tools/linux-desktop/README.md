@@ -126,8 +126,9 @@ For Ubuntu extraction, select `localkey-ubuntu-desktop-arm:1` or
 `localkey-ubuntu-desktop-x86:1`. Do not modify or extract the disk while QEMU is running. To retry with changed
 fixtures, build a new disk. Debian's Firefox direct-attestation and account-selection buttons are
 calibrated for English 1280×800 screenshots, with screenshot-based prompt
-readiness checks. Ubuntu cycles native windows, refreshes browser frame state,
-and selects Firefox's visible native accessibility buttons. Native Collection
+readiness checks. Ubuntu uses the installed Snap desktop IDs and native favorite
+shortcuts to select browser windows, and selects Firefox's visible native
+accessibility buttons. Native Collection
 queries find authentication/buttons in the application without a slow per-node
 walk. Browser active-state flags can remain cached behind another Wayland window,
 and QEMU's virtual-clock key-release timers can

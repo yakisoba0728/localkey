@@ -47,20 +47,15 @@ class QmpTests(unittest.TestCase):
         self.assertEqual([(event['data']['key']['data'], event['data']['down']) for event in events],
                          [('ctrl', True), ('ret', True), ('ret', False), ('ctrl', False)])
 
-    def test_focus_refreshes_frame_state_and_cycles_native_windows(self):
-        browser = mock.MagicMock()
-        browser.name = 'Firefox'
-        frame = mock.MagicMock()
-        frame.getRole.return_value = pyatspi.ROLE_FRAME
-        frame.getState.return_value.contains.side_effect = [False, True]
-        browser.__iter__.side_effect = lambda: iter([frame])
+    def test_focus_uses_the_matching_browser_favorite(self):
         gui = Gui.__new__(Gui)
         gui.key = mock.Mock()
-        with mock.patch('wayland_ui.pyatspi.Registry.getDesktop', return_value=[browser]), \
-                mock.patch('wayland_ui.time.sleep'):
+        with mock.patch('wayland_ui.time.sleep'):
+            gui.focus('chromium')
             gui.focus('firefox')
-        gui.key.assert_called_once_with('Alt+Escape')
-        self.assertEqual(frame.clear_cache.call_count, 2)
+        self.assertEqual(gui.key.call_args_list, [mock.call('Super_L+2'), mock.call('Super_L+3')])
+        with self.assertRaises(AssertionError):
+            gui.focus('unknown')
 
     def test_native_button_search_skips_hidden_buttons_and_other_apps(self):
         shell = mock.MagicMock()
