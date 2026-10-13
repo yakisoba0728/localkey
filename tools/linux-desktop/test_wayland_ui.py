@@ -11,6 +11,21 @@ from wayland_ui import Gui
 
 
 class QmpTests(unittest.TestCase):
+    def test_focus_releases_alt_when_virtual_keyboard_input_fails(self):
+        gui = Gui.__new__(Gui)
+        gui.window = lambda *args, **options: None
+        events = []
+
+        def command(name, arguments):
+            events.extend(arguments['events'])
+            if arguments['events'][0]['data']['key']['data'] == 'tab':
+                raise RuntimeError('input failed')
+
+        gui.command = command
+        with self.assertRaisesRegex(RuntimeError, 'input failed'):
+            gui.focus('firefox')
+        self.assertEqual(events[-1]['data'], {'down': False, 'key': {'type': 'qcode', 'data': 'alt'}})
+
     def test_events_fragmented_reply_and_command_error(self):
         client, server = socket.socketpair()
         gui = Gui.__new__(Gui)

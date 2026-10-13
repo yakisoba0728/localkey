@@ -77,7 +77,7 @@ class Gui:
             {'type': 'btn', 'data': {'button': 'left', 'down': True}}]})
         self.command('input-send-event', {'events': [{'type': 'btn', 'data': {'button': 'left', 'down': False}}]})
 
-    def window(self, pattern, field='--name'):
+    def window(self, pattern, field='--name', active=False):
         if pattern.startswith('localkey'):
             result = self.run('xdotool', 'search', '--onlyvisible', '--name', pattern, check=False)
             return result.stdout.splitlines()[-1] if result.returncode == 0 and result.stdout.strip() else None
@@ -89,7 +89,9 @@ class Gui:
             count += 1
             try:
                 if expression.search(node.name or ''):
-                    return 'auth' if pattern == 'Authentication' else pattern
+                    if not active or (node.getRole() in (pyatspi.ROLE_FRAME, pyatspi.ROLE_DIALOG)
+                                      and node.getState().contains(pyatspi.STATE_ACTIVE)):
+                        return 'auth' if pattern == 'Authentication' else pattern
                 pending.extend(node)
             except Exception:
                 continue
@@ -98,9 +100,24 @@ class Gui:
     def focus(self, identifier):
         if identifier == 'auth':
             return  # GNOME's native polkit modal already owns keyboard focus.
-        favorite = {'chromium': '2', 'firefox': '3'}.get(identifier, '1')
-        self.key('Super_L+' + favorite)
-        time.sleep(1)
+        for count in range(8):
+            if identifier.isdigit():
+                active = self.run('xdotool', 'getwindowfocus', check=False).stdout.strip() == identifier
+            else:
+                active = self.window(identifier, active=True)
+            if active:
+                return
+            # Native Alt+Tab avoids app-ID mismatches in Snap WebDriver launches.
+            key = lambda code, down: {'type': 'key', 'data': {'down': down, 'key': {'type': 'qcode', 'data': code}}}
+            self.command('input-send-event', {'events': [key('alt', True)]})
+            try:
+                for _ in range(count + 1):
+                    self.command('input-send-event', {'events': [key('tab', True), key('tab', False)]})
+                    time.sleep(.15)
+            finally:
+                self.command('input-send-event', {'events': [key('alt', False)]})
+            time.sleep(.5)
+        raise RuntimeError(f'native window did not become active: {identifier}')
 
     def xdotool(self, arguments):
         command = arguments[0]
