@@ -29,7 +29,7 @@ def record_versions():
 def create_drivers():
     options = flow.webdriver.ChromeOptions()
     options.binary_location = '/snap/chromium/current/usr/lib/chromium-browser/chrome'
-    for flag in ['--no-first-run', '--disable-dev-shm-usage', '--ozone-platform=wayland',
+    for flag in ['--no-first-run', '--disable-dev-shm-usage', '--ozone-platform=wayland', '--class=chromium',
                  '--force-renderer-accessibility', '--user-data-dir=/home/lkdesktop/snap/chromium/common/test-profile']:
         options.add_argument(flag)
     chrome = flow.webdriver.Chrome(service=flow.ChromeService('/snap/bin/chromium.chromedriver',
@@ -39,22 +39,17 @@ def create_drivers():
     options.binary_location = '/snap/firefox/current/usr/lib/firefox/firefox'
     firefox = flow.webdriver.Firefox(service=flow.FirefoxService('/snap/bin/geckodriver',
                                      log_output=str(flow.RESULTS / 'gecko.log'),
-                                     env={**os.environ, 'MOZ_ENABLE_WAYLAND': '1'}), options=options)
+                                     env={**os.environ, 'MOZ_ENABLE_WAYLAND': '1',
+                                          'MOZ_APP_REMOTINGNAME': 'firefox_firefox'}), options=options)
     drivers = {'chromium': chrome, 'firefox': firefox}
-    profiles = {'chromium': [], 'firefox': []}
-    for process in Path('/proc').glob('[0-9]*'):
-        try:
-            command = (process / 'cmdline').read_bytes().split(b'\0')
-            if process.stat().st_uid != os.getuid() or b'--type=' in b' '.join(command) or b'-contentproc' in command:
-                continue
-            binary = command[0].decode()
-            for browser, executable in [('chromium', 'chrome'), ('firefox', 'firefox')]:
-                if binary.startswith('/snap/' + browser + '/') and Path(binary).name == executable:
-                    profiles[browser].append((process / 'attr/current').read_text().strip())
-        except (FileNotFoundError, PermissionError, ProcessLookupError):
-            continue
-    for browser, labels in profiles.items():
-        assert labels and all(label.startswith('snap.' + browser + '.') and '(enforce)' in label for label in labels), profiles
+    profiles = {}
+    for browser, capability in [('chromium', 'goog:processID'), ('firefox', 'moz:processID')]:
+        process = Path('/proc') / str(drivers[browser].capabilities[capability])
+        assert process.stat().st_uid == os.getuid()
+        assert str((process / 'exe').readlink()).startswith('/snap/' + browser + '/')
+        label = (process / 'attr/current').read_text().strip()
+        assert label.startswith('snap.' + browser + '.') and '(enforce)' in label, label
+        profiles[browser] = label
     assert original_run('xdotool', 'search', '--onlyvisible', '--class', 'chromium|firefox', check=False).returncode != 0
     flow.record('both Snap browsers enforce AppArmor and use native Wayland', profiles=profiles,
                 versions={browser: driver.capabilities['browserVersion'] for browser, driver in drivers.items()})

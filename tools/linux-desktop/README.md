@@ -12,7 +12,10 @@ state hashes before logging in again through both browsers.
 The VM has no NIC or host-device passthrough. Its container has `--network none`,
 no privileged mode and no host `/dev` or `/sys` mounts. Two CPUs, 6 GiB container
 memory, 3 GiB guest memory and a 30-minute timeout bound each Debian run. Ubuntu
-uses 4 GiB guest memory and a 60-minute timeout. Run one VM at
+uses four CPUs, 7 GiB container memory, 6 GiB guest memory, a 32 GiB sparse disk
+and a 60-minute timeout; allocate at least 8 GiB to Docker. This meets Ubuntu
+26.04's [6 GB RAM / 25 GB storage guidance](https://documentation.ubuntu.com/release-notes/26.04/).
+Run one VM at
 a time. Image construction uses the network for distro packages and signed Snap downloads. Package versions
 are recorded with every run; apt inputs are not pinned to a snapshot.
 

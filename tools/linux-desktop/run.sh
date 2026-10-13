@@ -7,10 +7,14 @@ desktop_dir=$(cd "$LK_DESKTOP_DIR" && pwd -P)
 [ -f "$desktop_dir/root.img" ] && [ -f "$desktop_dir/Image" ]
 extra=(-device virtio-rng-pci)
 memory=3072
+cpus=2
+container_memory=6g
 duration=1800
 if [ "$LK_DESKTOP_DISTRO" = ubuntu ]; then
     mkdir -p "$desktop_dir/screens"
-    memory=4096
+    memory=6144
+    cpus=4
+    container_memory=7g
     duration=3600
     extra+=(-initrd /out/initrd -device 'virtio-gpu-pci,xres=1280,yres=800'
            -device qemu-xhci -device usb-kbd -device usb-tablet
@@ -30,9 +34,9 @@ else
     if [ "$LK_DESKTOP_DISTRO" = debian ]; then extra+=(-initrd /out/initrd); fi
     console=ttyS0
 fi
-docker run --rm -i --network none --cpus 2 --memory 6g --name localkey-desktop-vm \
+docker run --rm -i --network none --cpus "$cpus" --memory "$container_memory" --name localkey-desktop-vm \
     -v "$desktop_dir":/out "$desktop_image" \
-    timeout -k 10 "$duration" "${qemu[@]}" -smp 2 -m "$memory" "${extra[@]}" \
+    timeout -k 10 "$duration" "${qemu[@]}" -smp "$cpus" -m "$memory" "${extra[@]}" \
     -nographic -nic none \
     -rtc base=2026-10-12T08:00:00 \
     -kernel /out/Image -drive file=/out/root.img,format=raw,if=virtio \

@@ -26,7 +26,7 @@ docker run --rm --network none --cpus 2 --memory 6g \
         if [ "$LK_DESKTOP_DISTRO" = ubuntu ]; then
             cp /tests/ubuntu-session.sh /rootfs/localkey/session.sh
             cp /tests/ubuntu-setup.sh /rootfs/localkey/setup.sh
-            disk_size=16G
+            disk_size=32G
         else cp /tests/session.sh /rootfs/localkey/session.sh; disk_size=4G; fi
         cp /bundle.tar.gz /rootfs/localkey/bundle.tar.gz
         if [ -f /geckodriver.tar.gz ]; then tar -xzf /geckodriver.tar.gz -C /rootfs/usr/local/bin; fi
