@@ -10,7 +10,7 @@ loginctl session-status
 gsettings set org.gnome.desktop.session idle-delay 0
 gsettings set org.gnome.desktop.screensaver lock-enabled false
 gsettings set org.gnome.shell favorite-apps "['localkey-touch.desktop', 'chromium_chromium.desktop', 'firefox_firefox.desktop']"
-gsettings set org.gnome.shell.extensions.dash-to-dock hot-keys false
+gsettings set org.gnome.shell.extensions.dash-to-dock click-action 'focus-or-previews'
 gsettings set org.gnome.desktop.interface enable-animations false
 gsettings set org.gnome.desktop.interface toolkit-accessibility true
 sudo -S -p '' /localkey/setup.sh <<< localkey-test-only

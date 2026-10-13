@@ -40,7 +40,6 @@ def create_drivers():
     options = flow.webdriver.ChromeOptions()
     options.binary_location = '/snap/chromium/current/usr/lib/chromium-browser/chrome'
     for flag in ['--no-first-run', '--disable-dev-shm-usage', '--ozone-platform=wayland',
-                 '--class=chromium_chromium',
                  '--force-renderer-accessibility', '--user-data-dir=/home/lkdesktop/snap/chromium/common/test-profile']:
         options.add_argument(flag)
     chrome = flow.webdriver.Chrome(service=flow.ChromeService('/snap/bin/chromium.chromedriver',
@@ -50,8 +49,7 @@ def create_drivers():
     options.binary_location = '/snap/firefox/current/usr/lib/firefox/firefox'
     firefox = flow.webdriver.Firefox(service=flow.FirefoxService('/snap/bin/geckodriver',
                                      log_output=str(flow.RESULTS / 'gecko.log'),
-                                     env={**os.environ, 'MOZ_ENABLE_WAYLAND': '1',
-                                          'MOZ_APP_REMOTINGNAME': 'firefox_firefox'}), options=options)
+                                     env={**os.environ, 'MOZ_ENABLE_WAYLAND': '1'}), options=options)
     drivers = {'chromium': chrome, 'firefox': firefox}
     profiles = {}
     for browser, capability in [('chromium', 'goog:processID'), ('firefox', 'moz:processID')]:

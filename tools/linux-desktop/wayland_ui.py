@@ -136,14 +136,14 @@ class Gui:
             focused = self.run('xdotool', 'getwindowfocus', 'getwindowname', check=False).stdout.strip()
             if expected and focused == expected:
                 return
-            self.key('Super_L+1')
+            self.click(33, 66)
             time.sleep(1)
             focused = self.run('xdotool', 'getwindowfocus', 'getwindowname', check=False).stdout.strip()
             assert expected and focused == expected, (expected, focused)
             return
         assert identifier in ('chromium', 'firefox'), identifier
-        # Match the installed Snap desktop IDs when WebDriver launches native Wayland windows.
-        self.key('Super_L+' + ('2' if identifier == 'chromium' else '3'))
+        # shortcut: running WebDriver dock icons in the calibrated Ubuntu 1280x800 fixture.
+        self.click(33, 260 if identifier == 'chromium' else 324)
         time.sleep(1)
 
     def xdotool(self, arguments):

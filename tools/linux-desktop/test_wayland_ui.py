@@ -44,13 +44,13 @@ class QmpTests(unittest.TestCase):
         self.assertEqual([(event['data']['key']['data'], event['data']['down']) for event in events],
                          [('ctrl', True), ('ret', True), ('ret', False), ('ctrl', False)])
 
-    def test_focus_uses_the_matching_browser_favorite(self):
+    def test_focus_uses_the_calibrated_running_browser_icon(self):
         gui = Gui.__new__(Gui)
-        gui.key = mock.Mock()
+        gui.click = mock.Mock()
         with mock.patch('wayland_ui.time.sleep'):
             gui.focus('chromium')
             gui.focus('firefox')
-        self.assertEqual(gui.key.call_args_list, [mock.call('Super_L+2'), mock.call('Super_L+3')])
+        self.assertEqual(gui.click.call_args_list, [mock.call(33, 260), mock.call(33, 324)])
         with self.assertRaises(AssertionError):
             gui.focus('unknown')
 
