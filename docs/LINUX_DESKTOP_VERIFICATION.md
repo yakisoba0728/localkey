@@ -64,4 +64,6 @@ hardware isolation, physical sensor or manufacturer-trusted attestation.
 
 Public source uses Apache-2.0. Public binaries remain blocked on an assigned own
 PID and a reviewed, signed release from clean source. `1209:0001` is private-test
-only; the unsubmitted PID request draft is in `tools/pidcodes/`.
+only; the request was submitted on 2026-10-13 as
+[pid.codes #1310](https://github.com/pidcodes/pidcodes.github.com/pull/1310).
+Submission does not allocate the candidate `1209:4C4B`.

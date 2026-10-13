@@ -56,6 +56,19 @@ def connect_window(identifier):
     # While disconnected, Connect is the only enabled button; labels may wrap.
     run("xdotool", "windowactivate", "--sync", identifier)
     run("xdotool", "key", "Tab", "space")
+    def watcher_ready():
+        return run("pgrep", "-u", "0", "-f",
+                   "^/usr/bin/python3 -I /usr/local/libexec/localkey-control watch$", check=False).returncode == 0
+    state = wait(lambda: window("Authentication") or watcher_ready(), "touch connection did not start")
+    authenticated = isinstance(state, str)
+    if authenticated:
+        screenshot("polkit-authentication")
+        run("xdotool", "windowactivate", "--sync", state)
+        run("xdotool", "type", "--clearmodifiers", PASSWORD)
+        run("xdotool", "key", "Return")
+        wait(watcher_ready, "authenticated touch watcher did not start")
+        record("native polkit authentication completed")
+    return authenticated
 
 
 def presence():
@@ -143,11 +156,7 @@ def main():
     wait(lambda: window("localkey.*Touch"), "touch window not shown")
     touch_window = window("localkey.*Touch")
     screenshot("touch-before-connect")
-    connect_window(touch_window)
-    wait(lambda: window("Authentication"), "polkit authentication dialog not shown")
-    screenshot("polkit-authentication")
-    run("xdotool", "type", "--clearmodifiers", PASSWORD)
-    run("xdotool", "key", "Return")
+    assert connect_window(touch_window), "a fresh session must require administrator authentication"
     time.sleep(2)
     screenshot("touch-connected")
     record("desktop polkit administrator authentication")

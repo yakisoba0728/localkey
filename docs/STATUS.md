@@ -422,6 +422,6 @@ source/binary distribution and Apache-2.0. The workspace now inherits that licen
   `Send` now.
 - **Decisions to revisit before any public release** (DESIGN §12 records the current
   choices):
-  - the project licence (none for now, all rights reserved);
+  - the project licence is now Apache-2.0; include original dependency notices in every binary bundle;
   - whether the compatibility profile's Yubico VID/PID, strings and AAGUID may be
     shipped, a trademark and identity question (the default profile is the engine's own).
