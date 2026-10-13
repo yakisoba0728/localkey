@@ -4,12 +4,11 @@ import re
 import select
 import shutil
 import time
-from collections import deque
 from pathlib import Path
 
 from PIL import Image
 import pyatspi
-from gi.repository import GLib
+from gi.repository import GLib, Atspi
 
 
 class Gui:
@@ -85,32 +84,39 @@ class Gui:
             {'type': 'btn', 'data': {'button': 'left', 'down': True}}]})
         self.command('input-send-event', {'events': [{'type': 'btn', 'data': {'button': 'left', 'down': False}}]})
 
+    def application(self, pattern):
+        for app in self.desktop():
+            try:
+                if re.search(pattern, app.name or '', re.I):
+                    return app
+            except Exception:
+                continue
+        return None
+
+    def matches(self, app, role, showing=True):
+        states = Atspi.StateSet.new([])
+        if showing:
+            states.add(Atspi.StateType.SHOWING)
+        rule = Atspi.MatchRule.new(states, Atspi.CollectionMatchType.ALL,
+                                  {}, Atspi.CollectionMatchType.ALL,
+                                  [role], Atspi.CollectionMatchType.ANY,
+                                  [], Atspi.CollectionMatchType.ALL, False)
+        # Query in the application: a per-node walk can exceed FIDO's presence timeout.
+        return app.get_collection_iface().get_matches(rule, Atspi.CollectionSortOrder.CANONICAL, 0, True)
+
     def window(self, pattern, field='--name'):
         if pattern.startswith('localkey'):
             result = self.run('xdotool', 'search', '--onlyvisible', '--name', pattern, check=False)
             return result.stdout.splitlines()[-1] if result.returncode == 0 and result.stdout.strip() else None
-        expression = re.compile(pattern, re.I)
-        applications = list(self.desktop())
-        pending = []
-        for app in applications:
+        app = self.application('^gnome-shell$' if pattern == 'Authentication' else pattern)
+        if app is None:
+            return None
+        if pattern != 'Authentication':
+            return pattern
+        for label in self.matches(app, Atspi.Role.LABEL):
             try:
-                if app.name == 'gnome-shell' if pattern == 'Authentication' else expression.search(app.name or ''):
-                    pending.append(app)
-                    break
-            except Exception:
-                continue
-        count = 0
-        seen = set()
-        while pending and count < 10000:
-            node = pending.pop()
-            if node in seen:
-                continue
-            seen.add(node)
-            count += 1
-            try:
-                if expression.search(node.name or ''):
-                    return 'auth' if pattern == 'Authentication' else pattern
-                pending.extend(node)
+                if re.search(pattern, label.name or '', re.I):
+                    return 'auth'
             except Exception:
                 continue
         return None
@@ -134,62 +140,27 @@ class Gui:
             focused = self.run('xdotool', 'getwindowfocus', 'getwindowname', check=False).stdout.strip()
             assert expected and focused == expected, (expected, focused)
             return
-        # Browser STATE_ACTIVE can remain set behind another Wayland window.
         self.key('Super_L')
         time.sleep(.5)
-        refreshed = False
-        deadline = time.monotonic() + 90
-        captions = []
-        count = 0
+        deadline = time.monotonic() + 20
         while time.monotonic() < deadline:
-            pending = deque()
-            for app in self.desktop():
-                try:
-                    if app.name == 'gnome-shell':
-                        if not refreshed:
-                            app.clear_cache()
-                            refreshed = True
-                        pending.append(app)
-                        break
-                except Exception:
-                    continue
-            count = 0
-            coordinates = None
-            seen = set()
-            while pending and count < 2000:
-                node = pending.popleft()
-                if node in seen:
-                    continue
-                seen.add(node)
-                count += 1
-                try:
-                    title = node.name or ''
-                    if 'localkey browser verification' in title and re.search(identifier, title, re.I):
-                        ancestors = []
-                        preview = node.parent
-                        for _ in range(8):
-                            if preview is None:
-                                break
-                            ancestors.append({'role': preview.getRoleName(), 'name': preview.name})
-                            if preview.getRole() == pyatspi.ROLE_PUSH_BUTTON:
-                                x, y, width, height = preview.queryComponent().getExtents(pyatspi.DESKTOP_COORDS)
-                                ancestors[-1]['rectangle'] = [x, y, width, height]
-                                if width > 100 and height > 100:
-                                    coordinates = (x + width // 2, y + height // 2)
-                                    break
-                            preview = preview.parent
-                        captions.append({'title': title, 'ancestors': ancestors})
-                        if coordinates:
-                            break
-                    pending.extend(node)
-                except Exception:
-                    continue
-            if coordinates:
-                self.click(*coordinates)
-                time.sleep(.5)
-                return
+            app = self.application('^gnome-shell$')
+            if app is not None:
+                for preview in self.matches(app, Atspi.Role.PUSH_BUTTON):
+                    try:
+                        x, y, width, height = preview.queryComponent().getExtents(pyatspi.DESKTOP_COORDS)
+                        if width <= 100 or height <= 100:
+                            continue
+                        titles = [child.name or '' for child in preview]
+                        selected = any('localkey browser verification' in title and
+                                       re.search(identifier, title, re.I) for title in titles)
+                    except Exception:
+                        continue
+                    if selected:
+                        self.click(x + width // 2, y + height // 2)
+                        time.sleep(.5)
+                        return
             time.sleep(.25)
-        (self.results / 'overview-diagnostic.json').write_text(json.dumps({'browser': identifier, 'visited': count, 'captions': captions}, indent=2))
         raise RuntimeError(f'native overview preview not found: {identifier}')
 
     def xdotool(self, arguments):
@@ -206,28 +177,13 @@ class Gui:
             raise ValueError(f'unsupported fixture UI command: {arguments}')
 
     def button(self, application, pattern):
-        expression = re.compile(pattern, re.I)
-        pending = []
-        for app in self.desktop():
-            try:
-                if (app.name or '').lower() == application:
-                    pending.append(app)
-                    break
-            except Exception:
-                continue
-        count = 0
-        seen = set()
-        while pending and count < 5000:
-            node = pending.pop()
-            if node in seen:
-                continue
-            seen.add(node)
-            count += 1
-            try:
-                if (node.getRole() == pyatspi.ROLE_PUSH_BUTTON and expression.search(node.name or '') and
-                        node.getState().contains(pyatspi.STATE_SHOWING)):
-                    return node
-                pending.extend(node)
-            except Exception:
-                continue
+        app = self.application('^' + re.escape(application) + '$')
+        if app is not None:
+            for button in self.matches(app, Atspi.Role.PUSH_BUTTON):
+                try:
+                    if (re.search(pattern, button.name or '', re.I) and
+                            button.getState().contains(pyatspi.STATE_SHOWING)):
+                        return button
+                except Exception:
+                    continue
         return None

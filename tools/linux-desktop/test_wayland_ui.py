@@ -29,7 +29,7 @@ class QmpTests(unittest.TestCase):
         shell.name = 'gnome-shell'
         dialog = mock.MagicMock()
         dialog.name = 'Authentication Required'
-        shell.__iter__.return_value = iter([dialog])
+        shell.get_collection_iface.return_value.get_matches.return_value = [dialog]
         closed = mock.MagicMock()
         type(closed).name = mock.PropertyMock(side_effect=RuntimeError('application no longer exists'))
         gui = Gui.__new__(Gui)
@@ -53,11 +53,11 @@ class QmpTests(unittest.TestCase):
         label = mock.MagicMock()
         label.name = 'localkey browser verification — Mozilla Firefox'
         label.getRole.return_value = pyatspi.ROLE_LABEL
-        label.parent.getRole.return_value = pyatspi.ROLE_PANEL
-        preview = label.parent.parent
+        preview = mock.MagicMock()
         preview.getRole.return_value = pyatspi.ROLE_PUSH_BUTTON
         preview.queryComponent.return_value.getExtents.return_value = (542, 431, 481, 305)
-        shell.__iter__.side_effect = lambda: iter([shell, label])
+        preview.__iter__.side_effect = lambda: iter([label])
+        shell.get_collection_iface.return_value.get_matches.return_value = [preview]
         gui = Gui.__new__(Gui)
         gui.key = mock.Mock()
         gui.click = mock.Mock()
@@ -81,7 +81,7 @@ class QmpTests(unittest.TestCase):
             button.getRole.return_value = pyatspi.ROLE_PUSH_BUTTON
         hidden.getState.return_value.contains.return_value = False
         visible.getState.return_value.contains.return_value = True
-        firefox.__iter__.return_value = iter([visible, hidden])
+        firefox.get_collection_iface.return_value.get_matches.return_value = [hidden, visible]
         gui = Gui.__new__(Gui)
         with mock.patch('wayland_ui.pyatspi.Registry.getDesktop', return_value=[shell, firefox]):
             self.assertIs(gui.button('firefox', r'^Allow$'), visible)
