@@ -44,7 +44,8 @@ class QmpTests(unittest.TestCase):
         label = mock.MagicMock()
         label.name = 'localkey browser verification — Mozilla Firefox'
         label.getRole.return_value = pyatspi.ROLE_LABEL
-        preview = label.parent
+        label.parent.getRole.return_value = pyatspi.ROLE_PANEL
+        preview = label.parent.parent
         preview.getRole.return_value = pyatspi.ROLE_PUSH_BUTTON
         preview.queryComponent.return_value.getExtents.return_value = (542, 431, 481, 305)
         shell.__iter__.side_effect = lambda: iter([label])

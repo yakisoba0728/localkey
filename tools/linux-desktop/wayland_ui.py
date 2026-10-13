@@ -14,6 +14,8 @@ class Gui:
     def __init__(self, run, results):
         self.run = run
         self.results = results
+        # This synchronous fixture does not run AT-SPI's cache-invalidation event loop.
+        pyatspi.Registry.getDesktop(0).set_cache_mask(0)
         self.port = open('/dev/virtio-ports/localkey.test-qmp', 'r+b', buffering=0)
         self.buffer = b''
         self.sequence = 0
@@ -139,9 +141,16 @@ class Gui:
                             'localkey browser verification' in (node.name or '') and
                             re.search(identifier, node.name, re.I)):
                         preview = node.parent
-                        x, y, width, height = preview.queryComponent().getExtents(pyatspi.DESKTOP_COORDS)
-                        if preview.getRole() == pyatspi.ROLE_PUSH_BUTTON and width > 100 and height > 100:
-                            coordinates = (x + width // 2, y + height // 2)
+                        for _ in range(4):
+                            if preview is None:
+                                break
+                            if preview.getRole() == pyatspi.ROLE_PUSH_BUTTON:
+                                x, y, width, height = preview.queryComponent().getExtents(pyatspi.DESKTOP_COORDS)
+                                if width > 100 and height > 100:
+                                    coordinates = (x + width // 2, y + height // 2)
+                                    break
+                            preview = preview.parent
+                        if coordinates:
                             break
                     pending.extend(node)
                 except Exception:
