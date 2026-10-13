@@ -566,10 +566,14 @@ fn debug_output_and_notices_name_sizes_not_report_bytes() {
     otp.kernel.send(&feature(0, vec![0xAB; 8], 3));
     assert_eq!(otp.kernel.next(), Event::SetReportReply { id: 3, err: 0 });
     let _ = harness.input();
+    // Receiving the kernel write does not mean its writer has published the notice yet.
+    let sent = harness.notice(|notice| {
+        matches!(notice, UhidNotice::Sent { interface: HidInterface::Fido, event: "INPUT2", size: 64 })
+    });
     let debug = harness.debug();
     assert!(debug.contains("UhidTransport") && debug.contains("Fido") && debug.contains("Otp"), "{debug}");
     let mut text = debug;
-    for notice in harness.notices() {
+    for notice in std::iter::once(sent).chain(harness.notices()) {
         text.push_str(&format!("{notice:?} {notice}\n"));
     }
     assert!(text.contains("INPUT2, 64 bytes"), "{text}");
