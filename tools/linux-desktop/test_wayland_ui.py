@@ -13,6 +13,18 @@ from wayland_ui import Gui
 
 
 class QmpTests(unittest.TestCase):
+    def test_pin_readiness_requires_a_focused_native_password_field(self):
+        gui = Gui.__new__(Gui)
+        gui.application = mock.Mock(return_value=object())
+        field = mock.MagicMock()
+        gui.matches = mock.Mock(return_value=[field])
+        field.getState.return_value.contains.return_value = False
+        self.assertFalse(gui.pin_ready('firefox'))
+        field.getState.return_value.contains.return_value = True
+        self.assertTrue(gui.pin_ready('firefox'))
+        gui.application.return_value = None
+        self.assertFalse(gui.pin_ready('firefox'))
+
     def test_desktop_dispatches_pending_accessibility_updates(self):
         context = mock.MagicMock()
         context.pending.side_effect = [True, True, False]

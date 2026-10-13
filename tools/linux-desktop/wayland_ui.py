@@ -159,6 +159,12 @@ class Gui:
         else:
             raise ValueError(f'unsupported fixture UI command: {arguments}')
 
+    def pin_ready(self, application):
+        app = self.application('^' + re.escape(application) + '$')
+        return app is not None and any(
+            field.getState().contains(pyatspi.STATE_FOCUSED)
+            for field in self.matches(app, Atspi.Role.PASSWORD_TEXT))
+
     def button(self, application, pattern):
         app = self.application('^' + re.escape(application) + '$')
         if app is not None:

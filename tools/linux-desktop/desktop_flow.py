@@ -350,16 +350,20 @@ def firefox_prompt(name, action):
     run("xdotool", "mousemove", str(x), str(y), "click", "1")
 
 
+def enter_pin(name, browser_class):
+    time.sleep(3)
+    screenshot(name + "-pin")
+    run("xdotool", "type", "--clearmodifiers", PIN)
+    run("xdotool", "key", "Return")
+
+
 def operation(driver, name, action, touch_window, pin=False, discoverable=False):
     browser_class = "firefox" if driver.capabilities["browserName"] == "firefox" else "chromium"
     identifier = wait(lambda: window(browser_class, "--class"), "browser window not found")
     run("xdotool", "windowactivate", "--sync", identifier)
     driver.find_element(By.ID, action).click()
     if pin:
-        time.sleep(3)
-        screenshot(f"{name}-{action}-pin")
-        run("xdotool", "type", "--clearmodifiers", PIN)
-        run("xdotool", "key", "Return")
+        enter_pin(f"{name}-{action}", browser_class)
     wait(presence, f"{name} {action}: HID presence not requested")
     time.sleep(.5)  # Let the user-session watch update the enabled button.
     screenshot(f"{name}-{action}-waiting")

@@ -73,10 +73,21 @@ def firefox_prompt(name, action):
     assert button.queryAction().doAction(0), 'Firefox native button refused activation'
 
 
+def enter_pin(name, browser_class):
+    if browser_class == 'firefox':
+        flow.wait(lambda: gui.pin_ready('firefox'), 'Firefox native PIN field did not receive focus')
+    else:
+        flow.time.sleep(3)
+    gui.screenshot(name + '-pin')
+    gui.type(flow.PIN)
+    gui.key('Return')
+
+
 flow.run = run
 flow.window = gui.window
 flow.screenshot = gui.screenshot
 flow.record_versions = record_versions
 flow.create_drivers = create_drivers
 flow.firefox_prompt = firefox_prompt
+flow.enter_pin = enter_pin
 flow.execute()
