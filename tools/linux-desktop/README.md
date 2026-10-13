@@ -126,9 +126,11 @@ For Ubuntu extraction, select `localkey-ubuntu-desktop-arm:1` or
 `localkey-ubuntu-desktop-x86:1`. Do not modify or extract the disk while QEMU is running. To retry with changed
 fixtures, build a new disk. Debian's Firefox direct-attestation and account-selection buttons are
 calibrated for English 1280×800 screenshots, with screenshot-based prompt
-readiness checks. Ubuntu selects GNOME's actual window previews and Firefox's
-visible native accessibility buttons. Browser active-state flags can remain set
-behind another Wayland window, and QEMU's virtual-clock key-release timers can
+readiness checks. Ubuntu cycles native windows, refreshes browser frame state,
+and selects Firefox's visible native accessibility buttons. Native Collection
+queries find authentication/buttons in the application without a slow per-node
+walk. Browser active-state flags can remain cached behind another Wayland window,
+and QEMU's virtual-clock key-release timers can
 lag during emulation; the fixture sends explicit key press/release events.
 Chromium keeps a retry/cancel dialog after the device's 30-second presence
 timeout; the test dismisses it before checking the page's rejection.

@@ -47,28 +47,20 @@ class QmpTests(unittest.TestCase):
         self.assertEqual([(event['data']['key']['data'], event['data']['down']) for event in events],
                          [('ctrl', True), ('ret', True), ('ret', False), ('ctrl', False)])
 
-    def test_focus_clicks_shell_window_preview_and_propagates_input_failure(self):
-        shell = mock.MagicMock()
-        shell.name = 'gnome-shell'
-        label = mock.MagicMock()
-        label.name = 'localkey browser verification — Mozilla Firefox'
-        label.getRole.return_value = pyatspi.ROLE_LABEL
-        preview = mock.MagicMock()
-        preview.getRole.return_value = pyatspi.ROLE_PUSH_BUTTON
-        preview.queryComponent.return_value.getExtents.return_value = (542, 431, 481, 305)
-        preview.__iter__.side_effect = lambda: iter([label])
-        shell.get_collection_iface.return_value.get_matches.return_value = [preview]
+    def test_focus_refreshes_frame_state_and_cycles_native_windows(self):
+        browser = mock.MagicMock()
+        browser.name = 'Firefox'
+        frame = mock.MagicMock()
+        frame.getRole.return_value = pyatspi.ROLE_FRAME
+        frame.getState.return_value.contains.side_effect = [False, True]
+        browser.__iter__.side_effect = lambda: iter([frame])
         gui = Gui.__new__(Gui)
         gui.key = mock.Mock()
-        gui.click = mock.Mock()
-        with mock.patch('wayland_ui.pyatspi.Registry.getDesktop', return_value=[shell]), \
+        with mock.patch('wayland_ui.pyatspi.Registry.getDesktop', return_value=[browser]), \
                 mock.patch('wayland_ui.time.sleep'):
             gui.focus('firefox')
-            gui.key.assert_called_once_with('Super_L')
-            gui.click.assert_called_once_with(782, 583)
-            gui.click.side_effect = RuntimeError('input failed')
-            with self.assertRaisesRegex(RuntimeError, 'input failed'):
-                gui.focus('firefox')
+        gui.key.assert_called_once_with('Alt+Escape')
+        self.assertEqual(frame.clear_cache.call_count, 2)
 
     def test_native_button_search_skips_hidden_buttons_and_other_apps(self):
         shell = mock.MagicMock()

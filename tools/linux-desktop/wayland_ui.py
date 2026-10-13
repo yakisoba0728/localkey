@@ -140,28 +140,21 @@ class Gui:
             focused = self.run('xdotool', 'getwindowfocus', 'getwindowname', check=False).stdout.strip()
             assert expected and focused == expected, (expected, focused)
             return
-        self.key('Super_L')
-        time.sleep(.5)
-        deadline = time.monotonic() + 20
-        while time.monotonic() < deadline:
-            app = self.application('^gnome-shell$')
-            if app is not None:
-                for preview in self.matches(app, Atspi.Role.PUSH_BUTTON):
-                    try:
-                        x, y, width, height = preview.queryComponent().getExtents(pyatspi.DESKTOP_COORDS)
-                        if width <= 100 or height <= 100:
-                            continue
-                        titles = [child.name or '' for child in preview]
-                        selected = any('localkey browser verification' in title and
-                                       re.search(identifier, title, re.I) for title in titles)
-                    except Exception:
-                        continue
-                    if selected:
-                        self.click(x + width // 2, y + height // 2)
-                        time.sleep(.5)
+        app = self.application(identifier)
+        assert app is not None, f'no native browser application: {identifier}'
+        for _ in range(12):
+            for frame in app:
+                try:
+                    frame.clear_cache()
+                    if (frame.getRole() in (pyatspi.ROLE_FRAME, pyatspi.ROLE_DIALOG) and
+                            frame.getState().contains(pyatspi.STATE_ACTIVE)):
                         return
-            time.sleep(.25)
-        raise RuntimeError(f'native overview preview not found: {identifier}')
+                except Exception:
+                    continue
+            # Cycle real windows; avoid a Shell overview query during a browser modal.
+            self.key('Alt+Escape')
+            time.sleep(.5)
+        raise RuntimeError(f'native browser did not become active: {identifier}')
 
     def xdotool(self, arguments):
         command = arguments[0]
