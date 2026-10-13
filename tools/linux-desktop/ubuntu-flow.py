@@ -25,6 +25,10 @@ def record_versions():
                                              original_run('uname', '-a').stdout)
     assert 'Type=wayland' in original_run('loginctl', 'show-session', os.environ['XDG_SESSION_ID'], '-p', 'Type').stdout
     assert original_run('aa-enabled', check=False).returncode == 0
+    connectors = {str(path.parent): path.read_text().strip()
+                  for path in Path('/sys/class/drm').glob('card*-*/status')}
+    (flow.RESULTS / 'display-connectors.txt').write_text(str(connectors) + '\n')
+    assert sum(status == 'connected' for status in connectors.values()) == 1, connectors
 
 
 def create_drivers():

@@ -31,7 +31,12 @@ if [ "$LK_DESKTOP_ARCH" = aarch64 ]; then
 else
     [ -f "$desktop_dir/initrd" ]
     qemu=(qemu-system-x86_64 -M q35 -cpu max)
-    if [ "$LK_DESKTOP_DISTRO" = debian ]; then extra+=(-initrd /out/initrd); fi
+    if [ "$LK_DESKTOP_DISTRO" = debian ]; then
+        extra+=(-initrd /out/initrd)
+    else
+        # The PC's default VGA would add a second display and change tablet coordinates.
+        extra+=(-vga none)
+    fi
     console=ttyS0
 fi
 docker run --rm -i --network none --cpus "$cpus" --memory "$container_memory" --name localkey-desktop-vm \
