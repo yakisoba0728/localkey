@@ -1,0 +1,11 @@
+Name               Version                         Rev    Tracking  Publisher       Notes
+bare               1.0                             5      -         canonical**     base
+chromium           155.0.8059.39                   3554   -         canonical**     -
+core24             20260824                        2124   -         canonical**     base
+core26             20260629                        462    -         canonical**     base
+cups               2.4.19-6                        1262   -         openprinting**  -
+firefox            157.0.1-1                       9036   -         mozilla**       -
+gnome-46-2404      0+git.b31ceab-sdk0+git.f80dd8b  168    -         canonical**     -
+gtk-common-themes  0.1-81-g442e511                 1535   -         canonical**     -
+mesa-2404          25.2.8-snap288                  1839   -         canonical**     -
+snapd              2.78                            28332  -         canonical**     snapd

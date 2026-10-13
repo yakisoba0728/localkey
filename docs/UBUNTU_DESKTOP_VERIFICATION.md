@@ -1,7 +1,7 @@
 # Ubuntu desktop verification — 2026-10-13–14
 
-**aarch64 passed all 46 checks with signed Snapd 2.78 candidate, including both
-boots; x86_64 is in progress.** The default stable Snapd configuration fails to
+**Both architectures passed recovery and both boots with signed Snapd 2.78
+candidate: aarch64 46 checks, x86_64 45 checks (91 recorded checks total).** The default stable Snapd configuration fails to
 expose the own UHID key to the confined browsers. Candidate coverage is separate
 from stable/default Ubuntu support.
 
@@ -34,7 +34,7 @@ includes the **failed** result JSON, versions, connections, udev properties,
 sanitized access diagnostic and the actual Chromium waiting screen. The eight
 passed setup/session checks in that JSON do not constitute browser-flow success.
 
-## Candidate Snapd: aarch64 passed; x86_64 in progress
+## Candidate Snapd: both architectures passed
 
 As checked on 2026-10-14 (Korea time), the official stable channel still provides `2.77.1`
 (amd64 revision `28254`, arm64 `28255`); candidate provides signed `2.78`
@@ -44,8 +44,8 @@ These packages are test inputs and are not included in a localkey bundle.
 Files installed offline show `Tracking: -`; the recorded version/revision and
 downloaded channel identify the input, rather than an ongoing channel subscription.
 
-The fresh aarch64 run completed 46 checks and emitted `LK-DESKTOP-END rc=0`
-with `result.json` containing `passed: true`. It verified:
+Both fresh runs emitted `LK-DESKTOP-END rc=0` with final `result.json` containing
+`passed: true`. They verified:
 
 - Actual systemd installation, user HID access, local administrator authentication,
   inactive-local/SSH denial and renewed administrator authentication for a verified touch.
@@ -61,21 +61,35 @@ The actual browser processes use official Snap WebDrivers and native Wayland;
 their verified AppArmor labels are `snap.chromium.chromedriver (enforce)` and
 `snap.firefox.geckodriver (enforce)`. Selenium does not supply authenticator
 responses. The RP verifies the own AAGUID, signatures, UP/UV flags, account user
-handles and counters. The completed fixture revision is
-`e61940b7394bbe7743dfded7ecdd03784a8f4e4d`; its native window selection follows
-visible running Dock buttons by name/position, and waits for Firefox's focused
-native PIN field before typing. Both Linux CI jobs passed for that revision.
+handles and counters. The fixture follows visible running Dock buttons by
+name/position and waits for Firefox's focused native PIN field before typing.
+Completed fixture revisions:
+
+| Architecture | Signed Snapd revision | Recorded checks | Fixture revision |
+| --- | --- | --- | --- |
+| aarch64 | 28331 | 46 | `e61940b7394bbe7743dfded7ecdd03784a8f4e4d` |
+| x86_64 | 28332 | 45 | `5225213d5beeaf6ab4a451c7dd8f5ebaf5b8a970` |
+
+The extra aarch64 entry is a renewed connection authentication during restore;
+the x86_64 grant was still valid then. Both runs separately renewed administrator
+authentication for a verified touch. All required scenarios passed on each.
+x86_64 uses one virtio GPU and disables the PC's additional default VGA; the
+guest checks one connected display before applying absolute tablet coordinates.
+Touch activation also waits for its actual Xwayland keyboard focus. These are
+fixture calibration changes, not changes to authenticator responses or confinement.
 
 Selected [candidate aarch64 evidence](../reference/ubuntu-desktop-2026-10-14/candidate-aarch64/)
+and [candidate x86_64 evidence](../reference/ubuntu-desktop-2026-10-14/candidate-x86_64/)
 includes the final result, versions, connected plugs, sanitized HID access,
 bundle provenance/checksums, the native Chromium PIN prompt, both account pickers
 and verified post-reboot login screenshots.
-x86_64 must complete its own recovery and both boots before being reported as
-passed. Aborted runs, timeouts and an intermediate reboot are not a final pass.
+Prepared OS images contain the signed Snaps and no localkey key/state before a
+fresh verification run. OS preparation, aborted runs, timeouts and an intermediate
+reboot are not a final pass.
 
 The private test bundle was packaged from clean source
 `392ad39acbd3111a60b2a93aa1fc6f2843222389`; its manifest and both checksum layers
-are recorded with the stable evidence. Runtime identity remains private-test
+are recorded with the selected evidence. Runtime identity remains private-test
 `1209:0001`. This is local test provenance, not a signed release attestation.
 The guest uses a fixed 2026-10-12 test clock, with 2026-10-13 during signed Snap
 installation, so screenshot dates differ from the host's verification time.

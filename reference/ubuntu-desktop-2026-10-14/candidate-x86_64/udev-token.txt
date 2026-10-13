@@ -1,0 +1,10 @@
+DEVPATH=/devices/virtual/misc/uhid/0003:1209:0001.0004/hidraw/hidraw2
+DEVNAME=/dev/hidraw2
+MAJOR=239
+MINOR=2
+SUBSYSTEM=hidraw
+USEC_INITIALIZED=23566433
+ID_FIDO_TOKEN=1
+ID_SECURITY_TOKEN=1
+TAGS=:systemd:snap_firefox_geckodriver:snap_chromium_chromedriver:security-device:snap_chromium_chromium:seat:snap_firefox_firefox:uaccess:snap_chromium_daemon:
+CURRENT_TAGS=:snap_chromium_daemon:snap_firefox_geckodriver:snap_chromium_chromedriver:security-device:seat:snap_chromium_chromium:snap_firefox_firefox:uaccess:systemd:
