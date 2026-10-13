@@ -19,7 +19,7 @@ Source remains public under Apache-2.0.
    checks using that assigned identity. Update the evidence and checksums in
    `docs/LINUX_DESKTOP_VERIFICATION.md`; the old private-test results do not verify
    the new identity.
-3. The remaining desktop flows passed on 2026-10-13: live inactive/SSH polkit denial,
+3. The remaining Debian desktop flows passed on 2026-10-13: live inactive/SSH polkit denial,
    browser discoverable-account selection, expired-grant reauthentication and a full
    reboot with the same saved RP credentials/counters (43 checks per architecture).
    Repeat these with the assigned identity. Physical desktop/distro coverage remains

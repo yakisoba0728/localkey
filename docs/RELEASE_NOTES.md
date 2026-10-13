@@ -28,7 +28,8 @@ including real inactive-local/SSH polkit denial, retained-grant reauthentication
 native browser account selection and full reboot with saved RP records. Repeat
 these with the assigned identity before replacing this unreleased template.
 
-Ubuntu GNOME/Wayland verification is still in progress. Stable Snapd 2.77.1
+Ubuntu GNOME/Wayland passed 46 aarch64 checks with signed Snapd 2.78 candidate,
+including recovery and both boots; x86_64 is in progress. Stable Snapd 2.77.1
 blocks the own UHID key in confined Chromium/Firefox. Signed Snapd 2.78 candidate
 has the generic FIDO rule; candidate results must be stated separately from
 stable Ubuntu support. See `docs/UBUNTU_DESKTOP_VERIFICATION.md` and verify the

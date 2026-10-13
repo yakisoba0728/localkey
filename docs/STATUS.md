@@ -280,11 +280,14 @@ source/binary distribution and Apache-2.0. The workspace now inherits that licen
   RP public state atomically; a self-test rejects repeated/zero counter rollback.
   Physical and stock Ubuntu desktops remain outside this preview's coverage;
   an assigned PID and a reviewed signed release remain publication gates.
-- Ubuntu 26.04.1 GDM/GNOME/Wayland checks are in progress; see
+- Ubuntu 26.04.1 GDM/GNOME/Wayland with signed Snapd 2.78 candidate passed all
+  **46 aarch64 checks including recovery and both boots**; x86_64 is in progress. See
   `docs/UBUNTU_DESKTOP_VERIFICATION.md`. Stable Snapd 2.77.1 refuses the own UHID
   node despite FIDO/uaccess tags and connected browser plugs. Signed 2.78
   candidate checks keep confinement enabled and are separate from stable support.
-  No complete Ubuntu two-boot pass is recorded yet.
+  Actual browser processes retain the official Snap WebDriver AppArmor profiles
+  in enforce mode and use native Wayland. Candidate coverage does not establish
+  default/stable Ubuntu support or an interactive ISO/physical desktop installation.
 - Both static musl preview bundles were generated locally. x86_64 cross-build
   succeeded and its keygen/wire-status/conditional-touch/shutdown CLI lifecycle
   passed under emulation; aarch64 HID execution is covered by the guest above.

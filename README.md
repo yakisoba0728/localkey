@@ -16,7 +16,8 @@ Chromium·Firefox 등록·로그인·PIN·상주 키·계정 선택·취소·시
 동일 RP 기록을 유지한 전체 재부팅 후 로그인까지 통과했습니다(아키텍처별 43개 검증).
 실제 비활성 로컬 세션·SSH 세션의 polkit 거부와 인증 만료 후 재인증도 확인했습니다.
 환경과 증거는 [Linux 데스크톱 검증 기록](docs/LINUX_DESKTOP_VERIFICATION.md)에 있습니다.
-Ubuntu GNOME/Wayland 검증은 [별도 기록](docs/UBUNTU_DESKTOP_VERIFICATION.md)으로 진행 중입니다.
+Ubuntu GNOME/Wayland도 Snapd 2.78 후보 버전에서 aarch64의 복구·전체 재부팅까지
+46개 검증을 통과했습니다. x86_64 검증은 [별도 기록](docs/UBUNTU_DESKTOP_VERIFICATION.md)으로 진행 중입니다.
 기본 Snapd 2.77.1은 자체 UHID 장치 접근을 차단하며, 2.78 후보 버전의 검증을 기본 Ubuntu 지원과 구분합니다.
 현재 `1209:0001`은 내부 시험용 PID이며, 자체 PID 배정과 서명된 릴리스 전에는 공개 바이너리로 배포하지
 않습니다. [자체 PID 신청](https://github.com/pidcodes/pidcodes.github.com/pull/1310)은 제출했고 배정을 기다립니다.
