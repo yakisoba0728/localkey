@@ -59,10 +59,13 @@ class QmpTests(unittest.TestCase):
     def test_focus_uses_the_calibrated_running_browser_icon(self):
         gui = Gui.__new__(Gui)
         gui.click = mock.Mock()
+        gui.application = mock.Mock(return_value=object())
         with mock.patch('wayland_ui.time.sleep'):
             gui.focus('chromium')
             gui.focus('firefox')
-        self.assertEqual(gui.click.call_args_list, [mock.call(33, 260), mock.call(33, 324)])
+            gui.application.return_value = None
+            gui.focus('firefox')
+        self.assertEqual(gui.click.call_args_list, [mock.call(33, 260), mock.call(33, 324), mock.call(33, 260)])
         with self.assertRaises(AssertionError):
             gui.focus('unknown')
 

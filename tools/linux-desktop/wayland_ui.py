@@ -143,7 +143,9 @@ class Gui:
             return
         assert identifier in ('chromium', 'firefox'), identifier
         # shortcut: running WebDriver dock icons in the calibrated Ubuntu 1280x800 fixture.
-        self.click(33, 260 if identifier == 'chromium' else 324)
+        # Firefox moves up when the preceding Chromium window closes after restore/reboot.
+        y = 324 if identifier == 'firefox' and self.application('^chromium$') is not None else 260
+        self.click(33, y)
         time.sleep(1)
 
     def xdotool(self, arguments):
