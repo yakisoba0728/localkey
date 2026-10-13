@@ -28,7 +28,7 @@ jobs:
       - name: Install build and UI test tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y musl-tools python3-tk xvfb xauth shellcheck desktop-file-utils
+          sudo apt-get install -y musl-tools python3-tk python3-pil python3-pyatspi xvfb xauth shellcheck desktop-file-utils
           rustup toolchain install 1.98.1 --profile minimal --component clippy --target '${{ matrix.target }}'
       - name: Engine and program checks
         run: |
@@ -43,6 +43,7 @@ jobs:
           python3 -m py_compile tools/linux-desktop/*.py
           desktop-file-validate tools/linux/localkey-touch.desktop
           xvfb-run -a python3 -m unittest discover -s tools/linux -p 'test_*.py'
+          python3 tools/linux-desktop/test_wayland_ui.py
       - name: Build and stage the private-test bundle
         run: |
           cargo build --release --locked -p localkeyd --target '${{ matrix.target }}'
