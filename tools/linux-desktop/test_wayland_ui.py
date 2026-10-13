@@ -22,20 +22,17 @@ class QmpTests(unittest.TestCase):
             self.assertEqual(gui.desktop(), 'desktop')
         self.assertEqual(context.iteration.call_args_list, [mock.call(False), mock.call(False)])
 
-    def test_authentication_search_uses_shell_not_browser_page_content(self):
-        browser = mock.MagicMock()
-        browser.name = 'Chromium'
-        shell = mock.MagicMock()
-        shell.name = 'gnome-shell'
-        dialog = mock.MagicMock()
-        dialog.name = 'Authentication Required'
-        shell.get_collection_iface.return_value.get_matches.return_value = [dialog]
-        closed = mock.MagicMock()
-        type(closed).name = mock.PropertyMock(side_effect=RuntimeError('application no longer exists'))
+    def test_authentication_screen_check_excludes_white_browser_content(self):
         gui = Gui.__new__(Gui)
-        with mock.patch('wayland_ui.pyatspi.Registry.getDesktop', return_value=[browser, closed, shell]):
+        with tempfile.TemporaryDirectory() as directory:
+            gui.results = Path(directory)
+            picture = Image.new('RGB', (1280, 800), 'white')
+            gui.screenshot = lambda name: picture.save(gui.results / f'{name}.png')
+            self.assertIsNone(gui.window('Authentication'))
+            picture.putpixel((500, 435), (233, 84, 32))
             self.assertEqual(gui.window('Authentication'), 'auth')
-        browser.__iter__.assert_not_called()
+            picture.putpixel((500, 190), (0, 0, 0))
+            self.assertIsNone(gui.window('Authentication'))
 
     def test_chord_releases_keys_when_wait_fails(self):
         gui = Gui.__new__(Gui)

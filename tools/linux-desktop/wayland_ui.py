@@ -108,18 +108,16 @@ class Gui:
         if pattern.startswith('localkey'):
             result = self.run('xdotool', 'search', '--onlyvisible', '--name', pattern, check=False)
             return result.stdout.splitlines()[-1] if result.returncode == 0 and result.stdout.strip() else None
-        app = self.application('^gnome-shell$' if pattern == 'Authentication' else pattern)
-        if app is None:
+        if pattern == 'Authentication':
+            # shortcut: Ubuntu GNOME 50 light-theme 1280x800 native polkit dialog.
+            self.screenshot('authentication-state')
+            with Image.open(self.results / 'authentication-state.png') as picture:
+                red, green, blue = picture.convert('RGB').getpixel((500, 435))
+                panel = picture.convert('RGB').getpixel((500, 190))
+            if red > 180 and 40 < green < 130 and blue < 100 and min(panel) > 235:
+                return 'auth'
             return None
-        if pattern != 'Authentication':
-            return pattern
-        for label in self.matches(app, Atspi.Role.LABEL):
-            try:
-                if re.search(pattern, label.name or '', re.I):
-                    return 'auth'
-            except Exception:
-                continue
-        return None
+        return pattern if self.application(pattern) is not None else None
 
     def desktop(self):
         # Dispatch AT-SPI's queued cache updates without a blocking main loop.
