@@ -8,6 +8,7 @@ import hashlib
 import io
 import json
 from pathlib import Path
+import re
 import struct
 import subprocess
 import tarfile
@@ -15,6 +16,29 @@ import tomllib
 
 ROOT = Path(__file__).resolve().parent.parent
 TARGETS = {"x86_64-unknown-linux-musl": 62, "aarch64-unknown-linux-musl": 183}
+
+
+def own_usb_identity():
+    profile = (ROOT / "crates/lk-core/src/profile.rs").read_text().split("pub fn own(", 1)[1].split("pub fn ", 1)[0]
+    names = {"usb_vendor_id", "otp", "fido", "otp_fido", "ccid", "otp_ccid", "fido_ccid", "otp_fido_ccid"}
+    # shortcut: literal fields only; update this reader if the profile starts using constants.
+    fields = re.findall(r"\b(" + "|".join(sorted(names)) + r")\s*:\s*(0x[0-9A-Fa-f]+)\b", profile)
+    if len(fields) != len(names) or {name for name, _ in fields} != names:
+        raise ValueError("own USB identity must contain eight literal identifier fields")
+    values = {name: int(value, 16) for name, value in fields}
+    if any(value > 0xFFFF for value in values.values()):
+        raise ValueError("USB identifiers must fit in 16 bits")
+    products = {value for name, value in values.items() if name != "usb_vendor_id"}
+    if len(products) != 1:
+        raise ValueError("the Linux bundle requires one own PID for all interface combinations")
+    return values["usb_vendor_id"], products.pop()
+
+
+def require_public_identity():
+    vendor, product = own_usb_identity()
+    if vendor == 0x1209 and product < 0x2000:
+        raise ValueError("own profile uses a private-test PID or reserved pid.codes range; only --development is allowed")
+    return vendor, product
 
 
 def validate_binary(binary, target):
@@ -34,9 +58,7 @@ def validate_binary(binary, target):
 def collect_files(binary, target, development, metadata):
     validate_binary(binary, target)
     version = tomllib.loads((ROOT / "Cargo.toml").read_text())["workspace"]["package"]["version"]
-    own_profile = (ROOT / "crates/lk-core/src/profile.rs").read_text().split("pub fn own(", 1)[1].split("pub fn ", 1)[0]
-    if not development and ("0x1209" in own_profile and "0x0001" in own_profile):
-        raise ValueError("own profile still uses the private-test PID 1209:0001; only --development is allowed")
+    vendor, product = own_usb_identity() if development else require_public_identity()
     dirty = bool(subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT))
     if dirty and not development:
         raise ValueError("public bundles require a clean committed source tree")
@@ -75,6 +97,7 @@ def collect_files(binary, target, development, metadata):
             files[f"licenses/{package['name']}-{package['version']}/{path.name}"] = (path.read_bytes(), 0o644)
         dependencies.append({"name": package["name"], "version": package["version"], "license": package["license"]})
     manifest = {"version": version, "target": target, "development_only": development, "packaging_rustc": rustc,
+                "usb_vendor_id": f"{vendor:04x}", "usb_product_id": f"{product:04x}",
                 "bundled_musl": "1.2.5",
                 "revision": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
                 "source_dirty": dirty, "binary_sha256": hashlib.sha256(binary).hexdigest(),

@@ -15,7 +15,8 @@ Debian 13 데스크톱 VM의 aarch64·x86_64에서 실제 systemd 설치·업그
 Chromium·Firefox 등록·로그인·PIN·상주 키·취소·시간 초과 검증을 통과했습니다.
 환경과 증거는 [Linux 데스크톱 검증 기록](docs/LINUX_DESKTOP_VERIFICATION.md)에 있습니다.
 현재 `1209:0001`은 내부 시험용 PID이며, 자체 PID 배정과 서명된 릴리스 전에는 공개 바이너리로 배포하지
-않습니다. [PID 신청 초안](tools/pidcodes/README.md)은 준비했고 아직 제출하지 않았습니다.
+않습니다. [자체 PID 신청](https://github.com/pidcodes/pidcodes.github.com/pull/1310)은 제출했고 배정을 기다립니다.
+태그 기반 빌드·서명된 빌드 증명·초안 릴리스 절차는 [릴리스 준비 문서](docs/RELEASE.md)에 있습니다.
 프로젝트 라이선스는 Apache-2.0(`LICENSE`)입니다.
 
 - 엔진은 전송 계층과 분리된 동기식 결정론 상태 기계입니다. 스레드, 시계, 파일, OS 호출이 없습니다. 같은

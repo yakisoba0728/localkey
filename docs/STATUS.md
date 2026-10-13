@@ -278,11 +278,20 @@ source/binary distribution and Apache-2.0. The workspace now inherits that licen
   succeeded and its keygen/wire-status/conditional-touch/shutdown CLI lifecycle
   passed under emulation; aarch64 HID execution is covered by the guest above.
   The x86_64 binary also passed the real systemd desktop VM flow above.
-- `tools/pidcodes/`: organization/PID pages and a PR body prepared for candidate
-  `1209:4c4b`. The full upstream tree and open PRs were checked on 2026-10-12:
-  no conflict found. No submission/allocation; the candidate is not used or reserved.
-  Software-only allocation needs upstream review. Public source is licensed
-  Apache-2.0; `1209:0001` continues to block public binary packaging.
+- The Linux CI run for `1a2de8d` passed on 2026-10-13 on both architectures:
+  2,390 Rust tests per native job, Clippy, license/catalog checks, measurement tests,
+  desktop/installer tests and static-musl bundle staging.
+  <https://github.com/yakisoba0728/localkey/actions/runs/38323529249>.
+- `tools/pidcodes/`: request for `1209:4C4B` submitted on 2026-10-13 as
+  <https://github.com/pidcodes/pidcodes.github.com/pull/1310>. The complete upstream
+  tree and open PRs had no conflict; the public source/license/evidence were readable
+  without authentication. Allocation is pending; the candidate is not used or reserved.
+  Public source is Apache-2.0; `1209:0001` continues to block public binary packaging.
+- `.github/workflows/linux-release.yml` prepares both static-musl bundles from a clean
+  version tag on main. It requires a matching upstream PID allocation, reruns checks,
+  signs/verifies build provenance and creates only a draft prerelease. It has no push
+  trigger. `docs/RELEASE.md` records the remaining desktop verification and publication
+  steps. No public binaries or release tags have been created.
 
 ### Transport maintenance (2026-10-12)
 

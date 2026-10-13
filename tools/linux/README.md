@@ -128,10 +128,11 @@ and license texts, and musl 1.2.5's original COPYRIGHT from its upstream release
 that version: <https://blog.rust-lang.org/2025/12/05/Updating-musl-1.2.5/>.
 Packaging is pinned to Rust 1.98.1; refresh runtime notices on a toolchain update.
 For the same inputs its archive metadata is deterministic. The manifest records
-the source revision and whether the working tree had changes; it does not prove
+the source revision, own VID/PID and whether the working tree had changes; it does not prove
 that the supplied binary was built from that source. Public release mode also
 requires a clean committed source tree. Build and sign in trusted release CI
-before claiming provenance.
+before claiming provenance. `docs/RELEASE.md` describes the manual tagged release
+workflow, allocation check, signed build provenance and draft prerelease review.
 
 `./install.sh install --development --destdir /tmp/localkey-stage` stages the
 files without creating keys, installing OS packages, running systemctl/udev or

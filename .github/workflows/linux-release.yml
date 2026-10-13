@@ -1,0 +1,124 @@
+name: Linux release candidate
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: linux-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            target: x86_64-unknown-linux-musl
+          - runner: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-musl
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    env:
+      CARGO_BUILD_JOBS: 2
+      RUSTUP_TOOLCHAIN: 1.98.1
+      RELEASE_TAG: ${{ github.ref_name }}
+      RELEASE_TARGET: ${{ matrix.target }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require a version tag and allocated identity
+        run: |
+          test "$GITHUB_REF_TYPE" = tag
+          python3 tools/release_check.py "$RELEASE_TAG"
+      - name: Install build and UI test tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools python3-tk xvfb xauth shellcheck desktop-file-utils
+          rustup toolchain install 1.98.1 --profile minimal --component clippy --target "$RELEASE_TARGET"
+      - name: Verify engine, desktop and packaging
+        run: |
+          cargo test --workspace --locked -- --include-ignored
+          cargo clippy --workspace --all-targets --locked -- -D warnings
+          python3 tools/license_check.py
+          python3 tools/catalog_status.py --check
+          python3 -m unittest discover -s tools/measure -p 'test_*.py'
+          shellcheck tools/linux/install.sh tools/linux-desktop/*.sh
+          python3 -m py_compile tools/linux-desktop/*.py
+          desktop-file-validate tools/linux/localkey-touch.desktop
+          xvfb-run -a python3 -m unittest discover -s tools/linux -p 'test_*.py'
+      - name: Build and stage the public bundle
+        run: |
+          cargo build --release --locked -p localkeyd --target "$RELEASE_TARGET"
+          python3 tools/package_linux.py --binary "target/$RELEASE_TARGET/release/localkeyd" \
+            --target "$RELEASE_TARGET" --output "$RUNNER_TEMP/bundles"
+          (cd "$RUNNER_TEMP/bundles" && sha256sum --check ./*.sha256)
+          tar -xzf "$RUNNER_TEMP"/bundles/*.tar.gz -C "$RUNNER_TEMP/bundles"
+          bundle=$(find "$RUNNER_TEMP/bundles" -mindepth 1 -maxdepth 1 -type d)
+          (cd "$bundle" && sha256sum --check SHA256SUMS)
+          test ! -e "$bundle/DEVELOPMENT_ONLY"
+          "$bundle/install.sh" install --destdir "$RUNNER_TEMP/stage"
+          test ! -e "$RUNNER_TEMP/stage/etc/localkey/storage.key"
+          "$bundle/install.sh" uninstall --destdir "$RUNNER_TEMP/stage"
+      - name: Sign build provenance
+        id: attest
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: ${{ runner.temp }}/bundles/*.tar.gz
+      - name: Verify and retain provenance
+        env:
+          ATTESTATION_BUNDLE: ${{ steps.attest.outputs.bundle-path }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp "$ATTESTATION_BUNDLE" "$RUNNER_TEMP/bundles/provenance-$RELEASE_TARGET.sigstore.json"
+          gh attestation verify "$RUNNER_TEMP"/bundles/*.tar.gz --bundle "$ATTESTATION_BUNDLE" \
+            --repo "$GITHUB_REPOSITORY" --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/linux-release.yml" \
+            --source-ref "$GITHUB_REF" --source-digest "$GITHUB_SHA" --deny-self-hosted-runners
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: linux-release-${{ matrix.target }}
+          path: |
+            ${{ runner.temp }}/bundles/*.tar.gz
+            ${{ runner.temp }}/bundles/*.sha256
+            ${{ runner.temp }}/bundles/*.sigstore.json
+          if-no-files-found: error
+
+  draft:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      RELEASE_TAG: ${{ github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: linux-release-*
+          merge-multiple: true
+          path: assets
+      - name: Create a draft prerelease for review
+        run: |
+          git fetch --force --no-tags origin "refs/tags/$RELEASE_TAG"
+          test "$(git rev-parse 'FETCH_HEAD^{commit}')" = "$GITHUB_SHA"
+          test "$(find assets -name '*.tar.gz' | wc -l)" -eq 2
+          (cd assets && sha256sum --check ./*.sha256)
+          for target in x86_64-unknown-linux-musl aarch64-unknown-linux-musl; do
+            gh attestation verify "assets/localkey-${RELEASE_TAG#v}-$target.tar.gz" \
+              --bundle "assets/provenance-$target.sigstore.json" \
+              --repo "$GITHUB_REPOSITORY" --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/linux-release.yml" \
+              --source-ref "$GITHUB_REF" --source-digest "$GITHUB_SHA" --deny-self-hosted-runners
+          done
+          gh release create "$RELEASE_TAG" assets/* --verify-tag --draft --prerelease \
+            --title "localkey $RELEASE_TAG Linux desktop preview" --notes-file docs/RELEASE_NOTES.md
