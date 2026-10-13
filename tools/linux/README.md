@@ -18,6 +18,14 @@ polkit's `pkexec`, and a desktop polkit authentication agent. On Debian/Ubuntu,
 the additional packages are `python3-tk` and `pkexec`; your desktop normally
 provides the agent. The installer does not install OS packages itself.
 
+Ubuntu's Snap browsers also need Snapd's generic FIDO device rule: Snapd 2.78
+with systemd 244 or newer. Stable Snapd 2.77.1 blocks this software UHID device
+despite connected `u2f-devices` plugs; assigning a PID does not remove that
+restriction. On 2026-10-13, 2.78 is available in the candidate channel only.
+Candidate testing is separate from default Ubuntu support. Check the actual
+stable version before deployment; do not disable Snap confinement or substitute
+another vendor's identity. See the [2.78 interface implementation](https://raw.githubusercontent.com/canonical/snapd/2.78/interfaces/builtin/u2f_devices.go).
+
 Verify the archive checksum against a trusted release channel before unpacking.
 The bundled checksum verifies file integrity; it is not a publisher signature.
 

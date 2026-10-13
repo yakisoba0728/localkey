@@ -65,9 +65,18 @@ def create_drivers():
     return drivers
 
 
+def firefox_prompt(name, action):
+    prompt = f'{name}-attestation' if action == 'register' else f'{name}-account-picker'
+    pattern = r'^Allow$' if action == 'register' else r'(chromium|firefox)-pin'
+    button = flow.wait(lambda: gui.button('firefox', pattern), 'Firefox native permission/account button did not appear')
+    gui.screenshot(prompt)
+    assert button.queryAction().doAction(0), 'Firefox native button refused activation'
+
+
 flow.run = run
 flow.window = gui.window
 flow.screenshot = gui.screenshot
 flow.record_versions = record_versions
 flow.create_drivers = create_drivers
+flow.firefox_prompt = firefox_prompt
 flow.execute()

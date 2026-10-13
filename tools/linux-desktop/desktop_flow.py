@@ -337,6 +337,19 @@ def main():
     return True
 
 
+def firefox_prompt(name, action):
+    # shortcut: fixed English Firefox doorhanger coordinates; recalibrate after browser UI changes.
+    prompt = f"{name}-attestation" if action == "register" else f"{name}-account-picker"
+    def prompt_visible():
+        screenshot(prompt)
+        with Image.open(RESULTS / f"{prompt}.png") as picture:
+            red, green, blue = picture.convert("RGB").getpixel((625, 254 if action == "register" else 175))
+        return red < 100 and 80 < green < 180 and blue > 180
+    wait(prompt_visible, "Firefox native permission/account picker did not appear")
+    x, y = (647, 264) if action == "register" else (495, 183)
+    run("xdotool", "mousemove", str(x), str(y), "click", "1")
+
+
 def operation(driver, name, action, touch_window, pin=False, discoverable=False):
     browser_class = "firefox" if driver.capabilities["browserName"] == "firefox" else "chromium"
     identifier = wait(lambda: window(browser_class, "--class"), "browser window not found")
@@ -360,18 +373,7 @@ def operation(driver, name, action, touch_window, pin=False, discoverable=False)
     run("xdotool", "windowactivate", "--sync", identifier)
     screenshot(f"{name}-{action}-after-touch")
     if browser_class == "firefox" and (action == "register" or discoverable):
-        # shortcut: fixed English Firefox doorhanger coordinates; recalibrate after browser UI changes.
-        prompt = f"{name}-attestation" if action == "register" else f"{name}-account-picker"
-        def prompt_visible():
-            screenshot(prompt)
-            red, green, blue = Image.open(RESULTS / f"{prompt}.png").convert("RGB").getpixel(
-                (625, 254 if action == "register" else 175))
-            return red < 100 and 80 < green < 180 and blue > 180
-        wait(prompt_visible, "Firefox native permission/account picker did not appear")
-        if action == "register":
-            run("xdotool", "mousemove", "647", "264", "click", "1")
-        else:
-            run("xdotool", "mousemove", "495", "183", "click", "1")
+        firefox_prompt(name, action)
     elif discoverable:
         time.sleep(2)
         screenshot(f"{name}-account-picker")

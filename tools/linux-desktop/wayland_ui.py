@@ -58,7 +58,13 @@ class Gui:
         aliases = {'Super_L': 'meta_l', 'Return': 'ret', 'Escape': 'esc', 'Tab': 'tab', 'space': 'spc'}
         for chord in chords:
             keys = [aliases.get(key, key.lower()) for key in chord.split('+')]
-            self.command('send-key', {'keys': [{'type': 'qcode', 'data': key} for key in keys], 'hold-time': 60})
+            event = lambda key, down: {'type': 'key', 'data': {'down': down, 'key': {'type': 'qcode', 'data': key}}}
+            # QEMU's virtual-clock key-release timer can lag during emulated browser startup.
+            self.command('input-send-event', {'events': [event(key, True) for key in keys]})
+            try:
+                time.sleep(.06)
+            finally:
+                self.command('input-send-event', {'events': [event(key, False) for key in reversed(keys)]})
             time.sleep(.12)
 
     def type(self, text):
@@ -77,7 +83,7 @@ class Gui:
             {'type': 'btn', 'data': {'button': 'left', 'down': True}}]})
         self.command('input-send-event', {'events': [{'type': 'btn', 'data': {'button': 'left', 'down': False}}]})
 
-    def window(self, pattern, field='--name', active=False):
+    def window(self, pattern, field='--name'):
         if pattern.startswith('localkey'):
             result = self.run('xdotool', 'search', '--onlyvisible', '--name', pattern, check=False)
             return result.stdout.splitlines()[-1] if result.returncode == 0 and result.stdout.strip() else None
@@ -90,24 +96,13 @@ class Gui:
                     pending.append(app)
             except Exception:
                 continue
-        if active:
-            for app in pending:
-                for child in app:
-                    try:
-                        if child.getRole() in (pyatspi.ROLE_FRAME, pyatspi.ROLE_DIALOG) and child.getState().contains(pyatspi.STATE_ACTIVE):
-                            return pattern
-                    except Exception:
-                        continue
-            return None
         count = 0
         while pending and count < 10000:
             node = pending.pop()
             count += 1
             try:
                 if expression.search(node.name or ''):
-                    if not active or (node.getRole() in (pyatspi.ROLE_FRAME, pyatspi.ROLE_DIALOG)
-                                      and node.getState().contains(pyatspi.STATE_ACTIVE)):
-                        return 'auth' if pattern == 'Authentication' else pattern
+                    return 'auth' if pattern == 'Authentication' else pattern
                 pending.extend(node)
             except Exception:
                 continue
@@ -123,21 +118,40 @@ class Gui:
             focused = self.run('xdotool', 'getwindowfocus', 'getwindowname', check=False).stdout.strip()
             assert expected and focused == expected, (expected, focused)
             return
-        for count in range(8):
-            active = self.window(identifier, active=True)
-            if active:
+        # Browser STATE_ACTIVE can remain set behind another Wayland window.
+        self.key('Super_L')
+        deadline = time.monotonic() + 20
+        while time.monotonic() < deadline:
+            pending = []
+            for app in pyatspi.Registry.getDesktop(0):
+                try:
+                    if app.name == 'gnome-shell':
+                        pending.append(app)
+                except Exception:
+                    continue
+            count = 0
+            coordinates = None
+            while pending and count < 2000:
+                node = pending.pop()
+                count += 1
+                try:
+                    if (node.getRole() == pyatspi.ROLE_LABEL and
+                            'localkey browser verification' in (node.name or '') and
+                            re.search(identifier, node.name, re.I)):
+                        preview = node.parent
+                        x, y, width, height = preview.queryComponent().getExtents(pyatspi.DESKTOP_COORDS)
+                        if preview.getRole() == pyatspi.ROLE_PUSH_BUTTON and width > 100 and height > 100:
+                            coordinates = (x + width // 2, y + height // 2)
+                            break
+                    pending.extend(node)
+                except Exception:
+                    continue
+            if coordinates:
+                self.click(*coordinates)
+                time.sleep(.5)
                 return
-            # Native Alt+Tab avoids app-ID mismatches in Snap WebDriver launches.
-            key = lambda code, down: {'type': 'key', 'data': {'down': down, 'key': {'type': 'qcode', 'data': code}}}
-            self.command('input-send-event', {'events': [key('alt', True)]})
-            try:
-                for _ in range(count + 1):
-                    self.command('input-send-event', {'events': [key('tab', True), key('tab', False)]})
-                    time.sleep(.15)
-            finally:
-                self.command('input-send-event', {'events': [key('alt', False)]})
-            time.sleep(.5)
-        raise RuntimeError(f'native window did not become active: {identifier}')
+            time.sleep(.25)
+        raise RuntimeError(f'native overview preview not found: {identifier}')
 
     def xdotool(self, arguments):
         command = arguments[0]
@@ -151,3 +165,25 @@ class Gui:
             self.click(int(arguments[1]), int(arguments[2]))
         else:
             raise ValueError(f'unsupported fixture UI command: {arguments}')
+
+    def button(self, application, pattern):
+        expression = re.compile(pattern, re.I)
+        pending = []
+        for app in pyatspi.Registry.getDesktop(0):
+            try:
+                if (app.name or '').lower() == application:
+                    pending.append(app)
+            except Exception:
+                continue
+        count = 0
+        while pending and count < 5000:
+            node = pending.pop()
+            count += 1
+            try:
+                if (node.getRole() == pyatspi.ROLE_PUSH_BUTTON and expression.search(node.name or '') and
+                        node.getState().contains(pyatspi.STATE_SHOWING)):
+                    return node
+                pending.extend(node)
+            except Exception:
+                continue
+        return None

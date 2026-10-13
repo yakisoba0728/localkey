@@ -24,6 +24,11 @@ Source remains public under Apache-2.0.
    reboot with the same saved RP credentials/counters (43 checks per architecture).
    Repeat these with the assigned identity. Physical desktop/distro coverage remains
    limited; state the tested platforms accurately in the release notes.
+   Ubuntu's stable Snapd 2.77.1 blocks the own UHID device. Candidate Snapd 2.78
+   has the generic FIDO rule; its results must be reported separately. Before
+   claiming default Ubuntu Snap support, verify the fix is in the stable channel
+   and repeat actual confined browser access. PID allocation alone cannot fix
+   this platform restriction.
 4. Update `docs/RELEASE_NOTES.md` with the allocation, verified evidence and known
    limits. Run Linux preview CI on the final commit and wait for both jobs to pass.
    Review the final diff and commit it on `main`.

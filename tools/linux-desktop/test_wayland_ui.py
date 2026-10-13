@@ -8,6 +8,7 @@ import unittest
 from unittest import mock
 
 from PIL import Image
+import pyatspi
 from wayland_ui import Gui
 
 
@@ -27,20 +28,54 @@ class QmpTests(unittest.TestCase):
             self.assertEqual(gui.window('Authentication'), 'auth')
         browser.__iter__.assert_not_called()
 
-    def test_focus_releases_alt_when_virtual_keyboard_input_fails(self):
+    def test_chord_releases_keys_when_wait_fails(self):
         gui = Gui.__new__(Gui)
-        gui.window = lambda *args, **options: None
         events = []
+        gui.command = lambda name, arguments: events.extend(arguments['events'])
+        with mock.patch('wayland_ui.time.sleep', side_effect=RuntimeError('wait failed')):
+            with self.assertRaisesRegex(RuntimeError, 'wait failed'):
+                gui.key('ctrl+Return')
+        self.assertEqual([(event['data']['key']['data'], event['data']['down']) for event in events],
+                         [('ctrl', True), ('ret', True), ('ret', False), ('ctrl', False)])
 
-        def command(name, arguments):
-            events.extend(arguments['events'])
-            if arguments['events'][0]['data']['key']['data'] == 'tab':
-                raise RuntimeError('input failed')
-
-        gui.command = command
-        with self.assertRaisesRegex(RuntimeError, 'input failed'):
+    def test_focus_clicks_shell_window_preview_and_propagates_input_failure(self):
+        shell = mock.MagicMock()
+        shell.name = 'gnome-shell'
+        label = mock.MagicMock()
+        label.name = 'localkey browser verification — Mozilla Firefox'
+        label.getRole.return_value = pyatspi.ROLE_LABEL
+        preview = label.parent
+        preview.getRole.return_value = pyatspi.ROLE_PUSH_BUTTON
+        preview.queryComponent.return_value.getExtents.return_value = (542, 431, 481, 305)
+        shell.__iter__.side_effect = lambda: iter([label])
+        gui = Gui.__new__(Gui)
+        gui.key = mock.Mock()
+        gui.click = mock.Mock()
+        with mock.patch('wayland_ui.pyatspi.Registry.getDesktop', return_value=[shell]), \
+                mock.patch('wayland_ui.time.sleep'):
             gui.focus('firefox')
-        self.assertEqual(events[-1]['data'], {'down': False, 'key': {'type': 'qcode', 'data': 'alt'}})
+            gui.key.assert_called_once_with('Super_L')
+            gui.click.assert_called_once_with(782, 583)
+            gui.click.side_effect = RuntimeError('input failed')
+            with self.assertRaisesRegex(RuntimeError, 'input failed'):
+                gui.focus('firefox')
+
+    def test_native_button_search_skips_hidden_buttons_and_other_apps(self):
+        shell = mock.MagicMock()
+        shell.name = 'gnome-shell'
+        firefox = mock.MagicMock()
+        firefox.name = 'Firefox'
+        hidden, visible = mock.MagicMock(), mock.MagicMock()
+        for button in (hidden, visible):
+            button.name = 'Allow'
+            button.getRole.return_value = pyatspi.ROLE_PUSH_BUTTON
+        hidden.getState.return_value.contains.return_value = False
+        visible.getState.return_value.contains.return_value = True
+        firefox.__iter__.return_value = iter([visible, hidden])
+        gui = Gui.__new__(Gui)
+        with mock.patch('wayland_ui.pyatspi.Registry.getDesktop', return_value=[shell, firefox]):
+            self.assertIs(gui.button('firefox', r'^Allow$'), visible)
+        shell.__iter__.assert_not_called()
 
     def test_events_fragmented_reply_and_command_error(self):
         client, server = socket.socketpair()
