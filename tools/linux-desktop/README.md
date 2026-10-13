@@ -128,7 +128,9 @@ fixtures, build a new disk. Debian's Firefox direct-attestation and account-sele
 calibrated for English 1280×800 screenshots, with screenshot-based prompt
 readiness checks. Ubuntu uses the installed Snap desktop IDs and native favorite
 shortcuts to select browser windows, and selects Firefox's visible native
-accessibility buttons. Native Collection
+accessibility buttons. The fixture disables Ubuntu Dock's override of those
+shortcuts, which can minimize an already active window, and uses GNOME's
+application activation bindings. Native Collection
 queries find authentication/buttons in the application without a slow per-node
 walk. Browser active-state flags can remain cached behind another Wayland window,
 and QEMU's virtual-clock key-release timers can

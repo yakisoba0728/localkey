@@ -134,9 +134,12 @@ class Gui:
         if identifier == 'auth':
             return  # GNOME's native polkit modal already owns keyboard focus.
         if identifier.isdigit():
+            expected = self.run('xdotool', 'getwindowname', identifier).stdout.strip()
+            focused = self.run('xdotool', 'getwindowfocus', 'getwindowname', check=False).stdout.strip()
+            if expected and focused == expected:
+                return
             self.key('Super_L+1')
             time.sleep(1)
-            expected = self.run('xdotool', 'getwindowname', identifier).stdout.strip()
             focused = self.run('xdotool', 'getwindowfocus', 'getwindowname', check=False).stdout.strip()
             assert expected and focused == expected, (expected, focused)
             return
