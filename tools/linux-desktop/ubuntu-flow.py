@@ -28,12 +28,13 @@ def record_versions():
 
 def create_drivers():
     options = flow.webdriver.ChromeOptions()
-    options.binary_location = '/snap/bin/chromium'
+    options.binary_location = '/snap/chromium/current/usr/lib/chromium-browser/chrome'
     for flag in ['--no-first-run', '--disable-dev-shm-usage', '--ozone-platform=wayland',
                  '--force-renderer-accessibility', '--user-data-dir=/home/lkdesktop/snap/chromium/common/test-profile']:
         options.add_argument(flag)
     chrome = flow.webdriver.Chrome(service=flow.ChromeService('/snap/bin/chromium.chromedriver',
-                                   log_output=(flow.RESULTS / 'chrome.log').open('w')), options=options)
+                                   log_output=(flow.RESULTS / 'chrome.log').open('w'),
+                                   service_args=['--verbose']), options=options)
     options = flow.webdriver.FirefoxOptions()
     options.binary_location = '/snap/firefox/current/usr/lib/firefox/firefox'
     firefox = flow.webdriver.Firefox(service=flow.FirefoxService('/snap/bin/geckodriver',

@@ -11,11 +11,15 @@ from test_desktop import HERE, load
 class TouchUiTests(unittest.TestCase):
     def setUp(self):
         self.ui = load("localkey_touch", HERE / "localkey-touch")
-        self.root = self.ui.tk.Tk()
+        self.root = self.ui.tk.Tk(className=self.ui.WINDOW_CLASS)
         self.window = self.ui.TouchWindow(self.root)
 
     def tearDown(self):
         self.window.close()
+
+    def test_desktop_launcher_matches_the_actual_tk_window_class(self):
+        self.assertIn(f"StartupWMClass={self.root.winfo_class()}\n",
+                      (HERE / "localkey-touch.desktop").read_text())
 
     def test_presence_enables_touch_but_never_sends_it_automatically(self):
         with patch.object(self.window, "send_tap") as sent:
