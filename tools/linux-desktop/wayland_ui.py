@@ -4,6 +4,7 @@ import re
 import select
 import shutil
 import time
+from collections import deque
 from pathlib import Path
 
 from PIL import Image
@@ -142,11 +143,29 @@ class Gui:
             assert expected and focused == expected, (expected, focused)
             return
         assert identifier in ('chromium', 'firefox'), identifier
-        # shortcut: running WebDriver dock icons in the calibrated Ubuntu 1280x800 fixture.
-        # Firefox moves up when the preceding Chromium window closes after restore/reboot.
-        y = 324 if identifier == 'firefox' and self.application('^chromium$') is not None else 260
-        self.click(33, y)
-        time.sleep(1)
+        # shortcut: these running-window names differ from the Snap favorites; recalibrate after app-ID changes.
+        name = 'chromium-browser' if identifier == 'chromium' else 'firefox'
+        shell = self.application('^gnome-shell$')
+        assert shell is not None, 'GNOME native dock is unavailable'
+        queue = deque([shell])
+        seen = set()
+        for _ in range(256):
+            if not queue:
+                break
+            node = queue.popleft()
+            if hash(node) in seen:
+                continue
+            seen.add(hash(node))
+            if node is not shell and not node.getState().contains(pyatspi.STATE_SHOWING):
+                continue
+            if node.getRole() == pyatspi.ROLE_PUSH_BUTTON and node.name == name:
+                x, y, width, height = node.queryComponent().getExtents(pyatspi.DESKTOP_COORDS)
+                assert width > 0 and height > 0
+                self.click(x + width // 2, y + height // 2)
+                time.sleep(1)
+                return
+            queue.extend(child for child in node if child is not None)
+        raise RuntimeError(f'visible native running-window dock button not found: {name}')
 
     def xdotool(self, arguments):
         command = arguments[0]

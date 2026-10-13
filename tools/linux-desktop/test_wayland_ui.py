@@ -56,16 +56,30 @@ class QmpTests(unittest.TestCase):
         self.assertEqual([(event['data']['key']['data'], event['data']['down']) for event in events],
                          [('ctrl', True), ('ret', True), ('ret', False), ('ctrl', False)])
 
-    def test_focus_uses_the_calibrated_running_browser_icon(self):
+    def test_focus_follows_native_running_icons_instead_of_favorites_or_order(self):
         gui = Gui.__new__(Gui)
         gui.click = mock.Mock()
-        gui.application = mock.Mock(return_value=object())
+        shell, hidden, favorite, chromium, firefox = [mock.MagicMock() for _ in range(5)]
+        shell.getRole.return_value = pyatspi.ROLE_APPLICATION
+        shell.__iter__.return_value = [hidden, favorite, firefox, chromium]
+        hidden.getState.return_value.contains.return_value = False
+        for node, name, y in [(favorite, 'Firefox', 161), (chromium, 'chromium-browser', 292),
+                              (firefox, 'firefox', 228)]:
+            node.name = name
+            node.getRole.return_value = pyatspi.ROLE_PUSH_BUTTON
+            node.getState.return_value.contains.return_value = True
+            node.queryComponent.return_value.getExtents.return_value = (1, y, 64, 64)
+        gui.application = mock.Mock(return_value=shell)
         with mock.patch('wayland_ui.time.sleep'):
             gui.focus('chromium')
             gui.focus('firefox')
-            gui.application.return_value = None
+            chromium.getState.return_value.contains.return_value = False
+            firefox.queryComponent.return_value.getExtents.return_value = (1, 164, 64, 64)
             gui.focus('firefox')
-        self.assertEqual(gui.click.call_args_list, [mock.call(33, 260), mock.call(33, 324), mock.call(33, 260)])
+        self.assertEqual(gui.click.call_args_list, [mock.call(33, 324), mock.call(33, 260), mock.call(33, 196)])
+        hidden.__iter__.assert_not_called()
+        with self.assertRaisesRegex(RuntimeError, 'dock button not found'):
+            gui.focus('chromium')
         with self.assertRaises(AssertionError):
             gui.focus('unknown')
 

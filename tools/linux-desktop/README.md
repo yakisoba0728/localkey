@@ -126,9 +126,12 @@ For Ubuntu extraction, select `localkey-ubuntu-desktop-arm:1` or
 `localkey-ubuntu-desktop-x86:1`. Do not modify or extract the disk while QEMU is running. To retry with changed
 fixtures, build a new disk. Debian's Firefox direct-attestation and account-selection buttons are
 calibrated for English 1280×800 screenshots, with screenshot-based prompt
-readiness checks. Ubuntu clicks the calibrated running-window Dock icons with
+readiness checks. Ubuntu finds the visible running-window Dock buttons by their
+native accessibility names and clicks their current positions with
 `focus-or-previews` configured, observes the rendered native polkit prompt, and
-selects Firefox's visible native accessibility buttons through Collection queries.
+waits for the focused native Firefox PIN field, and selects Firefox's visible
+permission/account buttons through Collection queries. Hidden GNOME branches are
+skipped so window selection stays within the authenticator's presence timeout.
 These checks use the English GNOME 50 light theme at 1280×800; recalibrate after
 layout/theme changes. Browser active-state flags can remain cached behind another Wayland window,
 and QEMU's virtual-clock key-release timers can
