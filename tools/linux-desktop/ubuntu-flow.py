@@ -1,6 +1,7 @@
 """Reuse the desktop checks with Ubuntu GNOME Wayland and confined Snap browsers."""
 from pathlib import Path
 import os
+import shlex
 import subprocess
 
 import desktop_flow as flow
@@ -27,6 +28,15 @@ def record_versions():
 
 
 def create_drivers():
+    device = original_run('fido2-token', '-L').stdout.strip().split(':', 1)[0]
+    assert device.startswith('/dev/hidraw')
+    (flow.RESULTS / 'udev-token.txt').write_text(original_run('udevadm', 'info', '--query=property', '--name=' + device).stdout)
+    descriptor = '/sys/class/hidraw/' + Path(device).name + '/device/report_descriptor'
+    probe = original_run('snap', 'run', '--shell', 'chromium.chromedriver',
+                         input='cat /proc/self/attr/current\n' +
+                               'cat ' + shlex.quote(descriptor) + ' >/dev/null && echo DESCRIPTOR_READ_OK\n' +
+                               '(exec 3<>' + shlex.quote(device) + ') && echo HID_OPEN_OK\nexit\n', check=False)
+    (flow.RESULTS / 'snap-hid-access.txt').write_text(probe.stdout + probe.stderr)
     options = flow.webdriver.ChromeOptions()
     options.binary_location = '/snap/chromium/current/usr/lib/chromium-browser/chrome'
     for flag in ['--no-first-run', '--disable-dev-shm-usage', '--ozone-platform=wayland',

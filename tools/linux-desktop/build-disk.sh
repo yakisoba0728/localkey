@@ -5,6 +5,11 @@ repo=$(cd "$(dirname "$0")/../.." && pwd -P)
 # shellcheck source=tools/linux-desktop/env.sh
 . "$(dirname "$0")/env.sh"
 fixture_mounts=(-v "$repo/tools/linux-desktop":/tests:ro)
+if [ -n "${LK_SNAPD_CANDIDATE_DIR:-}" ]; then
+    [ "$LK_DESKTOP_DISTRO" = ubuntu ]
+    [ -f "$LK_SNAPD_CANDIDATE_DIR/snapd.snap" ] && [ -f "$LK_SNAPD_CANDIDATE_DIR/snapd.assert" ]
+    fixture_mounts+=(-v "$LK_SNAPD_CANDIDATE_DIR":/candidate:ro)
+fi
 if [ "$LK_DESKTOP_DISTRO" = debian ]; then
     : "${LK_GECKODRIVER_TAR:?set LK_GECKODRIVER_TAR to the verified matching Linux geckodriver archive}"
     [ -f "$LK_GECKODRIVER_TAR" ]
@@ -29,6 +34,10 @@ docker run --rm --network none --cpus 2 --memory 6g \
             disk_size=32G
         else cp /tests/session.sh /rootfs/localkey/session.sh; disk_size=4G; fi
         cp /bundle.tar.gz /rootfs/localkey/bundle.tar.gz
+        if [ -f /candidate/snapd.snap ]; then
+            cp /candidate/snapd.snap /rootfs/localkey/snapd-candidate.snap
+            cp /candidate/snapd.assert /rootfs/localkey/snapd-candidate.assert
+        fi
         if [ -f /geckodriver.tar.gz ]; then tar -xzf /geckodriver.tar.gz -C /rootfs/usr/local/bin; fi
         rm -f /rootfs/.dockerenv /rootfs/etc/resolv.conf
         printf "127.0.0.1 localhost\n127.0.1.1 localkey-desktop\n::1 localhost\n" > /rootfs/etc/hosts

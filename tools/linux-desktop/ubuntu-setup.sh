@@ -11,6 +11,15 @@ if [ ! -f /localkey/snaps-installed ]; then
     snap install /localkey/snaps/*.snap
     touch /localkey/snaps-installed
 fi
+if [ -f /localkey/snapd-candidate.snap ] && [ ! -f /localkey/snapd-candidate-installed ]; then
+    snap ack /localkey/snapd-candidate.assert
+    snap install /localkey/snapd-candidate.snap
+    for browser in firefox chromium; do
+        snap disconnect "$browser":u2f-devices
+        snap connect "$browser":u2f-devices
+    done
+    touch /localkey/snapd-candidate-installed
+fi
 snap list > /localkey/results/snaps.txt
 snap connections firefox > /localkey/results/firefox-connections.txt
 snap connections chromium > /localkey/results/chromium-connections.txt

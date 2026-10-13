@@ -391,6 +391,8 @@ def execute():
         (RESULTS / "result.json").write_text(json.dumps({"passed": success and not reboot, "checks": CHECKS}, indent=2) + "\n")
         journal = sudo("journalctl", "-b", "-u", "localkeyd.service", "--no-pager", check=False)
         (RESULTS / ("journal-before-reboot.log" if reboot else "journal.log")).write_text(journal.stdout + journal.stderr)
+        kernel = sudo("journalctl", "-k", "-b", "--no-pager", check=False)
+        (RESULTS / ("kernel-before-reboot.log" if reboot else "kernel.log")).write_text(kernel.stdout + kernel.stderr)
         marker = "===== LK-DESKTOP-REBOOT =====" if success and reboot else (
                  "===== LK-DESKTOP-END rc=0 =====" if success else "===== LK-DESKTOP-END rc=1 =====")
         serial = "ttyS0" if platform.machine() == "x86_64" else "ttyAMA0"

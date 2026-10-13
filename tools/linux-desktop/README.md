@@ -71,6 +71,22 @@ display images; no host source, device, Docker socket or home directory is expos
 This management port is a disposable test-fixture facility, never a release
 component. The RP and authenticator still communicate through the actual guest HID stack.
 
+Snapd 2.77.1's `u2f-devices` interface uses USB ancestor VID/PID rules and rejects
+the own UHID device even with a connected plug and `ID_SECURITY_TOKEN=1`.
+The official [2.78 source](https://raw.githubusercontent.com/canonical/snapd/2.78/interfaces/builtin/u2f_devices.go)
+uses systemd's FIDO identification instead on systemd 244+. As of 2026-10-13,
+2.78 is in the candidate channel, so candidate coverage must be reported separately
+from stable/default Ubuntu coverage. Do not change the identity or generated
+security profiles to conceal this restriction.
+
+For a candidate verification, download the matching architecture's signed
+`snapd.snap` and `snapd.assert` with `snap download snapd --channel=candidate
+--basename=snapd`, put them in a private directory, and set
+`LK_SNAPD_CANDIDATE_DIR` to it before `build-disk.sh`. The guest acknowledges
+the assertions, installs the signed file and reconnects the browsers' ordinary
+`u2f-devices` plugs; AppArmor and device mediation remain enabled. This test-only
+input is optional and is never included in the localkey bundle.
+
 Download geckodriver v0.37.1 from its official release:
 <https://github.com/mozilla/geckodriver/releases/tag/v0.37.1>.
 The archives used on 2026-10-12 had SHA-256:

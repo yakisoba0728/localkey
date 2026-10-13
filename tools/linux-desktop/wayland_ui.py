@@ -100,11 +100,15 @@ class Gui:
     def focus(self, identifier):
         if identifier == 'auth':
             return  # GNOME's native polkit modal already owns keyboard focus.
+        if identifier.isdigit():
+            self.key('Super_L+1')
+            time.sleep(1)
+            expected = self.run('xdotool', 'getwindowname', identifier).stdout.strip()
+            focused = self.run('xdotool', 'getwindowfocus', 'getwindowname', check=False).stdout.strip()
+            assert expected and focused == expected, (expected, focused)
+            return
         for count in range(8):
-            if identifier.isdigit():
-                active = self.run('xdotool', 'getwindowfocus', check=False).stdout.strip() == identifier
-            else:
-                active = self.window(identifier, active=True)
+            active = self.window(identifier, active=True)
             if active:
                 return
             # Native Alt+Tab avoids app-ID mismatches in Snap WebDriver launches.
